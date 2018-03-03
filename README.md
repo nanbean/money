@@ -19,9 +19,10 @@ run app in different terminal
 yarn start
 ```
 
-Ivalid Host Problem
+Invalid Host Problem
 -------
-you shoul add .env.development in root directory
+you should change .env.development in root directory
+example
 ```bash
-HOST=yourip
+HOST=8.8.8.8
 ```
