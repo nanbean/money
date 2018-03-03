@@ -7,7 +7,7 @@ import PerformanceGrid from '../components/PerformanceGrid';
 class InvestmentPerformance extends Component {
 
 	render () {
-		const { investment, performance, isMobile } = this.props;
+		const { investment, performance } = this.props;
 		const totalPerformance = performance.length > 0 ? performance.map(l => l.periodReturn).reduce((a, b) => a + b) : 0;
 		const totalQuantity = performance.length > 0 ? performance.map(m => m.quantity).reduce((a, b) => a + b) : 0;
 		const totalGain = performance.length > 0 ? performance.map(l => l.periodGain).reduce((a, b) => a + b) : 0;
@@ -47,7 +47,6 @@ class InvestmentPerformance extends Component {
 			<div>
 				<Header as='h4'>{investment}</Header>
 				<PerformanceGrid
-					isMobile={isMobile}
 					performanceData={performanceData}
 				/>
 			</div>
@@ -56,7 +55,6 @@ class InvestmentPerformance extends Component {
 }
 
 InvestmentPerformance.propTypes = {
-	isMobile: PropTypes.bool,
 	investment: PropTypes.string.isRequired,
 	performance: PropTypes.array.isRequired
 };

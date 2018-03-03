@@ -8,7 +8,7 @@ import { getAccountPerformance } from '../utils/performance';
 
 class AccountInvestments extends Component {
 	render () {
-		const { isMobile, account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice } = this.props;
+		const { account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice } = this.props;
 		const cash = accountInvestments.length > 0 ? accountInvestments.find(i => i.name === 'cash').amount : 0;
 		const accountPerformance = getAccountPerformance(account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice);
 		const totalCostBasis = accountPerformance.length > 0 ? accountPerformance.map(i => i.costBasis).reduce((a, b) => a + b) : 0;
@@ -43,7 +43,7 @@ class AccountInvestments extends Component {
 				'Cash',
 				'',
 				'',
-				'Cost ',
+				'',
 				cash,
 				'',
 				'',
@@ -52,9 +52,9 @@ class AccountInvestments extends Component {
 			[
 				'',
 				'',
+				'',
 				totalCostBasis,
 				totalMarketValue,
-				cash,
 				totalPeriodGain,
 				totalPeriodReturn,
 				''
@@ -64,7 +64,6 @@ class AccountInvestments extends Component {
 		return (
 			<div className='investments'>
 				<PerformanceGrid
-					isMobile={isMobile}
 					performanceData={performanceData}
 				/>
 			</div>
@@ -73,13 +72,11 @@ class AccountInvestments extends Component {
 }
 
 AccountInvestments.propTypes = {
-	isMobile: PropTypes.bool,
 	accountList:  PropTypes.array.isRequired,
 	accountInvestments: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({
-	isMobile: state.ui.isMobile,
 	account: state.account,
 	allInvestmentsTransactions: state.allInvestmentsTransactions,
 	allInvestmentsPrice: state.allInvestmentsPrice,
