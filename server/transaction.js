@@ -1,0 +1,601 @@
+const path = require('path');
+const fs = require('fs');
+const async = require('async');
+const Spooky = require('spooky');
+const CronJob = require('cron').CronJob;
+const googleFinance = require('google-finance');
+const moment = require('moment');
+
+const qif2json = require('./qif2json');
+const json2qif = require('./json2qif');
+
+let money = exports;
+
+function updateAccountList (name, type, balance, investments, qifData) {
+	const account = {
+		name: name,
+		type: type,
+		balance: balance,
+		investments: investments
+	};
+	let accountListIndex = -1;
+
+	if (name.match(/Closed/i)) {
+		// do nothing
+	} else if (name.match(/_Cash/i)) { // _Cash account is sub-account of Investement
+		accountListIndex = money.accountList.findIndex(i => i.name === name.substr(0, name.length  -5));
+		if (accountListIndex >= 0) {
+			money.accountList[accountListIndex].cashAccount = account;
+			money.accountList[accountListIndex].investments.push({
+				name: 'cash',
+				amount: balance
+			});
+		}
+	} else {
+		accountListIndex = money.accountList.findIndex(i => i.name === name);
+		if (accountListIndex >= 0) {
+			money.accountList[accountListIndex] = account;
+		} else {
+			money.accountList.push(account);
+		}
+	}
+
+	money.accounts[name] = qifData;
+}
+
+function getInvestmentList (name, transactions) {
+	const investments = [];
+	for (let i = 0; i < transactions.length; i++) {
+		const transaction = transactions[i];
+		if (transaction) {
+			const activity = transaction.activity;
+			const investmentIdx = investments.findIndex((item) => item.name === transaction.investment);
+			if (activity === 'Buy') {
+				if (investmentIdx >= 0) {
+					investments[investmentIdx].price = (investments[investmentIdx].price * investments[investmentIdx].quantity + transaction.price * transaction.quantity) / (investments[investmentIdx].quantity + transaction.quantity);
+					investments[investmentIdx].quantity += transaction.quantity;
+					investments[investmentIdx].gain -= transaction.commission ? transaction.commission:0;
+					investments[investmentIdx].amount += (transaction.amount );
+				} else {
+					investments.push({
+						name: transaction.investment,
+						quantity: transaction.quantity,
+						price: transaction.price,
+						amount: transaction.amount,
+						gain: transaction.commission ? -transaction.commission:0
+					})
+				}
+			} else if (transaction.activity === 'Sell') {
+				if (investmentIdx >= 0) {
+					investments[investmentIdx].gain -= transaction.commission ? transaction.commission : 0;
+					investments[investmentIdx].gain -= parseInt(investments[investmentIdx].price * investments[investmentIdx].quantity - transaction.price * transaction.quantity, 10);
+					investments[investmentIdx].quantity -= transaction.quantity;
+					investments[investmentIdx].amount -= transaction.amount;
+
+					if (investments[investmentIdx].quantity === 0) {
+						investments[investmentIdx].amount = 0;
+					}
+				} else {
+					console.log('error');
+					console.log(transaction)
+				}
+			} else if (activity === 'ShrsIn') {
+				const shrsInOutIdx = money.shrsInOut.findIndex((item) => item.date === transaction.date && item.shrsInOut == 'ShrsOut' && item.investment == transaction.investment);
+
+				if (investmentIdx >= 0) {
+					investments[investmentIdx].price = (investments[investmentIdx].price * investments[investmentIdx].quantity + money.shrsInOut[shrsInOutIdx].price * transaction.quantity) / (investments[investmentIdx].quantity + transaction.quantity);
+					investments[investmentIdx].quantity += transaction.quantity;
+				} else {
+					investments.push({
+						name: transaction.investment,
+						quantity: transaction.quantity,
+						price: money.shrsInOut[shrsInOutIdx] ? money.shrsInOut[shrsInOutIdx].price : 0,
+						amount: transaction.amount,
+						gain: transaction.commission ? -transaction.commission:0
+					})
+				}
+				money.shrsInOut.push({
+					account: name,
+					shrsInOut: 'ShrsIn',
+					date: transaction.date,
+					investment: transaction.investment,
+					transaction: transaction
+				});
+			} else if (activity === 'ShrsOut') {
+				if (investmentIdx >= 0) {
+					investments[investmentIdx].quantity -= transaction.quantity;
+					investments[investmentIdx].amount -= transaction.amount;
+				} else {
+					console.log('error');
+					console.log(transaction)
+				}
+				money.shrsInOut.push({
+					account: name,
+					shrsInOut: 'ShrsOut',
+					date: transaction.date,
+					investment: transaction.investment,
+					price: investments[investmentIdx].price,
+					transaction: transaction
+				});
+			}
+		}
+	}
+
+	return investments;
+}
+
+function getBalance (name, transactions) {
+	let balance = 0;
+	for (let i = 0; i < transactions.length; i++) {
+		const transaction = transactions[i];
+		if (transaction) {
+			const activity = transaction.activity;
+			balance += transaction.amount;
+		}
+	}
+
+	// We have to subtract ivestment in investment cash account
+	if (name.match(/_Cash/i)) {
+		const investmemtTransaction = money.accounts[name.split('_')[0]];
+		if (investmemtTransaction && investmemtTransaction.transactions) {
+			for (let i = 0; i < investmemtTransaction.transactions.length; i++) {
+				const transaction = investmemtTransaction.transactions[i];
+				if (transaction.activity === 'Buy' || transaction.activity === 'MiscExp') {
+					balance -= transaction.amount;
+				} else if (transaction.activity === 'Sell' || transaction.activity === 'Div') {
+					balance += transaction.amount;
+				}
+			}
+		}
+	}
+
+	return balance;
+}
+
+function getInvestmentBalance (investments) {
+	let balance = 0;
+	if (investments.length > 0) {
+		balance = investments.map((i) => i.price * i.quantity).reduce( (prev, curr) => prev + curr );
+	}
+
+	return balance;
+}
+
+function parseFile (file, callback) {
+	return new Promise(resolve => {
+		const filePath = path.resolve(__dirname, file);
+		const name = path.basename(filePath, '.qif');
+		console.log(`parsing ${file} ...`);
+		if (fs.existsSync(filePath)) {
+			qif2json.parseFile(filePath, function(err, qifData) {
+				const type = qifData.type;
+				let balance = 0;
+				let investments = [];
+
+				if (qifData.transactions) {
+					if (type === 'Invst') {
+						investments = getInvestmentList(name, qifData.transactions);
+						balance = getInvestmentBalance(investments);
+					} else {
+						balance = getBalance(name, qifData.transactions);
+					}
+				}
+				updateAccountList(name, type, balance, investments, qifData);
+				console.log(`parsing ${file} done...`);
+				callback && callback();
+				resolve('done');
+			});
+		} else {
+			resolve('done');
+		}
+	});
+}
+
+function updateInvestmentAccount () {
+	money.accountList
+	.sort((a, b) => {
+		if (a.type < b.type) {
+			return -1;
+		}
+		if (b.type < a.type) {
+			return 1;
+		}
+		if (a.name < b.name) {
+			return -1;
+		}
+		if (b.name < a.name) {
+			return 1;
+		}
+		return 0;
+	});
+
+	for (let i = 0; i < money.accountList.length; i++) {
+		const account = money.accountList[i];
+		if (account.type == 'Invst' && account.investments) {
+			const investments = account.investments;
+			let balance = 0;
+			for (let j = 0; j < investments.length; j++) {
+				if (investments[j].quantity > 0) {
+					const findInvestment = money.investments.find(item => item.name === investments[j].name);
+					balance += investments[j].quantity * (findInvestment && findInvestment.price ? findInvestment.price : investments[j].price);
+				}
+				if (investments[j].name === 'cash') {
+					balance += investments[j].amount
+				}
+			}
+			account.balance = balance;
+		}
+	}
+	console.log('init done');
+}
+
+function arrangeCategory (category) {
+	money.categories = [];
+	let categories = [];
+	let subcategories = [];
+	for (let i in money.accounts) {
+		const transactions = money.accounts[i].transactions;
+		if (transactions) {
+			categories = [...categories, ...transactions.filter(i => i.category).map(i => i.category)];
+			subcategories = [...subcategories, ...transactions.filter(i => i.subcategory).map(i => `${i.category}:${i.subcategory}`)];
+		}
+	}
+	categories = [...new Set(categories)];
+	if (!categories.find(i => i === '분류없음')) {
+		categories.push('분류없음');
+	}
+	subcategories = [...new Set(subcategories)];
+	money.categories = [...categories, ...subcategories];
+	money.categories.sort();
+}
+
+function arrangePayee () {
+	money.payees = [];
+	let payees = [];
+	for (let i in money.accounts) {
+		const transactions = money.accounts[i].transactions;
+		if (transactions) {
+			payees = [...payees, ...transactions.filter(i => i.payee).map(i => i.payee)];
+		}
+	}
+	payees = [...new Set(payees)];
+	money.payees = payees;
+	money.payees.sort();
+}
+
+function arrangeInvestmemt (resolve) {
+	const investmentList = [...new Set(money.accountList.filter(i => i.investments.length > 0).map(i => i.investments).reduce((a, b) => a.concat(b)).map(i => i.name))];
+	const investments = investmentList.filter(j => j !== 'cash').map(i => { return {name: i} });
+	const allinvestments = [];
+
+	money.investments = investments;
+	money.allinvestments = allinvestments;
+
+	const filePath = path.resolve(__dirname, 'account.json')
+	fs.writeFile(filePath, JSON.stringify(money.accountList, null, 2), function (err, data) {
+	});
+
+	var spooky = new Spooky({
+		child: {
+			transport: 'http'
+		},
+		casper: {
+			logLevel: 'debug',
+			verbose: true,
+			viewportSize: {width: 1600, height: 1200}
+		}
+	}, function (err) {
+		if (err) {
+			e = new Error('Failed to initialize SpookyJS');
+			e.details = err;
+			throw e;
+		}
+
+		spooky.start('http://finance.daum.net/quote/all.daum?type=S&stype=P');
+
+		spooky.then(function(){
+			var investment1 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(1) a'), function (e) {
+					return e.innerHTML.replace("&amp;", "&");
+				});
+			});
+			var investment2 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(4) a'), function (e) {
+					return e.innerHTML.replace("&amp;", "&");
+				});
+			});
+			var symbol1 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(1) a'), function (e) {
+					return e.href.substr(e.href.length - 6, 6);
+				});
+			});
+			var symbol2 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(4) a'), function (e) {
+					return e.href.substr(e.href.length - 6, 6);
+				});
+			});
+			var price1 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(2) span'), function (e) {
+					return e.innerHTML;
+				});
+			});
+			var price2 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(5) span'), function (e) {
+					return e.innerHTML;
+				});
+			});
+			this.emit('kospiParsed', investment1.concat(investment2), symbol1.concat(symbol2), price1.concat(price2));
+		});
+
+		spooky.thenOpen('http://finance.daum.net/quote/all.daum?type=S&stype=Q');
+
+		spooky.then(function(){
+			var investment1 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(1) a'), function (e) {
+					return e.innerHTML.replace("&amp;", "&");
+				});
+			});
+			var investment2 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(4) a'), function (e) {
+					return e.innerHTML.replace("&amp;", "&");
+				});
+			});
+			var symbol1 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(1) a'), function (e) {
+					return e.href.substr(e.href.length - 6, 6);
+				});
+			});
+			var symbol2 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(4) a'), function (e) {
+					return e.href.substr(e.href.length - 6, 6);
+				});
+			});
+			var price1 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(2) span'), function (e) {
+					return e.innerHTML;
+				});
+			});
+			var price2 = this.evaluate(function () {
+				return [].map.call(__utils__.findAll('table.gTable.clr tr td:nth-child(5) span'), function (e) {
+					return e.innerHTML;
+				});
+			});
+			this.emit('kodaqParsed', investment1.concat(investment2), symbol1.concat(symbol2), price1.concat(price2));
+		});
+
+		spooky.run();
+	});
+
+	spooky.on('kospiParsed', function (investment, symbol, price) {
+		for (let i = 0; i < investments.length; i++) {
+			const index = investment.findIndex(item => item === investments[i].name);
+			if ( index >= 0 ) {
+				investments[i].symbol = symbol[index];
+				investments[i].googleSymbol = `KRX:${symbol[index]}`;
+				investments[i].price = parseFloat(price[index].replace(/,/g, ''));
+			}
+		}
+
+		for (let k = 0; k < investment.length; k++) {
+			allinvestments.push({
+				name: investment[k],
+				symbol: symbol[k],
+				googleSymbol : `KRX:${symbol[k]}`,
+				price: parseFloat(price[k].replace(/,/g, ''))
+			});
+		}
+	});
+
+	spooky.on('kodaqParsed', function (investment, symbol, price) {
+		for (let i = 0; i < investments.length; i++) {
+			for (let j = 0; j < investment.length; j++) {
+				if (investment[j] === investments[i].name) {
+					investments[i].symbol = symbol[j];
+					investments[i].googleSymbol = `KOSDAQ:${symbol[j]}`;
+					investments[i].price = parseFloat(price[j].replace(/,/g, ''));
+				}
+			}
+		}
+		for (let k = 0; k < investment.length; k++) {
+			allinvestments.push({
+				name: investment[k],
+				symbol: symbol[k],
+				googleSymbol : `KOSDAQ:${symbol[k]}`,
+				price: parseFloat(price[k].replace(/,/g, ''))
+			});
+		}
+		updateInvestmentAccount();
+		updateHistorical();
+		if (resolve) {
+			resolve(true);
+		}
+
+		console.log('arrangeInvestmemt done');
+	});
+
+	// for debug
+	// spooky.on('console', function (line) {
+	// 	console.log(line);
+	// });
+}
+
+function updateHistorical (resolve) {
+	const filePath = path.resolve(__dirname, 'historical.json')
+	fs.readFile(filePath, 'utf8', function (err, data) {
+		const result = JSON.parse(data);
+		for (let key in result) {
+			const investmentIdx = money.investments.findIndex(i => i.googleSymbol === key);
+			if (investmentIdx >= 0) {
+				money.investments[investmentIdx].historical = result[key];
+			}
+		}
+		console.log('updateHistorical done...');
+	});
+}
+
+function init () {
+	money.accountList = [];
+	money.shrsInOut = [];
+	money.accounts = {};
+
+	var queue = async.queue(function (task, callback) {
+		parseFile(task.file, callback)
+	}, 1);
+
+	queue.drain = function() {
+		arrangeInvestmemt();
+		arrangeCategory();
+		arrangePayee();
+	}
+
+	fs.readdir(path.resolve(__dirname), function (err, files) {
+		for (let i = 0; i < files.length; i++) {
+			if (files[i].match(/\.qif/i)) {
+				queue.push({file: files[i]});
+			}
+		}
+	});
+}
+
+exports.updateqifFile = async function(account) {
+	const filePath = path.resolve(__dirname, `./${account}.qif`);
+	money.accounts[account].transactions.sort((a, b) => +(a.date > b.date) || +(a.date === b.date) - 1);
+	const token = await json2qif.writeToFile(money.accounts[account], filePath);
+
+	const investmentFile = account.match(/_Cash/) ? `${account.substr(0, account.length  -5)}.qif` : `${account}.qif`
+	const cashFile = account.match(/_Cash/) ? `${account}.qif` : `${account}_Cash.qif`;
+
+	const token2 = await parseFile(investmentFile);
+	const token3 = await parseFile(cashFile);
+	updateInvestmentAccount();
+	arrangeCategory();
+	arrangePayee();
+}
+
+exports.updateInvestmentPrice = function() {
+	return new Promise(function (resolve, reject) {
+		arrangeInvestmemt(resolve);
+	});
+}
+
+function getBalanceToDate (name, transactions, accounts) {
+	let balance = 0;
+	for (let i = 0; i < transactions.length; i++) {
+		const transaction = transactions[i];
+		if (transaction) {
+			const activity = transaction.activity;
+			balance += transaction.amount;
+		}
+	}
+
+	// We have to subtract ivestment in investment cash account
+	if (name.match(/_Cash/i)) {
+		const investmemtTransaction = accounts[name.split('_')[0]];
+		if (investmemtTransaction && investmemtTransaction.transactions) {
+			for (let i = 0; i < investmemtTransaction.transactions.length; i++) {
+				const transaction = investmemtTransaction.transactions[i];
+				if (transaction.activity === 'Buy' || transaction.activity === 'MiscExp') {
+					balance -= transaction.amount;
+				} else if (transaction.activity === 'Sell' || transaction.activity === 'Div') {
+					balance += transaction.amount;
+				}
+			}
+		}
+	}
+
+	return balance;
+}
+
+function getInvestmentBalanceToDate (investments, date) {
+	const currentYearMonth = moment().format('YYYY-MM');
+	let balance = 0;
+	if (investments.length > 0) {
+		balance = investments.map((i) => {
+			if (i.quantity > 0) {
+				const dateYearMonth = date.substr(0,7);
+				const investment = money.investments.find(j => j.name === i.name);
+				const historical = investment && investment.historical && investment.historical.filter(k => {
+					return k.date.substr(0,7) === dateYearMonth;
+				});
+				const historicalPrice = historical && historical.length > 0 && historical[historical.length - 1].close;
+				if (currentYearMonth === dateYearMonth) {
+					return investment.price * i.quantity;
+				}
+				if (historicalPrice) {
+					return historicalPrice * i.quantity
+				}
+			}
+			return i.price * i.quantity
+		}).reduce( (prev, curr) => prev + curr );
+	}
+
+	return balance;
+}
+
+exports.getNetWorth = function(date) {
+	const dateAccounts = {};
+	let netWorth = 0;
+	for (let i in money.accounts) {
+		dateAccounts[i] = {};
+		dateAccounts[i].type = money.accounts[i].type;
+		if (money.accounts[i].transactions) {
+			dateAccounts[i].transactions = money.accounts[i].transactions.filter(i => i.date <= date);
+			if (dateAccounts[i].type === 'Invst') {
+				const investments = getInvestmentList(i, dateAccounts[i].transactions);
+				netWorth += getInvestmentBalanceToDate(investments, date);
+			} else {
+				netWorth += getBalanceToDate(i, dateAccounts[i].transactions, dateAccounts);
+			}
+		}
+	}
+	return netWorth;
+}
+
+init();
+
+var job = new CronJob('00 40 15 * * 1-5', function() {
+		/*
+		 * investment update automation.
+		 * Runs week day (Monday through Friday)
+		 * at 05:00:00 AM.
+		 */
+		console.log('00 40 15 daily arrangeInvestmemt started');
+
+		arrangeInvestmemt();
+	}, function () {
+		/* This function is executed when the job stops */
+		console.log('00 40 15 daily arrangeInvestmemt ended');
+	},
+	true, /* Start the job right now */
+	'Asia/Seoul' /* Time zone of this job. */
+);
+
+var job = new CronJob('00 00 01 01 * *', function() {
+// var job = new CronJob('00 04 20 * * *', function() {
+		/*
+		 * historical update automation.
+		 * Runs 1st day of month
+		 * at 01:00:00 AM.
+		 */
+		console.log('monthly historical update started');
+		const filePath = path.resolve(__dirname, 'historical.json')
+		const symbols = money.investments.filter(i => i.googleSymbol).map(i => i.googleSymbol);
+
+		googleFinance.historical({
+			symbols: symbols,
+			from: '2003-01-01',
+			to: moment().format('YYYY-MM-DD')
+		}, function (err, result) {
+			const filePath = path.resolve(__dirname, 'historical.json')
+			fs.writeFile(filePath, JSON.stringify(result), function (err, data) {
+				updateHistorical();
+				console.log('monthly historical update ended');
+			});
+		});
+	}, function () {
+		/* This function is executed when the job stops */
+		console.log('monthly historical update ended');
+	},
+	true, /* Start the job right now */
+	'Asia/Seoul' /* Time zone of this job. */
+);

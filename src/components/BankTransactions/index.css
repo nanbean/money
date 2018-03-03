@@ -1,0 +1,26 @@
+.bank-transaction {
+	display: flex;
+	height: 73vh;
+	font-size: .9em;
+	text-align: center;
+}
+
+@media (min-width: 768px) and (max-width: 1193px) {
+	.bank-transaction {
+		height: 70vh;
+	}
+}
+
+@media (min-width: 1194px) {
+	.bank-transaction {
+		height: 65vh;
+	}
+}
+
+.bank-transaction .header {
+	font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.bank-transaction .row {
+
+}
