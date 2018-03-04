@@ -78,7 +78,7 @@ class BankTransactions extends Component {
 					</AutoSizer>
 				}
 			</div>
-		)
+		);
 	}
 }
 

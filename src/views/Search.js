@@ -49,7 +49,7 @@ class Search extends Component {
 							const divisionItem = division[m];
 							divisionItem.date = date;
 							divisionItem.payee = divisionItem.description;
-							divisions.push(divisionItem)
+							divisions.push(divisionItem);
 						}
 					}
 					filteredTransactions = [
@@ -111,8 +111,8 @@ class Search extends Component {
 	render () {
 		const { categoryList, payeeList } = this.props;
 		const { filteredTransactions, keyword } = this.state;
-		const dropCategoryList = categoryList.map(i => { return {key: i, value: i, text: i}});
-		const dropPayeeList = payeeList.map(i => { return {key: i, name: i}});
+		const dropCategoryList = categoryList.map(i => ({key: i, value: i, text: i}));
+		const dropPayeeList = payeeList.map(i => ({key: i, name: i}));
 
 		return (
 			<div>
@@ -155,11 +155,23 @@ class Search extends Component {
 }
 
 Search.propTypes = {
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			name: PropTypes.string.isRequired,
+		}).isRequired
+	}),
+	isEdit: PropTypes.bool.isRequired,
 	allAccountTransactions:  PropTypes.object.isRequired,
 	categoryList: PropTypes.array.isRequired,
 	payeeList: PropTypes.array.isRequired,
 	getAllAccountTransactionsAction: PropTypes.func.isRequired,
-	isModalOpen: PropTypes.bool.isRequired
+	isModalOpen: PropTypes.bool.isRequired,
+	getCategoryListAction: PropTypes.func.isRequired,
+	getPayeeListAction: PropTypes.func.isRequired,
+	openTransactionInModal: PropTypes.func.isRequired,
+	resetTransactionForm: PropTypes.func.isRequired,
+	deleteTransactionAction: PropTypes.func.isRequired,
+	editTransactionAction: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({

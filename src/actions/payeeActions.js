@@ -7,7 +7,7 @@ export const fetchGetPayeeListSuccess = params => ({
 	payload: params
 });
 
-export const fetchGetPayeeListFailure = params => ({
+export const fetchGetPayeeListFailure = () => ({
 	type: SET_PAYEE_LIST,
 	payload: []
 });
@@ -16,7 +16,7 @@ export const getPayeeListAction = () => (dispatch) => {
 	const apiUrl = '/api/getPayeeList';
 
 	return fetch(apiUrl)
-	.then(res => res.json())
-	.then(body => dispatch(fetchGetPayeeListSuccess(body)))
-	.catch(ex => dispatch(fetchGetPayeeListFailure(ex)))
+		.then(res => res.json())
+		.then(body => dispatch(fetchGetPayeeListSuccess(body)))
+		.catch(ex => dispatch(fetchGetPayeeListFailure(ex)));
 };

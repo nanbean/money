@@ -7,7 +7,7 @@ export const fetchGetLifetimeFlowSuccess = params => ({
 	payload: params
 });
 
-export const fetchGetLifetimeFlowFailure = params => ({
+export const fetchGetLifetimeFlowFailure = () => ({
 	type: SET_LIFETIME_PLANNER_FLOW,
 	payload: {}
 });
@@ -16,11 +16,11 @@ export const getLifetimeFlowAction = () => (dispatch) => {
 	const apiUrl = '/api/getLifetimeFlow';
 
 	return fetch(apiUrl)
-	.then(res => res.json())
-	.then(body => {
-		if (body.count) {
-			dispatch(fetchGetLifetimeFlowSuccess(body));
-		}
-	})
-	.catch(ex => dispatch(fetchGetLifetimeFlowFailure(ex)));
+		.then(res => res.json())
+		.then(body => {
+			if (body.count) {
+				dispatch(fetchGetLifetimeFlowSuccess(body));
+			}
+		})
+		.catch(ex => dispatch(fetchGetLifetimeFlowFailure(ex)));
 };

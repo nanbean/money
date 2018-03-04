@@ -1,6 +1,6 @@
-import React from 'react'
-import { Route, Link } from 'react-router-dom'
-import { Icon, Menu } from 'semantic-ui-react'
+import React from 'react';
+import { Route, Link } from 'react-router-dom';
+import { Icon, Menu } from 'semantic-ui-react';
 
 const routes = [
 	{
@@ -34,7 +34,7 @@ const routes = [
 		label: 'Search',
 		icon: 'search'
 	}
-]
+];
 
 const SidebarMenu = () => (
 	<nav>
@@ -44,17 +44,18 @@ const SidebarMenu = () => (
 					key={route.path}
 					exact={route.exact}
 					path={route.path}
-					children={({ match }) => {
+					children={({ match }) => { // eslint-disable-line react/no-children-prop
 						return (
-						<Menu.Item as={Link} to={route.path} active={!!match}>
-							<Icon name={route.icon} />
-							{route.label}
-						</Menu.Item>
-					)}}
+							<Menu.Item as={Link} to={route.path} active={!!match}>
+								<Icon name={route.icon} />
+								{route.label}
+							</Menu.Item>
+						);
+					}}
 				/>
 			))}
 		</Menu>
 	</nav>
-)
+);
 
 export default SidebarMenu;

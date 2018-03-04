@@ -31,12 +31,12 @@ class LifetimePlanner extends Component {
 								data={lifetimePlannerFlow}
 								margin={{top: 5, right: 10, left: 20, bottom: 5}}
 							>
-							<XAxis dataKey="year"/>
-							<YAxis hide/>
-							<CartesianGrid strokeDasharray="3 3"/>
-							<Tooltip formatter={this.formatter} />
-							<Bar dataKey="amountInflation" name="Amount(Inflation)" fill="#8884d8" />
-							<Bar dataKey="amount" name="Amount" fill="#82ca9d" />
+								<XAxis dataKey="year"/>
+								<YAxis hide/>
+								<CartesianGrid strokeDasharray="3 3"/>
+								<Tooltip formatter={this.formatter} />
+								<Bar dataKey="amountInflation" name="Amount(Inflation)" fill="#8884d8" />
+								<Bar dataKey="amount" name="Amount" fill="#82ca9d" />
 							</BarChart>
 						</ResponsiveContainer>
 					}

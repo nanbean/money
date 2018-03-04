@@ -6,7 +6,7 @@ import TitleHeader from '../components/TitleHeader';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 
 import { getInvestmentTransactionsAction } from '../actions/investmentActions';
-import { getInvestmentPriceAction } from '../actions/priceActions'
+import { getInvestmentPriceAction } from '../actions/priceActions';
 import { getInvestmentPerformance } from '../utils/performance';
 
 class Performance extends Component {
@@ -40,6 +40,11 @@ class Performance extends Component {
 }
 
 Performance.propTypes = {
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			name: PropTypes.string.isRequired,
+		}).isRequired
+	}),
 	isMobile: PropTypes.bool,
 	investmentPrice: PropTypes.number.isRequired,
 	investmentTransactions: PropTypes.array.isRequired,

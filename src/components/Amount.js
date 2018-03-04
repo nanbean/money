@@ -1,5 +1,5 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 import { toCurrencyFormat } from '../utils/formatting';
 
 const Amount = ({ value, showColor = true }) => (
@@ -8,11 +8,11 @@ const Amount = ({ value, showColor = true }) => (
 	>
 		{toCurrencyFormat(value)}
 	</span>
-)
+);
 
 Amount.propTypes = {
 	value: PropTypes.number,
 	showColor: PropTypes.bool
-}
+};
 
-export default Amount
+export default Amount;

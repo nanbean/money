@@ -24,7 +24,7 @@ export default handleActions(
 			...state,
 			...payload
 		}),
-		[resetTransactionForm]: (state, { payload }) => ({
+		[resetTransactionForm]: () => ({
 			...initialState
 		}),
 		[openTransactionInModal]: (state, { payload }) => ({

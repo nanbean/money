@@ -49,7 +49,7 @@ class ReportGrid extends Component {
 					</AutoSizer>
 				}
 			</div>
-		)
+		);
 	}
 }
 

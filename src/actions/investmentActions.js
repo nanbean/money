@@ -17,7 +17,7 @@ const fetchGetInvestmentListSuccess = params => ({
 	payload: params
 });
 
-const fetchGetInvestmentListFailure = params => ({
+const fetchGetInvestmentListFailure = () => ({
 	type: SET_INVESTMENT_LIST,
 	payload: []
 });
@@ -26,9 +26,9 @@ export const getInvestmentListAction = () => (dispatch) => {
 	const apiUrl = '/api/getInvestmentList';
 
 	return fetch(apiUrl)
-	.then(res => res.json())
-	.then(body => dispatch(fetchGetInvestmentListSuccess(body)))
-	.catch(ex => dispatch(fetchGetInvestmentListFailure(ex)))
+		.then(res => res.json())
+		.then(body => dispatch(fetchGetInvestmentListSuccess(body)))
+		.catch(ex => dispatch(fetchGetInvestmentListFailure(ex)));
 };
 
 const fetchGetAllInvestmentsTransactionsSuccess = params => ({
@@ -36,18 +36,18 @@ const fetchGetAllInvestmentsTransactionsSuccess = params => ({
 	payload: params
 });
 
-const fetchGetAllInvestmentsTransactionsFailure = params => ({
+const fetchGetAllInvestmentsTransactionsFailure = () => ({
 	type: SET_ALL_INVESTMENTS_TRANSACTIONS,
 	payload: []
 });
 
 export const getAllInvestmentsTransactionsAction = () => (dispatch) => {
-	const apiUrl = `/api/getAllInvestmentsTransactions`;
+	const apiUrl = '/api/getAllInvestmentsTransactions';
 
 	return fetch(apiUrl)
-	.then(res => res.json())
-	.then(body => dispatch(fetchGetAllInvestmentsTransactionsSuccess(body)))
-	.catch(ex => dispatch(fetchGetAllInvestmentsTransactionsFailure(ex)))
+		.then(res => res.json())
+		.then(body => dispatch(fetchGetAllInvestmentsTransactionsSuccess(body)))
+		.catch(ex => dispatch(fetchGetAllInvestmentsTransactionsFailure(ex)));
 };
 
 const fetchGetAllInvestmentsPriceSuccess = params => ({
@@ -55,18 +55,18 @@ const fetchGetAllInvestmentsPriceSuccess = params => ({
 	payload: params
 });
 
-const fetchGetAllInvestmentsPriceFailure = params => ({
+const fetchGetAllInvestmentsPriceFailure = () => ({
 	type: SET_ALL_INVESTMENTS_PRICE,
 	payload: []
 });
 
 export const getAllInvestmentsPriceAction = () => (dispatch) => {
-	const apiUrl = `/api/getAllInvestmentsPrice`;
+	const apiUrl = '/api/getAllInvestmentsPrice';
 
 	return fetch(apiUrl)
-	.then(res => res.json())
-	.then(body => dispatch(fetchGetAllInvestmentsPriceSuccess(body)))
-	.catch(ex => dispatch(fetchGetAllInvestmentsPriceFailure(ex)))
+		.then(res => res.json())
+		.then(body => dispatch(fetchGetAllInvestmentsPriceSuccess(body)))
+		.catch(ex => dispatch(fetchGetAllInvestmentsPriceFailure(ex)));
 };
 
 const fetchInvestmentAccountTransactionsSuccess = params => ({
@@ -74,7 +74,7 @@ const fetchInvestmentAccountTransactionsSuccess = params => ({
 	payload: params
 });
 
-const fetchGetInvestmentAccountTransactionsFailure = params => ({
+const fetchGetInvestmentAccountTransactionsFailure = () => ({
 	type: SET_INVESTMENT_ACCOUNT_TRANSACTIONS,
 	payload: []
 });
@@ -84,9 +84,9 @@ export const getInvestmentAccountTransactionsAction = (account) => (dispatch) =>
 		const apiUrl = `/api/getInvestmentAccountTransactions?account=${account}`;
 
 		return fetch(apiUrl)
-		.then(res => res.json())
-		.then(body => dispatch(fetchInvestmentAccountTransactionsSuccess(body)))
-		.catch(ex => dispatch(fetchGetInvestmentAccountTransactionsFailure(ex)))
+			.then(res => res.json())
+			.then(body => dispatch(fetchInvestmentAccountTransactionsSuccess(body)))
+			.catch(ex => dispatch(fetchGetInvestmentAccountTransactionsFailure(ex)));
 	}
 };
 
@@ -102,7 +102,7 @@ const fetchGetAccountInvestmentsSuccess = params => ({
 	payload: params
 });
 
-const fetchGetAccountInvestmentsFailure = params => ({
+const fetchGetAccountInvestmentsFailure = () => ({
 	type: SET_ACCOUNT_INVESTMENTS,
 	payload: {}
 });
@@ -115,9 +115,9 @@ export const getAccountInvestmentsAction = (account) => (dispatch) => {
 		const apiUrl = `/api/getAccountInvestments?account=${account}`;
 
 		return fetch(apiUrl)
-		.then(res => res.json())
-		.then(body => dispatch(fetchGetAccountInvestmentsSuccess(body)))
-		.catch(ex => dispatch(fetchGetAccountInvestmentsFailure(ex)))
+			.then(res => res.json())
+			.then(body => dispatch(fetchGetAccountInvestmentsSuccess(body)))
+			.catch(ex => dispatch(fetchGetAccountInvestmentsFailure(ex)));
 	}
 };
 
@@ -133,15 +133,15 @@ export const addInvestmentTransactionAction = (data) => (dispatch) => {
 			},
 			body: JSON.stringify(data)
 		})
-		.then(res => res.json())
-		.then(body => {
-			if (body.return === true) {
-				dispatch(getInvestmentAccountTransactionsAction(data.account));
-				dispatch(getAccountInvestmentsAction(data.account));
-				dispatch(getAccountListAction());
-			}
-		})
-		.catch(ex => console.log(ex))
+			.then(res => res.json())
+			.then(body => {
+				if (body.return === true) {
+					dispatch(getInvestmentAccountTransactionsAction(data.account));
+					dispatch(getAccountInvestmentsAction(data.account));
+					dispatch(getAccountListAction());
+				}
+			})
+			.catch();
 	}
 };
 
@@ -157,15 +157,15 @@ export const deleteInvestmentTransactionAction = (data) => (dispatch) => {
 			},
 			body: JSON.stringify(data)
 		})
-		.then(res => res.json())
-		.then(body => {
-			if (body.return === true) {
-				dispatch(getInvestmentAccountTransactionsAction(data.account));
-				dispatch(getAccountInvestmentsAction(data.account));
-				dispatch(getAccountListAction());
-			}
-		})
-		.catch(ex => console.log(ex))
+			.then(res => res.json())
+			.then(body => {
+				if (body.return === true) {
+					dispatch(getInvestmentAccountTransactionsAction(data.account));
+					dispatch(getAccountInvestmentsAction(data.account));
+					dispatch(getAccountListAction());
+				}
+			})
+			.catch();
 	}
 };
 
@@ -181,15 +181,15 @@ export const editInvestmentTransactionAction = (data) => (dispatch) => {
 			},
 			body: JSON.stringify(data)
 		})
-		.then(res => res.json())
-		.then(body => {
-			if (body.return === true) {
-				dispatch(getInvestmentAccountTransactionsAction(data.account));
-				dispatch(getAccountInvestmentsAction(data.account));
-				dispatch(getAccountListAction());
-			}
-		})
-		.catch(ex => console.log(ex))
+			.then(res => res.json())
+			.then(body => {
+				if (body.return === true) {
+					dispatch(getInvestmentAccountTransactionsAction(data.account));
+					dispatch(getAccountInvestmentsAction(data.account));
+					dispatch(getAccountListAction());
+				}
+			})
+			.catch();
 	}
 };
 
@@ -211,7 +211,7 @@ const fetchGetInvestmentPriceSuccess = params => ({
 	payload: params
 });
 
-const fetchGetInvestmentPriceFailure = params => ({
+const fetchGetInvestmentPriceFailure = () => ({
 	type: SET_INVESTMENT_PRICE,
 	payload: []
 });
@@ -221,9 +221,9 @@ export const getInvestmentPriceAction = (investment) => (dispatch) => {
 		const apiUrl = `/api/getInvestmentPrice?investment=${investment}`;
 
 		return fetch(apiUrl)
-		.then(res => res.json())
-		.then(body => dispatch(fetchGetInvestmentPriceSuccess(body)))
-		.catch(ex => dispatch(fetchGetInvestmentPriceFailure(ex)));
+			.then(res => res.json())
+			.then(body => dispatch(fetchGetInvestmentPriceSuccess(body)))
+			.catch(ex => dispatch(fetchGetInvestmentPriceFailure(ex)));
 	}
 };
 
@@ -232,7 +232,7 @@ const fetchGetInvestmentTransactionsSuccess = params => ({
 	payload: params
 });
 
-const fetchGetInvestmentTransactionsFailure = params => ({
+const fetchGetInvestmentTransactionsFailure = () => ({
 	type: SET_INVESTMENT_TRANSACTIONS,
 	payload: {}
 });
@@ -243,8 +243,8 @@ export const getInvestmentTransactionsAction = (investment) => (dispatch) => {
 		const apiUrl = `/api/getInvestmentTransactions?investment=${investment}`;
 
 		return fetch(apiUrl)
-		.then(res => res.json())
-		.then(body => dispatch(fetchGetInvestmentTransactionsSuccess(body)))
-		.catch(ex => dispatch(fetchGetInvestmentTransactionsFailure(ex)));
+			.then(res => res.json())
+			.then(body => dispatch(fetchGetInvestmentTransactionsSuccess(body)))
+			.catch(ex => dispatch(fetchGetInvestmentTransactionsFailure(ex)));
 	}
 };

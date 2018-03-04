@@ -96,7 +96,7 @@ class InvestmentTransactions extends Component {
 					}
 				</div>
 			</div>
-		)
+		);
 	}
 }
 

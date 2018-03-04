@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { Switch, Route } from 'react-router-dom';
 import { Dimmer } from 'semantic-ui-react';
-import throttle from 'lodash/throttle'
+import throttle from 'lodash/throttle';
 
 import {
 	Home,
@@ -42,7 +42,7 @@ const Routing = () => (
 
 class App extends React.Component {
 	componentWillMount() {
-		window.addEventListener('resize', throttle(this.props.windowResize, 500))
+		window.addEventListener('resize', throttle(this.props.windowResize, 500));
 	}
 
 	render() {
@@ -63,7 +63,7 @@ class App extends React.Component {
 							active={isSidebarOpen}
 							onClick={toggleSidebar}
 						/>
-							<Routing />
+						<Routing />
 					</Dimmer.Dimmable>
 				</div>
 			</div>
@@ -73,8 +73,9 @@ class App extends React.Component {
 
 App.propTypes = {
 	isSidebarOpen: PropTypes.bool,
-	toggleSidebar: PropTypes.func
-}
+	toggleSidebar: PropTypes.func,
+	windowResize: PropTypes.func
+};
 
 const mapStateToProps = state => ({
 	isSidebarOpen: state.ui.isSidebarOpen

@@ -13,6 +13,6 @@ const Root = () => (
 			<App />
 		</BrowserRouter>
 	</Provider>
-)
+);
 
 export default Root;

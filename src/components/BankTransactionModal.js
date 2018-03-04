@@ -1,6 +1,6 @@
-import React from 'react'
-import PropTypes from 'prop-types'
-import { Modal, Header } from 'semantic-ui-react'
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Modal, Header } from 'semantic-ui-react';
 
 const BankTransactionModal = props => (
 	<Modal
@@ -26,7 +26,7 @@ const BankTransactionModal = props => (
 			/>
 		</Modal.Content>
 	</Modal>
-)
+);
 
 BankTransactionModal.propTypes = {
 	isOpen: PropTypes.bool,
@@ -40,6 +40,6 @@ BankTransactionModal.propTypes = {
 	deleteTransactionAction: PropTypes.func,
 	editTransactionAction: PropTypes.func,
 	EditForm: PropTypes.func
-}
+};
 
-export default BankTransactionModal
+export default BankTransactionModal;

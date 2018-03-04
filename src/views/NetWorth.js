@@ -31,11 +31,11 @@ class NetWorth extends Component {
 								data={netWorth}
 								margin={{top: 5, right: 10, left: 20, bottom: 5}}
 							>
-							<XAxis dataKey="date"/>
-							<YAxis hide/>
-							<CartesianGrid strokeDasharray="3 3"/>
-							<Tooltip formatter={this.formatter} />
-							<Bar dataKey="netWorth" fill="#8884d8" />
+								<XAxis dataKey="date"/>
+								<YAxis hide/>
+								<CartesianGrid strokeDasharray="3 3"/>
+								<Tooltip formatter={this.formatter} />
+								<Bar dataKey="netWorth" fill="#8884d8" />
 							</BarChart>
 						</ResponsiveContainer>
 					}
