@@ -623,7 +623,7 @@ router.post('/api/editTransaction', async (ctx, next) => {
 							counterTransaction.date = body.changed.date;
 						}
 						if (typeof body.changed.amount !== 'undefined') {
-							counterTransaction.amount = body.changed.amount;
+							counterTransaction.amount = body.changed.amount * (-1);
 						}
 						if (body.changed.payee) {
 							counterTransaction.payee = body.changed.payee;
