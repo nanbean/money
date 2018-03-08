@@ -202,6 +202,9 @@ router.post('/api/addTransaction', async (ctx, next) => {
 		if (body.subcategory) {
 			transaction.subcategory = body.subcategory;
 		}
+		if (body.memo) {
+			transaction.memo = body.memo;
+		}
 		transactions.push(transaction);
 
 		const token = await money.updateqifFile(body.account);
@@ -218,7 +221,8 @@ router.post('/api/addTransaction', async (ctx, next) => {
 				date: body.date,
 				amount: body.amount * (-1),
 				payee: body.payee,
-				category: `[${body.account}]`
+				category: `[${body.account}]`,
+				memo: body.memo
 			}
 			counterTransactions.push(counterTransaction);
 
@@ -599,6 +603,9 @@ router.post('/api/editTransaction', async (ctx, next) => {
 				if (body.changed.subcategory) {
 					transaction.subcategory = body.changed.subcategory;
 				}
+				if (body.changed.memo) {
+					transaction.memo = body.changed.memo;
+				}
 			}
 			const token = await money.updateqifFile(body.account);
 
@@ -626,6 +633,9 @@ router.post('/api/editTransaction', async (ctx, next) => {
 						}
 						if (body.changed.subcategory) {
 							counterTransaction.subcategory = body.changed.subcategory;
+						}
+						if (body.changed.memo) {
+							counterTransaction.subcategory = body.changed.memo;
 						}
 					}
 					const token2 = await money.updateqifFile(counterAccount);
