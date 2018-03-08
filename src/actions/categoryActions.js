@@ -7,7 +7,7 @@ export const fetchGetCategoryListSuccess = params => ({
 	payload: params
 });
 
-export const fetchGetCategoryListFailure = params => ({
+export const fetchGetCategoryListFailure = () => ({
 	type: SET_CATEGORY_LIST,
 	payload: []
 });
@@ -16,7 +16,7 @@ export const getCategoryListAction = () => (dispatch) => {
 	const apiUrl = '/api/getCategoryList';
 
 	return fetch(apiUrl)
-	.then(res => res.json())
-	.then(body => dispatch(fetchGetCategoryListSuccess(body)))
-	.catch(ex => dispatch(fetchGetCategoryListFailure(ex)))
+		.then(res => res.json())
+		.then(body => dispatch(fetchGetCategoryListSuccess(body)))
+		.catch(ex => dispatch(fetchGetCategoryListFailure(ex)));
 };

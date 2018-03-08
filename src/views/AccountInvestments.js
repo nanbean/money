@@ -72,6 +72,9 @@ class AccountInvestments extends Component {
 }
 
 AccountInvestments.propTypes = {
+	account: PropTypes.string.isRequired,
+	allInvestmentsTransactions: PropTypes.array.isRequired,
+	allInvestmentsPrice: PropTypes.array.isRequired,
 	accountList:  PropTypes.array.isRequired,
 	accountInvestments: PropTypes.array.isRequired
 };

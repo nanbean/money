@@ -13,7 +13,7 @@ import { getAllAccountTransactionsAction } from '../actions/transactionActions';
 const month = Array.from({length: 12}, (v, k) => _.padStart(k + 1, 2, '0'));
 const startYear = 2005;
 const endYear = parseInt(moment().format('YYYY'), 10);
-const yearOptions = Array.from({length: endYear - startYear + 1}, (v, k) => k + startYear).map(i => { return {key: i, value: i, text: i} });
+const yearOptions = Array.from({length: endYear - startYear + 1}, (v, k) => k + startYear).map(i => ({key: i, value: i, text: i}));
 
 class Report extends Component {
 	constructor (props) {
@@ -56,7 +56,7 @@ class Report extends Component {
 		const filtered = data[key].filter(i => i.date.substr(5, 2) === month);
 
 		if (filtered.length > 0) {
-			return filtered.map(i => i.amount).reduce((a, b) => a + b)
+			return filtered.map(i => i.amount).reduce((a, b) => a + b);
 		}
 
 		return 0;
@@ -88,7 +88,7 @@ class Report extends Component {
 						const divisionItem = division[m];
 						divisionItem.date = date;
 						divisionItem.payee = divisionItem.description;
-						divisions.push(divisionItem)
+						divisions.push(divisionItem);
 					}
 				}
 				if (livingExpenseCardOnly && i !== '생활비카드') {
@@ -103,7 +103,7 @@ class Report extends Component {
 					...expenseTransactions,
 					...account.transactions.filter(j => j.amount < 0 && !j.category.startsWith('[') && !j.division),
 					...divisions.filter(j => j.amount < 0 && !j.category.startsWith('[') && j.payee !== 'Principal')
-				]
+				];
 			}
 		}
 
@@ -122,7 +122,7 @@ class Report extends Component {
 					category: key,
 					month: month.map(i => this.getMonthFiltered(groupedExpenseData, key, i)),
 					sum: groupedExpenseData[key].map(i => i.amount).reduce((a, b) => a + b)
-				}
+				};
 			}).sort((a, b) => {
 				const categoryA = a.category.toLowerCase();
 				const categoryB = b.category.toLowerCase();
@@ -140,7 +140,7 @@ class Report extends Component {
 					category: key,
 					month: month.map(i => this.getMonthFiltered(groupedIncomeData, key, i)),
 					sum: groupedIncomeData[key].map(i => i.amount).reduce((a, b) => a + b)
-				}
+				};
 			}).sort((a, b) => {
 				const categoryA = a.category.toLowerCase();
 				const categoryB = b.category.toLowerCase();
@@ -195,7 +195,7 @@ class Report extends Component {
 					...totalMonthExpenseSum,
 					totalExpenseSum
 				]
-			]
+			];
 		}
 
 		return (

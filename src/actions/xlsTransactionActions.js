@@ -24,7 +24,7 @@ const fetchUploadTransactionsXlsSuccess = params => ({
 	payload: params
 });
 
-const fetchUploadTransactionsXlsFailure = params => ({
+const fetchUploadTransactionsXlsFailure = () => ({
 	type: SET_XLS_TRANSACTIONS,
 	payload: []
 });
@@ -38,7 +38,7 @@ export const uploadTransactionsXlsAction = (files) => (dispatch) => {
 		method: 'POST',
 		body: xlsFile
 	})
-	.then(res => res.json())
-	.then(body => dispatch(fetchUploadTransactionsXlsSuccess(body)))
-	.catch(ex => dispatch(fetchUploadTransactionsXlsFailure(ex)))
+		.then(res => res.json())
+		.then(body => dispatch(fetchUploadTransactionsXlsSuccess(body)))
+		.catch(ex => dispatch(fetchUploadTransactionsXlsFailure(ex)));
 };

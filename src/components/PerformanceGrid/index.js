@@ -44,7 +44,7 @@ class PerformanceGrid extends Component {
 										columnCount={performanceData[0].length}
 										enableFixedColumnScroll
 										enableFixedRowScroll
-										width={width}
+										width={adjustedWidth}
 										height={ROW_HEIGHT * performanceData.length + 10}
 										rowHeight={ROW_HEIGHT}
 										rowCount={performanceData.length}
@@ -58,12 +58,12 @@ class PerformanceGrid extends Component {
 					</AutoSizer>
 				}
 			</div>
-		)
+		);
 	}
 }
 
 PerformanceGrid.propTypes = {
-	reportData: PropTypes.array
+	performanceData: PropTypes.array
 };
 
 export default PerformanceGrid;

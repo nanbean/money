@@ -1,4 +1,4 @@
-import { handleActions } from 'redux-actions'
+import { handleActions } from 'redux-actions';
 import moment from 'moment';
 import {
 	fillTransactionForm,
@@ -9,12 +9,12 @@ import {
 	changeCategory,
 	changeAmount,
 	changeMemo
-} from '../../../actions/ui/form/bankTransaction'
+} from '../../../actions/ui/form/bankTransaction';
 
 const initialState = {
 	isModalOpen: false,
 	date: moment().format('YYYY-MM-DD')
-}
+};
 
 export default handleActions(
 	{
@@ -22,7 +22,7 @@ export default handleActions(
 			...state,
 			...payload
 		}),
-		[resetTransactionForm]: (state, { payload }) => ({
+		[resetTransactionForm]: () => ({
 			...initialState
 		}),
 		[openTransactionInModal]: (state, { payload }) => ({
@@ -52,4 +52,4 @@ export default handleActions(
 		})
 	},
 	initialState
-)
+);

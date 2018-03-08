@@ -1,4 +1,4 @@
-import { createActions } from 'redux-actions'
+import { createActions } from 'redux-actions';
 
 export const {
 	fillTransactionForm,
@@ -18,4 +18,4 @@ export const {
 	'CHANGE_CATEGORY',
 	'CHANGE_AMOUNT',
 	'CHANGE_MEMO'
-)
+);

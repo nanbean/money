@@ -17,7 +17,7 @@ const typeEmoji = {
 	'Invst': '📈',
 	'Oth L': '🏧',
 	'Oth A': '🏠',
-}
+};
 
 export class Home extends Component {
 	constructor (props) {
@@ -26,7 +26,7 @@ export class Home extends Component {
 		this.onRefreshClick = this.onRefreshClick.bind(this);
 	}
 
-	onRefreshClick (e) {
+	onRefreshClick () {
 		this.props.updateInvestmentPriceAction();
 	}
 
@@ -115,7 +115,8 @@ export class Home extends Component {
 Home.propTypes = {
 	accountList:  PropTypes.array.isRequired,
 	getAccountListAction: PropTypes.func.isRequired,
-	updateInvestmentPriceFetching: PropTypes.bool.isRequired
+	updateInvestmentPriceFetching: PropTypes.bool.isRequired,
+	updateInvestmentPriceAction: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({

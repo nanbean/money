@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Autocomplete from 'react-autocomplete';
 
-import './index.css'
+import './index.css';
 
 class AutoComplete extends Component {
 	matchStateToTerm = (state, value) => state.key.toLowerCase().indexOf(value.toLowerCase()) !== -1 || 	state.name.toLowerCase().indexOf(value.toLowerCase()) !== -1
@@ -35,7 +35,7 @@ class AutoComplete extends Component {
 					</div>
 				}
 			/>
-		)
+		);
 	}
 }
 

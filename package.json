@@ -42,14 +42,19 @@
     "start": "react-scripts start",
     "start:server": "node server",
     "build": "react-scripts build",
+    "lint": "eslint",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
   "homepage": "http://money.nanbean.net",
   "proxy": "http://money.nanbean.net:3004",
   "devDependencies": {
+    "babel-eslint": "^8.2.2",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
+    "eslint": "^4.18.2",
+    "eslint-plugin-jest": "^21.12.3",
+    "eslint-plugin-react": "^7.7.0",
     "fetch-mock": "^6.0.0",
     "redux-mock-store": "^1.5.1"
   }

@@ -18,13 +18,15 @@ export function getShrsOutMeanPrice (investmentTransactions, account, date, quan
 					if (meanPrice === 0) {
 						meanPrice = transaction.price;
 					} else {
-						meanPrice = (meanPrice * remainQuantity + transaction.price * transaction.quantity) / (remainQuantity + transaction.quantity)
+						meanPrice = (meanPrice * remainQuantity + transaction.price * transaction.quantity) / (remainQuantity + transaction.quantity);
 					}
 					remainQuantity += transaction.quantity;
 				} else if (transaction.activity === 'MiscExp') {
+					// do nothing
 				} else if (transaction.activity === 'Sell') {
 					remainQuantity -= transaction.quantity;
 				} else if (transaction.activity === 'Div') {
+					// do nothing
 				} else if (transaction.activity === 'ShrsOut') {
 					remainQuantity -= transaction.quantity;
 					if (transaction.date === date) {
@@ -56,7 +58,7 @@ export function getInvestmentPerformance (investmentTransactions, investmentPric
 					if (meanPrice === 0) {
 						meanPrice = transaction.price;
 					} else {
-						meanPrice = (meanPrice * remainQuantity + transaction.price * transaction.quantity) / (remainQuantity + transaction.quantity)
+						meanPrice = (meanPrice * remainQuantity + transaction.price * transaction.quantity) / (remainQuantity + transaction.quantity);
 					}
 					remainQuantity += transaction.quantity;
 				} else if (transaction.activity === 'MiscExp') {
@@ -70,11 +72,11 @@ export function getInvestmentPerformance (investmentTransactions, investmentPric
 				} else if (transaction.activity === 'ShrsOut') {
 					remainQuantity -= transaction.quantity;
 				} else if (transaction.activity === 'ShrsIn') {
-					const shrsOutMeanPrice = getShrsOutMeanPrice(investmentTransactions, i.account, transaction.date, transaction.quantity)
+					const shrsOutMeanPrice = getShrsOutMeanPrice(investmentTransactions, i.account, transaction.date, transaction.quantity);
 					if (meanPrice === 0) {
 						meanPrice = shrsOutMeanPrice;
 					} else {
-						meanPrice = (meanPrice * remainQuantity + shrsOutMeanPrice * transaction.quantity) / (remainQuantity + transaction.quantity)
+						meanPrice = (meanPrice * remainQuantity + shrsOutMeanPrice * transaction.quantity) / (remainQuantity + transaction.quantity);
 					}
 					remainQuantity += transaction.quantity;
 				}
@@ -86,7 +88,7 @@ export function getInvestmentPerformance (investmentTransactions, investmentPric
 				periodGain: periodGain + periodDiv + periodMiscExp,
 				periodReturn: periodGain + periodDiv + periodMiscExp + (remainQuantity * (investmentPrice - meanPrice)),
 				quantity: remainQuantity
-			}
+			};
 		});
 	}
 
@@ -113,7 +115,7 @@ export function getAccountPerformance (account, accountInvestments, allInvestmen
 					periodGain: investmentPerformance.periodGain,
 					periodReturn: investmentPerformance.periodReturn,
 					quantity: investmentPerformance.quantity
-				}
+				};
 			} else {
 				return {};
 			}

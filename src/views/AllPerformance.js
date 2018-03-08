@@ -8,10 +8,10 @@ import InvestmentFilter from '../components/InvestmentFilter';
 import TitleHeader from '../components/TitleHeader';
 
 import {
-	 getAllInvestmentsTransactionsAction,
-	 getAllInvestmentsPriceAction,
-	 setfilteredInvestments
- } from '../actions/investmentActions';
+	getAllInvestmentsTransactionsAction,
+	getAllInvestmentsPriceAction,
+	setfilteredInvestments
+} from '../actions/investmentActions';
 import { toCurrencyFormat } from '../utils/formatting';
 import { getInvestmentPerformance } from '../utils/performance';
 
@@ -25,7 +25,7 @@ class AllPerformance extends Component {
 		const { isMobile, allInvestmentsTransactions, allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered } = this.props;
 
 		const allPerformance = allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0 && allInvestmentsTransactions.map(i => {
-			const investmentTransactions = i.transactions
+			const investmentTransactions = i.transactions;
 			const investmentPrice = allInvestmentsPrice.find(p => p.investment === i.investment).price;
 			const investment = i.investment;
 			const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
@@ -37,7 +37,7 @@ class AllPerformance extends Component {
 				performance: performance,
 				totalPerformance: totalPerformance,
 				totalQuantity: totalQuantity
-			}
+			};
 		});
 
 		const filteredPerformance = allPerformance.length > 0 && allPerformance.filter(i => {

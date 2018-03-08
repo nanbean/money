@@ -1,7 +1,7 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react'
+import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
 import _ from 'lodash';
 
 import AutoComplete from '../AutoComplete';
@@ -14,9 +14,9 @@ import {
 	changeCategory,
 	changeAmount,
 	changeMemo
-} from '../../actions/ui/form/bankTransaction'
+} from '../../actions/ui/form/bankTransaction';
 
-import './index.css'
+import './index.css';
 
 class BankTransactionForm extends React.Component {
 	onChange = handler => (event, { value }) => handler(value)
@@ -183,7 +183,7 @@ class BankTransactionForm extends React.Component {
 					</Form>
 				</Segment>
 			</div>
-		)
+		);
 	}
 }
 
@@ -202,12 +202,19 @@ BankTransactionForm.propTypes = {
 	dropPayeeList: PropTypes.array,
 	addTransactionAction: PropTypes.func,
 	deleteTransactionAction: PropTypes.func,
-	editTransactionAction: PropTypes.func
-}
+	editTransactionAction: PropTypes.func,
+	fillTransactionForm: PropTypes.func,
+	resetTransactionForm: PropTypes.func,
+	changeDate: PropTypes.func,
+	changePayee: PropTypes.func,
+	changeCategory: PropTypes.func,
+	changeAmount: PropTypes.func,
+	changeMemo: PropTypes.func
+};
 
 const mapStateToProps = state => ({
 	form: state.ui.form.bankTransaction,
-})
+});
 
 export default connect(mapStateToProps, {
 	fillTransactionForm,
@@ -217,4 +224,4 @@ export default connect(mapStateToProps, {
 	changeCategory,
 	changeAmount,
 	changeMemo
-})(BankTransactionForm)
+})(BankTransactionForm);

@@ -1,7 +1,7 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react'
+import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
 
 import AutoComplete from '../AutoComplete';
 
@@ -15,9 +15,9 @@ import {
 	changePrice,
 	changeCommission,
 	changeAmount
-} from '../../actions/ui/form/investmentTransaction'
+} from '../../actions/ui/form/investmentTransaction';
 
-import './index.css'
+import './index.css';
 
 const activityList = [
 	{key: 'Buy', value: 'Buy', text: 'Buy'},
@@ -128,7 +128,7 @@ class InvestmentTransactionForm extends React.Component {
 		return (
 			<div>
 				<Segment attached="bottom">
-					<Form onSubmit={this.props.onSubmit} className="investment-transaction-form">
+					<Form className="investment-transaction-form">
 						<Input
 							fluid
 							type='date'
@@ -204,7 +204,7 @@ class InvestmentTransactionForm extends React.Component {
 					</Form>
 				</Segment>
 			</div>
-		)
+		);
 	}
 }
 
@@ -220,14 +220,24 @@ InvestmentTransactionForm.propTypes = {
 	}),
 	account: PropTypes.string,
 	investmentAccountTransactions: PropTypes.array,
+	autocompleteInvestmentList: PropTypes.array,
 	addInvestmentTransactionAction: PropTypes.func,
 	deleteInvestmentTransactionAction: PropTypes.func,
-	editInvestmentTransactionAction: PropTypes.func
-}
+	editInvestmentTransactionAction: PropTypes.func,
+	fillTransactionForm: PropTypes.func,
+	resetTransactionForm: PropTypes.func,
+	changeDate: PropTypes.func,
+	changeInvestment: PropTypes.func,
+	changeActivity: PropTypes.func,
+	changeQuantity: PropTypes.func,
+	changePrice: PropTypes.func,
+	changeCommission: PropTypes.func,
+	changeAmount: PropTypes.func
+};
 
 const mapStateToProps = state => ({
 	form: state.ui.form.investmentTransaction
-})
+});
 
 export default connect(mapStateToProps, {
 	fillTransactionForm,
@@ -239,4 +249,4 @@ export default connect(mapStateToProps, {
 	changePrice,
 	changeCommission,
 	changeAmount
-})(InvestmentTransactionForm)
+})(InvestmentTransactionForm);

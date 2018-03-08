@@ -10,18 +10,18 @@ export const fetchGetAllAccountTransactionsSuccess = params => ({
 	payload: params
 });
 
-export const fetchGetAllAccountTransactionsFailure = params => ({
+export const fetchGetAllAccountTransactionsFailure = () => ({
 	type: SET_ALL_ACCOUNT_TRANSACTIONS,
 	payload: {}
 });
 
 export const getAllAccountTransactionsAction = () => (dispatch) => {
-	const apiUrl = `/api/getAllAccountTransactions`;
+	const apiUrl = '/api/getAllAccountTransactions';
 
 	return fetch(apiUrl)
-	.then(res => res.json())
-	.then(body => dispatch(fetchGetAllAccountTransactionsSuccess(body)))
-	.catch(ex => dispatch(fetchGetAllAccountTransactionsFailure(ex)))
+		.then(res => res.json())
+		.then(body => dispatch(fetchGetAllAccountTransactionsSuccess(body)))
+		.catch(ex => dispatch(fetchGetAllAccountTransactionsFailure(ex)));
 };
 
 export const fetchGetTransactionsSuccess = params => ({
@@ -29,7 +29,7 @@ export const fetchGetTransactionsSuccess = params => ({
 	payload: params
 });
 
-export const fetchGetTransactionsFailure = params => ({
+export const fetchGetTransactionsFailure = () => ({
 	type: SET_BANK_TRANSACTIONS,
 	payload: []
 });
@@ -39,9 +39,9 @@ export const getTransactionsAction = (account) => (dispatch) => {
 		const apiUrl = `/api/getTransactions?account=${account}`;
 
 		return fetch(apiUrl)
-		.then(res => res.json())
-		.then(body => dispatch(fetchGetTransactionsSuccess(body)))
-		.catch(ex => dispatch(fetchGetTransactionsFailure(ex)))
+			.then(res => res.json())
+			.then(body => dispatch(fetchGetTransactionsSuccess(body)))
+			.catch(ex => dispatch(fetchGetTransactionsFailure(ex)));
 	}
 };
 
@@ -57,14 +57,14 @@ export const addTransactionsAction = (data) => (dispatch) => {
 			},
 			body: JSON.stringify(data)
 		})
-		.then(res => res.json())
-		.then(body => {
-			if (body.return === true) {
-				dispatch(getTransactionsAction(data.account));
-				dispatch(getAccountListAction());
-			}
-		})
-		.catch(ex => console.log(ex))
+			.then(res => res.json())
+			.then(body => {
+				if (body.return === true) {
+					dispatch(getTransactionsAction(data.account));
+					dispatch(getAccountListAction());
+				}
+			})
+			.catch();
 	}
 };
 
@@ -80,14 +80,14 @@ export const addTransactionAction = (data) => (dispatch) => {
 			},
 			body: JSON.stringify(data)
 		})
-		.then(res => res.json())
-		.then(body => {
-			if (body.return === true) {
-				dispatch(getTransactionsAction(data.account));
-				dispatch(getAccountListAction());
-			}
-		})
-		.catch(ex => console.log(ex))
+			.then(res => res.json())
+			.then(body => {
+				if (body.return === true) {
+					dispatch(getTransactionsAction(data.account));
+					dispatch(getAccountListAction());
+				}
+			})
+			.catch();
 	}
 };
 
@@ -103,19 +103,19 @@ export const deleteTransactionAction = (data, type) => (dispatch) => {
 			},
 			body: JSON.stringify(data)
 		})
-		.then(res => res.json())
-		.then(body => {
-			if (body.return === true) {
-				if (type === 'search') {
-					dispatch(getAllAccountTransactionsAction());
-					dispatch(getAccountListAction());
-				} else {
-					dispatch(getTransactionsAction(data.account));
-					dispatch(getAccountListAction());
+			.then(res => res.json())
+			.then(body => {
+				if (body.return === true) {
+					if (type === 'search') {
+						dispatch(getAllAccountTransactionsAction());
+						dispatch(getAccountListAction());
+					} else {
+						dispatch(getTransactionsAction(data.account));
+						dispatch(getAccountListAction());
+					}
 				}
-			}
-		})
-		.catch(ex => console.log(ex))
+			})
+			.catch();
 	}
 };
 
@@ -131,18 +131,18 @@ export const editTransactionAction = (data, type) => (dispatch) => {
 			},
 			body: JSON.stringify(data)
 		})
-		.then(res => res.json())
-		.then(body => {
-			if (body.return === true) {
-				if (type === 'search') {
-					dispatch(getAllAccountTransactionsAction());
-					dispatch(getAccountListAction());
-				} else {
-					dispatch(getTransactionsAction(data.account));
-					dispatch(getAccountListAction());
+			.then(res => res.json())
+			.then(body => {
+				if (body.return === true) {
+					if (type === 'search') {
+						dispatch(getAllAccountTransactionsAction());
+						dispatch(getAccountListAction());
+					} else {
+						dispatch(getTransactionsAction(data.account));
+						dispatch(getAccountListAction());
+					}
 				}
-			}
-		})
-		.catch(ex => console.log(ex))
+			})
+			.catch();
 	}
 };

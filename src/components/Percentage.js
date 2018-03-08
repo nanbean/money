@@ -1,5 +1,5 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 import { toPercentFormat } from '../utils/formatting';
 
 const Percentage = ({ value, showColor = true }) => (
@@ -8,11 +8,11 @@ const Percentage = ({ value, showColor = true }) => (
 	>
 		{toPercentFormat(value)}
 	</span>
-)
+);
 
 Percentage.propTypes = {
 	value: PropTypes.number.isRequired,
 	showColor: PropTypes.bool
-}
+};
 
-export default Percentage
+export default Percentage;

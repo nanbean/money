@@ -37,8 +37,8 @@ class Bank extends Component {
 	render () {
 		const { account, transactions, categoryList, payeeList, mortgageSchedule } = this.props;
 		const balance = transactions.length > 0 && transactions.map((i) => i.amount).reduce( (a, b) => a + b );
-		const dropCategoryList = categoryList.map(i => { return {key: i, value: i, text: i}});
-		const dropPayeeList = payeeList.map(i => { return {key: i, name: i}});
+		const dropCategoryList = categoryList.map(i => ({key: i, value: i, text: i}));
+		const dropPayeeList = payeeList.map(i => ({key: i, name: i}));
 
 		return (
 			<div>
@@ -88,6 +88,13 @@ class Bank extends Component {
 }
 
 Bank.propTypes = {
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			name: PropTypes.string.isRequired,
+		}).isRequired
+	}),
+	isModalOpen: PropTypes.bool.isRequired,
+	isEdit: PropTypes.bool.isRequired,
 	account: PropTypes.string.isRequired,
 	categoryList: PropTypes.array.isRequired,
 	payeeList: PropTypes.array.isRequired,
@@ -96,6 +103,12 @@ Bank.propTypes = {
 	getTransactionsAction: PropTypes.func.isRequired,
 	addTransactionAction: PropTypes.func.isRequired,
 	getCategoryListAction: PropTypes.func.isRequired,
+	getPayeeListAction: PropTypes.func.isRequired,
+	openTransactionInModal: PropTypes.func.isRequired,
+	resetTransactionForm: PropTypes.func.isRequired,
+	deleteTransactionAction: PropTypes.func.isRequired,
+	editTransactionAction: PropTypes.func.isRequired,
+	getMortgageScheduleAction: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({

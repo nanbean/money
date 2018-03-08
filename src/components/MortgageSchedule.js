@@ -32,13 +32,13 @@ class MortgageSchedule extends Component {
 		interestData.amount = schedule.interest * (-1);
 
 		this.props.addTransactionAction(interestData);
-	};
+	}
 
 	componentWillMount () {
 		this.props.getMortgageScheduleAction();
 	}
 
-	renderMortgageSchedule (schedule, index) {
+	renderMortgageSchedule (schedule) {
 		return (
 			<Table.Row key={schedule.no}>
 				<Table.Cell>
@@ -48,13 +48,13 @@ class MortgageSchedule extends Component {
 					{schedule.date}
 				</Table.Cell>
 				<Table.Cell>
-					{schedule.amount ? parseInt(schedule.amount, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ''}
+					{schedule.amount ? parseInt(schedule.amount, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 				</Table.Cell>
 				<Table.Cell>
-					{schedule.principal ? parseInt(schedule.principal, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ''}
+					{schedule.principal ? parseInt(schedule.principal, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 				</Table.Cell>
 				<Table.Cell>
-					{schedule.interest ? parseInt(schedule.interest, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ''}
+					{schedule.interest ? parseInt(schedule.interest, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 				</Table.Cell>
 				<Table.Cell textAlign='center'>
 					<Button

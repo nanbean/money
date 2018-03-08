@@ -12,18 +12,18 @@ import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 
 import { setAccount } from '../actions/accountActions';
 import {
-	 getInvestmentListAction,
-	 getAllInvestmentsTransactionsAction,
-	 getAllInvestmentsPriceAction,
-	 getInvestmentAccountTransactionsAction,
-	 getAccountInvestmentsAction,
-	 addInvestmentTransactionAction,
-	 deleteInvestmentTransactionAction,
-	 editInvestmentTransactionAction
- } from '../actions/investmentActions';
- import {
- 	openTransactionInModal,
- 	resetTransactionForm,
+	getInvestmentListAction,
+	getAllInvestmentsTransactionsAction,
+	getAllInvestmentsPriceAction,
+	getInvestmentAccountTransactionsAction,
+	getAccountInvestmentsAction,
+	addInvestmentTransactionAction,
+	deleteInvestmentTransactionAction,
+	editInvestmentTransactionAction
+} from '../actions/investmentActions';
+import {
+	openTransactionInModal,
+	resetTransactionForm,
 } from '../actions/ui/form/investmentTransaction';
 
 export class Investment extends Component {
@@ -41,7 +41,7 @@ export class Investment extends Component {
 
 	render () {
 		const { isMobile, account, investmentList, investmentAccountTransactions } = this.props;
-		const autocompleteInvestmentList = investmentList.map(i => { return {key: i.symbol, name: i.name}});
+		const autocompleteInvestmentList = investmentList.map(i => ({key: i.symbol, name: i.name}));
 
 		return (
 			<div>
@@ -58,8 +58,8 @@ export class Investment extends Component {
 							<Link to={`/bank/${account}_Cash`}>
 								<Button
 									icon="right arrow"
-		              labelPosition="right"
-		              content="Cash"
+									labelPosition="right"
+									content="Cash"
 								/>
 							</Link>
 						</Button.Group>
@@ -90,7 +90,14 @@ export class Investment extends Component {
 }
 
 Investment.propTypes = {
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			name: PropTypes.string.isRequired,
+		}).isRequired
+	}),
 	isMobile: PropTypes.bool.isRequired,
+	isModalOpen: PropTypes.bool.isRequired,
+	isEdit: PropTypes.bool.isRequired,
 	account: PropTypes.string.isRequired,
 	investmentList: PropTypes.array.isRequired,
 	accountInvestments: PropTypes.array.isRequired,
@@ -100,6 +107,12 @@ Investment.propTypes = {
 	deleteInvestmentTransactionAction: PropTypes.func.isRequired,
 	editInvestmentTransactionAction: PropTypes.func.isRequired,
 	getInvestmentListAction: PropTypes.func.isRequired,
+	setAccount: PropTypes.func.isRequired,
+	getAllInvestmentsTransactionsAction: PropTypes.func.isRequired,
+	getAllInvestmentsPriceAction: PropTypes.func.isRequired,
+	getAccountInvestmentsAction: PropTypes.func.isRequired,
+	openTransactionInModal: PropTypes.func.isRequired,
+	resetTransactionForm: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({
