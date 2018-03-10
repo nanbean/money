@@ -27,7 +27,7 @@ class AccountInvestments extends Component {
 				'Return for Period',
 				'%Port'
 			],
-			...accountPerformance.map(i => {
+			...accountPerformance.filter(j => j.name).map(i => {
 				return [
 					i.name,
 					i.price,
