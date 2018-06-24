@@ -3,7 +3,7 @@ const fs = require('fs');
 const util = require('util');
 const admin = require("firebase-admin");
 
-const serviceAccount = require('./your_credential.json');
+const serviceAccount = require('./firebase-credential.json');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
