@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const util = require('util');
 const async = require('async');
 const Spooky = require('spooky');
 const CronJob = require('cron').CronJob;
@@ -10,7 +11,18 @@ const qif2json = require('./qif2json');
 const json2qif = require('./json2qif');
 const messaging = require('./messaging');
 
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
+
 let money = exports;
+
+const readFileAsync = async (filePath) => {
+	return await readFile(filePath);
+}
+
+const writeFileAsync = async (filePath, data) => {
+	return await writeFile(filePath, JSON.stringify(data, null, 2));
+}
 
 function updateAccountList (name, type, balance, investments, qifData) {
 	const account = {
@@ -654,6 +666,51 @@ exports.fetchHistorical = function() {
 		});
 	});
 }
+
+var monthlyUpdateHistoricaljob = new CronJob('00 00 03 1 * *', async function() {
+		/*
+		 * update historical automation.
+		 * Runs every 1st day of month, and write last day of previous month price
+		 * at 03:00:00 AM.
+		 */
+		console.log('00 00 03 monthly monthlyUpdateHistoricaljob started');
+		const filePath = path.resolve(__dirname, 'historical.json');
+		const { investments } =  money;
+		const historical = await readFileAsync(filePath).then(data => {
+			const result = JSON.parse(data);
+			return result;
+		});
+		let date = new Date();
+		date.setDate(date.getDate() - 1)
+
+		for (let i = 0; i < investments.length; i++) {
+			const key = investments[i].yahooSymbol;
+			const price = investments[i].price;
+			if (key === '267250.KS') {
+				if (typeof historical[key] !== 'undefined') {
+					historical[key].unshift({
+						date: date.toISOString(),
+						close: price
+					});
+				} else {
+					historical[key] = [
+						{
+							date: date.toISOString(),
+							close: price
+						}
+					];
+				}
+			}
+		}
+		writeFileAsync(filePath, historical);
+		return true;
+	}, function () {
+		/* This function is executed when the job stops */
+		console.log('00 00 03 monthly monthlyUpdateHistoricaljob ended');
+	},
+	true, /* Start the job right now */
+	'Asia/Seoul' /* Time zone of this job. */
+);
 
 // var fetchHistoricalJob = new CronJob('00 00 01 01 * *', function() {
 // // var job = new CronJob('00 04 20 * * *', function() {
