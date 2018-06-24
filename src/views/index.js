@@ -7,3 +7,5 @@ export { default as Performance } from './Performance';
 export { default as AllPerformance } from './AllPerformance';
 export { default as Report } from './Report';
 export { default as Search } from './Search';
+export { default as Setting } from './Setting';
+export { default as NotificationLog } from './NotificationLog';

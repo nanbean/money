@@ -15,13 +15,16 @@ import {
 	Performance,
 	AllPerformance,
 	Report,
-	Search
+	Search,
+	Setting,
+	NotificationLog
 } from './views';
 
 import SidebarMenu from './components/SidebarMenu';
 
 import { toggleSidebar } from './actions/uiActions';
 import { windowResize } from './actions/ui/windowResize';
+import { rehydrateAction } from './actions/rehydrateActions';
 
 import './App.css';
 
@@ -37,11 +40,15 @@ const Routing = () => (
 		<Route exact path="/report" component={Report} />
 		<Route exact path="/search" component={Search} />
 		<Route path="/search/:keyword" component={Search} />
+		<Route exact path="/setting" component={Setting} />
+		<Route exact path="/notificationlog" component={NotificationLog} />
 	</Switch>
 );
 
 class App extends React.Component {
-	componentWillMount() {
+	componentDidMount() {
+		this.props.rehydrateAction();
+
 		window.addEventListener('resize', throttle(this.props.windowResize, 500));
 	}
 
@@ -84,6 +91,7 @@ const mapStateToProps = state => ({
 export default withRouter(connect(
 	mapStateToProps,
 	{
+		rehydrateAction,
 		toggleSidebar,
 		windowResize
 	}

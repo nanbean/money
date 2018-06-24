@@ -22,6 +22,8 @@ import allInvestmentsFiltered from './allInvestmentsFiltered';
 import updateInvestmentPriceFetching from './updateInvestmentPriceFetching';
 import lifetimePlannerFlow from './lifetimePlannerFlow';
 import allAccountTransactions from './allAccountTransactions';
+import messagingToken from './messagingToken';
+import notificationHistory from './notificationHistory';
 
 const money = combineReducers({
 	ui,
@@ -46,7 +48,9 @@ const money = combineReducers({
 	allInvestmentsFiltered,
 	updateInvestmentPriceFetching,
 	lifetimePlannerFlow,
-	allAccountTransactions
+	allAccountTransactions,
+	messagingToken,
+	notificationHistory
 });
 
 export default money;

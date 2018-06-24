@@ -2,7 +2,7 @@ import * as actions from '../actions/actionTypes';
 
 const initialState = [
 	'현대중공업',
-	'현대로보틱스',
+	'현대중공업지주',
 	'현대일렉트릭',
 	'현대건설기계'
 ];

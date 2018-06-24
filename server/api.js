@@ -1,5 +1,4 @@
 const router = require('koa-router')();
-const money = require('./transaction');
 const xlsx = require('node-xlsx');
 const Excel = require('exceljs');
 const _ = require('lodash');
@@ -8,6 +7,10 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 const moment = require('moment');
 const streamifier = require('streamifier');
+
+const money = require('./transaction');
+const messaging = require('./messaging');
+const notification = require('./notification');
 
 const upload = multer({
 	storage: multer.memoryStorage()
@@ -280,163 +283,21 @@ router.post('/api/addTransactions', async (ctx, next) => {
 	}
 });
 
-function findCategoryByPayee (transactions, transaction) {
-	const matchTransaction = transactions.find(i => i.payee === transaction.payee);
-	if (matchTransaction) {
-		if (matchTransaction.category) {
-			transaction.category = matchTransaction.category;
-		}
-		if (matchTransaction.subcategory) {
-			transaction.subcategory = matchTransaction.subcategory;
-		}
-	} else if (transaction.payee.match(/홈플러스/) || transaction.payee.match(/이마트/) ||
-						transaction.payee.match(/롯데마트/) || transaction.payee.match(/코스트코/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '식료품';
-	} else if (transaction.payee.match(/스타벅스/) || transaction.payee.match(/이디야/) ||
-						transaction.payee.match(/투썸플레이스/) || transaction.payee.match(/탐앤탐스/) ||
-						transaction.payee.match(/빽다방/) || transaction.payee.match(/셀렉토/) ||
-						transaction.payee.match(/카페/) || transaction.payee.match(/커피/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '군것질';
-	} else if (transaction.payee.match(/위드미/) || transaction.payee.match(/씨유/) ||
-						transaction.payee.match(/미니스톱/) || transaction.payee.match(/세븐일레븐/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '군것질';
-	} else if (transaction.payee.match(/맥도날드/) || transaction.payee.match(/VIPS/) ||
-						transaction.payee.match(/본죽/) || transaction.payee.match(/신촌설렁탕/) ||
-						transaction.payee.match(/아웃백/) || transaction.payee.match(/계절밥상/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '외식';
-	} else if (transaction.payee.match(/주유소/) || transaction.payee.match(/SK네트웍스/)) {
-		transaction.category = '교통비';
-		transaction.subcategory = '연료비';
-	}
-
-	return transaction;
-}
-
 router.post('/api/addTransactionWithNotification', async (ctx, next) => {
 	const body = ctx.request.body;
+	const result = await notification.addTransaction(body);
 
-	console.log('/api/addTransactionWithNotification');
+	ctx.body = {return: result};
+});
 
-	if (body && body.packageName && body.text) {
-		let account = '';
-		if (body.packageName.match(/com\.kbcard\.kbkookmincard/i)) {
-			account = 'KB카드';
-		} else if (body.packageName.match(/com\.ex\.hipasscard/i)) {
-			account = 'KB체크카드';
-		}
-		let items = [];
-		let transaction = {};
+router.get('/api/getNotificationHistory', async (ctx, next) => {
+	const body = ctx.request.body;
+	const history = await notification.getHistory();
 
-		// const dateString = text.match(/\d{2}\/\d{2}/);
-		// const date = dateString && moment(dateString, 'MM/DD').format('YYYY-MM-DD');
-		// const amount = text.replace(',', '').match(/\d{1,10}원/);
-		// const items = text.replace('\n', ' ').split(' ');
-		// const payee = items & item.length > 0 && item[item.length - 1];
-
-		console.log(body.text);
-
-		if (body.text.match(/승인취소/g)) {
-			// do nothing
-		} else if (body.packageName.match(/com\.ex\.hipasscard/i)) {
-			account = 'KB체크카드';
-			transaction = {
-				date: moment().format('YYYY-MM-DD'),
-				amount: parseInt(body.text.replace(',', '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g,''), 10) * (-1),
-				payee: '도로비',
-				category: '교통비',
-				subcategory: '도로비&주차비'
-			};
-		} else if (body.packageName.match(/com\.kbcard\.kbkookmincard/i)) {
-			account = 'KB카드';
-			items = body.text.split('\n');
-			transaction = {
-				date: items[3] && moment(items[3], 'MM/DD').format('YYYY-MM-DD'),
-				amount: items[2] && parseInt(items[2].replace(',', '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g,''), 10) * (-1),
-				payee: items[4],
-				category: '분류없음'
-			};
-		} else if (body.text.match(/케이뱅크/g)) {
-			account = '생활비카드';
-			items = body.text.split(' ');
-			transaction = {
-				date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-				amount: items[6] && parseInt(items[6].replace(/[^0-9]/g,''), 10) * (-1),
-				payee: items[9],
-				category: '분류없음'
-			};
-		} else if (body.text.match(/삼성체크/g)) {
-			account = '생활비카드';
-			items = body.text.split('\n');
-			transaction = {
-				date: items[3] && moment(items[3], 'MM/DD').format('YYYY-MM-DD'),
-				amount: items[2] && parseInt(items[2].replace(/[^0-9]/g,''), 10) * (-1),
-				payee: items[4],
-				category: '분류없음'
-			};
-		} else if (body.text.match(/신한체크/g)) {
-			account = '생활비카드';
-			items = body.text.split(' ');
-			transaction = {
-				date: items[2] && moment(items[2], 'MM/DD').format('YYYY-MM-DD'),
-				amount: items[4] && parseInt(items[4].replace(/[^0-9]/g,''), 10) * (-1),
-				payee: items[5],
-				category: '분류없음'
-			};
-		} else if (body.text.match(/하나/g)) {
-			account = '급여계좌';
-			items = body.text.split(' ');
-			if (body.text.match(/체크/g)) {
-				transaction = {
-					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[3] && parseInt(items[3].replace(/[^0-9]/g,''), 10) * (-1),
-					payee: items[6],
-					category: '분류없음'
-				};
-			} else {
-				transaction = {
-					date: items[5] && moment(items[5], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[3] && parseInt(items[3].replace(/[^0-9]/g,''), 10) * (-1),
-					payee: items[7],
-					category: '분류없음'
-				};
-			}
-		}
-
-		if (account && transaction.date && transaction.payee && transaction.amount) {
-			const transactions = money.accounts[account].transactions;
-			transaction = findCategoryByPayee(transactions, transaction);
-
-			transactions.push(transaction);
-
-			const token = await money.updateqifFile(account);
-			ctx.body = {return: true};
-		} else {
-			ctx.body = {return: false};
-		}
-
-		fetch(`https://api.telegram.org/bot211661458:AAGQvpckxjbc7bLEI6Tyl4S0yoHqO5qEAKg/sendMessage`, {
-			method: 'POST',
-			headers: {
-				'Accept': 'application/json, text/plain, */*',
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				chat_id: 209982269,
-				text : JSON.stringify({
-					originalPackageName: body.packageName,
-					originalText: body.text,
-					transaction: transaction,
-					parsed: ctx.body.return ? '👍' : '⚠️'
-				})
-			})
-		})
-	} else {
-		ctx.body = {return: false};
-	}
+	ctx.body = {
+		return: true,
+		history: history
+	};
 });
 
 router.post('/api/addInvestmentTransaction', async (ctx, next) => {
@@ -468,7 +329,7 @@ router.post('/api/addInvestmentTransaction', async (ctx, next) => {
 		}
 		if (body.activity !== 'ShrsOut' && body.activity !== 'ShrsIn' && body.activity !== 'Div' && body.activity !== 'MiscExp') {
 			if (typeof body.commission !== 'undefined') {
-				if (body.commission !== 0) {
+				if (body.commission != 0) {
 					transaction.commission = body.commission;
 				}
 			}
@@ -544,7 +405,7 @@ router.post('/api/deleteInvestmentTransaction', async (ctx, next) => {
 		let idx;
 		let transaction;
 		if (body.activity === 'Buy' || body.activity === 'Sell') {
-			if (typeof body.commission !== 'undefined') {
+			if (typeof body.commission !== 'undefined' && body.commission) {
 				idx = money.accounts[body.account].transactions.findIndex(
 					i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
 					i.quantity === body.quantity && i.price === body.price && i.amount === body.amount &&
@@ -657,7 +518,7 @@ router.post('/api/editInvestmentTransaction', async (ctx, next) => {
 		let transaction;
 
 		if (body.activity === 'Buy' || body.activity === 'Sell') {
-			if (typeof body.commission !== 'undefined') {
+			if (typeof body.commission !== 'undefined' && body.commission) {
 				transaction = money.accounts[body.account].transactions.find(
 					i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
 					i.quantity === body.quantity && i.price === body.price && i.amount === body.amount &&
@@ -699,7 +560,7 @@ router.post('/api/editInvestmentTransaction', async (ctx, next) => {
 			}
 			if (body.activity !== 'ShrsOut' && body.activity !== 'ShrsIn' && body.activity !== 'Div') {
 				if (typeof body.changed.commission !== 'undefined') {
-					if (body.changed.commission !== 0) {
+					if (body.changed.commission != 0) {
 						transaction.commission = body.changed.commission;
 					} else {
 						delete transaction.commission;
@@ -891,6 +752,38 @@ router.get('/api/getLifetimeFlow', async (ctx, next) => {
 		count: list.length,
 		list: list
 	};
+});
+
+router.get('/api/fetchHistorical', (ctx, next) => {
+	const body = {};
+
+	money.fetchHistorical();
+
+	ctx.body = body;
+});
+
+router.post('/api/registerMessageToken', async (ctx, next) => {
+	const body = ctx.request.body;
+
+	if (body && body.messagingToken) {
+		const result = await messaging.addToken(body.messagingToken);
+
+		ctx.body = {return: result};
+	} else {
+		ctx.body = {return: false};
+	}
+});
+
+router.post('/api/unRegisterMessageToken', async (ctx, next) => {
+	const body = ctx.request.body;
+
+	if (body && body.messagingToken) {
+		const result = await messaging.removeToken(body.messagingToken);
+
+		ctx.body = {return: result};
+	} else {
+		ctx.body = {return: false};
+	}
 });
 
 module.exports = router;

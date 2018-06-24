@@ -8,6 +8,7 @@ const moment = require('moment');
 
 const qif2json = require('./qif2json');
 const json2qif = require('./json2qif');
+const messaging = require('./messaging');
 
 let money = exports;
 
@@ -372,6 +373,7 @@ function arrangeInvestmemt (resolve) {
 			if ( index >= 0 ) {
 				investments[i].symbol = symbol[index];
 				investments[i].googleSymbol = `KRX:${symbol[index]}`;
+				investments[i].yahooSymbol = `${symbol[index]}.KS`;
 				investments[i].price = parseFloat(price[index].replace(/,/g, ''));
 			}
 		}
@@ -381,6 +383,7 @@ function arrangeInvestmemt (resolve) {
 				name: investment[k],
 				symbol: symbol[k],
 				googleSymbol : `KRX:${symbol[k]}`,
+				yahooSymbol : `${symbol[k]}.KS`,
 				price: parseFloat(price[k].replace(/,/g, ''))
 			});
 		}
@@ -392,6 +395,7 @@ function arrangeInvestmemt (resolve) {
 				if (investment[j] === investments[i].name) {
 					investments[i].symbol = symbol[j];
 					investments[i].googleSymbol = `KOSDAQ:${symbol[j]}`;
+					investments[i].yahooSymbol = `${symbol[j]}.KQ`;
 					investments[i].price = parseFloat(price[j].replace(/,/g, ''));
 				}
 			}
@@ -401,6 +405,7 @@ function arrangeInvestmemt (resolve) {
 				name: investment[k],
 				symbol: symbol[k],
 				googleSymbol : `KOSDAQ:${symbol[k]}`,
+				yahooSymbol : `${symbol[k]}.KQ`,
 				price: parseFloat(price[k].replace(/,/g, ''))
 			});
 		}
@@ -424,7 +429,7 @@ function updateHistorical (resolve) {
 	fs.readFile(filePath, 'utf8', function (err, data) {
 		const result = JSON.parse(data);
 		for (let key in result) {
-			const investmentIdx = money.investments.findIndex(i => i.googleSymbol === key);
+			const investmentIdx = money.investments.findIndex(i => i.yahooSymbol === key);
 			if (investmentIdx >= 0) {
 				money.investments[investmentIdx].historical = result[key];
 			}
@@ -459,7 +464,39 @@ function init () {
 
 exports.updateqifFile = async function(account) {
 	const filePath = path.resolve(__dirname, `./${account}.qif`);
-	money.accounts[account].transactions.sort((a, b) => +(a.date > b.date) || +(a.date === b.date) - 1);
+	money.accounts[account].transactions.sort((a, b) => {
+		if (a.date < b.date) {
+			return -1;
+		}
+		if (b.date < a.date) {
+			return 1;
+		}
+		if (typeof a.payee !== 'undefined') {
+			if (a.payee < b.payee) {
+				return -1;
+			}
+			if (b.payee < a.payee) {
+				return 1;
+			}
+		}
+		if (typeof a.investment !== 'undefined') {
+			if (a.investment < b.investment) {
+				return -1;
+			}
+			if (b.investment < a.investment) {
+				return 1;
+			}
+		}
+		if (typeof a.activity !== 'undefined') {
+			if (a.activity < b.activity) {
+				return -1;
+			}
+			if (b.activity < a.activity) {
+				return 1;
+			}
+		}
+		return 0;
+	});
 	const token = await json2qif.writeToFile(money.accounts[account], filePath);
 
 	const investmentFile = account.match(/_Cash/) ? `${account.substr(0, account.length  -5)}.qif` : `${account}.qif`
@@ -551,9 +588,15 @@ exports.getNetWorth = function(date) {
 	return netWorth;
 }
 
+const sendBalanceUpdateNotification = () => {
+	const balance = money.accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
+	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+	messaging.sendNotification('NetWorth Update', `Today's NetWorth is ${netWorth}`);
+}
+
 init();
 
-var job = new CronJob('00 40 15 * * 1-5', function() {
+var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', function() {
 		/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
@@ -562,6 +605,7 @@ var job = new CronJob('00 40 15 * * 1-5', function() {
 		console.log('00 40 15 daily arrangeInvestmemt started');
 
 		arrangeInvestmemt();
+		sendBalanceUpdateNotification();
 	}, function () {
 		/* This function is executed when the job stops */
 		console.log('00 40 15 daily arrangeInvestmemt ended');
@@ -570,32 +614,60 @@ var job = new CronJob('00 40 15 * * 1-5', function() {
 	'Asia/Seoul' /* Time zone of this job. */
 );
 
-var job = new CronJob('00 00 01 01 * *', function() {
-// var job = new CronJob('00 04 20 * * *', function() {
-		/*
-		 * historical update automation.
-		 * Runs 1st day of month
-		 * at 01:00:00 AM.
-		 */
-		console.log('monthly historical update started');
-		const filePath = path.resolve(__dirname, 'historical.json')
-		const symbols = money.investments.filter(i => i.googleSymbol).map(i => i.googleSymbol);
+var yahooFinance = require('yahoo-finance');
 
-		googleFinance.historical({
-			symbols: symbols,
-			from: '2003-01-01',
-			to: moment().format('YYYY-MM-DD')
-		}, function (err, result) {
-			const filePath = path.resolve(__dirname, 'historical.json')
-			fs.writeFile(filePath, JSON.stringify(result), function (err, data) {
-				updateHistorical();
-				console.log('monthly historical update ended');
-			});
+// exports.fetchHistorical = function() {
+// 	const filePath = path.resolve(__dirname, 'historical.json')
+// 	const symbols = money.investments.filter(i => i.googleSymbol).map(i => i.googleSymbol);
+//
+// 	googleFinance.historical({
+// 		symbols: symbols,
+// 		from: '2003-01-01',
+// 		to: moment().format('YYYY-MM-DD')
+// 	}, function (err, result) {
+// 		const filePath = path.resolve(__dirname, 'historical.json')
+// 		fs.writeFile(filePath, JSON.stringify(result), function (err, data) {
+// 			updateHistorical();
+// 			console.log('fetchHistorical ended');
+// 		});
+// 	});
+// }
+
+exports.fetchHistorical = function() {
+	const filePath = path.resolve(__dirname, 'historical.json')
+	const symbols = money.investments.filter(i => i.yahooSymbol).map(i => i.yahooSymbol);
+
+	yahooFinance.historical({
+	  symbols: symbols,
+	  from: '2003-01-01',
+	  to: moment().format('YYYY-MM-DD'),
+	  period: 'm'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
+	}, function (err, result) {
+		const filePath = path.resolve(__dirname, 'historical.json');
+
+		for (let i = 0; i < symbols.length; i++) {
+			result[symbols[i]] = result[symbols[i]].map(k => ({ date: k.date, close: k.close }));
+		}
+		fs.writeFile(filePath, JSON.stringify(result, null, 2), function (err, data) {
+			updateHistorical();
+			console.log('fetchHistorical ended');
 		});
-	}, function () {
-		/* This function is executed when the job stops */
-		console.log('monthly historical update ended');
-	},
-	true, /* Start the job right now */
-	'Asia/Seoul' /* Time zone of this job. */
-);
+	});
+}
+
+// var fetchHistoricalJob = new CronJob('00 00 01 01 * *', function() {
+// // var job = new CronJob('00 04 20 * * *', function() {
+// 		/*
+// 		 * historical update automation.
+// 		 * Runs 1st day of month
+// 		 * at 01:00:00 AM.
+// 		 */
+// 		console.log('monthly historical update started');
+// 		fetchHistorical();
+// 	}, function () {
+// 		/* This function is executed when the job stops */
+// 		console.log('monthly historical update ended');
+// 	},
+// 	true, /* Start the job right now */
+// 	'Asia/Seoul' /* Time zone of this job. */
+// );

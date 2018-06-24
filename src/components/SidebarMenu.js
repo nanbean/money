@@ -33,6 +33,11 @@ const routes = [
 		path: '/search',
 		label: 'Search',
 		icon: 'search'
+	},
+	{
+		path: '/setting',
+		label: 'Setting',
+		icon: 'setting'
 	}
 ];
 

@@ -139,6 +139,11 @@ header .ui.header h2 {
 	}
 }
 
+.container-full-page .container-item {
+	padding: 1em;
+	background: #f9fafb;
+}
+
 .mono {
 	font-family: 'Roboto Mono', monospace;
 	color: #686869;

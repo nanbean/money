@@ -1,0 +1,194 @@
+const path = require('path');
+const fs = require('fs');
+const util = require('util');
+const moment = require('moment');
+
+const money = require('./transaction');
+const messaging = require('./messaging');
+
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
+const filePath = path.resolve(__dirname, 'notification.json');
+
+async function readNotificationFile() {
+	return await readFile(filePath);
+}
+
+async function writeNotificationFile(data) {
+	return await writeFile(filePath, JSON.stringify(data, null, 2));
+}
+
+const findCategoryByPayee = (transactions, transaction) => {
+	const matchTransaction = transactions.find(i => i.payee === transaction.payee);
+	if (matchTransaction) {
+		if (matchTransaction.category) {
+			transaction.category = matchTransaction.category;
+		}
+		if (matchTransaction.subcategory) {
+			transaction.subcategory = matchTransaction.subcategory;
+		}
+	} else if (transaction.payee.match(/홈플러스/) || transaction.payee.match(/이마트/) ||
+						transaction.payee.match(/롯데마트/) || transaction.payee.match(/코스트코/)) {
+		transaction.category = '식비';
+		transaction.subcategory = '식료품';
+	} else if (transaction.payee.match(/스타벅스/) || transaction.payee.match(/이디야/) ||
+						transaction.payee.match(/투썸플레이스/) || transaction.payee.match(/탐앤탐스/) ||
+						transaction.payee.match(/빽다방/) || transaction.payee.match(/셀렉토/) ||
+						transaction.payee.match(/카페/) || transaction.payee.match(/커피/)) {
+		transaction.category = '식비';
+		transaction.subcategory = '군것질';
+	} else if (transaction.payee.match(/위드미/) || transaction.payee.match(/씨유/) ||
+						transaction.payee.match(/미니스톱/) || transaction.payee.match(/세븐일레븐/)) {
+		transaction.category = '식비';
+		transaction.subcategory = '군것질';
+	} else if (transaction.payee.match(/맥도날드/) || transaction.payee.match(/VIPS/) ||
+						transaction.payee.match(/본죽/) || transaction.payee.match(/신촌설렁탕/) ||
+						transaction.payee.match(/아웃백/) || transaction.payee.match(/계절밥상/)) {
+		transaction.category = '식비';
+		transaction.subcategory = '외식';
+	} else if (transaction.payee.match(/주유소/) || transaction.payee.match(/SK네트웍스/)) {
+		transaction.category = '교통비';
+		transaction.subcategory = '연료비';
+	}
+
+	return transaction;
+}
+
+const addHistory = function (packageName, text, transaction, result) {
+	readNotificationFile().then(data => {
+		const result = JSON.parse(data);
+		let history = result.history;
+		history.push(JSON.stringify({
+			originalPackageName: packageName,
+			originalText: text,
+			transaction: transaction,
+			parsed: result ? '👍' : '⚠️'
+		}));
+		writeNotificationFile(result).then(() => {
+			console.log(JSON.stringify({
+				originalPackageName: packageName,
+				originalText: text,
+				transaction: transaction,
+				parsed: result ? '👍' : '⚠️'
+			}));
+		})
+	});
+}
+
+exports.addTransaction = async function (body) {
+	let result = false;
+
+	if (body && body.packageName && body.text) {
+		let account = '';
+		if (body.packageName.match(/com\.kbcard\.kbkookmincard/i)) {
+			account = 'KB카드';
+		} else if (body.packageName.match(/com\.ex\.hipasscard/i)) {
+			account = 'KB체크카드';
+		}
+		let items = [];
+		let transaction = {};
+
+		// const dateString = text.match(/\d{2}\/\d{2}/);
+		// const date = dateString && moment(dateString, 'MM/DD').format('YYYY-MM-DD');
+		// const amount = text.replace(',', '').match(/\d{1,10}원/);
+		// const items = text.replace('\n', ' ').split(' ');
+		// const payee = items & item.length > 0 && item[item.length - 1];
+
+		console.log(body.text);
+
+		if (body.text.match(/승인취소/g)) {
+			// do nothing
+		} else if (body.packageName.match(/com\.ex\.hipasscard/i)) {
+			account = 'KB체크카드';
+			transaction = {
+				date: moment().format('YYYY-MM-DD'),
+				amount: parseInt(body.text.replace(',', '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g,''), 10) * (-1),
+				payee: '도로비',
+				category: '교통비',
+				subcategory: '도로비&주차비'
+			};
+		} else if (body.packageName.match(/com\.kbcard\.kbkookmincard/i)) {
+			account = 'KB카드';
+			items = body.text.split('\n');
+			transaction = {
+				date: items[3] && moment(items[3], 'MM/DD').format('YYYY-MM-DD'),
+				amount: items[2] && parseInt(items[2].replace(',', '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g,''), 10) * (-1),
+				payee: items[4],
+				category: '분류없음'
+			};
+		} else if (body.text.match(/케이뱅크/g)) {
+			account = '생활비카드';
+			items = body.text.split(' ');
+			transaction = {
+				date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
+				amount: items[6] && parseInt(items[6].replace(/[^0-9]/g,''), 10) * (-1),
+				payee: items[10] ? `${items[9]} ${items[10]}` : items[9],
+				category: '분류없음'
+			};
+		} else if (body.text.match(/삼성체크/g)) {
+			account = '생활비카드';
+			items = body.text.split('\n');
+			transaction = {
+				date: items[3] && moment(items[3], 'MM/DD').format('YYYY-MM-DD'),
+				amount: items[2] && parseInt(items[2].replace(/[^0-9]/g,''), 10) * (-1),
+				payee: items[4],
+				category: '분류없음'
+			};
+		} else if (body.text.match(/신한체크/g)) {
+			account = '생활비카드';
+			items = body.text.split(' ');
+			transaction = {
+				date: items[2] && moment(items[2], 'MM/DD').format('YYYY-MM-DD'),
+				amount: items[4] && parseInt(items[4].replace(/[^0-9]/g,''), 10) * (-1),
+				payee: items[5],
+				category: '분류없음'
+			};
+		} else if (body.text.match(/하나/g)) {
+			account = '급여계좌';
+			items = body.text.split(' ');
+			if (body.text.match(/체크/g)) {
+				transaction = {
+					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
+					amount: items[3] && parseInt(items[3].replace(/[^0-9]/g,''), 10) * (-1),
+					payee: items[6],
+					category: '분류없음'
+				};
+			} else {
+				transaction = {
+					date: items[5] && moment(items[5], 'MM/DD').format('YYYY-MM-DD'),
+					amount: items[3] && parseInt(items[3].replace(/[^0-9]/g,''), 10) * (-1),
+					payee: items[7],
+					category: '분류없음'
+				};
+			}
+		}
+
+		if (account && transaction.date && transaction.payee && transaction.amount) {
+			const transactions = money.accounts[account].transactions;
+			transaction = findCategoryByPayee(transactions, transaction);
+
+			transactions.push(transaction);
+
+			const token = await money.updateqifFile(account);
+			result = true;
+		} else {
+			result = false;
+		}
+
+		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction));
+		addHistory(body.packageName, body.text, transaction, result);
+
+		return result;
+	} else {
+		return false;
+	}
+}
+
+exports.getHistory = async function (count = 100) {
+	const history = await readNotificationFile().then(data => {
+		const result = JSON.parse(data);
+		return result.history.slice(count * -1);
+	})
+
+	return history;
+}
