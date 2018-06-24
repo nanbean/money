@@ -80,6 +80,7 @@ class App extends React.Component {
 
 App.propTypes = {
 	isSidebarOpen: PropTypes.bool,
+	rehydrateAction: PropTypes.func,
 	toggleSidebar: PropTypes.func,
 	windowResize: PropTypes.func
 };

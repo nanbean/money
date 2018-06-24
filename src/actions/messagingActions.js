@@ -18,7 +18,7 @@ export const requestPermissionAction = () => (dispatch) => {
 		.then(() => messaging.getToken())
 		.then(messagingToken => {
 			if (messagingToken) {
-				const apiUrl = `/api/registerMessageToken`;
+				const apiUrl = '/api/registerMessageToken';
 
 				return fetch(apiUrl, {
 					method: 'POST',
@@ -31,7 +31,7 @@ export const requestPermissionAction = () => (dispatch) => {
 					.then(res => res.json())
 					.then(body => {
 						if (body.return === true) {
-							dispatch(getTokenSuccess(messagingToken))
+							dispatch(getTokenSuccess(messagingToken));
 						}
 					})
 					.catch(() => dispatch(getTokenFailure()));
@@ -56,7 +56,7 @@ export const removePermissionAction = () => (dispatch, getState) => {
 	return messaging.deleteToken(messagingToken)
 		.then(() => {
 			if (messagingToken) {
-				const apiUrl = `/api/unRegisterMessageToken`;
+				const apiUrl = '/api/unRegisterMessageToken';
 
 				return fetch(apiUrl, {
 					method: 'POST',
@@ -69,7 +69,7 @@ export const removePermissionAction = () => (dispatch, getState) => {
 					.then(res => res.json())
 					.then(body => {
 						if (body.return === true) {
-							dispatch(deleteTokenSuccess())
+							dispatch(deleteTokenSuccess());
 						}
 					})
 					.catch(() => dispatch(deleteTokenFailure()));

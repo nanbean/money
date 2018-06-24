@@ -19,17 +19,17 @@ class NotificationLog extends Component {
 			<div>
 				<TitleHeader title='Notification Log' />
 				<div className='container-full-page'>
-				{
-					notificationHistory.map(i => {
-						return (
-							<div className="container-item">
-								<Message>
-									{i}
-								</Message>
-							</div>
-						)
-					})
-				}
+					{
+						notificationHistory.map(i => {
+							return (
+								<div className="container-item" key={i}>
+									<Message>
+										{i}
+									</Message>
+								</div>
+							);
+						})
+					}
 				</div>
 			</div>
 		);

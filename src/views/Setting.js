@@ -20,7 +20,7 @@ class Setting extends Component {
 	}
 
 	handleNotificationLog = () => {
-		this.props.history.push(`/notificationlog`)
+		this.props.history.push('/notificationlog');
 	}
 
 	handlePushNotificationChange = (e, data) => {
@@ -55,6 +55,9 @@ class Setting extends Component {
 }
 
 Setting.propTypes = {
+	history: PropTypes.shape({
+		push: PropTypes.func.isRequired
+	}).isRequired,
 	messagingToken: PropTypes.string.isRequired,
 	removePermissionAction: PropTypes.func.isRequired,
 	requestPermissionAction: PropTypes.func.isRequired
