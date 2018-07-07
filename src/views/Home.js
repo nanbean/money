@@ -78,7 +78,7 @@ export class Home extends Component {
 			<div>
 				<TitleHeader title='Home' />
 				<div className='container-full-page'>
-					<div className="container-header">
+					<div className="container-header header-sticky">
 						<Button.Group basic fluid>
 							<Button
 								content='Refresh'

@@ -47,7 +47,7 @@ export class Investment extends Component {
 			<div>
 				<TitleHeader title={account} />
 				<div className='container-full-page'>
-					<div className="container-header">
+					<div className="container-header header-sticky">
 						<Button.Group basic fluid>
 							<Button
 								icon="plus"

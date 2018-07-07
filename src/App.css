@@ -118,6 +118,12 @@ header .ui.header h2 {
 	background: #f9fafb;
 }
 
+.container-full-page .header-sticky {
+	position: sticky;
+	top: 62px;
+	z-index: 1;
+}
+
 .container-full-page .container-header > .ui.basic.buttons {
 	background: #ffffff;
 }
@@ -134,6 +140,10 @@ header .ui.header h2 {
 		border-top: solid 1px #d4d4d5;
 	}
 
+	.container-full-page .header-sticky {
+		top: 50px;
+	}
+
 	.container-full-page .container-header .detail-toggle {
 		margin-top: 0;
 	}
@@ -142,6 +152,7 @@ header .ui.header h2 {
 .container-full-page .container-item {
 	padding: 1em;
 	background: #f9fafb;
+	word-break: break-all;
 }
 
 .mono {
