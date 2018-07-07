@@ -754,14 +754,6 @@ router.get('/api/getLifetimeFlow', async (ctx, next) => {
 	};
 });
 
-router.get('/api/fetchHistorical', (ctx, next) => {
-	const body = {};
-
-	money.fetchHistorical();
-
-	ctx.body = body;
-});
-
 router.post('/api/registerMessageToken', async (ctx, next) => {
 	const body = ctx.request.body;
 

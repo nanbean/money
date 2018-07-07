@@ -24,7 +24,7 @@ const writeFileAsync = async (filePath, data) => {
 	return await writeFile(filePath, JSON.stringify(data, null, 2));
 }
 
-function updateAccountList (name, type, balance, investments, qifData) {
+const updateAccountList = (name, type, balance, investments, qifData) => {
 	const account = {
 		name: name,
 		type: type,
@@ -56,7 +56,7 @@ function updateAccountList (name, type, balance, investments, qifData) {
 	money.accounts[name] = qifData;
 }
 
-function getInvestmentList (name, transactions) {
+const getInvestmentList = (name, transactions) => {
 	const investments = [];
 	for (let i = 0; i < transactions.length; i++) {
 		const transaction = transactions[i];
@@ -137,7 +137,7 @@ function getInvestmentList (name, transactions) {
 	return investments;
 }
 
-function getBalance (name, transactions) {
+const getBalance = (name, transactions) => {
 	let balance = 0;
 	for (let i = 0; i < transactions.length; i++) {
 		const transaction = transactions[i];
@@ -165,7 +165,7 @@ function getBalance (name, transactions) {
 	return balance;
 }
 
-function getInvestmentBalance (investments) {
+const getInvestmentBalance = (investments) => {
 	let balance = 0;
 	if (investments.length > 0) {
 		balance = investments.map((i) => i.price * i.quantity).reduce( (prev, curr) => prev + curr );
@@ -174,13 +174,13 @@ function getInvestmentBalance (investments) {
 	return balance;
 }
 
-function parseFile (file, callback) {
+const parseFile = (file, callback) => {
 	return new Promise(resolve => {
 		const filePath = path.resolve(__dirname, file);
 		const name = path.basename(filePath, '.qif');
 		console.log(`parsing ${file} ...`);
 		if (fs.existsSync(filePath)) {
-			qif2json.parseFile(filePath, function(err, qifData) {
+			qif2json.parseFile(filePath, (err, qifData) => {
 				const type = qifData.type;
 				let balance = 0;
 				let investments = [];
@@ -204,7 +204,7 @@ function parseFile (file, callback) {
 	});
 }
 
-function updateInvestmentAccount () {
+const updateInvestmentAccount = () => {
 	money.accountList
 	.sort((a, b) => {
 		if (a.type < b.type) {
@@ -242,7 +242,7 @@ function updateInvestmentAccount () {
 	console.log('init done');
 }
 
-function arrangeCategory (category) {
+const arrangeCategory = (category) => {
 	money.categories = [];
 	let categories = [];
 	let subcategories = [];
@@ -262,7 +262,7 @@ function arrangeCategory (category) {
 	money.categories.sort();
 }
 
-function arrangePayee () {
+const arrangePayee = () => {
 	money.payees = [];
 	let payees = [];
 	for (let i in money.accounts) {
@@ -276,7 +276,7 @@ function arrangePayee () {
 	money.payees.sort();
 }
 
-function arrangeInvestmemt (resolve) {
+const arrangeInvestmemt = (resolve) => {
 	const investmentList = [...new Set(money.accountList.filter(i => i.investments.length > 0).map(i => i.investments).reduce((a, b) => a.concat(b)).map(i => i.name))];
 	const investments = investmentList.filter(j => j !== 'cash').map(i => { return {name: i} });
 	const allinvestments = [];
@@ -285,7 +285,7 @@ function arrangeInvestmemt (resolve) {
 	money.allinvestments = allinvestments;
 
 	const filePath = path.resolve(__dirname, 'account.json')
-	fs.writeFile(filePath, JSON.stringify(money.accountList, null, 2), function (err, data) {
+	fs.writeFile(filePath, JSON.stringify(money.accountList, null, 2), (err, data) => {
 	});
 
 	var spooky = new Spooky({
@@ -401,7 +401,7 @@ function arrangeInvestmemt (resolve) {
 		}
 	});
 
-	spooky.on('kodaqParsed', function (investment, symbol, price) {
+	spooky.on('kodaqParsed', async (investment, symbol, price) => {
 		for (let i = 0; i < investments.length; i++) {
 			for (let j = 0; j < investment.length; j++) {
 				if (investment[j] === investments[i].name) {
@@ -422,7 +422,7 @@ function arrangeInvestmemt (resolve) {
 			});
 		}
 		updateInvestmentAccount();
-		updateHistorical();
+		await updateHistorical();
 		if (resolve) {
 			resolve(true);
 		}
@@ -436,9 +436,9 @@ function arrangeInvestmemt (resolve) {
 	// });
 }
 
-function updateHistorical (resolve) {
-	const filePath = path.resolve(__dirname, 'historical.json')
-	fs.readFile(filePath, 'utf8', function (err, data) {
+const updateHistorical = async () => {
+	const filePath = path.resolve(__dirname, 'historical.json');
+	await readFileAsync(filePath).then(data => {
 		const result = JSON.parse(data);
 		for (let key in result) {
 			const investmentIdx = money.investments.findIndex(i => i.yahooSymbol === key);
@@ -446,26 +446,29 @@ function updateHistorical (resolve) {
 				money.investments[investmentIdx].historical = result[key];
 			}
 		}
-		console.log('updateHistorical done...');
+		console.log('updateHistorical inside done...');
+		return true;
 	});
+	console.log('updateHistorical outside done...');
+	return true;
 }
 
-function init () {
+const init = () => {
 	money.accountList = [];
 	money.shrsInOut = [];
 	money.accounts = {};
 
-	var queue = async.queue(function (task, callback) {
+	var queue = async.queue((task, callback) => {
 		parseFile(task.file, callback)
 	}, 1);
 
-	queue.drain = function() {
-		arrangeInvestmemt();
+	queue.drain = async () => {
+		await updateInvestmentPrice();
 		arrangeCategory();
 		arrangePayee();
 	}
 
-	fs.readdir(path.resolve(__dirname), function (err, files) {
+	fs.readdir(path.resolve(__dirname), (err, files) => {
 		for (let i = 0; i < files.length; i++) {
 			if (files[i].match(/\.qif/i)) {
 				queue.push({file: files[i]});
@@ -474,7 +477,7 @@ function init () {
 	});
 }
 
-exports.updateqifFile = async function(account) {
+exports.updateqifFile = async (account) => {
 	const filePath = path.resolve(__dirname, `./${account}.qif`);
 	money.accounts[account].transactions.sort((a, b) => {
 		if (a.date < b.date) {
@@ -521,13 +524,15 @@ exports.updateqifFile = async function(account) {
 	arrangePayee();
 }
 
-exports.updateInvestmentPrice = function() {
-	return new Promise(function (resolve, reject) {
+const updateInvestmentPrice = () => {
+	return new Promise((resolve, reject) => {
 		arrangeInvestmemt(resolve);
 	});
 }
 
-function getBalanceToDate (name, transactions, accounts) {
+exports.updateInvestmentPrice = updateInvestmentPrice;
+
+const getBalanceToDate = (name, transactions, accounts) => {
 	let balance = 0;
 	for (let i = 0; i < transactions.length; i++) {
 		const transaction = transactions[i];
@@ -555,7 +560,7 @@ function getBalanceToDate (name, transactions, accounts) {
 	return balance;
 }
 
-function getInvestmentBalanceToDate (investments, date) {
+const getInvestmentBalanceToDate = (investments, date) => {
 	const currentYearMonth = moment().format('YYYY-MM');
 	let balance = 0;
 	if (investments.length > 0) {
@@ -581,7 +586,7 @@ function getInvestmentBalanceToDate (investments, date) {
 	return balance;
 }
 
-exports.getNetWorth = function(date) {
+exports.getNetWorth = (date) => {
 	const dateAccounts = {};
 	let netWorth = 0;
 	for (let i in money.accounts) {
@@ -608,66 +613,25 @@ const sendBalanceUpdateNotification = () => {
 
 init();
 
-var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', function() {
+var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', async () => {
 		/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
 		 * at 05:00:00 AM.
 		 */
-		console.log('00 40 15 daily arrangeInvestmemt started');
+		console.log('00 40 15 daily dailyArrangeInvestmemtjob started');
 
-		arrangeInvestmemt();
+		await updateInvestmentPrice();
 		sendBalanceUpdateNotification();
-	}, function () {
+	}, () => {
 		/* This function is executed when the job stops */
-		console.log('00 40 15 daily arrangeInvestmemt ended');
+		console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');
 	},
 	true, /* Start the job right now */
 	'Asia/Seoul' /* Time zone of this job. */
 );
 
-var yahooFinance = require('yahoo-finance');
-
-// exports.fetchHistorical = function() {
-// 	const filePath = path.resolve(__dirname, 'historical.json')
-// 	const symbols = money.investments.filter(i => i.googleSymbol).map(i => i.googleSymbol);
-//
-// 	googleFinance.historical({
-// 		symbols: symbols,
-// 		from: '2003-01-01',
-// 		to: moment().format('YYYY-MM-DD')
-// 	}, function (err, result) {
-// 		const filePath = path.resolve(__dirname, 'historical.json')
-// 		fs.writeFile(filePath, JSON.stringify(result), function (err, data) {
-// 			updateHistorical();
-// 			console.log('fetchHistorical ended');
-// 		});
-// 	});
-// }
-
-exports.fetchHistorical = function() {
-	const filePath = path.resolve(__dirname, 'historical.json')
-	const symbols = money.investments.filter(i => i.yahooSymbol).map(i => i.yahooSymbol);
-
-	yahooFinance.historical({
-	  symbols: symbols,
-	  from: '2003-01-01',
-	  to: moment().format('YYYY-MM-DD'),
-	  period: 'm'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
-	}, function (err, result) {
-		const filePath = path.resolve(__dirname, 'historical.json');
-
-		for (let i = 0; i < symbols.length; i++) {
-			result[symbols[i]] = result[symbols[i]].map(k => ({ date: k.date, close: k.close }));
-		}
-		fs.writeFile(filePath, JSON.stringify(result, null, 2), function (err, data) {
-			updateHistorical();
-			console.log('fetchHistorical ended');
-		});
-	});
-}
-
-var monthlyUpdateHistoricaljob = new CronJob('00 00 03 1 * *', async function() {
+var monthlyUpdateHistoricaljob = new CronJob('00 00 03 1 * *', async () => {
 		/*
 		 * update historical automation.
 		 * Runs every 1st day of month, and write last day of previous month price
@@ -704,27 +668,10 @@ var monthlyUpdateHistoricaljob = new CronJob('00 00 03 1 * *', async function() 
 		}
 		writeFileAsync(filePath, historical);
 		return true;
-	}, function () {
+	}, () => {
 		/* This function is executed when the job stops */
 		console.log('00 00 03 monthly monthlyUpdateHistoricaljob ended');
 	},
 	true, /* Start the job right now */
 	'Asia/Seoul' /* Time zone of this job. */
 );
-
-// var fetchHistoricalJob = new CronJob('00 00 01 01 * *', function() {
-// // var job = new CronJob('00 04 20 * * *', function() {
-// 		/*
-// 		 * historical update automation.
-// 		 * Runs 1st day of month
-// 		 * at 01:00:00 AM.
-// 		 */
-// 		console.log('monthly historical update started');
-// 		fetchHistorical();
-// 	}, function () {
-// 		/* This function is executed when the job stops */
-// 		console.log('monthly historical update ended');
-// 	},
-// 	true, /* Start the job right now */
-// 	'Asia/Seoul' /* Time zone of this job. */
-// );

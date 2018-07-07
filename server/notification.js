@@ -175,7 +175,7 @@ exports.addTransaction = async function (body) {
 			result = false;
 		}
 
-		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction));
+		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction).replace(/({|})/gi,'').replace(/,/gi, ',\n'), './notificationlog');
 		addHistory(body.packageName, body.text, transaction, result);
 
 		return result;
