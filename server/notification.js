@@ -163,7 +163,7 @@ exports.addTransaction = async function (body) {
 			}
 		}
 
-		if (account && transaction.date && transaction.payee && transaction.amount) {
+		if (account && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
 			const transactions = money.accounts[account].transactions;
 			transaction = findCategoryByPayee(transactions, transaction);
 
