@@ -6,6 +6,7 @@ const Spooky = require('spooky');
 const CronJob = require('cron').CronJob;
 const googleFinance = require('google-finance');
 const moment = require('moment');
+const { exec } = require('child_process');
 
 const qif2json = require('./qif2json');
 const json2qif = require('./json2qif');
@@ -671,6 +672,28 @@ var monthlyUpdateHistoricaljob = new CronJob('00 00 03 1 * *', async () => {
 	}, () => {
 		/* This function is executed when the job stops */
 		console.log('00 00 03 monthly monthlyUpdateHistoricaljob ended');
+	},
+	true, /* Start the job right now */
+	'Asia/Seoul' /* Time zone of this job. */
+);
+
+var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
+		/*
+		 * investment update automation.
+		 * Runs week day (Monday through Friday)
+		 * at 05:00:00 AM.
+		 */
+		console.log('00 00 03 weekly weeklyBackupjob started');
+
+		const backupDir = `backup_${moment().format('YYYYMMDD')}`;
+
+		exec(`mkdir ${backupDir}`, {cwd: __dirname});
+		exec(`cp *.qif ${backupDir}/`, {cwd: __dirname});
+		exec(`cp *.json ${backupDir}/`, {cwd: __dirname});
+		exec(`cp *.xlsx ${backupDir}/`, {cwd: __dirname});
+	}, () => {
+		/* This function is executed when the job stops */
+		console.log('00 00 03 weekly weeklyBackupjob ended');
 	},
 	true, /* Start the job right now */
 	'Asia/Seoul' /* Time zone of this job. */
