@@ -632,7 +632,7 @@ var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', async () => {
 	'Asia/Seoul' /* Time zone of this job. */
 );
 
-var monthlyUpdateHistoricaljob = new CronJob('00 00 03 1 * *', async () => {
+var monthlyUpdateHistoricaljob = new CronJob('00 00 9 1 * *', async () => {
 		/*
 		 * update historical automation.
 		 * Runs every 1st day of month, and write last day of previous month price
@@ -646,25 +646,23 @@ var monthlyUpdateHistoricaljob = new CronJob('00 00 03 1 * *', async () => {
 			return result;
 		});
 		let date = new Date();
-		date.setDate(date.getDate() - 1)
+		date.setDate(date.getDate() - 1);
 
 		for (let i = 0; i < investments.length; i++) {
 			const key = investments[i].yahooSymbol;
 			const price = investments[i].price;
-			if (key === '267250.KS') {
-				if (typeof historical[key] !== 'undefined') {
-					historical[key].unshift({
-						date: date.toISOString(),
+			if (typeof historical[key] !== 'undefined') {
+				historical[key].unshift({
+					date: `${moment(date).format('YYYY-MM-DD')}T18:00:00.000Z`,
+					close: price
+				});
+			} else {
+				historical[key] = [
+					{
+						date: `${moment(date).format('YYYY-MM-DD')}T18:00:00.000Z`,
 						close: price
-					});
-				} else {
-					historical[key] = [
-						{
-							date: date.toISOString(),
-							close: price
-						}
-					];
-				}
+					}
+				];
 			}
 		}
 		writeFileAsync(filePath, historical);
