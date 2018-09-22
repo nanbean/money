@@ -8,7 +8,7 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
 
 const ROW_HEIGHT = 40;
-const COLUMN_WIDTH = 100;
+const COLUMN_WIDTH = 84;
 
 class ReportGrid extends Component {
 	render () {
