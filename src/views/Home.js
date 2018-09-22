@@ -69,9 +69,11 @@ export class Home extends Component {
 	render () {
 		const { accountList, updateInvestmentPriceFetching } = this.props;
 		let sum = 0;
+		let financeSum = 0;
 
 		if (accountList.length > 0) {
 			sum = accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
+			financeSum = accountList.filter(i => i.type !== 'Oth A').map((i) => i.balance).reduce( (prev, curr) => prev + curr );
 		}
 
 		return (
@@ -94,9 +96,11 @@ export class Home extends Component {
 						<Table.Header>
 							<Table.Row>
 								<Table.HeaderCell />
-								<Table.HeaderCell />
-								<Table.HeaderCell  textAlign='center'>
-									<Amount value={sum} />
+								<Table.HeaderCell textAlign='center'>
+									<Amount value={`${sum}`} />
+								</Table.HeaderCell>
+								<Table.HeaderCell textAlign='center'>
+									<Amount value={`${financeSum}`} />
 								</Table.HeaderCell>
 							</Table.Row>
 						</Table.Header>
