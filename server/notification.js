@@ -116,15 +116,24 @@ exports.addTransaction = async function (body) {
 				payee: items[4],
 				category: '분류없음'
 			};
-		} else if (body.text.match(/케이뱅크/g)) {
+		} else if (body.packageName.match(/com\.kbankwith\.smartbank/i)) {
 			account = '생활비카드';
 			items = body.text.split(' ');
-			transaction = {
-				date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-				amount: items[6] && parseInt(items[6].replace(/[^0-9]/g,''), 10) * (-1),
-				payee: items[10] ? `${items[9]} ${items[10]}` : items[9],
-				category: '분류없음'
-			};
+			if (body.text.match(/케이뱅크/g)) {
+				transaction = {
+					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
+					amount: items[6] && parseInt(items[6].replace(/[^0-9]/g,''), 10) * (-1),
+					payee: items[10] ? `${items[9]} ${items[10]}` : items[9],
+					category: '분류없음'
+				};
+			} else if (body.text.match(/체크승인/g)) {
+				transaction = {
+					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
+					amount: items[1] && parseInt(items[1].replace(/[^0-9]/g,''), 10) * (-1),
+					payee: items[2],
+					category: '분류없음'
+				};
+			}
 		} else if (body.text.match(/삼성체크/g)) {
 			account = '생활비카드';
 			items = body.text.split('\n');
