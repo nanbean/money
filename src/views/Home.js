@@ -97,10 +97,10 @@ export class Home extends Component {
 							<Table.Row>
 								<Table.HeaderCell />
 								<Table.HeaderCell textAlign='center'>
-									<Amount value={`${sum}`} />
+									<Amount value={sum} />
 								</Table.HeaderCell>
 								<Table.HeaderCell textAlign='center'>
-									<Amount value={`${financeSum}`} />
+									<Amount value={financeSum} />
 								</Table.HeaderCell>
 							</Table.Row>
 						</Table.Header>

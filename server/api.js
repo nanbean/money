@@ -628,7 +628,8 @@ router.get('/api/getNetWorth', (ctx, next) => {
 	body.list = dates.map(i => {
 		return {
 			date: i.substr(0,7),
-			netWorth: money.getNetWorth(i)
+			netWorth: money.getNetWorth(i),
+			assetNetWorth: money.getAssetNetWorth(i)
 		};
 	});
 	ctx.body = body;

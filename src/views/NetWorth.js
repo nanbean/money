@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Bar, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 import TitleHeader from '../components/TitleHeader';
 
@@ -27,7 +27,7 @@ class NetWorth extends Component {
 					{
 						netWorth.length > 1 &&
 						<ResponsiveContainer width='100%' height={400}>
-							<BarChart
+							<ComposedChart
 								data={netWorth}
 								margin={{top: 5, right: 10, left: 20, bottom: 5}}
 							>
@@ -35,8 +35,9 @@ class NetWorth extends Component {
 								<YAxis hide/>
 								<CartesianGrid strokeDasharray="3 3"/>
 								<Tooltip formatter={this.formatter} />
+								<Area type="monotone" dataKey="assetNetWorth" fill="#999999" stroke="#999999" />
 								<Bar dataKey="netWorth" fill="#8884d8" />
-							</BarChart>
+							</ComposedChart>
 						</ResponsiveContainer>
 					}
 				</div>

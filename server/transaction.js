@@ -606,6 +606,22 @@ exports.getNetWorth = (date) => {
 	return netWorth;
 }
 
+exports.getAssetNetWorth = (date) => {
+	const dateAccounts = {};
+	let netWorth = 0;
+	for (let i in money.accounts) {
+		dateAccounts[i] = {};
+		dateAccounts[i].type = money.accounts[i].type;
+		if (money.accounts[i].transactions) {
+			dateAccounts[i].transactions = money.accounts[i].transactions.filter(i => i.date <= date);
+			if (dateAccounts[i].type === 'Oth A') {
+				netWorth += getBalanceToDate(i, dateAccounts[i].transactions, dateAccounts);
+			}
+		}
+	}
+	return netWorth;
+}
+
 const sendBalanceUpdateNotification = () => {
 	const balance = money.accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
 	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
