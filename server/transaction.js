@@ -648,13 +648,13 @@ var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', async () => {
 	'Asia/Seoul' /* Time zone of this job. */
 );
 
-var monthlyUpdateHistoricaljob = new CronJob('00 00 3 1 * *', async () => {
+var monthlyUpdateHistoricaljob = new CronJob('00 33 05 1 * *', async () => {
 		/*
 		 * update historical automation.
 		 * Runs every 1st day of month, and write last day of previous month price
 		 * at 03:00:00 AM.
 		 */
-		console.log('00 00 03 monthly monthlyUpdateHistoricaljob started');
+		console.log('00 33 05 monthly monthlyUpdateHistoricaljob started');
 		const filePath = path.resolve(__dirname, 'historical.json');
 		const { investments } =  money;
 		const historical = await readFileAsync(filePath).then(data => {
@@ -683,7 +683,7 @@ var monthlyUpdateHistoricaljob = new CronJob('00 00 3 1 * *', async () => {
 		return true;
 	}, () => {
 		/* This function is executed when the job stops */
-		console.log('00 00 03 monthly monthlyUpdateHistoricaljob ended');
+		console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
 	},
 	true, /* Start the job right now */
 	'Asia/Seoul' /* Time zone of this job. */
@@ -697,7 +697,7 @@ var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
 		 */
 		console.log('00 00 03 weekly weeklyBackupjob started');
 
-		const backupDir = `backup_${moment().format('YYYYMMDD')}`;
+		const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}`;
 
 		exec(`mkdir ${backupDir}`, {cwd: __dirname});
 		exec(`cp *.qif ${backupDir}/`, {cwd: __dirname});
