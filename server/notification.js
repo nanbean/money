@@ -127,12 +127,21 @@ exports.addTransaction = async function (body) {
 					category: '분류없음'
 				};
 			} else if (body.text.match(/체크승인/g)) {
-				transaction = {
-					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[1] && parseInt(items[1].replace(/[^0-9]/g,''), 10) * (-1),
-					payee: items[2],
-					category: '분류없음'
-				};
+				if (items[4].match(/\d{2}\/\d{2}/)) {
+					transaction = {
+						date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
+						amount: items[1] && parseInt(items[1].replace(/[^0-9]/g,''), 10) * (-1),
+						payee: items[2],
+						category: '분류없음'
+					};
+				} else if (items[5].match(/\d{2}\/\d{2}/)) {
+					transaction = {
+						date: items[5] && moment(items[5], 'MM/DD').format('YYYY-MM-DD'),
+						amount: items[1] && parseInt(items[1].replace(/[^0-9]/g,''), 10) * (-1),
+						payee: `${items[2]} ${items[3]}`,
+						category: '분류없음'
+					};
+				}
 			}
 		} else if (body.text.match(/삼성체크/g)) {
 			account = '생활비카드';
