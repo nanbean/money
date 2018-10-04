@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { Table, Button, Icon } from 'semantic-ui-react';
+import {Table, Button, Icon} from 'semantic-ui-react';
 import moment from 'moment';
 
 class MortgageSchedule extends Component {
@@ -11,8 +11,12 @@ class MortgageSchedule extends Component {
 		this.renderMortgageSchedule = this.renderMortgageSchedule.bind(this);
 	}
 
+	componentDidMount () {
+		this.props.getMortgageScheduleAction();
+	}
+
 	onAddClick (e, data) {
-		const { mortgageSchedule } = this.props;
+		const {mortgageSchedule} = this.props;
 		const schedule = mortgageSchedule[data.no - 1];
 		const amountData = {};
 		const interestData = {};
@@ -34,10 +38,6 @@ class MortgageSchedule extends Component {
 		this.props.addTransactionAction(interestData);
 	}
 
-	componentWillMount () {
-		this.props.getMortgageScheduleAction();
-	}
-
 	renderMortgageSchedule (schedule) {
 		return (
 			<Table.Row key={schedule.no}>
@@ -56,15 +56,15 @@ class MortgageSchedule extends Component {
 				<Table.Cell>
 					{schedule.interest ? parseInt(schedule.interest, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 				</Table.Cell>
-				<Table.Cell textAlign='center'>
+				<Table.Cell textAlign="center">
 					<Button
 						icon
-						floated='right'
-						size='mini'
+						floated="right"
+						size="mini"
 						no={schedule.no}
 						onClick={this.onAddClick}
 					>
-						<Icon name='add' />
+						<Icon name="add" />
 					</Button>
 				</Table.Cell>
 			</Table.Row>
@@ -72,13 +72,13 @@ class MortgageSchedule extends Component {
 	}
 
 	render () {
-		const { mortgageSchedule } = this.props;
+		const {mortgageSchedule} = this.props;
 		const today = moment().format('YYYY-MM');
 		const filteredMorageSchedule = mortgageSchedule.filter(i => i.date >= today);
 
 		return (
-			<div className='investments'>
-				<Table celled size='small'>
+			<div className="investments">
+				<Table celled size="small">
 					<Table.Header>
 						<Table.Row>
 							<Table.HeaderCell>
@@ -113,9 +113,9 @@ class MortgageSchedule extends Component {
 }
 
 MortgageSchedule.propTypes = {
-	mortgageSchedule:  PropTypes.array.isRequired,
+	addTransactionAction: PropTypes.func.isRequired,
 	getMortgageScheduleAction: PropTypes.func.isRequired,
-	addTransactionAction: PropTypes.func.isRequired
+	mortgageSchedule:  PropTypes.array.isRequired
 };
 
 export default MortgageSchedule;

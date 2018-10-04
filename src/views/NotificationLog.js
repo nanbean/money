@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Message } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Message} from 'semantic-ui-react';
 
 import TitleHeader from '../components/TitleHeader';
 
-import { getNotificationHistoryAction } from '../actions/notificationActions';
+import {getNotificationHistoryAction} from '../actions/notificationActions';
 
 class NotificationLog extends Component {
 	componentDidMount () {
@@ -13,12 +13,12 @@ class NotificationLog extends Component {
 	}
 
 	render () {
-		const { notificationHistory } = this.props;
+		const {notificationHistory} = this.props;
 
 		return (
 			<div>
-				<TitleHeader title='Notification Log' />
-				<div className='container-full-page'>
+				<TitleHeader title="Notification Log" />
+				<div className="container-full-page">
 					{
 						notificationHistory.map(i => {
 							return (
@@ -37,8 +37,8 @@ class NotificationLog extends Component {
 }
 
 NotificationLog.propTypes = {
-	notificationHistory: PropTypes.array.isRequired,
-	getNotificationHistoryAction: PropTypes.func.isRequired
+	getNotificationHistoryAction: PropTypes.func.isRequired,
+	notificationHistory: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({

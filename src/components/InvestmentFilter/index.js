@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { Checkbox } from 'semantic-ui-react';
+import {Checkbox} from 'semantic-ui-react';
 
 import './index.css';
 
@@ -13,7 +13,7 @@ class InvestmentFilter extends Component {
 	}
 
 	onFilteredInvestmentsChange (e, data) {
-		const { filteredInvestments } = this.props;
+		const {filteredInvestments} = this.props;
 		const investment = data.label;
 		const checked = data.checked;
 
@@ -28,21 +28,19 @@ class InvestmentFilter extends Component {
 					investment
 				]);
 			}
+		} else if (findIndex >= 0) {
+			this.props.setfilteredInvestments([
+				...filteredInvestments.slice(0, findIndex),
+				...filteredInvestments.slice(findIndex + 1)
+			]);
 		} else {
-			if (findIndex >= 0) {
-				this.props.setfilteredInvestments([
-					...filteredInvestments.slice(0, findIndex),
-					...filteredInvestments.slice(findIndex + 1)
-				]);
-			} else {
-				// do nothing
-			}
+			// do nothing
 		}
 	}
 
 	onAllInvestementClick (e, data) {
 		const checked = data.checked;
-		const { allInvestmentsPrice } = this.props;
+		const {allInvestmentsPrice} = this.props;
 		const allInvestments = allInvestmentsPrice.map(j => j.investment);
 
 		if ( checked === true) {
@@ -56,30 +54,30 @@ class InvestmentFilter extends Component {
 	}
 
 	render () {
-		const { allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered } = this.props;
+		const {allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered} = this.props;
 
 		return (
-			<div className='investment-filter'>
+			<div className="investment-filter">
 				{
 					allInvestmentsPrice && allInvestmentsPrice.map(j => {
 						return (
-							<div key={j.investment} className='investment-filter-checkbox'>
+							<div key={j.investment} className="investment-filter-checkbox">
 								<Checkbox key={j.investment} label={j.investment} checked={filteredInvestments.find(q => q === j.investment) ? true : false} onChange={this.onFilteredInvestmentsChange}/>
 							</div>
 						);
 					})
 				}
-				<Checkbox key='All' label='All' checked={allInvestmentsFiltered} onClick={this.onAllInvestementClick}/>
+				<Checkbox key="All" label="All" checked={allInvestmentsFiltered} onClick={this.onAllInvestementClick}/>
 			</div>
 		);
 	}
 }
 
 InvestmentFilter.propTypes = {
-	setfilteredInvestments: PropTypes.func.isRequired,
+	allInvestmentsFiltered: PropTypes.bool.isRequired,
 	allInvestmentsPrice: PropTypes.array.isRequired,
 	filteredInvestments: PropTypes.array.isRequired,
-	allInvestmentsFiltered: PropTypes.bool.isRequired
+	setfilteredInvestments: PropTypes.func.isRequired
 };
 
 export default InvestmentFilter;

@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { Button } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Link} from 'react-router-dom';
+import {Button} from 'semantic-ui-react';
 
 import AccountInvestments from './AccountInvestments';
 import TitleHeader from '../components/TitleHeader';
@@ -10,7 +10,7 @@ import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 
-import { setAccount } from '../actions/accountActions';
+import {setAccount} from '../actions/accountActions';
 import {
 	getInvestmentListAction,
 	getAllInvestmentsTransactionsAction,
@@ -23,12 +23,12 @@ import {
 } from '../actions/investmentActions';
 import {
 	openTransactionInModal,
-	resetTransactionForm,
+	resetTransactionForm
 } from '../actions/ui/form/investmentTransaction';
 
 export class Investment extends Component {
-	componentWillMount () {
-		const { match } = this.props;
+	componentDidMount () {
+		const {match} = this.props;
 		const name = match && match.params && match.params.name;
 
 		this.props.setAccount(name);
@@ -40,13 +40,13 @@ export class Investment extends Component {
 	}
 
 	render () {
-		const { isMobile, account, investmentList, investmentAccountTransactions } = this.props;
+		const {isMobile, account, investmentList, investmentAccountTransactions} = this.props;
 		const autocompleteInvestmentList = investmentList.map(i => ({key: i.symbol, name: i.name}));
 
 		return (
 			<div>
 				<TitleHeader title={account} />
-				<div className='container-full-page'>
+				<div className="container-full-page">
 					<div className="container-header header-sticky">
 						<Button.Group basic fluid>
 							<Button
@@ -90,29 +90,29 @@ export class Investment extends Component {
 }
 
 Investment.propTypes = {
-	match: PropTypes.shape({
-		params: PropTypes.shape({
-			name: PropTypes.string.isRequired,
-		}).isRequired
-	}),
-	isMobile: PropTypes.bool.isRequired,
-	isModalOpen: PropTypes.bool.isRequired,
-	isEdit: PropTypes.bool.isRequired,
 	account: PropTypes.string.isRequired,
-	investmentList: PropTypes.array.isRequired,
 	accountInvestments: PropTypes.array.isRequired,
-	investmentAccountTransactions: PropTypes.array.isRequired,
-	getInvestmentAccountTransactionsAction: PropTypes.func.isRequired,
 	addInvestmentTransactionAction: PropTypes.func.isRequired,
 	deleteInvestmentTransactionAction: PropTypes.func.isRequired,
 	editInvestmentTransactionAction: PropTypes.func.isRequired,
-	getInvestmentListAction: PropTypes.func.isRequired,
-	setAccount: PropTypes.func.isRequired,
-	getAllInvestmentsTransactionsAction: PropTypes.func.isRequired,
-	getAllInvestmentsPriceAction: PropTypes.func.isRequired,
 	getAccountInvestmentsAction: PropTypes.func.isRequired,
+	getAllInvestmentsPriceAction: PropTypes.func.isRequired,
+	getAllInvestmentsTransactionsAction: PropTypes.func.isRequired,
+	getInvestmentAccountTransactionsAction: PropTypes.func.isRequired,
+	getInvestmentListAction: PropTypes.func.isRequired,
+	investmentAccountTransactions: PropTypes.array.isRequired,
+	investmentList: PropTypes.array.isRequired,
+	isEdit: PropTypes.bool.isRequired,
+	isMobile: PropTypes.bool.isRequired,
+	isModalOpen: PropTypes.bool.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired,
-	resetTransactionForm: PropTypes.func.isRequired
+	resetTransactionForm: PropTypes.func.isRequired,
+	setAccount: PropTypes.func.isRequired,
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			name: PropTypes.string.isRequired
+		}).isRequired
+	})
 };
 
 const mapStateToProps = state => ({

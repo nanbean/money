@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Icon, Header } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Icon, Header} from 'semantic-ui-react';
 
-import { toggleSidebar } from '../../actions/uiActions';
+import {toggleSidebar} from '../../actions/uiActions';
 
 import './index.css';
 
@@ -26,5 +26,5 @@ TitleHeader.propTypes = {
 
 export default connect(
 	null,
-	{ toggleSidebar }
+	{toggleSidebar}
 )(TitleHeader);

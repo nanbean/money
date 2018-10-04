@@ -1,13 +1,13 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { Header } from 'semantic-ui-react';
+import {Header} from 'semantic-ui-react';
 
 import PerformanceGrid from '../components/PerformanceGrid';
 
 class InvestmentPerformance extends Component {
 
 	render () {
-		const { investment, performance } = this.props;
+		const {investment, performance} = this.props;
 		const totalPerformance = performance.length > 0 ? performance.map(l => l.periodReturn).reduce((a, b) => a + b) : 0;
 		const totalQuantity = performance.length > 0 ? performance.map(m => m.quantity).reduce((a, b) => a + b) : 0;
 		const totalGain = performance.length > 0 ? performance.map(l => l.periodGain).reduce((a, b) => a + b) : 0;
@@ -40,12 +40,12 @@ class InvestmentPerformance extends Component {
 				totalGain,
 				totalPerformance,
 				totalQuantity
-			],
+			]
 		];
 
 		return (
 			<div>
-				<Header as='h4'>{investment}</Header>
+				<Header as="h4">{investment}</Header>
 				<PerformanceGrid
 					performanceData={performanceData}
 				/>

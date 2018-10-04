@@ -1,17 +1,17 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import {connect} from 'react-redux';
 
 import TitleHeader from '../components/TitleHeader';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 
-import { getInvestmentTransactionsAction } from '../actions/investmentActions';
-import { getInvestmentPriceAction } from '../actions/priceActions';
-import { getInvestmentPerformance } from '../utils/performance';
+import {getInvestmentTransactionsAction} from '../actions/investmentActions';
+import {getInvestmentPriceAction} from '../actions/priceActions';
+import {getInvestmentPerformance} from '../utils/performance';
 
 class Performance extends Component {
-	componentWillMount () {
-		const { match } = this.props;
+	componentDidMount () {
+		const {match} = this.props;
 		const investment = match && match.params && match.params.investment;
 
 		this.props.getInvestmentTransactionsAction(investment);
@@ -19,15 +19,15 @@ class Performance extends Component {
 	}
 
 	render () {
-		const { isMobile, investmentTransactions, investmentPrice } = this.props;
-		const { match } = this.props;
+		const {isMobile, investmentTransactions, investmentPrice} = this.props;
+		const {match} = this.props;
 		const investment = match && match.params && match.params.investment;
 		const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
 
 		return (
 			<div>
 				<TitleHeader title={investment} />
-				<div className='container-full-page'>
+				<div className="container-full-page">
 					<InvestmentPerformance
 						isMobile={isMobile}
 						investment={investment}
@@ -40,16 +40,16 @@ class Performance extends Component {
 }
 
 Performance.propTypes = {
-	match: PropTypes.shape({
-		params: PropTypes.shape({
-			name: PropTypes.string.isRequired,
-		}).isRequired
-	}),
-	isMobile: PropTypes.bool,
+	getInvestmentPriceAction: PropTypes.func.isRequired,
+	getInvestmentTransactionsAction: PropTypes.func.isRequired,
 	investmentPrice: PropTypes.number.isRequired,
 	investmentTransactions: PropTypes.array.isRequired,
-	getInvestmentTransactionsAction: PropTypes.func.isRequired,
-	getInvestmentPriceAction: PropTypes.func.isRequired
+	isMobile: PropTypes.bool,
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			name: PropTypes.string.isRequired
+		}).isRequired
+	})
 };
 
 const mapStateToProps = state => ({

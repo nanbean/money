@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Button, Checkbox } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Button, Checkbox} from 'semantic-ui-react';
 
 import TitleHeader from '../components/TitleHeader';
 
@@ -32,14 +32,14 @@ class Setting extends Component {
 	}
 
 	render () {
-		const { messagingToken } = this.props;
+		const {messagingToken} = this.props;
 
 		return (
 			<div>
-				<TitleHeader title='Setting' />
-				<div className='container-full-page'>
+				<TitleHeader title="Setting" />
+				<div className="container-full-page">
 					<div className="container-item">
-						<Checkbox toggle label='푸쉬 알림 받기' checked={messagingToken} onChange={this.handlePushNotificationChange} />
+						<Checkbox toggle label="푸쉬 알림 받기" checked={messagingToken} onChange={this.handlePushNotificationChange} />
 					</div>
 					<div className="container-item">
 						<Button

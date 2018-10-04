@@ -1,14 +1,14 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { Table, Button, Loader } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Link} from 'react-router-dom';
+import {Table, Button, Loader} from 'semantic-ui-react';
 
 import TitleHeader from '../components/TitleHeader';
 import Amount from '../components/Amount';
 
-import { updateInvestmentPriceAction } from '../actions/priceActions';
-import { getAccountListAction } from '../actions/accountActions';
+import {updateInvestmentPriceAction} from '../actions/priceActions';
+import {getAccountListAction} from '../actions/accountActions';
 
 const typeEmoji = {
 	'Bank': '🏦',
@@ -16,7 +16,7 @@ const typeEmoji = {
 	'Cash': '💵',
 	'Invst': '📈',
 	'Oth L': '🏧',
-	'Oth A': '🏠',
+	'Oth A': '🏠'
 };
 
 export class Home extends Component {
@@ -26,12 +26,12 @@ export class Home extends Component {
 		this.onRefreshClick = this.onRefreshClick.bind(this);
 	}
 
-	onRefreshClick () {
-		this.props.updateInvestmentPriceAction();
+	componentDidMount () {
+		this.props.getAccountListAction();
 	}
 
-	componentWillMount () {
-		this.props.getAccountListAction();
+	onRefreshClick () {
+		this.props.updateInvestmentPriceAction();
 	}
 
 	renderLists (data) {
@@ -42,12 +42,12 @@ export class Home extends Component {
 
 		return (
 			<Table.Row key={this.key}>
-				<Table.Cell textAlign='center'>
+				<Table.Cell textAlign="center">
 					<span>
 						{`${typeEmoji[this.type]} ${this.type}`}
 					</span>
 				</Table.Cell>
-				<Table.Cell textAlign='center'>
+				<Table.Cell textAlign="center">
 					<span>
 						{
 							(this.type === 'Bank' || this.type === 'CCard' || this.type === 'Oth L' || this.type === 'Oth A' || this.type === 'Cash') &&
@@ -59,7 +59,7 @@ export class Home extends Component {
 						}
 					</span>
 				</Table.Cell>
-				<Table.Cell textAlign='center'>
+				<Table.Cell textAlign="center">
 					<Amount value={this.balance} />
 				</Table.Cell>
 			</Table.Row>
@@ -67,7 +67,7 @@ export class Home extends Component {
 	}
 
 	render () {
-		const { accountList, updateInvestmentPriceFetching } = this.props;
+		const {accountList, updateInvestmentPriceFetching} = this.props;
 		let sum = 0;
 		let financeSum = 0;
 
@@ -78,28 +78,28 @@ export class Home extends Component {
 
 		return (
 			<div>
-				<TitleHeader title='Home' />
-				<div className='container-full-page'>
+				<TitleHeader title="Home" />
+				<div className="container-full-page">
 					<div className="container-header header-sticky">
 						<Button.Group basic fluid>
 							<Button
-								content='Refresh'
-								icon='refresh'
-								floated='right'
-								labelPosition='right'
+								content="Refresh"
+								icon="refresh"
+								floated="right"
+								labelPosition="right"
 								onClick={this.onRefreshClick}
 							/>
 						</Button.Group>
 					</div>
-					<Loader active={updateInvestmentPriceFetching} size='huge'/>
-					<Table basic='very' unstackable size='small'>
+					<Loader active={updateInvestmentPriceFetching} size="huge"/>
+					<Table basic="very" unstackable size="small">
 						<Table.Header>
 							<Table.Row>
 								<Table.HeaderCell />
-								<Table.HeaderCell textAlign='center'>
+								<Table.HeaderCell textAlign="center">
 									<Amount value={sum} />
 								</Table.HeaderCell>
-								<Table.HeaderCell textAlign='center'>
+								<Table.HeaderCell textAlign="center">
 									<Amount value={financeSum} />
 								</Table.HeaderCell>
 							</Table.Row>
@@ -119,8 +119,8 @@ export class Home extends Component {
 Home.propTypes = {
 	accountList:  PropTypes.array.isRequired,
 	getAccountListAction: PropTypes.func.isRequired,
-	updateInvestmentPriceFetching: PropTypes.bool.isRequired,
-	updateInvestmentPriceAction: PropTypes.func.isRequired
+	updateInvestmentPriceAction: PropTypes.func.isRequired,
+	updateInvestmentPriceFetching: PropTypes.bool.isRequired
 };
 
 const mapStateToProps = state => ({

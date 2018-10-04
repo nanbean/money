@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Form, Button, Dropdown, Input, Segment} from 'semantic-ui-react';
 
 import AutoComplete from '../AutoComplete';
 
@@ -29,7 +29,7 @@ const activityList = [
 ];
 
 class InvestmentTransactionForm extends React.Component {
-	onChange = handler => (event, { value }) => handler(value)
+	onChange = handler => (event, {value}) => handler(value)
 
 	onInvestmentChange = handler => (event, value) => handler(value)
 
@@ -37,7 +37,7 @@ class InvestmentTransactionForm extends React.Component {
 
 	onAddButton = handler => () => {
 		const data = {};
-		const { account, form } = this.props;
+		const {account, form} = this.props;
 
 		data.account = account;
 		data.date = form.date;
@@ -55,7 +55,7 @@ class InvestmentTransactionForm extends React.Component {
 	}
 
 	onEditButton = handler => () => {
-		const { account, form, investmentAccountTransactions } = this.props;
+		const {account, form, investmentAccountTransactions} = this.props;
 		const transaction = investmentAccountTransactions[form.index];
 
 		transaction.account = account;
@@ -89,7 +89,7 @@ class InvestmentTransactionForm extends React.Component {
 
 	onDeleteButton = handler => () => {
 		const transaction = {};
-		const { account, form } = this.props;
+		const {account, form} = this.props;
 
 		transaction.account = account;
 		if (typeof form.date !== 'undefined') {
@@ -119,7 +119,7 @@ class InvestmentTransactionForm extends React.Component {
 	}
 
 	render() {
-		const { form, autocompleteInvestmentList } = this.props;
+		const {form, autocompleteInvestmentList} = this.props;
 		const quantityDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
 		const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
 		const commissionDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
@@ -131,21 +131,21 @@ class InvestmentTransactionForm extends React.Component {
 					<Form className="investment-transaction-form">
 						<Input
 							fluid
-							type='date'
-							placeholder='Date'
+							type="date"
+							placeholder="Date"
 							value={form.date}
 							onChange={this.onChange(this.props.changeDate)}
 						/>
 						<AutoComplete
 							value={form.investment}
 							items={autocompleteInvestmentList}
-							placeholder='Investment'
+							placeholder="Investment"
 							onChange={this.onInvestmentChange(this.props.changeInvestment)}
 							onSelect={this.onInvestmentSelect(this.props.changeInvestment)}
 						/>
 						<Dropdown
 							fluid
-							placeholder='Activity'
+							placeholder="Activity"
 							value={form.activity}
 							search
 							selection
@@ -154,32 +154,32 @@ class InvestmentTransactionForm extends React.Component {
 						/>
 						<Input
 							fluid
-							type='number'
-							placeholder='Quantity'
+							type="number"
+							placeholder="Quantity"
 							value={form.quantity}
 							disabled={quantityDisabled}
 							onChange={this.onChange(this.props.changeQuantity)}
 						/>
 						<Input
 							fluid
-							type='number'
-							placeholder='Price'
+							type="number"
+							placeholder="Price"
 							value={form.price}
 							disabled={priceDisabled}
 							onChange={this.onChange(this.props.changePrice)}
 						/>
 						<Input
 							fluid
-							type='number'
-							placeholder='Commission'
+							type="number"
+							placeholder="Commission"
 							value={form.commission}
 							disabled={commissionDisabled}
 							onChange={this.onChange(this.props.changeCommission)}
 						/>
 						<Input
 							fluid
-							type='number'
-							placeholder='Amount'
+							type="number"
+							placeholder="Amount"
 							value={form.amount}
 							disabled={amountDisabled}
 							onChange={this.onChange(this.props.changeAmount)}
@@ -209,6 +209,19 @@ class InvestmentTransactionForm extends React.Component {
 }
 
 InvestmentTransactionForm.propTypes = {
+	account: PropTypes.string,
+	addInvestmentTransactionAction: PropTypes.func,
+	autocompleteInvestmentList: PropTypes.array,
+	changeActivity: PropTypes.func,
+	changeAmount: PropTypes.func,
+	changeCommission: PropTypes.func,
+	changeDate: PropTypes.func,
+	changeInvestment: PropTypes.func,
+	changePrice: PropTypes.func,
+	changeQuantity: PropTypes.func,
+	deleteInvestmentTransactionAction: PropTypes.func,
+	editInvestmentTransactionAction: PropTypes.func,
+	fillTransactionForm: PropTypes.func,
 	form: PropTypes.shape({
 		date: PropTypes.string,
 		investment: PropTypes.string,
@@ -218,21 +231,8 @@ InvestmentTransactionForm.propTypes = {
 		commission: PropTypes.number,
 		amount: PropTypes.number
 	}),
-	account: PropTypes.string,
 	investmentAccountTransactions: PropTypes.array,
-	autocompleteInvestmentList: PropTypes.array,
-	addInvestmentTransactionAction: PropTypes.func,
-	deleteInvestmentTransactionAction: PropTypes.func,
-	editInvestmentTransactionAction: PropTypes.func,
-	fillTransactionForm: PropTypes.func,
-	resetTransactionForm: PropTypes.func,
-	changeDate: PropTypes.func,
-	changeInvestment: PropTypes.func,
-	changeActivity: PropTypes.func,
-	changeQuantity: PropTypes.func,
-	changePrice: PropTypes.func,
-	changeCommission: PropTypes.func,
-	changeAmount: PropTypes.func
+	resetTransactionForm: PropTypes.func
 };
 
 const mapStateToProps = state => ({

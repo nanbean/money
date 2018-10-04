@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
-import { Switch, Route } from 'react-router-dom';
-import { Dimmer } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {withRouter} from 'react-router-dom';
+import {Switch, Route} from 'react-router-dom';
+import {Dimmer} from 'semantic-ui-react';
 import throttle from 'lodash/throttle';
 
 import {
@@ -22,15 +22,15 @@ import {
 
 import SidebarMenu from './components/SidebarMenu';
 
-import { toggleSidebar } from './actions/uiActions';
-import { windowResize } from './actions/ui/windowResize';
-import { rehydrateAction } from './actions/rehydrateActions';
+import {toggleSidebar} from './actions/uiActions';
+import {windowResize} from './actions/ui/windowResize';
+import {rehydrateAction} from './actions/rehydrateActions';
 
 import './App.css';
 
 const Routing = () => (
 	<Switch>
-		<Route exact path='/' component={Home} />
+		<Route exact path="/" component={Home} />
 		<Route path="/bank/:name" component={Bank} />
 		<Route path="/investment/:name" component={Investment} />
 		<Route exact path="/networth" component={NetWorth} />
@@ -53,10 +53,10 @@ class App extends React.Component {
 	}
 
 	render() {
-		const { isSidebarOpen, toggleSidebar } = this.props;
+		const {isSidebarOpen, toggleSidebar} = this.props;
 
 		return (
-			<div className='App'>
+			<div className="App">
 				<div
 					className={isSidebarOpen ? 'openSidebar' : 'closedSidebar'}
 					onClick={isSidebarOpen ? toggleSidebar : undefined}

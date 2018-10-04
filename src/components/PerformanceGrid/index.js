@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { AutoSizer, ColumnSizer, MultiGrid } from 'react-virtualized';
+import {AutoSizer, ColumnSizer, MultiGrid} from 'react-virtualized';
 
-import { toCurrencyFormat } from '../../utils/formatting';
+import {toCurrencyFormat} from '../../utils/formatting';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
@@ -12,10 +12,10 @@ const COLUMN_MIN_WIDTH = 100;
 
 class PerformanceGrid extends Component {
 	render () {
-		const { performanceData } = this.props;
+		const {performanceData} = this.props;
 
 		return (
-			<div className='performance-grid'>
+			<div className="performance-grid">
 				{
 					<AutoSizer disableHeight>
 						{({width}) => (
@@ -48,9 +48,9 @@ class PerformanceGrid extends Component {
 										height={ROW_HEIGHT * performanceData.length + 10}
 										rowHeight={ROW_HEIGHT}
 										rowCount={performanceData.length}
-										classNameTopLeftGrid='top-left-grid'
-										classNameBottomLeftGrid='bottom-left-grid'
-										classNameTopRightGrid='top-right-grid'
+										classNameTopLeftGrid="top-left-grid"
+										classNameBottomLeftGrid="bottom-left-grid"
+										classNameTopRightGrid="top-right-grid"
 									/>
 								)}
 							</ColumnSizer>

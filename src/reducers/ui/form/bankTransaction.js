@@ -1,4 +1,4 @@
-import { handleActions } from 'redux-actions';
+import {handleActions} from 'redux-actions';
 import moment from 'moment';
 import {
 	fillTransactionForm,
@@ -18,35 +18,35 @@ const initialState = {
 
 export default handleActions(
 	{
-		[fillTransactionForm]: (state, { payload }) => ({
+		[fillTransactionForm]: (state, {payload}) => ({
 			...state,
 			...payload
 		}),
 		[resetTransactionForm]: () => ({
 			...initialState
 		}),
-		[openTransactionInModal]: (state, { payload }) => ({
+		[openTransactionInModal]: (state, {payload}) => ({
 			...state,
 			...payload,
 			isModalOpen: true
 		}),
-		[changeDate]: (state, { payload }) => ({
+		[changeDate]: (state, {payload}) => ({
 			...state,
 			date: payload
 		}),
-		[changePayee]: (state, { payload }) => ({
+		[changePayee]: (state, {payload}) => ({
 			...state,
 			payee: payload
 		}),
-		[changeCategory]: (state, { payload }) => ({
+		[changeCategory]: (state, {payload}) => ({
 			...state,
 			category: payload
 		}),
-		[changeAmount]: (state, { payload }) => ({
+		[changeAmount]: (state, {payload}) => ({
 			...state,
 			amount: payload
 		}),
-		[changeMemo]: (state, { payload }) => ({
+		[changeMemo]: (state, {payload}) => ({
 			...state,
 			memo: payload
 		})

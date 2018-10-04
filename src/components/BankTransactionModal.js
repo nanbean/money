@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Header } from 'semantic-ui-react';
+import {Modal, Header} from 'semantic-ui-react';
 
 const BankTransactionModal = props => (
 	<Modal
@@ -29,17 +29,17 @@ const BankTransactionModal = props => (
 );
 
 BankTransactionModal.propTypes = {
-	isOpen: PropTypes.bool,
-	isEdit: PropTypes.bool,
 	account: PropTypes.string,
-	transactions: PropTypes.array,
-	dropCategoryList: PropTypes.array,
-	dropPayeeList: PropTypes.array,
-	resetTransactionForm: PropTypes.func,
 	addTransactionAction: PropTypes.func,
 	deleteTransactionAction: PropTypes.func,
+	dropCategoryList: PropTypes.array,
+	dropPayeeList: PropTypes.array,
+	EditForm: PropTypes.func,
 	editTransactionAction: PropTypes.func,
-	EditForm: PropTypes.func
+	isEdit: PropTypes.bool,
+	isOpen: PropTypes.bool,
+	resetTransactionForm: PropTypes.func,
+	transactions: PropTypes.array
 };
 
 export default BankTransactionModal;

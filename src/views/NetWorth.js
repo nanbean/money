@@ -1,15 +1,15 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { ResponsiveContainer, ComposedChart, Bar, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import {connect} from 'react-redux';
+import {ResponsiveContainer, ComposedChart, Bar, Area, XAxis, YAxis, CartesianGrid, Tooltip} from 'recharts';
 
 import TitleHeader from '../components/TitleHeader';
 
-import { getNetWorthAction } from '../actions/netWorthActions';
-import { toCurrencyFormat } from '../utils/formatting';
+import {getNetWorthAction} from '../actions/netWorthActions';
+import {toCurrencyFormat} from '../utils/formatting';
 
 class NetWorth extends Component {
-	componentWillMount () {
+	componentDidMount () {
 		this.props.getNetWorthAction();
 	}
 
@@ -18,15 +18,15 @@ class NetWorth extends Component {
 	}
 
 	render () {
-		const { netWorth } = this.props;
+		const {netWorth} = this.props;
 
 		return (
 			<div>
-				<TitleHeader title='Net Worth' />
-				<div className='container-full-page'>
+				<TitleHeader title="Net Worth" />
+				<div className="container-full-page">
 					{
 						netWorth.length > 1 &&
-						<ResponsiveContainer width='100%' height={400}>
+						<ResponsiveContainer width="100%" height={400}>
 							<ComposedChart
 								data={netWorth}
 								margin={{top: 5, right: 10, left: 20, bottom: 5}}
@@ -47,8 +47,8 @@ class NetWorth extends Component {
 }
 
 NetWorth.propTypes = {
-	netWorth:  PropTypes.array.isRequired,
-	getNetWorthAction: PropTypes.func.isRequired
+	getNetWorthAction: PropTypes.func.isRequired,
+	netWorth:  PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({

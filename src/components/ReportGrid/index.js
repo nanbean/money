@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { AutoSizer, MultiGrid } from 'react-virtualized';
+import {AutoSizer, MultiGrid} from 'react-virtualized';
 
-import { toCurrencyFormat } from '../../utils/formatting';
+import {toCurrencyFormat} from '../../utils/formatting';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
@@ -12,10 +12,10 @@ const COLUMN_WIDTH = 84;
 
 class ReportGrid extends Component {
 	render () {
-		const { reportData } = this.props;
+		const {reportData} = this.props;
 
 		return (
-			<div className='report-grid'>
+			<div className="report-grid">
 				{
 					<AutoSizer>
 						{({width, height}) => (
@@ -28,7 +28,7 @@ class ReportGrid extends Component {
 									const isNumber = !Number.isNaN(parseValue);
 
 									return (
-										<div className='cell' key={key} style={style}>
+										<div className="cell" key={key} style={style}>
 											{isNumber ? toCurrencyFormat(parseValue) : value}
 										</div>
 									);
@@ -41,9 +41,9 @@ class ReportGrid extends Component {
 								height={height}
 								rowHeight={ROW_HEIGHT}
 								rowCount={reportData.length}
-								classNameTopLeftGrid='top-left-grid'
-								classNameBottomLeftGrid='bottom-left-grid'
-								classNameTopRightGrid='top-right-grid'
+								classNameTopLeftGrid="top-left-grid"
+								classNameBottomLeftGrid="bottom-left-grid"
+								classNameTopRightGrid="top-right-grid"
 							/>
 						)}
 					</AutoSizer>

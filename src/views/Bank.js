@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Button, Divider } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Button, Divider} from 'semantic-ui-react';
 
 import MortgageSchedule from '../components/MortgageSchedule';
 import TitleHeader from '../components/TitleHeader';
@@ -9,9 +9,9 @@ import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 
-import { getMortgageScheduleAction } from '../actions/mortgageActions';
-import { getCategoryListAction } from '../actions/categoryActions';
-import { getPayeeListAction } from '../actions/payeeActions';
+import {getMortgageScheduleAction} from '../actions/mortgageActions';
+import {getCategoryListAction} from '../actions/categoryActions';
+import {getPayeeListAction} from '../actions/payeeActions';
 import {
 	getTransactionsAction,
 	addTransactionAction,
@@ -20,13 +20,13 @@ import {
 } from '../actions/transactionActions';
 import {
 	openTransactionInModal,
-	resetTransactionForm,
+	resetTransactionForm
 } from '../actions/ui/form/bankTransaction';
-import { toCurrencyFormat } from '../utils/formatting';
+import {toCurrencyFormat} from '../utils/formatting';
 
 class Bank extends Component {
-	componentWillMount () {
-		const { match } = this.props;
+	componentDidMount () {
+		const {match} = this.props;
 		const name = match && match.params && match.params.name;
 
 		this.props.getTransactionsAction(name);
@@ -35,7 +35,7 @@ class Bank extends Component {
 	}
 
 	render () {
-		const { account, transactions, categoryList, payeeList, mortgageSchedule } = this.props;
+		const {account, transactions, categoryList, payeeList, mortgageSchedule} = this.props;
 		const balance = transactions.length > 0 && transactions.map((i) => i.amount).reduce( (a, b) => a + b );
 		const dropCategoryList = categoryList.map(i => ({key: i, value: i, text: i}));
 		const dropPayeeList = payeeList.map(i => ({key: i, name: i}));
@@ -43,8 +43,8 @@ class Bank extends Component {
 		return (
 			<div>
 				<TitleHeader title={account} />
-				<div className='container-full-page'>
-					<div className='container-header'>
+				<div className="container-full-page">
+					<div className="container-header">
 						<Button.Group basic fluid>
 							<Button
 								icon="plus"
@@ -88,27 +88,27 @@ class Bank extends Component {
 }
 
 Bank.propTypes = {
-	match: PropTypes.shape({
-		params: PropTypes.shape({
-			name: PropTypes.string.isRequired,
-		}).isRequired
-	}),
-	isModalOpen: PropTypes.bool.isRequired,
-	isEdit: PropTypes.bool.isRequired,
 	account: PropTypes.string.isRequired,
-	categoryList: PropTypes.array.isRequired,
-	payeeList: PropTypes.array.isRequired,
-	transactions: PropTypes.array.isRequired,
-	mortgageSchedule: PropTypes.array.isRequired,
-	getTransactionsAction: PropTypes.func.isRequired,
 	addTransactionAction: PropTypes.func.isRequired,
-	getCategoryListAction: PropTypes.func.isRequired,
-	getPayeeListAction: PropTypes.func.isRequired,
-	openTransactionInModal: PropTypes.func.isRequired,
-	resetTransactionForm: PropTypes.func.isRequired,
+	categoryList: PropTypes.array.isRequired,
 	deleteTransactionAction: PropTypes.func.isRequired,
 	editTransactionAction: PropTypes.func.isRequired,
-	getMortgageScheduleAction: PropTypes.func.isRequired
+	getCategoryListAction: PropTypes.func.isRequired,
+	getMortgageScheduleAction: PropTypes.func.isRequired,
+	getPayeeListAction: PropTypes.func.isRequired,
+	getTransactionsAction: PropTypes.func.isRequired,
+	isEdit: PropTypes.bool.isRequired,
+	isModalOpen: PropTypes.bool.isRequired,
+	mortgageSchedule: PropTypes.array.isRequired,
+	openTransactionInModal: PropTypes.func.isRequired,
+	payeeList: PropTypes.array.isRequired,
+	resetTransactionForm: PropTypes.func.isRequired,
+	transactions: PropTypes.array.isRequired,
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			name: PropTypes.string.isRequired
+		}).isRequired
+	})
 };
 
 const mapStateToProps = state => ({

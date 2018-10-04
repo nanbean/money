@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Form, Button, Dropdown, Input, Segment} from 'semantic-ui-react';
 import _ from 'lodash';
 
 import AutoComplete from '../AutoComplete';
@@ -19,12 +19,12 @@ import {
 import './index.css';
 
 class BankTransactionForm extends React.Component {
-	onChange = handler => (event, { value }) => handler(value)
+	onChange = handler => (event, {value}) => handler(value)
 
 	onPayeeChange = handler => (event, value) => handler(value)
 
 	onPayeeSelect = handler => (val) => {
-		const { transactions, form } = this.props;
+		const {transactions, form} = this.props;
 		const matchIndex = _.findLastIndex(transactions, i => i.payee === val);
 		const matchTransaction = matchIndex >= 0 && transactions[matchIndex];
 		const transaction = {
@@ -44,7 +44,7 @@ class BankTransactionForm extends React.Component {
 
 	onAddButton = handler => () => {
 		const data = {};
-		const { account, form } = this.props;
+		const {account, form} = this.props;
 		const categoryArray = form.category.split(':');
 
 		data.account = form.account || account;
@@ -69,7 +69,7 @@ class BankTransactionForm extends React.Component {
 	}
 
 	onEditButton = handler => () => {
-		const { account, form, transactions } = this.props;
+		const {account, form, transactions} = this.props;
 		const transaction = transactions[form.index];
 		const categoryArray = form.category.split(':');
 
@@ -101,7 +101,7 @@ class BankTransactionForm extends React.Component {
 
 	onDeleteButton = handler => () => {
 		const transaction = {};
-		const { account, form } = this.props;
+		const {account, form} = this.props;
 		const categoryArray = form.category.split(':');
 
 		transaction.account = form.account || account;
@@ -121,7 +121,7 @@ class BankTransactionForm extends React.Component {
 	}
 
 	render() {
-		const { form, dropCategoryList, dropPayeeList } = this.props;
+		const {form, dropCategoryList, dropPayeeList} = this.props;
 
 		return (
 			<div>
@@ -129,21 +129,21 @@ class BankTransactionForm extends React.Component {
 					<Form className="bank-transaction-form">
 						<Input
 							fluid
-							type='date'
-							placeholder='Date'
+							type="date"
+							placeholder="Date"
 							value={form.date}
 							onChange={this.onChange(this.props.changeDate)}
 						/>
 						<AutoComplete
 							value={form.payee}
 							items={dropPayeeList}
-							placeholder='Payee'
+							placeholder="Payee"
 							onChange={this.onPayeeChange(this.props.changePayee)}
 							onSelect={this.onPayeeSelect(this.props.fillTransactionForm)}
 						/>
 						<Dropdown
 							fluid
-							placeholder='Category'
+							placeholder="Category"
 							value={form.category}
 							search
 							selection
@@ -152,14 +152,14 @@ class BankTransactionForm extends React.Component {
 						/>
 						<Input
 							fluid
-							type='number'
-							placeholder='Amount'
+							type="number"
+							placeholder="Amount"
 							value={form.amount}
 							onChange={this.onChange(this.props.changeAmount)}
 						/>
 						<Input
 							fluid
-							placeholder='Memo'
+							placeholder="Memo"
 							value={form.memo}
 							onChange={this.onChange(this.props.changeMemo)}
 						/>
@@ -188,6 +188,18 @@ class BankTransactionForm extends React.Component {
 }
 
 BankTransactionForm.propTypes = {
+	account: PropTypes.string,
+	addTransactionAction: PropTypes.func,
+	changeAmount: PropTypes.func,
+	changeCategory: PropTypes.func,
+	changeDate: PropTypes.func,
+	changeMemo: PropTypes.func,
+	changePayee: PropTypes.func,
+	deleteTransactionAction: PropTypes.func,
+	dropCategoryList: PropTypes.array,
+	dropPayeeList: PropTypes.array,
+	editTransactionAction: PropTypes.func,
+	fillTransactionForm: PropTypes.func,
 	form: PropTypes.shape({
 		account: PropTypes.string,
 		date: PropTypes.string,
@@ -196,24 +208,12 @@ BankTransactionForm.propTypes = {
 		amount: PropTypes.number,
 		memo: PropTypes.string
 	}),
-	account: PropTypes.string,
-	transactions: PropTypes.array,
-	dropCategoryList: PropTypes.array,
-	dropPayeeList: PropTypes.array,
-	addTransactionAction: PropTypes.func,
-	deleteTransactionAction: PropTypes.func,
-	editTransactionAction: PropTypes.func,
-	fillTransactionForm: PropTypes.func,
 	resetTransactionForm: PropTypes.func,
-	changeDate: PropTypes.func,
-	changePayee: PropTypes.func,
-	changeCategory: PropTypes.func,
-	changeAmount: PropTypes.func,
-	changeMemo: PropTypes.func
+	transactions: PropTypes.array
 };
 
 const mapStateToProps = state => ({
-	form: state.ui.form.bankTransaction,
+	form: state.ui.form.bankTransaction
 });
 
 export default connect(mapStateToProps, {

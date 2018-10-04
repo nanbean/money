@@ -1,4 +1,4 @@
-import { getAccountListAction } from './accountActions';
+import {getAccountListAction} from './accountActions';
 
 import {
 	SET_ALL_ACCOUNT_TRANSACTIONS,

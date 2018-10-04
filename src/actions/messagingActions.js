@@ -52,7 +52,7 @@ export const deleteTokenFailure = () => ({
 
 export const removePermissionAction = () => (dispatch, getState) => {
 	const state = getState();
-	const { messagingToken } = state;
+	const {messagingToken} = state;
 	return messaging.deleteToken(messagingToken)
 		.then(() => {
 			if (messagingToken) {

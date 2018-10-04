@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Header } from 'semantic-ui-react';
+import {Modal, Header} from 'semantic-ui-react';
 
 const InvestmentTransactionModal = props => (
 	<Modal
@@ -11,7 +11,7 @@ const InvestmentTransactionModal = props => (
 		onClose={props.resetTransactionForm}
 	>
 		<Header
-			as='h4'
+			as="h4"
 			icon="file text outline"
 			content={props.isEdit ? 'Edit Transaction' : 'New Transaction'}
 		/>
@@ -29,16 +29,16 @@ const InvestmentTransactionModal = props => (
 );
 
 InvestmentTransactionModal.propTypes = {
-	isOpen: PropTypes.bool,
-	isEdit: PropTypes.bool,
 	account: PropTypes.string,
-	investmentAccountTransactions: PropTypes.array,
-	autocompleteInvestmentList: PropTypes.array,
-	resetTransactionForm: PropTypes.func,
 	addInvestmentTransactionAction: PropTypes.func,
+	autocompleteInvestmentList: PropTypes.array,
 	deleteInvestmentTransactionAction: PropTypes.func,
+	EditForm: PropTypes.func,
 	editInvestmentTransactionAction: PropTypes.func,
-	EditForm: PropTypes.func
+	investmentAccountTransactions: PropTypes.array,
+	isEdit: PropTypes.bool,
+	isOpen: PropTypes.bool,
+	resetTransactionForm: PropTypes.func
 };
 
 export default InvestmentTransactionModal;

@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Divider } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Divider} from 'semantic-ui-react';
 
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import InvestmentFilter from '../components/InvestmentFilter';
@@ -12,17 +12,17 @@ import {
 	getAllInvestmentsPriceAction,
 	setfilteredInvestments
 } from '../actions/investmentActions';
-import { toCurrencyFormat } from '../utils/formatting';
-import { getInvestmentPerformance } from '../utils/performance';
+import {toCurrencyFormat} from '../utils/formatting';
+import {getInvestmentPerformance} from '../utils/performance';
 
 class AllPerformance extends Component {
-	componentWillMount () {
+	componentDidMount () {
 		this.props.getAllInvestmentsTransactionsAction();
 		this.props.getAllInvestmentsPriceAction();
 	}
 
 	render () {
-		const { isMobile, allInvestmentsTransactions, allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered } = this.props;
+		const {isMobile, allInvestmentsTransactions, allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered} = this.props;
 
 		const allPerformance = allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0 && allInvestmentsTransactions.map(i => {
 			const investmentTransactions = i.transactions;
@@ -47,9 +47,9 @@ class AllPerformance extends Component {
 
 		return (
 			<div>
-				<TitleHeader title='Performance' />
-				<div className='container-full-page'>
-					<div className='container-header'>
+				<TitleHeader title="Performance" />
+				<div className="container-full-page">
+					<div className="container-header">
 						<InvestmentFilter
 							allInvestmentsPrice={allInvestmentsPrice}
 							filteredInvestments={filteredInvestments}
@@ -77,14 +77,14 @@ class AllPerformance extends Component {
 }
 
 AllPerformance.propTypes = {
-	isMobile: PropTypes.bool,
+	allInvestmentsFiltered: PropTypes.bool.isRequired,
 	allInvestmentsPrice: PropTypes.array.isRequired,
 	allInvestmentsTransactions: PropTypes.array.isRequired,
-	getAllInvestmentsTransactionsAction: PropTypes.func.isRequired,
-	getAllInvestmentsPriceAction: PropTypes.func.isRequired,
-	setfilteredInvestments: PropTypes.func.isRequired,
 	filteredInvestments: PropTypes.array.isRequired,
-	allInvestmentsFiltered: PropTypes.bool.isRequired
+	getAllInvestmentsPriceAction: PropTypes.func.isRequired,
+	getAllInvestmentsTransactionsAction: PropTypes.func.isRequired,
+	setfilteredInvestments: PropTypes.func.isRequired,
+	isMobile: PropTypes.bool
 };
 
 const mapStateToProps = state => ({

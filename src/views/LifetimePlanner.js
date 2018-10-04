@@ -1,15 +1,15 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import {connect} from 'react-redux';
+import {ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip} from 'recharts';
 
 import TitleHeader from '../components/TitleHeader';
 
-import { getLifetimeFlowAction } from '../actions/lifetimePlannerActions';
-import { toCurrencyFormat } from '../utils/formatting';
+import {getLifetimeFlowAction} from '../actions/lifetimePlannerActions';
+import {toCurrencyFormat} from '../utils/formatting';
 
 class LifetimePlanner extends Component {
-	componentWillMount () {
+	componentDidMount () {
 		this.props.getLifetimeFlowAction();
 	}
 
@@ -18,15 +18,15 @@ class LifetimePlanner extends Component {
 	}
 
 	render () {
-		const { lifetimePlannerFlow } = this.props;
+		const {lifetimePlannerFlow} = this.props;
 
 		return (
 			<div>
-				<TitleHeader title='Lifetime Planner' />
-				<div className='container-full-page'>
+				<TitleHeader title="Lifetime Planner" />
+				<div className="container-full-page">
 					{
 						lifetimePlannerFlow.length > 1 &&
-						<ResponsiveContainer width='100%' height={400}>
+						<ResponsiveContainer width="100%" height={400}>
 							<BarChart
 								data={lifetimePlannerFlow}
 								margin={{top: 5, right: 10, left: 20, bottom: 5}}
@@ -47,8 +47,8 @@ class LifetimePlanner extends Component {
 }
 
 LifetimePlanner.propTypes = {
-	lifetimePlannerFlow:  PropTypes.array.isRequired,
-	getLifetimeFlowAction: PropTypes.func.isRequired
+	getLifetimeFlowAction: PropTypes.func.isRequired,
+	lifetimePlannerFlow:  PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({

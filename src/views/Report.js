@@ -1,14 +1,14 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Dropdown, Checkbox } from 'semantic-ui-react';
+import {connect} from 'react-redux';
+import {Dropdown, Checkbox} from 'semantic-ui-react';
 import moment from 'moment';
 import _ from 'lodash';
 
 import TitleHeader from '../components/TitleHeader';
 import ReportGrid from '../components/ReportGrid';
 
-import { getAllAccountTransactionsAction } from '../actions/transactionActions';
+import {getAllAccountTransactionsAction} from '../actions/transactionActions';
 
 const month = Array.from({length: 12}, (v, k) => _.padStart(k + 1, 2, '0'));
 const startYear = 2005;
@@ -30,6 +30,10 @@ class Report extends Component {
 		};
 	}
 
+	componentDidMount () {
+		this.props.getAllAccountTransactionsAction();
+	}
+
 	onYearChange (e, data) {
 		this.setState({
 			year: data.value
@@ -48,10 +52,6 @@ class Report extends Component {
 		});
 	}
 
-	componentWillMount () {
-		this.props.getAllAccountTransactionsAction();
-	}
-
 	getMonthFiltered (data, key, month) {
 		const filtered = data[key].filter(i => i.date.substr(5, 2) === month);
 
@@ -63,8 +63,8 @@ class Report extends Component {
 	}
 
 	render () {
-		const { allAccountTransactions } = this.props;
-		const { year, livingExpenseOnly, livingExpenseCardOnly } = this.state;
+		const {allAccountTransactions} = this.props;
+		const {year, livingExpenseOnly, livingExpenseCardOnly} = this.state;
 		let incomeTransactions = [];
 		let expenseTransactions = [];
 		const startDate = moment(`${year}-01-01`).format('YYYY-MM-DD');
@@ -162,7 +162,7 @@ class Report extends Component {
 					'취미-레저:여행',
 					'교통비:차량구입비'
 				];
-				expenseReport = expenseReport.filter(i => !exemptionCategory.find(j => i.category.startWith(j)));
+				expenseReport = expenseReport.filter(i => !exemptionCategory.find(j => i.category && i.category.startsWith(j)));
 			}
 			totalMonthExpenseSum = month.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
 			totalExpenseSum = expenseReport.map(i => i.sum).reduce((a, b) => a + b);
@@ -207,21 +207,21 @@ class Report extends Component {
 
 		return (
 			<div>
-				<TitleHeader title='Monthly Expense' />
-				<div className='container-full-page'>
+				<TitleHeader title="Monthly Expense" />
+				<div className="container-full-page">
 					<div className="container-header">
 						<Dropdown
 							fluid
-							placeholder='Year'
+							placeholder="Year"
 							value={year}
 							search
 							selection
 							options={yearOptions}
 							onChange={this.onYearChange}
 						/>
-						<div className='detail-toggle'>
-							<Checkbox toggle label='생활비만 보기' checked={livingExpenseOnly} onChange={this.onLivingExpenseOnlyChange} />
-							<Checkbox toggle label='생활비카드만 보기' checked={livingExpenseCardOnly} onChange={this.onLivingExpenseCardOnlyChange} />
+						<div className="detail-toggle">
+							<Checkbox toggle label="생활비만 보기" checked={livingExpenseOnly} onChange={this.onLivingExpenseOnlyChange} />
+							<Checkbox toggle label="생활비카드만 보기" checked={livingExpenseCardOnly} onChange={this.onLivingExpenseCardOnlyChange} />
 						</div>
 					</div>
 					{reportData.length > 0 && <ReportGrid reportData={reportData} />}
