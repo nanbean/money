@@ -154,8 +154,15 @@ class Report extends Component {
 			});
 
 			if (livingExpenseOnly) {
-				expenseReport = expenseReport.filter(i => !i.category.startsWith('세금') && !i.category.startsWith('대출이자') &&
-				!i.category.startsWith('보험') && !i.category.startsWith('실제지출아님') && !i.category.startsWith('취미-레저:여행'));
+				const exemptionCategory = [
+					'세금',
+					'대출이자',
+					'보험',
+					'실제지출아님',
+					'취미-레저:여행',
+					'교통비:차량구입비'
+				];
+				expenseReport = expenseReport.filter(i => !exemptionCategory.find(j => i.category.startWith(j)));
 			}
 			totalMonthExpenseSum = month.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
 			totalExpenseSum = expenseReport.map(i => i.sum).reduce((a, b) => a + b);
