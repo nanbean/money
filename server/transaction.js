@@ -349,12 +349,12 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.then(function(){
 			var investment1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('iv > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
+				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
 				});
 			});
 			var investment2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('iv > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
+				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
 				});
 			});
