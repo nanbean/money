@@ -307,36 +307,42 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.start('http://finance.daum.net/domestic/all_stocks?market=KOSPI');
 
-		spooky.wait(2000, function() {});
+		spooky.wait(500, function() {});
+
+		spooky.then(function(){
+			this.click('#orderStock');
+		});
+
+		spooky.wait(1500, function() {});
 
 		spooky.then(function(){
 			var investment1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
 				});
 			});
 			var investment2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
 				});
 			});
 			var symbol1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.href.substr(e.href.length - 6, 6);
 				});
 			});
 			var symbol2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
 					return e.href.substr(e.href.length - 6, 6);
 				});
 			});
 			var price1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
 					return e.innerHTML;
 				});
 			});
 			var price2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
 					return e.innerHTML;
 				});
 			});
@@ -345,36 +351,42 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.thenOpen('http://finance.daum.net/domestic/all_stocks?market=KOSDAQ');
 
-		spooky.wait(2000, function() {});
+		spooky.wait(500, function() {});
+
+		spooky.then(function(){
+			this.click('#orderStock');
+		});
+
+		spooky.wait(1500, function() {});
 
 		spooky.then(function(){
 			var investment1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
 				});
 			});
 			var investment2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
 				});
 			});
 			var symbol1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.href.substr(e.href.length - 6, 6);
 				});
 			});
 			var symbol2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
 					return e.href.substr(e.href.length - 6, 6);
 				});
 			});
 			var price1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
 					return e.innerHTML;
 				});
 			});
 			var price2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('div > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
 					return e.innerHTML;
 				});
 			});
