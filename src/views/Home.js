@@ -19,6 +19,22 @@ const typeEmoji = {
 	'Oth A': '🏠'
 };
 
+const quickAssetAccount = [
+	'키움증권맥쿼리',
+	'키움증권',
+	'몬쁭스SK증권',
+	'동양종금장마',
+	'급여계좌',
+	'KB체크카드',
+	'KB카드',
+	'LG카드',
+	'생활비카드',
+	'지갑',
+	'연금저축',
+	'IRP',
+	'IRP오은미'
+]
+
 export class Home extends Component {
 	constructor (props) {
 		super(props);
@@ -70,10 +86,16 @@ export class Home extends Component {
 		const {accountList, updateInvestmentPriceFetching} = this.props;
 		let sum = 0;
 		let financeSum = 0;
+		let quickassets = 0;
 
 		if (accountList.length > 0) {
 			sum = accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
-			financeSum = accountList.filter(i => i.type !== 'Oth A').map((i) => i.balance).reduce( (prev, curr) => prev + curr );
+			financeSum = accountList.filter(i => i.type !== 'Oth A')
+										.map((i) => i.balance)
+										.reduce( (prev, curr) => prev + curr );
+			quickassets = accountList.filter(i => quickAssetAccount.find(j => j === i.name))
+										.map((i) => i.balance)
+										.reduce( (prev, curr) => prev + curr );
 		}
 
 		return (
@@ -95,9 +117,11 @@ export class Home extends Component {
 					<Table basic="very" unstackable size="small">
 						<Table.Header>
 							<Table.Row>
-								<Table.HeaderCell />
 								<Table.HeaderCell textAlign="center">
 									<Amount value={sum} />
+								</Table.HeaderCell>
+								<Table.HeaderCell textAlign="center">
+									<Amount value={quickassets} />
 								</Table.HeaderCell>
 								<Table.HeaderCell textAlign="center">
 									<Amount value={financeSum} />
