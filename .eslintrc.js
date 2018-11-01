@@ -38,7 +38,8 @@ module.exports = {
 			"camelcase": [
 				"warn",
 				{
-					"properties": "always"
+					"properties": "always",
+					"allow": ['^UNSAFE_']
 				}
 			],
 			"comma-dangle": [

@@ -33,7 +33,7 @@ const quickAssetAccount = [
 	'연금저축',
 	'IRP',
 	'IRP오은미'
-]
+];
 
 export class Home extends Component {
 	constructor (props) {
@@ -91,11 +91,11 @@ export class Home extends Component {
 		if (accountList.length > 0) {
 			sum = accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
 			financeSum = accountList.filter(i => i.type !== 'Oth A')
-										.map((i) => i.balance)
-										.reduce( (prev, curr) => prev + curr );
+				.map((i) => i.balance)
+				.reduce( (prev, curr) => prev + curr );
 			quickassets = accountList.filter(i => quickAssetAccount.find(j => j === i.name))
-										.map((i) => i.balance)
-										.reduce( (prev, curr) => prev + curr );
+				.map((i) => i.balance)
+				.reduce( (prev, curr) => prev + curr );
 		}
 
 		return (

@@ -77,6 +77,8 @@ class Search extends Component {
 								return true;
 							} else if (j.subcategory && j.subcategory.match(new RegExp(keyword, 'i'))) {
 								return true;
+							} else if (j.memo && j.memo.match(new RegExp(keyword, 'i'))) {
+								return true;
 							} else {
 								return false;
 							}
