@@ -171,6 +171,8 @@ exports.addTransaction = async function (body) {
 					payee: items[6],
 					category: '분류없음'
 				};
+			} else if (body.text.match(/해외승인/g)) { // exclude oversea credit charge
+				transcation = {};
 			} else {
 				transaction = {
 					date: items[5] && moment(items[5], 'MM/DD').format('YYYY-MM-DD'),
