@@ -116,6 +116,15 @@ exports.addTransaction = async function (body) {
 				payee: items[4],
 				category: '분류없음'
 			};
+		} else if (body.packageName.match(/com\.wooricard\.smartapp/i)) {
+			account = '급여계좌';
+			items = body.text.split('\n');
+			transaction = {
+				date: items[0] && moment(items[0].match(/\d{2}\.\d{2}/), 'MM.DD').format('YYYY-MM-DD'),
+				amount: items[0] && parseInt(items[0].replace(',', '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g,''), 10) * (-1),
+				payee: items[1],
+				category: '분류없음'
+			};
 		} else if (body.packageName.match(/com\.kbankwith\.smartbank/i)) {
 			account = '생활비카드';
 			items = body.text.split(' ');
