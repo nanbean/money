@@ -164,10 +164,10 @@ class Report extends Component {
 				];
 				expenseReport = expenseReport.filter(i => !exemptionCategory.find(j => i.category && i.category.startsWith(j)));
 			}
-			totalMonthExpenseSum = month.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
-			totalExpenseSum = expenseReport.map(i => i.sum).reduce((a, b) => a + b);
-			totalMonthIncomeSum = month.map((m, index) => incomeReport.map(i => i.month[index]).reduce((a, b) => a + b));
-			totalIncomeSum = incomeReport.map(i => i.sum).reduce((a, b) => a + b);
+			totalMonthExpenseSum = expenseReport.length > 0 && month.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
+			totalExpenseSum = expenseReport.length > 0 && expenseReport.map(i => i.sum).reduce((a, b) => a + b);
+			totalMonthIncomeSum = incomeReport.length > 0 && month.map((m, index) => incomeReport.map(i => i.month[index]).reduce((a, b) => a + b));
+			totalIncomeSum = incomeReport.length > 0 && incomeReport.map(i => i.sum).reduce((a, b) => a + b);
 		}
 		let reportData = [];
 
