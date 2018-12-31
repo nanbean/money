@@ -696,6 +696,7 @@ var monthlyUpdateHistoricaljob = new CronJob('00 33 05 1 * *', async () => {
 			}
 		}
 		writeFileAsync(filePath, historical);
+		await updateHistorical();
 		return true;
 	}, () => {
 		/* This function is executed when the job stops */
