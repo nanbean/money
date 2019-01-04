@@ -106,22 +106,17 @@ class Report extends Component {
 				];
 			}
 		}
-
-		if (incomeTransactions.length > 0  && expenseTransactions.length > 0) {
-			const groupedExpenseData = _
-				.chain(expenseTransactions.filter(k => k.date >= startDate &&  k.date <= endDate))
-				.groupBy(x => x.subcategory ? `${x.category}:${x.subcategory}` : x.category)
-				.value();
+		if (incomeTransactions.length > 0) {
 			const groupedIncomeData = _
 				.chain(incomeTransactions.filter(k => k.date >= startDate &&  k.date <= endDate))
 				.groupBy(x => x.subcategory ? `${x.category}:${x.subcategory}` : x.category)
 				.value();
 
-			expenseReport = Object.keys(groupedExpenseData).map(key => {
+			incomeReport = Object.keys(groupedIncomeData).map(key => {
 				return {
 					category: key,
-					month: month.map(i => this.getMonthFiltered(groupedExpenseData, key, i)),
-					sum: groupedExpenseData[key].map(i => i.amount).reduce((a, b) => a + b)
+					month: month.map(i => this.getMonthFiltered(groupedIncomeData, key, i)),
+					sum: groupedIncomeData[key].map(i => i.amount).reduce((a, b) => a + b)
 				};
 			}).sort((a, b) => {
 				const categoryA = a.category.toLowerCase();
@@ -135,11 +130,21 @@ class Report extends Component {
 				return 0;
 			});
 
-			incomeReport = Object.keys(groupedIncomeData).map(key => {
+			totalMonthIncomeSum = incomeReport.length > 0 && month.map((m, index) => incomeReport.map(i => i.month[index]).reduce((a, b) => a + b));
+			totalIncomeSum = incomeReport.length > 0 && incomeReport.map(i => i.sum).reduce((a, b) => a + b);
+		}
+
+		if (expenseTransactions.length > 0) {
+			const groupedExpenseData = _
+				.chain(expenseTransactions.filter(k => k.date >= startDate &&  k.date <= endDate))
+				.groupBy(x => x.subcategory ? `${x.category}:${x.subcategory}` : x.category)
+				.value();
+
+			expenseReport = Object.keys(groupedExpenseData).map(key => {
 				return {
 					category: key,
-					month: month.map(i => this.getMonthFiltered(groupedIncomeData, key, i)),
-					sum: groupedIncomeData[key].map(i => i.amount).reduce((a, b) => a + b)
+					month: month.map(i => this.getMonthFiltered(groupedExpenseData, key, i)),
+					sum: groupedExpenseData[key].map(i => i.amount).reduce((a, b) => a + b)
 				};
 			}).sort((a, b) => {
 				const categoryA = a.category.toLowerCase();
@@ -166,18 +171,20 @@ class Report extends Component {
 			}
 			totalMonthExpenseSum = expenseReport.length > 0 && month.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
 			totalExpenseSum = expenseReport.length > 0 && expenseReport.map(i => i.sum).reduce((a, b) => a + b);
-			totalMonthIncomeSum = incomeReport.length > 0 && month.map((m, index) => incomeReport.map(i => i.month[index]).reduce((a, b) => a + b));
-			totalIncomeSum = incomeReport.length > 0 && incomeReport.map(i => i.sum).reduce((a, b) => a + b);
 		}
 		let reportData = [];
 
+		reportData = [
+			[
+				'Category',
+				...month,
+				'Total'
+			]
+		];
+
 		if (incomeReport.length > 0 ) {
 			reportData = [
-				[
-					'Category',
-					...month,
-					'Total'
-				],
+				...reportData,
 				...incomeReport.map(i => {
 					return [
 						i.category,
@@ -189,7 +196,12 @@ class Report extends Component {
 					'Income Total',
 					...totalMonthIncomeSum,
 					totalIncomeSum
-				],
+				]
+			];
+		}
+		if (expenseReport.length > 0 ) {
+			reportData = [
+				...reportData,
 				...expenseReport.map(i => {
 					return [
 						i.category,
