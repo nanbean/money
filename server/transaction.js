@@ -307,13 +307,13 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.start('http://finance.daum.net/domestic/all_stocks?market=KOSPI');
 
-		spooky.wait(500, function() {});
+		spooky.wait(1500, function() {});
 
 		spooky.then(function(){
 			this.click('#orderStock');
 		});
 
-		spooky.wait(1500, function() {});
+		spooky.wait(4000, function() {});
 
 		spooky.then(function(){
 			var investment1 = this.evaluate(function () {
@@ -351,13 +351,13 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.thenOpen('http://finance.daum.net/domestic/all_stocks?market=KOSDAQ');
 
-		spooky.wait(500, function() {});
+		spooky.wait(1500, function() {});
 
 		spooky.then(function(){
 			this.click('#orderStock');
 		});
 
-		spooky.wait(1500, function() {});
+		spooky.wait(4000, function() {});
 
 		spooky.then(function(){
 			var investment1 = this.evaluate(function () {
