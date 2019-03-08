@@ -1,12 +1,12 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip} from 'recharts';
+import { connect } from 'react-redux';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 import TitleHeader from '../components/TitleHeader';
 
-import {getLifetimeFlowAction} from '../actions/lifetimePlannerActions';
-import {toCurrencyFormat} from '../utils/formatting';
+import { getLifetimeFlowAction } from '../actions/lifetimePlannerActions';
+import { toCurrencyFormat } from '../utils/formatting';
 
 class LifetimePlanner extends Component {
 	componentDidMount () {
@@ -18,7 +18,7 @@ class LifetimePlanner extends Component {
 	}
 
 	render () {
-		const {lifetimePlannerFlow} = this.props;
+		const { lifetimePlannerFlow } = this.props;
 
 		return (
 			<div>
@@ -29,7 +29,7 @@ class LifetimePlanner extends Component {
 						<ResponsiveContainer width="100%" height={400}>
 							<BarChart
 								data={lifetimePlannerFlow}
-								margin={{top: 5, right: 10, left: 20, bottom: 5}}
+								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 							>
 								<XAxis dataKey="year"/>
 								<YAxis hide/>

@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Autocomplete from 'react-autocomplete';
 
@@ -8,7 +8,7 @@ class AutoComplete extends Component {
 	matchStateToTerm = (state, value) => state.key.toLowerCase().indexOf(value.toLowerCase()) !== -1 || 	state.name.toLowerCase().indexOf(value.toLowerCase()) !== -1
 
 	render () {
-		const {value, items, placeholder, onChange, onSelect} = this.props;
+		const { value, items, placeholder, onChange, onSelect } = this.props;
 
 		return (
 			<Autocomplete

@@ -1,0 +1,10 @@
+.account-filter {
+	padding: 5px;
+	border: 1px solid rgba(34,36,38,.1);
+	border-radius: .28571429rem;
+}
+
+.account-filter-checkbox {
+	display: inline-block;
+	margin-right: 10px;
+}

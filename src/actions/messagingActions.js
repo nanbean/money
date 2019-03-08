@@ -26,7 +26,7 @@ export const requestPermissionAction = () => (dispatch) => {
 						'Accept': 'application/json, text/plain, */*',
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({messagingToken})
+					body: JSON.stringify({ messagingToken })
 				})
 					.then(res => res.json())
 					.then(body => {
@@ -52,7 +52,7 @@ export const deleteTokenFailure = () => ({
 
 export const removePermissionAction = () => (dispatch, getState) => {
 	const state = getState();
-	const {messagingToken} = state;
+	const { messagingToken } = state;
 	return messaging.deleteToken(messagingToken)
 		.then(() => {
 			if (messagingToken) {
@@ -64,7 +64,7 @@ export const removePermissionAction = () => (dispatch, getState) => {
 						'Accept': 'application/json, text/plain, */*',
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({messagingToken})
+					body: JSON.stringify({ messagingToken })
 				})
 					.then(res => res.json())
 					.then(body => {

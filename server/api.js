@@ -779,4 +779,39 @@ router.post('/api/unRegisterMessageToken', async (ctx, next) => {
 	}
 });
 
+router.get('/api/dividends', (ctx, next) => {
+	let start = ctx.request.query.start;
+	let end = ctx.request.query.end;
+
+	if (!start) {
+		start = moment().startOf('year').format('YYYY-MM-DD');
+	}
+
+	if (!end) {
+		end = moment().endOf('year').format('YYYY-MM-DD');
+	}
+
+	const result = money.getDividends(start, end);
+	ctx.status = result.status;
+	ctx.body = result.body;
+});
+
+router.get('/api/dividends/:account', (ctx, next) => {
+	let start = ctx.request.query.start;
+	let end = ctx.request.query.end;
+	const account = ctx.params.account;
+
+	if (!start) {
+		start = moment().startOf('year').format('YYYY-MM-DD');
+	}
+
+	if (!end) {
+		end = moment().endOf('year').format('YYYY-MM-DD');
+	}
+
+	const result = money.getDividends(start, end, account);
+	ctx.status = result.status;
+	ctx.body = result.body;
+});
+
 module.exports = router;

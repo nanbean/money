@@ -1,7 +1,7 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Button, Checkbox} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Button, Checkbox } from 'semantic-ui-react';
 
 import TitleHeader from '../components/TitleHeader';
 
@@ -32,7 +32,7 @@ class Setting extends Component {
 	}
 
 	render () {
-		const {messagingToken} = this.props;
+		const { messagingToken } = this.props;
 
 		return (
 			<div>

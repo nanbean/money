@@ -638,6 +638,50 @@ exports.getAssetNetWorth = (date) => {
 	return netWorth;
 }
 
+exports.getDividends = (startDate, endDate, account) => {
+	if (account) {
+		if (money.accounts[account]) {
+			if (money.accounts[account].type === 'Invst' && money.accounts[account].transactions) {
+				return {
+					status: 200,
+					body: money.accounts[account].transactions.filter(j => j.date >= startDate && j.date <= endDate && (j.activity === 'Div' || j.activity === 'MiscExp'))
+				}
+			} else {
+				return {
+					status: 200,
+					body: []
+				}
+			}
+		} else {
+			return {
+				status: 404,
+				body: {
+					message: 'Invalid account'
+				}
+			}
+		}
+
+	} else {
+		const dividendsAccounts = [];
+		for (let i in money.accounts) {
+			const dividendsAccount = money.accounts[i];
+			if (dividendsAccount.type === 'Invst' && dividendsAccount.transactions) {
+				const transactions = dividendsAccount.transactions.filter(j => j.date >= startDate && j.date <= endDate && (j.activity === 'Div' || j.activity === 'MiscExp'));
+				if (transactions.length > 0) {
+					dividendsAccounts.push({
+						account: i,
+						transactions
+					});
+				}
+			}
+		}
+		return {
+			status: 200,
+			body: dividendsAccounts
+		}
+	}
+}
+
 const sendBalanceUpdateNotification = () => {
 	const balance = money.accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
 	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')

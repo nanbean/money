@@ -1,14 +1,14 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
 import PerformanceGrid from '../components/PerformanceGrid';
 
-import {getAccountPerformance} from '../utils/performance';
+import { getAccountPerformance } from '../utils/performance';
 
 class AccountInvestments extends Component {
 	render () {
-		const {account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice} = this.props;
+		const { account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice } = this.props;
 		const cash = accountInvestments.length > 0 ? accountInvestments.find(i => i.name === 'cash').amount : 0;
 		const accountPerformance = getAccountPerformance(account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice);
 		const totalCostBasis = accountPerformance.length > 0 ? accountPerformance.map(i => i.costBasis).reduce((a, b) => a + b) : 0;

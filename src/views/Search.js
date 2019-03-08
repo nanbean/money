@@ -1,16 +1,16 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Input} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Input } from 'semantic-ui-react';
 
 import TitleHeader from '../components/TitleHeader';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 
-import {getAllAccountTransactionsAction} from '../actions/transactionActions';
-import {getCategoryListAction} from '../actions/categoryActions';
-import {getPayeeListAction} from '../actions/payeeActions';
+import { getAllAccountTransactionsAction } from '../actions/transactionActions';
+import { getCategoryListAction } from '../actions/categoryActions';
+import { getPayeeListAction } from '../actions/payeeActions';
 import {
 	deleteTransactionAction,
 	editTransactionAction
@@ -35,7 +35,7 @@ class Search extends Component {
 	}
 
 	componentDidMount () {
-		const {match} = this.props;
+		const { match } = this.props;
 		const keyword = match && match.params && match.params.keyword;
 
 		this.setState({
@@ -47,8 +47,8 @@ class Search extends Component {
 	}
 
 	UNSAFE_componentWillReceiveProps (nextProps) {
-		const {allAccountTransactions} = nextProps;
-		const {keyword} = this.state;
+		const { allAccountTransactions } = nextProps;
+		const { keyword } = this.state;
 		this.updateFilteredTransactions(allAccountTransactions,  keyword);
 	}
 
@@ -98,7 +98,7 @@ class Search extends Component {
 
 	onSearchKeyPress (e) {
 		if (e.key === 'Enter' && e.target.value) {
-			const {allAccountTransactions} = this.props;
+			const { allAccountTransactions } = this.props;
 			const keyword = e.target.value;
 			this.updateFilteredTransactions(allAccountTransactions,  keyword);
 		}
@@ -111,10 +111,10 @@ class Search extends Component {
 	}
 
 	render () {
-		const {categoryList, payeeList} = this.props;
-		const {filteredTransactions, keyword} = this.state;
-		const dropCategoryList = categoryList.map(i => ({key: i, value: i, text: i}));
-		const dropPayeeList = payeeList.map(i => ({key: i, name: i}));
+		const { categoryList, payeeList } = this.props;
+		const { filteredTransactions, keyword } = this.state;
+		const dropCategoryList = categoryList.map(i => ({ key: i, value: i, text: i }));
+		const dropPayeeList = payeeList.map(i => ({ key: i, name: i }));
 
 		return (
 			<div>

@@ -1,7 +1,7 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Divider} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Divider } from 'semantic-ui-react';
 
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import InvestmentFilter from '../components/InvestmentFilter';
@@ -12,8 +12,8 @@ import {
 	getAllInvestmentsPriceAction,
 	setfilteredInvestments
 } from '../actions/investmentActions';
-import {toCurrencyFormat} from '../utils/formatting';
-import {getInvestmentPerformance} from '../utils/performance';
+import { toCurrencyFormat } from '../utils/formatting';
+import { getInvestmentPerformance } from '../utils/performance';
 
 class AllPerformance extends Component {
 	componentDidMount () {
@@ -22,7 +22,7 @@ class AllPerformance extends Component {
 	}
 
 	render () {
-		const {isMobile, allInvestmentsTransactions, allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered} = this.props;
+		const { isMobile, allInvestmentsTransactions, allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered } = this.props;
 
 		const allPerformance = allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0 && allInvestmentsTransactions.map(i => {
 			const investmentTransactions = i.transactions;

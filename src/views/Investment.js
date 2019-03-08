@@ -1,8 +1,8 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Link} from 'react-router-dom';
-import {Button} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { Button } from 'semantic-ui-react';
 
 import AccountInvestments from './AccountInvestments';
 import TitleHeader from '../components/TitleHeader';
@@ -10,7 +10,7 @@ import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 
-import {setAccount} from '../actions/accountActions';
+import { setAccount } from '../actions/accountActions';
 import {
 	getInvestmentListAction,
 	getAllInvestmentsTransactionsAction,
@@ -28,7 +28,7 @@ import {
 
 export class Investment extends Component {
 	componentDidMount () {
-		const {match} = this.props;
+		const { match } = this.props;
 		const name = match && match.params && match.params.name;
 
 		this.props.setAccount(name);
@@ -40,8 +40,8 @@ export class Investment extends Component {
 	}
 
 	render () {
-		const {isMobile, account, investmentList, investmentAccountTransactions} = this.props;
-		const autocompleteInvestmentList = investmentList.map(i => ({key: i.symbol, name: i.name}));
+		const { isMobile, account, investmentList, investmentAccountTransactions } = this.props;
+		const autocompleteInvestmentList = investmentList.map(i => ({ key: i.symbol, name: i.name }));
 
 		return (
 			<div>

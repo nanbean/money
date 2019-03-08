@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Form, Button, Dropdown, Input, Segment} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
 import _ from 'lodash';
 
 import AutoComplete from '../AutoComplete';
@@ -19,12 +19,12 @@ import {
 import './index.css';
 
 class BankTransactionForm extends React.Component {
-	onChange = handler => (event, {value}) => handler(value)
+	onChange = handler => (event, { value }) => handler(value)
 
 	onPayeeChange = handler => (event, value) => handler(value)
 
 	onPayeeSelect = handler => (val) => {
-		const {transactions, form} = this.props;
+		const { transactions, form } = this.props;
 		const matchIndex = _.findLastIndex(transactions, i => i.payee === val);
 		const matchTransaction = matchIndex >= 0 && transactions[matchIndex];
 		const transaction = {
@@ -44,7 +44,7 @@ class BankTransactionForm extends React.Component {
 
 	onAddButton = handler => () => {
 		const data = {};
-		const {account, form} = this.props;
+		const { account, form } = this.props;
 		const categoryArray = form.category.split(':');
 
 		data.account = form.account || account;
@@ -69,7 +69,7 @@ class BankTransactionForm extends React.Component {
 	}
 
 	onEditButton = handler => () => {
-		const {account, form, transactions} = this.props;
+		const { account, form, transactions } = this.props;
 		const transaction = transactions[form.index];
 		const categoryArray = form.category.split(':');
 
@@ -101,7 +101,7 @@ class BankTransactionForm extends React.Component {
 
 	onDeleteButton = handler => () => {
 		const transaction = {};
-		const {account, form} = this.props;
+		const { account, form } = this.props;
 		const categoryArray = form.category.split(':');
 
 		transaction.account = form.account || account;
@@ -121,7 +121,7 @@ class BankTransactionForm extends React.Component {
 	}
 
 	render() {
-		const {form, dropCategoryList, dropPayeeList} = this.props;
+		const { form, dropCategoryList, dropPayeeList } = this.props;
 
 		return (
 			<div>

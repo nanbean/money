@@ -1,4 +1,4 @@
-import {combineReducers} from 'redux';
+import { combineReducers } from 'redux';
 import ui from './ui';
 import transactions from './transactions';
 import investmentAccountTransactions from './investmentAccountTransactions';
@@ -24,6 +24,7 @@ import lifetimePlannerFlow from './lifetimePlannerFlow';
 import allAccountTransactions from './allAccountTransactions';
 import messagingToken from './messagingToken';
 import notificationHistory from './notificationHistory';
+import allDividends from './allDividends';
 
 const money = combineReducers({
 	ui,
@@ -50,7 +51,8 @@ const money = combineReducers({
 	lifetimePlannerFlow,
 	allAccountTransactions,
 	messagingToken,
-	notificationHistory
+	notificationHistory,
+	allDividends
 });
 
 export default money;

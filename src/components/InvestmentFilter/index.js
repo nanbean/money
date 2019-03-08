@@ -1,6 +1,6 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {Checkbox} from 'semantic-ui-react';
+import { Checkbox } from 'semantic-ui-react';
 
 import './index.css';
 
@@ -13,7 +13,7 @@ class InvestmentFilter extends Component {
 	}
 
 	onFilteredInvestmentsChange (e, data) {
-		const {filteredInvestments} = this.props;
+		const { filteredInvestments } = this.props;
 		const investment = data.label;
 		const checked = data.checked;
 
@@ -40,7 +40,7 @@ class InvestmentFilter extends Component {
 
 	onAllInvestementClick (e, data) {
 		const checked = data.checked;
-		const {allInvestmentsPrice} = this.props;
+		const { allInvestmentsPrice } = this.props;
 		const allInvestments = allInvestmentsPrice.map(j => j.investment);
 
 		if ( checked === true) {
@@ -54,7 +54,7 @@ class InvestmentFilter extends Component {
 	}
 
 	render () {
-		const {allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered} = this.props;
+		const { allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered } = this.props;
 
 		return (
 			<div className="investment-filter">

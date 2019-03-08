@@ -1,6 +1,6 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {Table, Button, Icon} from 'semantic-ui-react';
+import { Table, Button, Icon } from 'semantic-ui-react';
 import moment from 'moment';
 
 class MortgageSchedule extends Component {
@@ -16,7 +16,7 @@ class MortgageSchedule extends Component {
 	}
 
 	onAddClick (e, data) {
-		const {mortgageSchedule} = this.props;
+		const { mortgageSchedule } = this.props;
 		const schedule = mortgageSchedule[data.no - 1];
 		const amountData = {};
 		const interestData = {};
@@ -72,7 +72,7 @@ class MortgageSchedule extends Component {
 	}
 
 	render () {
-		const {mortgageSchedule} = this.props;
+		const { mortgageSchedule } = this.props;
 		const today = moment().format('YYYY-MM');
 		const filteredMorageSchedule = mortgageSchedule.filter(i => i.date >= today);
 

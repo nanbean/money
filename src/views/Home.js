@@ -1,14 +1,14 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Link} from 'react-router-dom';
-import {Table, Button, Loader} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { Table, Button, Loader } from 'semantic-ui-react';
 
 import TitleHeader from '../components/TitleHeader';
 import Amount from '../components/Amount';
 
-import {updateInvestmentPriceAction} from '../actions/priceActions';
-import {getAccountListAction} from '../actions/accountActions';
+import { updateInvestmentPriceAction } from '../actions/priceActions';
+import { getAccountListAction } from '../actions/accountActions';
 
 const typeEmoji = {
 	'Bank': '🏦',
@@ -83,7 +83,7 @@ export class Home extends Component {
 	}
 
 	render () {
-		const {accountList, updateInvestmentPriceFetching} = this.props;
+		const { accountList, updateInvestmentPriceFetching } = this.props;
 		let sum = 0;
 		let financeSum = 0;
 		let quickassets = 0;

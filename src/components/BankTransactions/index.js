@@ -1,17 +1,17 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {AutoSizer, Column, Table} from 'react-virtualized';
+import { AutoSizer, Column, Table } from 'react-virtualized';
 
 import Amount from '../Amount';
 
-import {toDateFormat} from '../../utils/formatting';
+import { toDateFormat } from '../../utils/formatting';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
 
 class BankTransactions extends Component {
-	onRowSelect = ({index}) => {
-		const {account, transactions} = this.props;
+	onRowSelect = ({ index }) => {
+		const { account, transactions } = this.props;
 		const transaction = transactions[index];
 
 		this.props.openTransactionInModal({
@@ -27,14 +27,14 @@ class BankTransactions extends Component {
 	}
 
 	render () {
-		const {showAccount, transactions} = this.props;
+		const { showAccount, transactions } = this.props;
 
 		return (
 			<div className="bank-transaction">
 				{
 					transactions &&
 					<AutoSizer>
-						{({height, width}) => (
+						{({ height, width }) => (
 							<Table
 								headerClassName="header"
 								rowClassName="row"
@@ -44,7 +44,7 @@ class BankTransactions extends Component {
 								rowHeight={30}
 								scrollToIndex={transactions.length-1}
 								rowCount={transactions.length}
-								rowGetter={({index}) => transactions[index]}
+								rowGetter={({ index }) => transactions[index]}
 								onRowClick={this.onRowSelect}
 							>
 								{
@@ -53,14 +53,14 @@ class BankTransactions extends Component {
 										label="Account"
 										dataKey="account"
 										width={width/4}
-										cellRenderer={({cellData}) => cellData}
+										cellRenderer={({ cellData }) => cellData}
 									/>
 								}
 								<Column
 									label="Date"
 									dataKey="date"
 									width={width/4}
-									cellRenderer={({cellData}) => toDateFormat(cellData)}
+									cellRenderer={({ cellData }) => toDateFormat(cellData)}
 								/>
 								<Column
 									label="Payee"
@@ -71,7 +71,7 @@ class BankTransactions extends Component {
 									width={width/4}
 									label="Amount"
 									dataKey="amount"
-									cellRenderer={({cellData}) => <Amount value={cellData} />}
+									cellRenderer={({ cellData }) => <Amount value={cellData} />}
 								/>
 							</Table>
 						)}

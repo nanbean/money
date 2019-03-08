@@ -1,17 +1,17 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
 import TitleHeader from '../components/TitleHeader';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 
-import {getInvestmentTransactionsAction} from '../actions/investmentActions';
-import {getInvestmentPriceAction} from '../actions/priceActions';
-import {getInvestmentPerformance} from '../utils/performance';
+import { getInvestmentTransactionsAction } from '../actions/investmentActions';
+import { getInvestmentPriceAction } from '../actions/priceActions';
+import { getInvestmentPerformance } from '../utils/performance';
 
 class Performance extends Component {
 	componentDidMount () {
-		const {match} = this.props;
+		const { match } = this.props;
 		const investment = match && match.params && match.params.investment;
 
 		this.props.getInvestmentTransactionsAction(investment);
@@ -19,8 +19,8 @@ class Performance extends Component {
 	}
 
 	render () {
-		const {isMobile, investmentTransactions, investmentPrice} = this.props;
-		const {match} = this.props;
+		const { isMobile, investmentTransactions, investmentPrice } = this.props;
+		const { match } = this.props;
 		const investment = match && match.params && match.params.investment;
 		const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
 

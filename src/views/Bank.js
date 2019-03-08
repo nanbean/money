@@ -1,7 +1,7 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Button, Divider} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Button, Divider } from 'semantic-ui-react';
 
 import MortgageSchedule from '../components/MortgageSchedule';
 import TitleHeader from '../components/TitleHeader';
@@ -9,9 +9,9 @@ import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 
-import {getMortgageScheduleAction} from '../actions/mortgageActions';
-import {getCategoryListAction} from '../actions/categoryActions';
-import {getPayeeListAction} from '../actions/payeeActions';
+import { getMortgageScheduleAction } from '../actions/mortgageActions';
+import { getCategoryListAction } from '../actions/categoryActions';
+import { getPayeeListAction } from '../actions/payeeActions';
 import {
 	getTransactionsAction,
 	addTransactionAction,
@@ -22,11 +22,11 @@ import {
 	openTransactionInModal,
 	resetTransactionForm
 } from '../actions/ui/form/bankTransaction';
-import {toCurrencyFormat} from '../utils/formatting';
+import { toCurrencyFormat } from '../utils/formatting';
 
 class Bank extends Component {
 	componentDidMount () {
-		const {match} = this.props;
+		const { match } = this.props;
 		const name = match && match.params && match.params.name;
 
 		this.props.getTransactionsAction(name);
@@ -35,10 +35,10 @@ class Bank extends Component {
 	}
 
 	render () {
-		const {account, transactions, categoryList, payeeList, mortgageSchedule} = this.props;
+		const { account, transactions, categoryList, payeeList, mortgageSchedule } = this.props;
 		const balance = transactions.length > 0 && transactions.map((i) => i.amount).reduce( (a, b) => a + b );
-		const dropCategoryList = categoryList.map(i => ({key: i, value: i, text: i}));
-		const dropPayeeList = payeeList.map(i => ({key: i, name: i}));
+		const dropCategoryList = categoryList.map(i => ({ key: i, value: i, text: i }));
+		const dropPayeeList = payeeList.map(i => ({ key: i, name: i }));
 
 		return (
 			<div>

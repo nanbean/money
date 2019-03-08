@@ -132,6 +132,10 @@ header .ui.header h2 {
 	margin-top: 10px;
 }
 
+.container-full-page .ui.segment {
+	padding: 0;
+}
+
 @media (max-width: 767px) {
 	.container-full-page .container-header {
 		padding: 0;

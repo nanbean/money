@@ -1,8 +1,8 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {AutoSizer, MultiGrid} from 'react-virtualized';
+import { AutoSizer, MultiGrid } from 'react-virtualized';
 
-import {toCurrencyFormat} from '../../utils/formatting';
+import { toCurrencyFormat } from '../../utils/formatting';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
@@ -12,17 +12,17 @@ const COLUMN_WIDTH = 84;
 
 class ReportGrid extends Component {
 	render () {
-		const {reportData} = this.props;
+		const { reportData } = this.props;
 
 		return (
 			<div className="report-grid">
 				{
 					<AutoSizer>
-						{({width, height}) => (
+						{({ width, height }) => (
 							<MultiGrid
 								fixedRowCount={1}
 								fixedColumnCount={1}
-								cellRenderer={({columnIndex, key, rowIndex, style}) => {
+								cellRenderer={({ columnIndex, key, rowIndex, style }) => {
 									const value = reportData[rowIndex][columnIndex];
 									const parseValue = parseInt(value, 10);
 									const isNumber = !Number.isNaN(parseValue);

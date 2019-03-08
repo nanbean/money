@@ -74,7 +74,7 @@ module.exports = {
 			],
 			"object-curly-spacing": [
 				"warn",
-				"never"
+				"always"
 			],
 			"react/default-props-match-prop-types": [
 				"warn"

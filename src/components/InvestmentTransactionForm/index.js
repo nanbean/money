@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Form, Button, Dropdown, Input, Segment} from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
 
 import AutoComplete from '../AutoComplete';
 
@@ -20,16 +20,16 @@ import {
 import './index.css';
 
 const activityList = [
-	{key: 'Buy', value: 'Buy', text: 'Buy'},
-	{key: 'Sell', value: 'Sell', text: 'Sell'},
-	{key: 'Div', value: 'Div', text: 'Div'},
-	{key: 'ShrsOut', value: 'ShrsOut', text: 'ShrsOut'},
-	{key: 'ShrsIn', value: 'ShrsIn', text: 'ShrsIn'},
-	{key: 'MiscExp', value: 'MiscExp', text: 'MiscExp'}
+	{ key: 'Buy', value: 'Buy', text: 'Buy' },
+	{ key: 'Sell', value: 'Sell', text: 'Sell' },
+	{ key: 'Div', value: 'Div', text: 'Div' },
+	{ key: 'ShrsOut', value: 'ShrsOut', text: 'ShrsOut' },
+	{ key: 'ShrsIn', value: 'ShrsIn', text: 'ShrsIn' },
+	{ key: 'MiscExp', value: 'MiscExp', text: 'MiscExp' }
 ];
 
 class InvestmentTransactionForm extends React.Component {
-	onChange = handler => (event, {value}) => handler(value)
+	onChange = handler => (event, { value }) => handler(value)
 
 	onInvestmentChange = handler => (event, value) => handler(value)
 
@@ -37,7 +37,7 @@ class InvestmentTransactionForm extends React.Component {
 
 	onAddButton = handler => () => {
 		const data = {};
-		const {account, form} = this.props;
+		const { account, form } = this.props;
 
 		data.account = account;
 		data.date = form.date;
@@ -55,7 +55,7 @@ class InvestmentTransactionForm extends React.Component {
 	}
 
 	onEditButton = handler => () => {
-		const {account, form, investmentAccountTransactions} = this.props;
+		const { account, form, investmentAccountTransactions } = this.props;
 		const transaction = investmentAccountTransactions[form.index];
 
 		transaction.account = account;
@@ -89,7 +89,7 @@ class InvestmentTransactionForm extends React.Component {
 
 	onDeleteButton = handler => () => {
 		const transaction = {};
-		const {account, form} = this.props;
+		const { account, form } = this.props;
 
 		transaction.account = account;
 		if (typeof form.date !== 'undefined') {
@@ -119,7 +119,7 @@ class InvestmentTransactionForm extends React.Component {
 	}
 
 	render() {
-		const {form, autocompleteInvestmentList} = this.props;
+		const { form, autocompleteInvestmentList } = this.props;
 		const quantityDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
 		const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
 		const commissionDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
