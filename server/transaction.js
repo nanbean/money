@@ -307,15 +307,15 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.start('http://finance.daum.net/domestic/all_stocks?market=KOSPI');
 
-		spooky.wait(1500, function() {});
+		spooky.wait(1500, function () {});
 
-		spooky.then(function(){
+		spooky.then(function () {
 			this.click('#orderStock');
 		});
 
-		spooky.wait(4000, function() {});
+		spooky.wait(4000, function () {});
 
-		spooky.then(function(){
+		spooky.then(function () {
 			var investment1 = this.evaluate(function () {
 				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
@@ -351,15 +351,15 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.thenOpen('http://finance.daum.net/domestic/all_stocks?market=KOSDAQ');
 
-		spooky.wait(1500, function() {});
+		spooky.wait(1500, function () {});
 
-		spooky.then(function(){
+		spooky.then(function () {
 			this.click('#orderStock');
 		});
 
-		spooky.wait(4000, function() {});
+		spooky.wait(4000, function () {});
 
-		spooky.then(function(){
+		spooky.then(function () {
 			var investment1 = this.evaluate(function () {
 				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.innerHTML.replace("&amp;", "&");
