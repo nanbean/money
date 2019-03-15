@@ -118,7 +118,7 @@ class InvestmentTransactionForm extends React.Component {
 		this.props.resetTransactionForm();
 	}
 
-	render() {
+	render () {
 		const { form, autocompleteInvestmentList } = this.props;
 		const quantityDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
 		const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';

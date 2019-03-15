@@ -46,12 +46,6 @@ class Search extends Component {
 		this.props.getPayeeListAction();
 	}
 
-	UNSAFE_componentWillReceiveProps (nextProps) {
-		const { allAccountTransactions } = nextProps;
-		const { keyword } = this.state;
-		this.updateFilteredTransactions(allAccountTransactions,  keyword);
-	}
-
 	updateFilteredTransactions (allAccountTransactions, keyword) {
 		if (keyword) {
 			let filteredTransactions = [];

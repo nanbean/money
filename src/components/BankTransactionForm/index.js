@@ -120,7 +120,7 @@ class BankTransactionForm extends React.Component {
 		this.props.resetTransactionForm();
 	}
 
-	render() {
+	render () {
 		const { form, dropCategoryList, dropPayeeList } = this.props;
 
 		return (

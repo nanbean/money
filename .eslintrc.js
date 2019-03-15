@@ -9,37 +9,28 @@ module.exports = {
 			"plugin:react/recommended",
 			"plugin:jest/recommended"
 		],
+		"settings": {
+			"react": {
+				"version": "16.7"
+			}
+		},
 		"parser": "babel-eslint",
 		"parserOptions": {
-				"ecmaFeatures": {
-						"experimentalObjectRestSpread": true,
-						"jsx": true
-				},
-				"sourceType": "module"
+			"ecmaFeatures": {
+				"experimentalObjectRestSpread": true,
+				"jsx": true
+			},
+			"sourceType": "module"
 		},
 		"plugins": [
 				"react",
 				"jest"
 		],
-		"settings": {
-			"react": {
-				"createClass": "createReactClass",	// Regex for Component Factory to use,
-																						// default to "createReactClass"
-				"pragma": "React",  // Pragma to use, default to "React"
-				"version": "16.4.2", // React version, default to the latest React stable release
-				"flowVersion": "0.53" // Flow version
-			},
-			"propWrapperFunctions": [ "forbidExtraProps" ]	// The names of any functions used to wrap the
-																											// propTypes object, e.g. `forbidExtraProps`.
-																											// If this isn't set, any propTypes wrapped in
-																											// a function will be skipped.
-		},
 		"rules": {
 			"camelcase": [
 				"warn",
 				{
-					"properties": "always",
-					"allow": ['^UNSAFE_']
+					"properties": "always"
 				}
 			],
 			"comma-dangle": [
@@ -73,6 +64,10 @@ module.exports = {
 				"warn"
 			],
 			"object-curly-spacing": [
+				"warn",
+				"always"
+			],
+			"space-before-function-paren": [
 				"warn",
 				"always"
 			],
