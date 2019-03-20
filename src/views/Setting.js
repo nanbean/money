@@ -39,7 +39,7 @@ class Setting extends Component {
 				<TitleHeader title="Setting" />
 				<div className="container-full-page">
 					<div className="container-item">
-						<Checkbox toggle label="푸쉬 알림 받기" checked={messagingToken} onChange={this.handlePushNotificationChange} />
+						<Checkbox toggle label="푸쉬 알림 받기" checked={messagingToken ? true : false} onChange={this.handlePushNotificationChange} />
 					</div>
 					<div className="container-item">
 						<Button

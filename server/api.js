@@ -290,14 +290,11 @@ router.post('/api/addTransactionWithNotification', async (ctx, next) => {
 	ctx.body = {return: result};
 });
 
-router.get('/api/getNotificationHistory', async (ctx, next) => {
-	const body = ctx.request.body;
-	const history = await notification.getHistory();
+router.get('/api/notifications', async (ctx, next) => {
+	const size = ctx.request.query.size || 20;
+	const history = await notification.getHistory(size);
 
-	ctx.body = {
-		return: true,
-		history: history
-	};
+	ctx.body = history;
 });
 
 router.post('/api/addInvestmentTransaction', async (ctx, next) => {

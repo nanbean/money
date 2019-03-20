@@ -5,22 +5,22 @@ import { Message } from 'semantic-ui-react';
 
 import TitleHeader from '../components/TitleHeader';
 
-import { getNotificationHistoryAction } from '../actions/notificationActions';
+import { getNotificationsAction } from '../actions/notificationActions';
 
 class NotificationLog extends Component {
 	componentDidMount () {
-		this.props.getNotificationHistoryAction();
+		this.props.getNotificationsAction();
 	}
 
 	render () {
-		const { notificationHistory } = this.props;
+		const { notifications } = this.props;
 
 		return (
 			<div>
 				<TitleHeader title="Notification Log" />
 				<div className="container-full-page">
 					{
-						notificationHistory.map(i => {
+						notifications.map(i => {
 							return (
 								<div className="container-item" key={i}>
 									<Message>
@@ -37,17 +37,17 @@ class NotificationLog extends Component {
 }
 
 NotificationLog.propTypes = {
-	getNotificationHistoryAction: PropTypes.func.isRequired,
-	notificationHistory: PropTypes.array.isRequired
+	getNotificationsAction: PropTypes.func.isRequired,
+	notifications: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({
-	notificationHistory: state.notificationHistory
+	notifications: state.notifications
 });
 
 const mapDispatchToProps = dispatch => ({
-	getNotificationHistoryAction () {
-		dispatch(getNotificationHistoryAction());
+	getNotificationsAction () {
+		dispatch(getNotificationsAction());
 	}
 });
 

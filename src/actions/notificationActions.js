@@ -2,9 +2,9 @@ import {
 	SET_NOTIFICATION_HISTORY
 } from './actionTypes';
 
-export const fetchGetNotificationHistorySuccess = params => ({
+export const fetchGetNotificationHistorySuccess = body => ({
 	type: SET_NOTIFICATION_HISTORY,
-	payload: params
+	body
 });
 
 export const fetchGetNotificationHistoryFailure = () => ({
@@ -12,11 +12,11 @@ export const fetchGetNotificationHistoryFailure = () => ({
 	payload: []
 });
 
-export const getNotificationHistoryAction = () => (dispatch) => {
-	const apiUrl = '/api/getNotificationHistory';
+export const getNotificationsAction = () => (dispatch) => {
+	const apiUrl = '/api/notifications?size=20';
 
 	return fetch(apiUrl)
 		.then(res => res.json())
-		.then(body => dispatch(fetchGetNotificationHistorySuccess(body.history)))
+		.then(body => dispatch(fetchGetNotificationHistorySuccess(body)))
 		.catch(ex => dispatch(fetchGetNotificationHistoryFailure(ex)));
 };

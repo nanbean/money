@@ -135,7 +135,7 @@ class Search extends Component {
 					<BankTransactionModal
 						EditForm={BankTransactionForm}
 						isOpen={this.props.isModalOpen}
-						isEdit={this.props.isEdit}
+						isEdit={true}
 						account={''}
 						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
 						dropCategoryList={dropCategoryList}
@@ -158,14 +158,13 @@ Search.propTypes = {
 	getAllAccountTransactionsAction: PropTypes.func.isRequired,
 	getCategoryListAction: PropTypes.func.isRequired,
 	getPayeeListAction: PropTypes.func.isRequired,
-	isEdit: PropTypes.bool.isRequired,
 	isModalOpen: PropTypes.bool.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired,
 	payeeList: PropTypes.array.isRequired,
 	resetTransactionForm: PropTypes.func.isRequired,
 	match: PropTypes.shape({
 		params: PropTypes.shape({
-			name: PropTypes.string.isRequired
+			name: PropTypes.string
 		}).isRequired
 	})
 };

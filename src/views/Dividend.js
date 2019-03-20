@@ -62,7 +62,7 @@ class Dividend extends Component {
 		const dividendGridata = [
 			[
 				'Account',
-				'Divndend',
+				'Dividend',
 				'Tax',
 				'Gain'
 			],

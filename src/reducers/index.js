@@ -23,7 +23,7 @@ import updateInvestmentPriceFetching from './updateInvestmentPriceFetching';
 import lifetimePlannerFlow from './lifetimePlannerFlow';
 import allAccountTransactions from './allAccountTransactions';
 import messagingToken from './messagingToken';
-import notificationHistory from './notificationHistory';
+import notifications from './notifications';
 import allDividends from './allDividends';
 
 const money = combineReducers({
@@ -51,7 +51,7 @@ const money = combineReducers({
 	lifetimePlannerFlow,
 	allAccountTransactions,
 	messagingToken,
-	notificationHistory,
+	notifications,
 	allDividends
 });
 

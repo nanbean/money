@@ -240,10 +240,10 @@ exports.addTransaction = async function (body) {
 	}
 }
 
-exports.getHistory = async function (count = 100) {
+exports.getHistory = async function (size) {
 	const history = await readNotificationFile().then(data => {
 		const result = JSON.parse(data);
-		return result.history.slice(count * -1);
+		return result.history.slice(size * -1);
 	})
 
 	return history;
