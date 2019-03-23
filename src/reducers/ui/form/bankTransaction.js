@@ -12,6 +12,7 @@ import {
 } from '../../../actions/ui/form/bankTransaction';
 
 const initialState = {
+	isEdit: false,
 	isModalOpen: false,
 	date: moment().format('YYYY-MM-DD')
 };
