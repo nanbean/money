@@ -25,6 +25,12 @@ import allAccountTransactions from './allAccountTransactions';
 import messagingToken from './messagingToken';
 import notifications from './notifications';
 import allDividends from './allDividends';
+import lastTransactions from './lastTransactions';
+import weeklyTransactions from './weeklyTransactions';
+import dropCategoryList from './dropCategoryList';
+import dropPayeeList from './dropPayeeList';
+import editTransaction from './editTransaction';
+import deleteTransaction from './deleteTransaction';
 
 const money = combineReducers({
 	ui,
@@ -52,7 +58,13 @@ const money = combineReducers({
 	allAccountTransactions,
 	messagingToken,
 	notifications,
-	allDividends
+	allDividends,
+	lastTransactions,
+	weeklyTransactions,
+	dropCategoryList,
+	dropPayeeList,
+	editTransaction,
+	deleteTransaction
 });
 
 export default money;

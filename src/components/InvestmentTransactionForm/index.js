@@ -1,7 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
+
+import FormControl from '@material-ui/core/FormControl';
+import Input from '@material-ui/core/Input';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import Button from '@material-ui/core/Button';
 
 import AutoComplete from '../AutoComplete';
 
@@ -28,14 +34,44 @@ const activityList = [
 	{ key: 'MiscExp', value: 'MiscExp', text: 'MiscExp' }
 ];
 
+const styles = theme => ({
+	paper: {
+		marginTop: theme.spacing.unit * 8,
+		display: 'flex',
+		flexDirection: 'column',
+		alignItems: 'center',
+		padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${theme.spacing.unit * 3}px`
+	},
+	form: {
+		width: '100%' // Fix IE 11 issue.
+	},
+	submit: {
+		marginTop: theme.spacing.unit
+	},
+	help: {
+		color: 'red'
+	}
+});
+
 class InvestmentTransactionForm extends React.Component {
-	onChange = handler => (event, { value }) => handler(value)
+	handleSubmit = (event) => {
+		event.preventDefault();
+		const { form } = this.props;
+
+		if (form.isEdit) {
+			this.onEditButton();
+		} else {
+			this.onAddButton();
+		}
+	}
+
+	onChange = handler => event => handler(event.target.value)
 
 	onInvestmentChange = handler => (event, value) => handler(value)
 
 	onInvestmentSelect = handler => (value) => handler(value)
 
-	onAddButton = handler => () => {
+	onAddButton = () => {
 		const data = {};
 		const { account, form } = this.props;
 
@@ -50,11 +86,11 @@ class InvestmentTransactionForm extends React.Component {
 		}
 		data.amount = form.amount;
 
-		handler(data);
+		this.props.addInvestmentTransactionAction(data);
 		this.props.resetTransactionForm();
 	}
 
-	onEditButton = handler => () => {
+	onEditButton = () => {
 		const { account, form, investmentAccountTransactions } = this.props;
 		const transaction = investmentAccountTransactions[form.index];
 
@@ -83,7 +119,7 @@ class InvestmentTransactionForm extends React.Component {
 			transaction.changed.amount = form.amount;
 		}
 
-		handler(transaction);
+		this.props.editInvestmentTransactionAction(transaction);
 		this.props.resetTransactionForm();
 	}
 
@@ -119,7 +155,7 @@ class InvestmentTransactionForm extends React.Component {
 	}
 
 	render () {
-		const { form, autocompleteInvestmentList } = this.props;
+		const { classes, form, autocompleteInvestmentList } = this.props;
 		const quantityDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
 		const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
 		const commissionDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
@@ -127,88 +163,116 @@ class InvestmentTransactionForm extends React.Component {
 
 		return (
 			<div>
-				<Segment attached="bottom">
-					<Form className="investment-transaction-form">
+				<form
+					className={classes.form}
+					onSubmit={this.handleSubmit}
+				>
+					<FormControl required fullWidth>
 						<Input
-							fluid
+							id="date"
 							type="date"
+							name="date"
 							placeholder="Date"
 							value={form.date}
 							onChange={this.onChange(this.props.changeDate)}
 						/>
-						<AutoComplete
-							value={form.investment}
-							items={autocompleteInvestmentList}
-							placeholder="Investment"
-							onChange={this.onInvestmentChange(this.props.changeInvestment)}
-							onSelect={this.onInvestmentSelect(this.props.changeInvestment)}
-						/>
-						<Dropdown
-							fluid
-							placeholder="Activity"
+					</FormControl>
+					<AutoComplete
+						value={form.investment}
+						items={autocompleteInvestmentList}
+						placeholder="Investment"
+						onChange={this.onInvestmentChange(this.props.changeInvestment)}
+						onSelect={this.onInvestmentSelect(this.props.changeInvestment)}
+					/>
+					<FormControl required fullWidth>
+						<Select
 							value={form.activity}
-							search
-							selection
-							options={activityList}
 							onChange={this.onChange(this.props.changeActivity)}
-						/>
+							inputProps={{
+								name: 'activity',
+								id: 'activity-select'
+							}}
+						>
+							{
+								activityList.map(i => (
+									<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+								))
+							}
+						</Select>
+					</FormControl>
+					<FormControl fullWidth>
 						<Input
-							fluid
+							id="quantity"
 							type="number"
+							name="quantity"
 							placeholder="Quantity"
 							value={form.quantity}
 							disabled={quantityDisabled}
 							onChange={this.onChange(this.props.changeQuantity)}
 						/>
+					</FormControl>
+					<FormControl fullWidth>
 						<Input
-							fluid
+							id="price"
 							type="number"
+							name="price"
 							placeholder="Price"
 							value={form.price}
 							disabled={priceDisabled}
 							onChange={this.onChange(this.props.changePrice)}
 						/>
+					</FormControl>
+					<FormControl fullWidth>
 						<Input
-							fluid
+							id="commission"
 							type="number"
+							name="commission"
 							placeholder="Commission"
 							value={form.commission}
 							disabled={commissionDisabled}
 							onChange={this.onChange(this.props.changeCommission)}
 						/>
+					</FormControl>
+					<FormControl required fullWidth>
 						<Input
-							fluid
+							id="amount"
 							type="number"
+							name="amount"
 							placeholder="Amount"
 							value={form.amount}
 							disabled={amountDisabled}
 							onChange={this.onChange(this.props.changeAmount)}
 						/>
-						<Button
-							primary
-							fluid
-							onClick={form.isEdit ? this.onEditButton(this.props.editInvestmentTransactionAction) : this.onAddButton(this.props.addInvestmentTransactionAction)}
-						>
-							{form.isEdit ? 'Edit' : 'Add'}
-						</Button>
-						{
-							form.isEdit &&
+					</FormControl>
+					<Button
+						type="submit"
+						fullWidth
+						variant="contained"
+						color="primary"
+						className={classes.submit}
+					>
+						{form.isEdit ? 'Edit' : 'Add'}
+					</Button>
+					{
+						form.isEdit &&
 							<Button
-								negative
-								fluid
+								fullWidth
+								variant="contained"
+								color="secondary"
+								className={classes.submit}
 								onClick={this.onDeleteButton(this.props.deleteInvestmentTransactionAction)}
 							>
 								Delete
 							</Button>
-						}
-					</Form>
-				</Segment>
+					}
+				</form>
 			</div>
 		);
 	}
 }
 
 InvestmentTransactionForm.propTypes = {
+	classes: PropTypes.object.isRequired,
 	account: PropTypes.string,
 	addInvestmentTransactionAction: PropTypes.func,
 	autocompleteInvestmentList: PropTypes.array,
@@ -249,4 +313,4 @@ export default connect(mapStateToProps, {
 	changePrice,
 	changeCommission,
 	changeAmount
-})(InvestmentTransactionForm);
+})(withStyles(styles)(InvestmentTransactionForm));

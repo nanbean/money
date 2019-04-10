@@ -1,10 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Route, BrowserRouter, Switch } from 'react-router-dom';
+import { withStyles } from '@material-ui/core/styles';
+import CssBaseline from '@material-ui/core/CssBaseline';
 
 import SidebarMenu from './components/SidebarMenu';
 
 import {
-	Home,
 	Bank,
 	Investment,
 	NetWorth,
@@ -17,29 +19,50 @@ import {
 	NotificationLog
 } from './views';
 
+import HomeMain from './home/HomeMain';
+
+const styles = theme => ({
+	root: {
+		display: 'flex'
+	},
+	toolbar: theme.mixins.toolbar,
+	content: {
+		flexGrow: 1,
+		backgroundColor: theme.palette.background.default
+	}
+});
+
 // eslint-disable-next-line react/display-name
-function Routes () {
+function Routes ({ classes }) {
 	return (
 		<BrowserRouter>
-			<div>
+			<div className={classes.root}>
+				<CssBaseline />
 				<SidebarMenu />
-				<Switch>
-					<Route exact path="/" component={Home} />
-					<Route path="/bank/:name" component={Bank} />
-					<Route path="/investment/:name" component={Investment} />
-					<Route exact path="/networth" component={NetWorth} />
-					<Route path="/lifetimeplanner" component={LifetimePlanner} />
-					<Route path="/performance/:investment" component={Performance} />
-					<Route exact path="/allperformance" component={AllPerformance} />
-					<Route exact path="/report" component={Report} />
-					<Route exact path="/search" component={Search} />
-					<Route path="/search/:keyword" component={Search} />
-					<Route exact path="/setting" component={Setting} />
-					<Route exact path="/notificationlog" component={NotificationLog} />
-				</Switch>
+				<main className={classes.content}>
+					<div className={classes.toolbar} />
+					<Switch>
+						<Route exact path="/" component={HomeMain} />
+						<Route path="/bank/:name" component={Bank} />
+						<Route path="/investment/:name" component={Investment} />
+						<Route exact path="/networth" component={NetWorth} />
+						<Route path="/lifetimeplanner" component={LifetimePlanner} />
+						<Route path="/performance/:investment" component={Performance} />
+						<Route exact path="/allperformance" component={AllPerformance} />
+						<Route exact path="/report" component={Report} />
+						<Route exact path="/search" component={Search} />
+						<Route path="/search/:keyword" component={Search} />
+						<Route exact path="/setting" component={Setting} />
+						<Route exact path="/notificationlog" component={NotificationLog} />
+					</Switch>
+				</main>
 			</div>
 		</BrowserRouter>
 	);
 }
 
-export default Routes;
+Routes.propTypes = {
+	classes: PropTypes.object.isRequired
+};
+
+export default withStyles(styles)(Routes);

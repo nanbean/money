@@ -33,6 +33,25 @@ router.get('/api/getTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
+router.get('/api/transactions', (ctx, next) => {
+	let start = ctx.request.query.start;
+	let end = ctx.request.query.end;
+
+	const result = money.getTransactions(start, end);
+	ctx.status = result.status;
+	ctx.body = result.body;
+});
+
+router.get('/api/transactions/:account', (ctx, next) => {
+	let start = ctx.request.query.start;
+	let end = ctx.request.query.end;
+	const account = ctx.params.account;
+
+	const result = money.getTransactions(start, end, account);
+	ctx.status = result.status;
+	ctx.body = result.body;
+});
+
 router.get('/api/getAllAccountTransactions', (ctx, next) => {
 	ctx.body = money.accounts;
 });
@@ -180,7 +199,7 @@ router.get('/api/getAccountInvestments', (ctx, next) => {
 		body.investments = accountItem.investments;
 		ctx.body = body;
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -188,7 +207,7 @@ router.get('/api/updateInvestmentPrice', async (ctx, next) => {
 	let body = {};
 
 	const token = await money.updateInvestmentPrice();
-	ctx.body = {return: token};
+	ctx.body = { return: token };
 });
 
 router.post('/api/addTransaction', async (ctx, next) => {
@@ -201,7 +220,7 @@ router.post('/api/addTransaction', async (ctx, next) => {
 			amount: body.amount,
 			payee: body.payee,
 			category: body.category
-		}
+		};
 		if (body.subcategory) {
 			transaction.subcategory = body.subcategory;
 		}
@@ -226,23 +245,23 @@ router.post('/api/addTransaction', async (ctx, next) => {
 				payee: body.payee,
 				category: `[${body.account}]`,
 				memo: body.memo
-			}
+			};
 			counterTransactions.push(counterTransaction);
 
 			const token2 = await money.updateqifFile(counterAccount);
 		}
 
-		ctx.body = {return: true};
+		ctx.body = { return: true };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
 router.post('/api/addTransactions', async (ctx, next) => {
 	const body = ctx.request.body;
 
-	console.log(body.account)
-	console.log(body.transactions)
+	console.log(body.account);
+	console.log(body.transactions);
 	if (body && body.account && body.transactions) {
 		for (let i = 0; i < body.transactions.length; i++) {
 			const transactions = money.accounts[body.account].transactions;
@@ -251,11 +270,11 @@ router.post('/api/addTransactions', async (ctx, next) => {
 				amount: body.transactions[i].amount,
 				payee: body.transactions[i].payee,
 				category: body.transactions[i].category
-			}
+			};
 			if (body.transactions[i].subcategory) {
 				transaction.subcategory = body.transactions[i].subcategory;
 			}
-			console.log(transaction)
+			console.log(transaction);
 			transactions.push(transaction);
 		}
 
@@ -270,16 +289,16 @@ router.post('/api/addTransactions', async (ctx, next) => {
 					amount: body.transactions[j].amount * (-1),
 					payee: body.transactions[j].payee,
 					category: `[${body.account}]`
-				}
+				};
 				counterTransactions.push(counterTransaction);
 
 				const token2 = await money.updateqifFile(counterAccount);
 			}
 		}
 
-		ctx.body = {return: true};
+		ctx.body = { return: true };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -287,7 +306,7 @@ router.post('/api/addTransactionWithNotification', async (ctx, next) => {
 	const body = ctx.request.body;
 	const result = await notification.addTransaction(body);
 
-	ctx.body = {return: result};
+	ctx.body = { return: result };
 });
 
 router.get('/api/notifications', async (ctx, next) => {
@@ -305,7 +324,7 @@ router.post('/api/addInvestmentTransaction', async (ctx, next) => {
 		const transaction = {
 			date: body.date,
 			investment: body.investment,
-			activity: body.activity,
+			activity: body.activity
 		};
 		// {"date":"2011-05-06","amount":0,"activity":"ShrsOut","investment":"휴스틸","price":null,"quantity":500}
 		// {"date":"2017-08-28","amount":4277250,"activity":"Div","investment":"맥쿼리인프라","price":null,"quantity":null,"category":"투자 수익"}
@@ -353,9 +372,9 @@ router.post('/api/addInvestmentTransaction', async (ctx, next) => {
 		transactions.push(transaction);
 
 		token = await money.updateqifFile(body.account);
-		ctx.body = {return: true};
+		ctx.body = { return: true };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -384,14 +403,14 @@ router.post('/api/deleteTransaction', async (ctx, next) => {
 				counterIdx = money.accounts[counterAccount].transactions.findIndex(i => i.date === body.date && i.amount === (body.amount *(-1)) && i.payee === body.payee && i.category === `[${body.account}]`);
 			}
 
-			if(counterIdx >= 0) {
+			if (counterIdx >= 0) {
 				money.accounts[counterAccount].transactions.splice(counterIdx, 1);
 				const token2 = await money.updateqifFile(counterAccount);
 			}
 		}
-		ctx.body = {return: true};
+		ctx.body = { return: true };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -427,9 +446,9 @@ router.post('/api/deleteInvestmentTransaction', async (ctx, next) => {
 			const token = await money.updateqifFile(body.account);
 		}
 
-		ctx.body = {return: true};
+		ctx.body = { return: true };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -499,12 +518,12 @@ router.post('/api/editTransaction', async (ctx, next) => {
 					const token2 = await money.updateqifFile(counterAccount);
 				}
 			}
-			ctx.body = {return: true, index: body.index};
+			ctx.body = { return: true, index: body.index };
 		} else {
-			ctx.body = {return: false};
+			ctx.body = { return: false };
 		}
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -579,9 +598,9 @@ router.post('/api/editInvestmentTransaction', async (ctx, next) => {
 			}
 		}
 		const token = await money.updateqifFile(body.account);
-		ctx.body = {return: true, index: body.index};
+		ctx.body = { return: true, index: body.index };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -594,9 +613,9 @@ router.get('/api/getMortgageSchedule', (ctx, next) => {
 			amount: parseFloat(i[3].replace(/,/g, '')),
 			principal: parseFloat(i[4].replace(/,/g, '')),
 			interest: parseFloat(i[5].replace(/,/g, ''))
-		}
+		};
 	});
-	ctx.body = {return: true, schedule: schedule};
+	ctx.body = { return: true, schedule: schedule };
 });
 
 router.get('/api/getNetWorth', (ctx, next) => {
@@ -656,27 +675,27 @@ router.get('/api/getAllInvestmentsPrice', (ctx, next) => {
 
 router.post('/api/uploadTransactionsXls', upload.single('document'), async (ctx, next) => {
 	const { file } = ctx.req;
-	console.log(file)
+	console.log(file);
 	// const body = {};
 	const workSheetsFromBuffer = xlsx.parse(file.buffer);
 
-	console.log(workSheetsFromBuffer[0].data)
+	console.log(workSheetsFromBuffer[0].data);
 	const body = workSheetsFromBuffer[0].data.map(i => {
 		const dateString = i[0];
 		let date = '';
 		if (dateString.match(/\d{4}-\d{2}-\d{2}/)) {
-			date = moment(i[0], 'YYYY-MM-DD').format('YYYY-MM-DD')
+			date = moment(i[0], 'YYYY-MM-DD').format('YYYY-MM-DD');
 		} else if (dateString.match(/\d{2}\.\d{2}\.\d{2}/)) {
-			date = moment(i[0], 'YY.MM.DD').format('YYYY-MM-DD')
+			date = moment(i[0], 'YY.MM.DD').format('YYYY-MM-DD');
 		} else {
-			date = moment().format('YYYY-MM-DD')
+			date = moment().format('YYYY-MM-DD');
 		}
 		return {
 			date: date,
 			payee: i[1],
 			category: '',
 			amount: (typeof i[2] === 'string' ? parseFloat(i[2].replace(/,/g, '')) : parseFloat(i[2]))* (-1)
-		}
+		};
 	}).sort((a, b) => {
 		if (a.date < b.date) {
 			return -1;
@@ -704,24 +723,24 @@ function getLifetimeFlowList () {
 		const fileName = `${__dirname}/lifetimePlanner.xlsx`;
 		const workbook = new Excel.Workbook();
 		workbook.xlsx.readFile(fileName)
-		.then(function() {
+			.then(function () {
 				const worksheet = workbook.getWorksheet(1);
 				const nameCol = worksheet.getColumn('A');
 				let yearRowNum = -1;
 				let flowRowNum = -1;
-				const data = []
+				const data = [];
 
-				nameCol.eachCell(function(cell, rowNumber) {
+				nameCol.eachCell(function (cell, rowNumber) {
 					const accountItem = money.accountList.find(i => i.name === cell.value && i.type == 'Invst');
 
 					if (accountItem) {
-						worksheet.getCell(`B${rowNumber}`).value = accountItem.balance
+						worksheet.getCell(`B${rowNumber}`).value = accountItem.balance;
 					}
 					if (cell.value === 'Year') {
-						yearRowNum = rowNumber
+						yearRowNum = rowNumber;
 					}
 					if (cell.value === '자산') {
-						flowRowNum = rowNumber
+						flowRowNum = rowNumber;
 					}
 				});
 				var yearList = worksheet.getRow(yearRowNum).values.filter(i => Number.isInteger(i)).map(i => i);
@@ -736,11 +755,11 @@ function getLifetimeFlowList () {
 					});
 				}
 
-				workbook.xlsx.writeFile(fileName).then(function() {
+				workbook.xlsx.writeFile(fileName).then(function () {
 				});
 
 				resolve(data);
-		});
+			});
 	});
 }
 
@@ -758,9 +777,9 @@ router.post('/api/registerMessageToken', async (ctx, next) => {
 	if (body && body.messagingToken) {
 		const result = await messaging.addToken(body.messagingToken);
 
-		ctx.body = {return: result};
+		ctx.body = { return: result };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 
@@ -770,9 +789,9 @@ router.post('/api/unRegisterMessageToken', async (ctx, next) => {
 	if (body && body.messagingToken) {
 		const result = await messaging.removeToken(body.messagingToken);
 
-		ctx.body = {return: result};
+		ctx.body = { return: result };
 	} else {
-		ctx.body = {return: false};
+		ctx.body = { return: false };
 	}
 });
 

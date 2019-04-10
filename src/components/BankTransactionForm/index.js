@@ -1,7 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Form, Button, Dropdown, Input, Segment } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
+
+import FormControl from '@material-ui/core/FormControl';
+import Input from '@material-ui/core/Input';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import Button from '@material-ui/core/Button';
+
 import _ from 'lodash';
 
 import AutoComplete from '../AutoComplete';
@@ -16,10 +23,38 @@ import {
 	changeMemo
 } from '../../actions/ui/form/bankTransaction';
 
-import './index.css';
+const styles = theme => ({
+	paper: {
+		marginTop: theme.spacing.unit * 8,
+		display: 'flex',
+		flexDirection: 'column',
+		alignItems: 'center',
+		padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${theme.spacing.unit * 3}px`
+	},
+	form: {
+		width: '100%' // Fix IE 11 issue.
+	},
+	submit: {
+		marginTop: theme.spacing.unit
+	},
+	help: {
+		color: 'red'
+	}
+});
 
 class BankTransactionForm extends React.Component {
-	onChange = handler => (event, { value }) => handler(value)
+	handleSubmit = (event) => {
+		event.preventDefault();
+		const { form } = this.props;
+
+		if (form.isEdit) {
+			this.onEditButton();
+		} else {
+			this.onAddButton();
+		}
+	}
+
+	onChange = handler => event => handler(event.target.value)
 
 	onPayeeChange = handler => (event, value) => handler(value)
 
@@ -42,7 +77,7 @@ class BankTransactionForm extends React.Component {
 		return handler(transaction);
 	}
 
-	onAddButton = handler => () => {
+	onAddButton = ()=> {
 		const data = {};
 		const { account, form } = this.props;
 		const categoryArray = form.category.split(':');
@@ -64,11 +99,11 @@ class BankTransactionForm extends React.Component {
 			data.subcategory = categoryArray[1];
 		}
 
-		handler(data);
+		this.props.addTransactionAction(data);
 		this.props.resetTransactionForm();
 	}
 
-	onEditButton = handler => () => {
+	onEditButton = () => {
 		const { account, form, transactions } = this.props;
 		const transaction = transactions[form.index];
 		const categoryArray = form.category.split(':');
@@ -95,7 +130,7 @@ class BankTransactionForm extends React.Component {
 			transaction.changed.subcategory = categoryArray[1];
 		}
 
-		handler(transaction);
+		this.props.editTransactionAction(transaction);
 		this.props.resetTransactionForm();
 	}
 
@@ -121,19 +156,28 @@ class BankTransactionForm extends React.Component {
 	}
 
 	render () {
-		const { form, dropCategoryList, dropPayeeList } = this.props;
+		const { classes, form, dropCategoryList, dropPayeeList } = this.props;
 
 		return (
 			<div>
-				<Segment attached="bottom">
-					<Form className="bank-transaction-form">
+				<form
+					className={classes.form}
+					onSubmit={this.handleSubmit}
+				>
+					<FormControl required fullWidth>
 						<Input
-							fluid
+							id="date"
 							type="date"
+							name="date"
+							autoComplete="off"
+							autoFocus
 							placeholder="Date"
 							value={form.date}
+							fullWidth
 							onChange={this.onChange(this.props.changeDate)}
 						/>
+					</FormControl>
+					<FormControl required fullWidth>
 						<AutoComplete
 							value={form.payee}
 							items={dropPayeeList}
@@ -141,53 +185,69 @@ class BankTransactionForm extends React.Component {
 							onChange={this.onPayeeChange(this.props.changePayee)}
 							onSelect={this.onPayeeSelect(this.props.fillTransactionForm)}
 						/>
-						<Dropdown
-							fluid
-							placeholder="Category"
+					</FormControl>
+					<FormControl required fullWidth>
+						<Select
 							value={form.category}
-							search
-							selection
-							options={dropCategoryList}
 							onChange={this.onChange(this.props.changeCategory)}
-						/>
+						>
+							{
+								dropCategoryList.map(i => (
+									<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+								))
+							}
+						</Select>
+					</FormControl>
+					<FormControl required fullWidth>
 						<Input
-							fluid
+							id="amount"
 							type="number"
+							name="amount"
+							autoComplete="off"
 							placeholder="Amount"
+							fullWidth
 							value={form.amount}
 							onChange={this.onChange(this.props.changeAmount)}
 						/>
+					</FormControl>
+					<FormControl fullWidth>
 						<Input
-							fluid
+							id="memo"
+							name="memo"
 							placeholder="Memo"
 							value={form.memo}
 							onChange={this.onChange(this.props.changeMemo)}
 						/>
-						<Button
-							primary
-							fluid
-							onClick={form.isEdit ? this.onEditButton(this.props.editTransactionAction) : this.onAddButton(this.props.addTransactionAction)}
-						>
-							{form.isEdit ? 'Edit' : 'Add'}
-						</Button>
-						{
-							form.isEdit &&
+					</FormControl>
+					<Button
+						type="submit"
+						fullWidth
+						variant="contained"
+						color="primary"
+						className={classes.submit}
+					>
+						{form.isEdit ? 'Edit' : 'Add'}
+					</Button>
+					{
+						form.isEdit &&
 							<Button
-								negative
-								fluid
+								fullWidth
+								variant="contained"
+								color="secondary"
+								className={classes.submit}
 								onClick={this.onDeleteButton(this.props.deleteTransactionAction)}
 							>
 								Delete
 							</Button>
-						}
-					</Form>
-				</Segment>
+					}
+				</form>
 			</div>
 		);
 	}
 }
 
 BankTransactionForm.propTypes = {
+	classes: PropTypes.object.isRequired,
 	account: PropTypes.string,
 	addTransactionAction: PropTypes.func,
 	changeAmount: PropTypes.func,
@@ -224,4 +284,4 @@ export default connect(mapStateToProps, {
 	changeCategory,
 	changeAmount,
 	changeMemo
-})(BankTransactionForm);
+})(withStyles(styles)(BankTransactionForm));

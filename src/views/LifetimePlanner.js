@@ -1,12 +1,25 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 import TitleHeader from '../components/TitleHeader';
 
 import { getLifetimeFlowAction } from '../actions/lifetimePlannerActions';
 import { toCurrencyFormat } from '../utils/formatting';
+
+const styles = theme => ({
+	container: {
+		maxWidth: 1200,
+		[theme.breakpoints.up('lg')]: {
+			margin: '1em auto'
+		},
+		[theme.breakpoints.down('sm')]: {
+			margin: 0
+		}
+	}
+});
 
 class LifetimePlanner extends Component {
 	componentDidMount () {
@@ -18,12 +31,12 @@ class LifetimePlanner extends Component {
 	}
 
 	render () {
-		const { lifetimePlannerFlow } = this.props;
+		const { classes, lifetimePlannerFlow } = this.props;
 
 		return (
 			<div>
 				<TitleHeader title="Lifetime Planner" />
-				<div className="container-full-page">
+				<div className={classes.container}>
 					{
 						lifetimePlannerFlow.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
@@ -47,6 +60,7 @@ class LifetimePlanner extends Component {
 }
 
 LifetimePlanner.propTypes = {
+	classes: PropTypes.object.isRequired,
 	getLifetimeFlowAction: PropTypes.func.isRequired,
 	lifetimePlannerFlow:  PropTypes.array.isRequired
 };
@@ -64,4 +78,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(LifetimePlanner);
+)(withStyles(styles)(LifetimePlanner));

@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Dropdown, Checkbox } from 'semantic-ui-react';
+
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+
 import moment from 'moment';
 import _ from 'lodash';
 
@@ -18,10 +24,6 @@ class MonthlyExpense extends Component {
 	constructor (props) {
 		super(props);
 
-		this.onYearChange = this.onYearChange.bind(this);
-		this.onLivingExpenseOnlyChange = this.onLivingExpenseOnlyChange.bind(this);
-		this.onLivingExpenseCardOnlyChange = this.onLivingExpenseCardOnlyChange.bind(this);
-
 		this.state = {
 			year: parseInt(moment().format('YYYY'), 10),
 			livingExpenseOnly: false,
@@ -33,21 +35,21 @@ class MonthlyExpense extends Component {
 		this.props.getAllAccountTransactionsAction();
 	}
 
-	onYearChange (e, data) {
+	onYearChange = event => {
 		this.setState({
-			year: data.value
+			year: event.target.value
 		});
 	}
 
-	onLivingExpenseOnlyChange (e, data) {
+	onLivingExpenseOnlyChange = event => {
 		this.setState({
-			livingExpenseOnly: data.checked
+			livingExpenseOnly: event.target.checked
 		});
 	}
 
-	onLivingExpenseCardOnlyChange (e, data) {
+	onLivingExpenseCardOnlyChange = event => {
 		this.setState({
-			livingExpenseCardOnly: data.checked
+			livingExpenseCardOnly: event.target.checked
 		});
 	}
 
@@ -219,18 +221,41 @@ class MonthlyExpense extends Component {
 		return (
 			<div>
 				<div className="container-header">
-					<Dropdown
-						fluid
-						placeholder="Year"
-						value={year}
-						search
-						selection
-						options={yearOptions}
-						onChange={this.onYearChange}
-					/>
+					<FormControl fullWidth>
+						<Select
+							value={year}
+							onChange={this.onYearChange}
+							inputProps={{
+								name: 'year',
+								id: 'year-select'
+							}}
+						>
+							{
+								yearOptions.map(i => (
+									<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+								))
+							}
+						</Select>
+					</FormControl>
 					<div className="detail-toggle">
-						<Checkbox toggle label="생활비만 보기" checked={livingExpenseOnly} onChange={this.onLivingExpenseOnlyChange} />
-						<Checkbox toggle label="생활비카드만 보기" checked={livingExpenseCardOnly} onChange={this.onLivingExpenseCardOnlyChange} />
+						<FormControlLabel
+							control={
+								<Switch
+									checked={livingExpenseOnly}
+									onChange={this.onLivingExpenseOnlyChange}
+								/>
+							}
+							label="생활비만 보기"
+						/>
+						<FormControlLabel
+							control={
+								<Switch
+									checked={livingExpenseCardOnly}
+									onChange={this.onLivingExpenseCardOnlyChange}
+								/>
+							}
+							label="생활비카드만 보기"
+						/>
 					</div>
 				</div>
 				{reportData.length > 0 && <ReportGrid reportData={reportData} />}

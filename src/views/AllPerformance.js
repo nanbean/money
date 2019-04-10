@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Divider } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
+
+import Paper from '@material-ui/core/Paper';
+import Divider from '@material-ui/core/Divider';
+import Typography from '@material-ui/core/Typography';
 
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import InvestmentFilter from '../components/InvestmentFilter';
@@ -15,6 +19,31 @@ import {
 import { toCurrencyFormat } from '../utils/formatting';
 import { getInvestmentPerformance } from '../utils/performance';
 
+const styles = theme => ({
+	container: {
+		maxWidth: 1200,
+		[theme.breakpoints.up('lg')]: {
+			margin: '1em auto'
+		},
+		[theme.breakpoints.down('sm')]: {
+			margin: 0
+		}
+	},
+	paper: {
+		[theme.breakpoints.up('lg')]: {
+			marginTop: theme.spacing.unit * 2
+		},
+		[theme.breakpoints.down('sm')]: {
+			marginTop: 0
+		},
+		alignItems: 'center'
+	},
+	total: {
+		marginTop: theme.spacing.unit,
+		marginRight: theme.spacing.unit
+	}
+});
+
 class AllPerformance extends Component {
 	componentDidMount () {
 		this.props.getAllInvestmentsTransactionsAction();
@@ -22,7 +51,14 @@ class AllPerformance extends Component {
 	}
 
 	render () {
-		const { isMobile, allInvestmentsTransactions, allInvestmentsPrice, filteredInvestments, allInvestmentsFiltered } = this.props;
+		const {
+			isMobile,
+			allInvestmentsTransactions,
+			allInvestmentsPrice,
+			filteredInvestments,
+			allInvestmentsFiltered,
+			classes
+		} = this.props;
 
 		const allPerformance = allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0 && allInvestmentsTransactions.map(i => {
 			const investmentTransactions = i.transactions;
@@ -48,28 +84,33 @@ class AllPerformance extends Component {
 		return (
 			<div>
 				<TitleHeader title="Performance" />
-				<div className="container-full-page">
-					<div className="container-header">
-						<InvestmentFilter
-							allInvestmentsPrice={allInvestmentsPrice}
-							filteredInvestments={filteredInvestments}
-							allInvestmentsFiltered={allInvestmentsFiltered}
-							setfilteredInvestments={this.props.setfilteredInvestments}
-						/>
-					</div>
-					<Divider horizontal>Grand Total : {toCurrencyFormat(grandTotalPerformance)}</Divider>
-					{
-						filteredPerformance && filteredPerformance.map(i => {
-							return (
-								<InvestmentPerformance
-									key={i.investment}
-									isMobile={isMobile}
-									investment={i.investment}
-									performance={i.performance}
-								/>
-							);
-						})
-					}
+				<div className={classes.container}>
+					<Paper className={classes.paper}>
+						<div className="container-header">
+							<InvestmentFilter
+								allInvestmentsPrice={allInvestmentsPrice}
+								filteredInvestments={filteredInvestments}
+								allInvestmentsFiltered={allInvestmentsFiltered}
+								setfilteredInvestments={this.props.setfilteredInvestments}
+							/>
+						</div>
+						<Divider />
+						<Typography variant="h6" color="inherit" gutterBottom align="right" className={classes.total}>
+							Grand Total : {toCurrencyFormat(grandTotalPerformance)}
+						</Typography>
+						{
+							filteredPerformance && filteredPerformance.map(i => {
+								return (
+									<InvestmentPerformance
+										key={i.investment}
+										isMobile={isMobile}
+										investment={i.investment}
+										performance={i.performance}
+									/>
+								);
+							})
+						}
+					</Paper>
 				</div>
 			</div>
 		);
@@ -80,6 +121,7 @@ AllPerformance.propTypes = {
 	allInvestmentsFiltered: PropTypes.bool.isRequired,
 	allInvestmentsPrice: PropTypes.array.isRequired,
 	allInvestmentsTransactions: PropTypes.array.isRequired,
+	classes: PropTypes.object.isRequired,
 	filteredInvestments: PropTypes.array.isRequired,
 	getAllInvestmentsPriceAction: PropTypes.func.isRequired,
 	getAllInvestmentsTransactionsAction: PropTypes.func.isRequired,
@@ -110,4 +152,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(AllPerformance);
+)(withStyles(styles)(AllPerformance));

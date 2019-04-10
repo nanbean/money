@@ -45,7 +45,7 @@ export default handleActions(
 		}),
 		[changeAmount]: (state, { payload }) => ({
 			...state,
-			amount: payload
+			amount: Number(payload)
 		}),
 		[changeMemo]: (state, { payload }) => ({
 			...state,

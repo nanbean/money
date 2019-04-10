@@ -1,14 +1,26 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Checkbox } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
 
-import './index.css';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
+
+const styles = theme => ({
+	filter: {
+		padding: 5
+	},
+	item: {
+		display: 'inline-block'
+	},
+	checkBox: {
+		padding: theme.spacing.unit
+	}
+});
 
 class AccountFilter extends Component {
-	onFilteredAccountsChange = (e, data) => {
+	onFilteredAccountsChange = account => event => {
 		const { filteredAccounts } = this.props;
-		const account = data.label;
-		const checked = data.checked;
+		const checked = event.target.checked;
 
 		const findIndex = filteredAccounts.findIndex(i => i === account);
 
@@ -31,8 +43,8 @@ class AccountFilter extends Component {
 		}
 	}
 
-	onAllAccountClick = (e, data) => {
-		const checked = data.checked;
+	onAllAccountClick = event => {
+		const checked = event.target.checked;
 		const { allAccounts } = this.props;
 
 		if ( checked === true) {
@@ -46,20 +58,31 @@ class AccountFilter extends Component {
 	}
 
 	render () {
-		const { allAccounts, filteredAccounts } = this.props;
+		const { allAccounts, classes, filteredAccounts } = this.props;
 
 		return (
-			<div className="account-filter">
+			<div className={classes.filter}>
 				{
 					allAccounts && allAccounts.map(j => {
 						return (
-							<div key={j} className="account-filter-checkbox">
-								<Checkbox label={j} checked={filteredAccounts.find(q => q === j) ? true : false} onChange={this.onFilteredAccountsChange}/>
+							<div key={j} className={classes.item}>
+								<FormControlLabel
+									control={
+										<Checkbox className={classes.checkBox} checked={filteredAccounts.find(q => q === j) ? true : false} onChange={this.onFilteredAccountsChange(j)}/>
+									}
+									label={j}
+								/>
 							</div>
 						);
 					})
 				}
-				<Checkbox key="All" label="All" checked={allAccounts.length === filteredAccounts.length} onClick={this.onAllAccountClick}/>
+				<FormControlLabel
+					control={
+						<Checkbox key="All" checked={allAccounts.length === filteredAccounts.length} onClick={this.onAllAccountClick}/>
+					}
+					label="All"
+				/>
+				
 			</div>
 		);
 	}
@@ -67,8 +90,9 @@ class AccountFilter extends Component {
 
 AccountFilter.propTypes = {
 	allAccounts: PropTypes.array.isRequired,
+	classes: PropTypes.object.isRequired,
 	filteredAccounts: PropTypes.array.isRequired,
 	setfilteredAccounts: PropTypes.func.isRequired
 };
 
-export default AccountFilter;
+export default  withStyles(styles)(AccountFilter);

@@ -1,13 +1,25 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Header } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
+
+import Typography from '@material-ui/core/Typography';
 
 import PerformanceGrid from '../components/PerformanceGrid';
+
+const styles = theme => ({
+	subject: {
+		margin: theme.spacing.unit
+	}
+});
 
 class InvestmentPerformance extends Component {
 
 	render () {
-		const { investment, performance } = this.props;
+		const {
+			classes,
+			investment,
+			performance
+		} = this.props;
 		const totalPerformance = performance.length > 0 ? performance.map(l => l.periodReturn).reduce((a, b) => a + b) : 0;
 		const totalQuantity = performance.length > 0 ? performance.map(m => m.quantity).reduce((a, b) => a + b) : 0;
 		const totalGain = performance.length > 0 ? performance.map(l => l.periodGain).reduce((a, b) => a + b) : 0;
@@ -45,7 +57,9 @@ class InvestmentPerformance extends Component {
 
 		return (
 			<div>
-				<Header as="h4">{investment}</Header>
+				<Typography variant="h5" gutterBottom color="inherit" className={classes.subject}>
+					{investment}
+				</Typography>
 				<PerformanceGrid
 					performanceData={performanceData}
 				/>
@@ -55,8 +69,9 @@ class InvestmentPerformance extends Component {
 }
 
 InvestmentPerformance.propTypes = {
+	classes: PropTypes.object.isRequired,
 	investment: PropTypes.string.isRequired,
 	performance: PropTypes.array.isRequired
 };
 
-export default InvestmentPerformance;
+export default withStyles(styles)(InvestmentPerformance);

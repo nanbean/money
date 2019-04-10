@@ -1,7 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Button, Divider } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
+
+import Paper from '@material-ui/core/Paper';
+import Button from '@material-ui/core/Button';
+import AddIcon from '@material-ui/icons/Add';
+import Typography from '@material-ui/core/Typography';
 
 import MortgageSchedule from '../components/MortgageSchedule';
 import TitleHeader from '../components/TitleHeader';
@@ -24,6 +29,39 @@ import {
 } from '../actions/ui/form/bankTransaction';
 import { toCurrencyFormat } from '../utils/formatting';
 
+const styles = theme => ({
+	container: {
+		maxWidth: 1200,
+		[theme.breakpoints.up('lg')]: {
+			margin: '1em auto'
+		},
+		[theme.breakpoints.down('sm')]: {
+			margin: 0
+		}
+	},
+	paper: {
+		[theme.breakpoints.up('lg')]: {
+			marginTop: theme.spacing.unit * 2
+		},
+		[theme.breakpoints.down('sm')]: {
+			marginTop: 0
+		},
+		alignItems: 'center'
+	},
+	header: {
+		width: '100%',
+		zIndex: theme.zIndex.drawer + 1,
+		backgroundColor: '#ffffff'
+	},
+	rightIcon: {
+		marginLeft: theme.spacing.unit
+	},
+	total: {
+		marginTop: theme.spacing.unit,
+		marginRight: theme.spacing.unit
+	}
+});
+
 class Bank extends Component {
 	componentDidMount () {
 		const { match } = this.props;
@@ -35,7 +73,14 @@ class Bank extends Component {
 	}
 
 	render () {
-		const { account, transactions, categoryList, payeeList, mortgageSchedule } = this.props;
+		const {
+			account,
+			classes,
+			transactions,
+			categoryList,
+			payeeList,
+			mortgageSchedule
+		} = this.props;
 		const balance = transactions.length > 0 && transactions.map((i) => i.amount).reduce( (a, b) => a + b );
 		const dropCategoryList = categoryList.map(i => ({ key: i, value: i, text: i }));
 		const dropPayeeList = payeeList.map(i => ({ key: i, name: i }));
@@ -43,44 +88,49 @@ class Bank extends Component {
 		return (
 			<div>
 				<TitleHeader title={account} />
-				<div className="container-full-page">
-					<div className="container-header">
-						<Button.Group basic fluid>
+				<div className={classes.container}>
+					<Paper className={classes.paper}>
+						<div className={classes.header}>
 							<Button
-								icon="plus"
-								labelPosition="right"
-								content="New"
+								fullWidth
+								variant="outlined"
+								color="primary"
 								onClick={this.props.openTransactionInModal}
-							/>
-						</Button.Group>
-					</div>
-					<BankTransactions
-						account={account}
-						transactions={transactions}
-						openTransactionInModal={this.props.openTransactionInModal}
-					/>
-					<Divider horizontal>잔액 : {toCurrencyFormat(balance)}</Divider>
-					<BankTransactionModal
-						EditForm={BankTransactionForm}
-						isOpen={this.props.isModalOpen}
-						isEdit={this.props.isEdit}
-						account={account}
-						transactions={transactions}
-						dropCategoryList={dropCategoryList}
-						dropPayeeList={dropPayeeList}
-						resetTransactionForm={this.props.resetTransactionForm}
-						addTransactionAction={this.props.addTransactionAction}
-						deleteTransactionAction={this.props.deleteTransactionAction}
-						editTransactionAction={this.props.editTransactionAction}
-					/>
-					{
-						account === '아낌이모기지론' &&
-						<MortgageSchedule
-							mortgageSchedule={mortgageSchedule}
-							getMortgageScheduleAction={this.props.getMortgageScheduleAction}
-							addTransactionAction={this.props.addTransactionAction}
+							>
+								New
+								<AddIcon className={classes.rightIcon} />
+							</Button>
+						</div>
+						<BankTransactions
+							account={account}
+							transactions={transactions}
+							openTransactionInModal={this.props.openTransactionInModal}
 						/>
-					}
+						<Typography variant="h6" color="inherit" gutterBottom align="right" className={classes.total}>
+							잔액 : {toCurrencyFormat(balance)}
+						</Typography>
+						<BankTransactionModal
+							EditForm={BankTransactionForm}
+							isOpen={this.props.isModalOpen}
+							isEdit={this.props.isEdit}
+							account={account}
+							transactions={transactions}
+							dropCategoryList={dropCategoryList}
+							dropPayeeList={dropPayeeList}
+							resetTransactionForm={this.props.resetTransactionForm}
+							addTransactionAction={this.props.addTransactionAction}
+							deleteTransactionAction={this.props.deleteTransactionAction}
+							editTransactionAction={this.props.editTransactionAction}
+						/>
+						{
+							account === '아낌이모기지론' &&
+							<MortgageSchedule
+								mortgageSchedule={mortgageSchedule}
+								getMortgageScheduleAction={this.props.getMortgageScheduleAction}
+								addTransactionAction={this.props.addTransactionAction}
+							/>
+						}
+					</Paper>
 				</div>
 			</div>
 		);
@@ -91,6 +141,7 @@ Bank.propTypes = {
 	account: PropTypes.string.isRequired,
 	addTransactionAction: PropTypes.func.isRequired,
 	categoryList: PropTypes.array.isRequired,
+	classes: PropTypes.object.isRequired,
 	deleteTransactionAction: PropTypes.func.isRequired,
 	editTransactionAction: PropTypes.func.isRequired,
 	getCategoryListAction: PropTypes.func.isRequired,
@@ -154,4 +205,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Bank);
+)(withStyles(styles)(Bank));

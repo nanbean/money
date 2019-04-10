@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Message } from 'semantic-ui-react';
+import Paper from '@material-ui/core/Paper';
 
 import TitleHeader from '../components/TitleHeader';
 
@@ -23,9 +23,9 @@ class NotificationLog extends Component {
 						notifications.map(i => {
 							return (
 								<div className="container-item" key={i}>
-									<Message>
+									<Paper >
 										{i}
-									</Message>
+									</Paper >
 								</div>
 							);
 						})

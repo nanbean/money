@@ -1,13 +1,19 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Table, Button, Icon } from 'semantic-ui-react';
+
+import Button from '@material-ui/core/Button';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+
 import moment from 'moment';
 
 class MortgageSchedule extends Component {
 	constructor (props) {
 		super(props);
 
-		this.onAddClick = this.onAddClick.bind(this);
 		this.renderMortgageSchedule = this.renderMortgageSchedule.bind(this);
 	}
 
@@ -15,9 +21,9 @@ class MortgageSchedule extends Component {
 		this.props.getMortgageScheduleAction();
 	}
 
-	onAddClick (e, data) {
+	onAddClick = no => () => {
 		const { mortgageSchedule } = this.props;
-		const schedule = mortgageSchedule[data.no - 1];
+		const schedule = mortgageSchedule[no - 1];
 		const amountData = {};
 		const interestData = {};
 
@@ -57,7 +63,7 @@ class MortgageSchedule extends Component {
 					{schedule.interest ? parseInt(schedule.interest, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 				</Table.Cell>
 				<Table.Cell textAlign="center">
-					<Button
+					{/* <Button
 						icon
 						floated="right"
 						size="mini"
@@ -65,6 +71,12 @@ class MortgageSchedule extends Component {
 						onClick={this.onAddClick}
 					>
 						<Icon name="add" />
+					</Button> */}
+					<Button
+						color="primary"
+						onClick={this.onAddClick(schedule.no)}
+					>
+						Add
 					</Button>
 				</Table.Cell>
 			</Table.Row>
@@ -72,40 +84,52 @@ class MortgageSchedule extends Component {
 	}
 
 	render () {
-		const { mortgageSchedule } = this.props;
+		const { classes, mortgageSchedule } = this.props;
 		const today = moment().format('YYYY-MM');
 		const filteredMorageSchedule = mortgageSchedule.filter(i => i.date >= today);
 
 		return (
 			<div className="investments">
-				<Table celled size="small">
-					<Table.Header>
-						<Table.Row>
-							<Table.HeaderCell>
-								No.
-							</Table.HeaderCell>
-							<Table.HeaderCell>
-								Date
-							</Table.HeaderCell>
-							<Table.HeaderCell>
-								Amount
-							</Table.HeaderCell>
-							<Table.HeaderCell>
-								Principal
-							</Table.HeaderCell>
-							<Table.HeaderCell>
-								Interest
-							</Table.HeaderCell>
-							<Table.HeaderCell>
-								Add
-							</Table.HeaderCell>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{
-							filteredMorageSchedule && filteredMorageSchedule.map(this.renderMortgageSchedule, this)
-						}
-					</Table.Body>
+				<Table className={classes.table}>
+					<TableHead>
+						<TableRow>
+							<TableCell align="center" className={classes.cell}>No.</TableCell>
+							<TableCell align="center" className={classes.cell}>Date</TableCell>
+							<TableCell align="center" className={classes.cell}>Amount</TableCell>
+							<TableCell align="center" className={classes.cell}>Principal</TableCell>
+							<TableCell align="center" className={classes.cell}>Interest</TableCell>
+							<TableCell align="center" className={classes.cell}>Add</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{filteredMorageSchedule && filteredMorageSchedule.map(row => (
+							<TableRow key={row.name}>
+								<TableCell component="th" scope="row" align="center" className={classes.cell}>
+									{row.no}
+								</TableCell>
+								<TableCell align="center" className={classes.cell}>
+									{row.date}
+								</TableCell>
+								<TableCell align="center" className={classes.cell}>
+									{row.amount ? parseInt(row.amount, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+								</TableCell>
+								<TableCell align="center" className={classes.cell}>
+									{row.principal ? parseInt(row.principal, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+								</TableCell>
+								<TableCell align="center" className={classes.cell}>
+									{row.interest ? parseInt(row.interest, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+								</TableCell>
+								<TableCell align="center" className={classes.cell}>
+									<Button
+										color="primary"
+										onClick={this.onAddClick(row.no)}
+									>
+						Add
+									</Button>
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
 				</Table>
 			</div>
 		);
@@ -114,6 +138,7 @@ class MortgageSchedule extends Component {
 
 MortgageSchedule.propTypes = {
 	addTransactionAction: PropTypes.func.isRequired,
+	classes: PropTypes.object.isRequired,
 	getMortgageScheduleAction: PropTypes.func.isRequired,
 	mortgageSchedule:  PropTypes.array.isRequired
 };

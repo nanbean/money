@@ -1,21 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Header } from 'semantic-ui-react';
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 const InvestmentTransactionModal = props => (
-	<Modal
-		closeIcon
-		size="small"
-		className="transaction"
+	<Dialog
 		open={props.isOpen}
 		onClose={props.resetTransactionForm}
+		aria-labelledby="form-dialog-title"
 	>
-		<Header
-			as="h4"
-			icon="file text outline"
-			content={props.isEdit ? 'Edit Transaction' : 'New Transaction'}
-		/>
-		<Modal.Content scrolling>
+		<DialogTitle id="form-dialog-title">{props.isEdit ? 'Edit Transaction' : 'New Transaction'}</DialogTitle>
+		<DialogContent>
 			<props.EditForm
 				account={props.account}
 				investmentAccountTransactions={props.investmentAccountTransactions}
@@ -24,8 +20,8 @@ const InvestmentTransactionModal = props => (
 				deleteInvestmentTransactionAction={props.deleteInvestmentTransactionAction}
 				editInvestmentTransactionAction={props.editInvestmentTransactionAction}
 			/>
-		</Modal.Content>
-	</Modal>
+		</DialogContent>
+	</Dialog>
 );
 
 InvestmentTransactionModal.propTypes = {

@@ -19,11 +19,11 @@ let money = exports;
 
 const readFileAsync = async (filePath) => {
 	return await readFile(filePath);
-}
+};
 
 const writeFileAsync = async (filePath, data) => {
 	return await writeFile(filePath, JSON.stringify(data, null, 2));
-}
+};
 
 const updateAccountList = (name, type, balance, investments, qifData) => {
 	const account = {
@@ -55,7 +55,7 @@ const updateAccountList = (name, type, balance, investments, qifData) => {
 	}
 
 	money.accounts[name] = qifData;
-}
+};
 
 const getInvestmentList = (name, transactions) => {
 	const investments = [];
@@ -77,7 +77,7 @@ const getInvestmentList = (name, transactions) => {
 						price: transaction.price,
 						amount: transaction.amount,
 						gain: transaction.commission ? -transaction.commission:0
-					})
+					});
 				}
 			} else if (transaction.activity === 'Sell') {
 				if (investmentIdx >= 0) {
@@ -91,7 +91,7 @@ const getInvestmentList = (name, transactions) => {
 					}
 				} else {
 					console.log('error');
-					console.log(transaction)
+					console.log(transaction);
 				}
 			} else if (activity === 'ShrsIn') {
 				const shrsInOutIdx = money.shrsInOut.findIndex((item) => item.date === transaction.date && item.shrsInOut == 'ShrsOut' && item.investment == transaction.investment);
@@ -106,7 +106,7 @@ const getInvestmentList = (name, transactions) => {
 						price: money.shrsInOut[shrsInOutIdx] ? money.shrsInOut[shrsInOutIdx].price : 0,
 						amount: transaction.amount,
 						gain: transaction.commission ? -transaction.commission:0
-					})
+					});
 				}
 				money.shrsInOut.push({
 					account: name,
@@ -121,7 +121,7 @@ const getInvestmentList = (name, transactions) => {
 					investments[investmentIdx].amount -= transaction.amount;
 				} else {
 					console.log('error');
-					console.log(transaction)
+					console.log(transaction);
 				}
 				money.shrsInOut.push({
 					account: name,
@@ -136,7 +136,64 @@ const getInvestmentList = (name, transactions) => {
 	}
 
 	return investments;
-}
+};
+
+exports.getTransactions = (startDate, endDate, account) => {
+	// TODO remove account, type infomation in transactions?
+	if (account) {
+		if (money.accounts[account]) {
+			const transactions = money.accounts[account].transactions.map(i => ({ ...i, account, type: money.accounts[account].type }));
+			if (transactions) {
+				if (startDate && endDate) {
+					const filteredTransactions = transactions.filter(j => j.date >= startDate && j.date <= endDate);
+					return {
+						status: 200,
+						body: filteredTransactions
+					};
+				} else {
+					return {
+						status: 200,
+						body: transactions
+					};
+				}
+			} else {
+				return {
+					status: 404,
+					body: {
+						message: 'no transactions'
+					}
+				};
+			}
+		} else {
+			return {
+				status: 404,
+				body: {
+					message: 'invalid account'
+				}
+			};
+		}
+	} else {
+		let allTransactions = [];
+		for (let i in money.accounts) {
+			const transactions = money.accounts[i].transactions && money.accounts[i].transactions.map(j => ({ ...j, account: i, type: money.accounts[i].type }));
+			if (transactions) {
+				allTransactions = allTransactions.concat(transactions);
+			}
+		}
+		if (startDate && endDate) {
+			const filteredAllTransactions = allTransactions.filter(j => j.date >= startDate && j.date <= endDate);
+			return {
+				status: 200,
+				body: filteredAllTransactions
+			};
+		} else {
+			return {
+				status: 200,
+				body: allTransactions
+			};
+		}
+	}
+};
 
 const getBalance = (name, transactions) => {
 	let balance = 0;
@@ -164,7 +221,7 @@ const getBalance = (name, transactions) => {
 	}
 
 	return balance;
-}
+};
 
 const getInvestmentBalance = (investments) => {
 	let balance = 0;
@@ -173,7 +230,7 @@ const getInvestmentBalance = (investments) => {
 	}
 
 	return balance;
-}
+};
 
 const parseFile = (file, callback) => {
 	return new Promise(resolve => {
@@ -203,25 +260,25 @@ const parseFile = (file, callback) => {
 			resolve('done');
 		}
 	});
-}
+};
 
 const updateInvestmentAccount = () => {
 	money.accountList
-	.sort((a, b) => {
-		if (a.type < b.type) {
-			return -1;
-		}
-		if (b.type < a.type) {
-			return 1;
-		}
-		if (a.name < b.name) {
-			return -1;
-		}
-		if (b.name < a.name) {
-			return 1;
-		}
-		return 0;
-	});
+		.sort((a, b) => {
+			if (a.type < b.type) {
+				return -1;
+			}
+			if (b.type < a.type) {
+				return 1;
+			}
+			if (a.name < b.name) {
+				return -1;
+			}
+			if (b.name < a.name) {
+				return 1;
+			}
+			return 0;
+		});
 
 	for (let i = 0; i < money.accountList.length; i++) {
 		const account = money.accountList[i];
@@ -234,14 +291,14 @@ const updateInvestmentAccount = () => {
 					balance += investments[j].quantity * (findInvestment && findInvestment.price ? findInvestment.price : investments[j].price);
 				}
 				if (investments[j].name === 'cash') {
-					balance += investments[j].amount
+					balance += investments[j].amount;
 				}
 			}
 			account.balance = balance;
 		}
 	}
 	console.log('init done');
-}
+};
 
 const arrangeCategory = (category) => {
 	money.categories = [];
@@ -261,7 +318,7 @@ const arrangeCategory = (category) => {
 	subcategories = [...new Set(subcategories)];
 	money.categories = [...categories, ...subcategories];
 	money.categories.sort();
-}
+};
 
 const arrangePayee = () => {
 	money.payees = [];
@@ -275,17 +332,17 @@ const arrangePayee = () => {
 	payees = [...new Set(payees)];
 	money.payees = payees;
 	money.payees.sort();
-}
+};
 
 const arrangeInvestmemt = (resolve) => {
 	const investmentList = [...new Set(money.accountList.filter(i => i.investments.length > 0).map(i => i.investments).reduce((a, b) => a.concat(b)).map(i => i.name))];
-	const investments = investmentList.filter(j => j !== 'cash').map(i => { return {name: i} });
+	const investments = investmentList.filter(j => j !== 'cash').map(i => { return { name: i }; });
 	const allinvestments = [];
 
 	money.investments = investments;
 	money.allinvestments = allinvestments;
 
-	const filePath = path.resolve(__dirname, 'account.json')
+	const filePath = path.resolve(__dirname, 'account.json');
 	fs.writeFile(filePath, JSON.stringify(money.accountList, null, 2), (err, data) => {
 	});
 
@@ -296,7 +353,7 @@ const arrangeInvestmemt = (resolve) => {
 		casper: {
 			logLevel: 'debug',
 			verbose: true,
-			viewportSize: {width: 1600, height: 1200}
+			viewportSize: { width: 1600, height: 1200 }
 		}
 	}, function (err) {
 		if (err) {
@@ -318,12 +375,12 @@ const arrangeInvestmemt = (resolve) => {
 		spooky.then(function () {
 			var investment1 = this.evaluate(function () {
 				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
-					return e.innerHTML.replace("&amp;", "&");
+					return e.innerHTML.replace('&amp;', '&');
 				});
 			});
 			var investment2 = this.evaluate(function () {
 				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
-					return e.innerHTML.replace("&amp;", "&");
+					return e.innerHTML.replace('&amp;', '&');
 				});
 			});
 			var symbol1 = this.evaluate(function () {
@@ -361,32 +418,32 @@ const arrangeInvestmemt = (resolve) => {
 
 		spooky.then(function () {
 			var investment1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
-					return e.innerHTML.replace("&amp;", "&");
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
+					return e.innerHTML.replace('&amp;', '&');
 				});
 			});
 			var investment2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
-					return e.innerHTML.replace("&amp;", "&");
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
+					return e.innerHTML.replace('&amp;', '&');
 				});
 			});
 			var symbol1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
 					return e.href.substr(e.href.length - 6, 6);
 				});
 			});
 			var symbol2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
 					return e.href.substr(e.href.length - 6, 6);
 				});
 			});
 			var price1 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
 					return e.innerHTML;
 				});
 			});
 			var price2 = this.evaluate(function () {
-				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(1) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
+				return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
 					return e.innerHTML;
 				});
 			});
@@ -420,13 +477,12 @@ const arrangeInvestmemt = (resolve) => {
 
 	spooky.on('kodaqParsed', async (investment, symbol, price) => {
 		for (let i = 0; i < investments.length; i++) {
-			for (let j = 0; j < investment.length; j++) {
-				if (investment[j] === investments[i].name) {
-					investments[i].symbol = symbol[j];
-					investments[i].googleSymbol = `KOSDAQ:${symbol[j]}`;
-					investments[i].yahooSymbol = `${symbol[j]}.KQ`;
-					investments[i].price = parseFloat(price[j].replace(/,/g, ''));
-				}
+			const index = investment.findIndex(item => item === investments[i].name);
+			if ( index >= 0 ) {
+				investments[i].symbol = symbol[index];
+				investments[i].googleSymbol = `KOSDAQ:${symbol[index]}`;
+				investments[i].yahooSymbol = `${symbol[index]}.KQ`;
+				investments[i].price = parseFloat(price[index].replace(/,/g, ''));
 			}
 		}
 		for (let k = 0; k < investment.length; k++) {
@@ -451,7 +507,7 @@ const arrangeInvestmemt = (resolve) => {
 	// spooky.on('console', function (line) {
 	// 	console.log(line);
 	// });
-}
+};
 
 const updateHistorical = async () => {
 	const filePath = path.resolve(__dirname, 'historical.json');
@@ -468,7 +524,7 @@ const updateHistorical = async () => {
 	});
 	console.log('updateHistorical outside done...');
 	return true;
-}
+};
 
 const init = () => {
 	money.accountList = [];
@@ -476,23 +532,23 @@ const init = () => {
 	money.accounts = {};
 
 	var queue = async.queue((task, callback) => {
-		parseFile(task.file, callback)
+		parseFile(task.file, callback);
 	}, 1);
 
 	queue.drain = async () => {
 		await updateInvestmentPrice();
 		arrangeCategory();
 		arrangePayee();
-	}
+	};
 
 	fs.readdir(path.resolve(__dirname), (err, files) => {
 		for (let i = 0; i < files.length; i++) {
 			if (files[i].match(/\.qif/i)) {
-				queue.push({file: files[i]});
+				queue.push({ file: files[i] });
 			}
 		}
 	});
-}
+};
 
 exports.updateqifFile = async (account) => {
 	const filePath = path.resolve(__dirname, `./${account}.qif`);
@@ -531,7 +587,7 @@ exports.updateqifFile = async (account) => {
 	});
 	const token = await json2qif.writeToFile(money.accounts[account], filePath);
 
-	const investmentFile = account.match(/_Cash/) ? `${account.substr(0, account.length  -5)}.qif` : `${account}.qif`
+	const investmentFile = account.match(/_Cash/) ? `${account.substr(0, account.length  -5)}.qif` : `${account}.qif`;
 	const cashFile = account.match(/_Cash/) ? `${account}.qif` : `${account}_Cash.qif`;
 
 	const token2 = await parseFile(investmentFile);
@@ -539,13 +595,13 @@ exports.updateqifFile = async (account) => {
 	updateInvestmentAccount();
 	arrangeCategory();
 	arrangePayee();
-}
+};
 
 const updateInvestmentPrice = () => {
 	return new Promise((resolve, reject) => {
 		arrangeInvestmemt(resolve);
 	});
-}
+};
 
 exports.updateInvestmentPrice = updateInvestmentPrice;
 
@@ -575,7 +631,7 @@ const getBalanceToDate = (name, transactions, accounts) => {
 	}
 
 	return balance;
-}
+};
 
 const getInvestmentBalanceToDate = (investments, date) => {
 	const currentYearMonth = moment().format('YYYY-MM');
@@ -593,15 +649,15 @@ const getInvestmentBalanceToDate = (investments, date) => {
 					return investment.price * i.quantity;
 				}
 				if (historicalPrice) {
-					return historicalPrice * i.quantity
+					return historicalPrice * i.quantity;
 				}
 			}
-			return i.price * i.quantity
+			return i.price * i.quantity;
 		}).reduce( (prev, curr) => prev + curr );
 	}
 
 	return balance;
-}
+};
 
 exports.getNetWorth = (date) => {
 	const dateAccounts = {};
@@ -620,7 +676,7 @@ exports.getNetWorth = (date) => {
 		}
 	}
 	return netWorth;
-}
+};
 
 exports.getAssetNetWorth = (date) => {
 	const dateAccounts = {};
@@ -636,7 +692,7 @@ exports.getAssetNetWorth = (date) => {
 		}
 	}
 	return netWorth;
-}
+};
 
 exports.getDividends = (startDate, endDate, account) => {
 	if (account) {
@@ -645,12 +701,12 @@ exports.getDividends = (startDate, endDate, account) => {
 				return {
 					status: 200,
 					body: money.accounts[account].transactions.filter(j => j.date >= startDate && j.date <= endDate && (j.activity === 'Div' || j.activity === 'MiscExp'))
-				}
+				};
 			} else {
 				return {
 					status: 200,
 					body: []
-				}
+				};
 			}
 		} else {
 			return {
@@ -658,7 +714,7 @@ exports.getDividends = (startDate, endDate, account) => {
 				body: {
 					message: 'Invalid account'
 				}
-			}
+			};
 		}
 
 	} else {
@@ -678,96 +734,96 @@ exports.getDividends = (startDate, endDate, account) => {
 		return {
 			status: 200,
 			body: dividendsAccounts
-		}
+		};
 	}
-}
+};
 
 const sendBalanceUpdateNotification = () => {
 	const balance = money.accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
-	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	messaging.sendNotification('NetWorth Update', `Today's NetWorth is ${netWorth}`);
-}
+};
 
 init();
 
 var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', async () => {
-		/*
+	/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
 		 * at 05:00:00 AM.
 		 */
-		console.log('00 40 15 daily dailyArrangeInvestmemtjob started');
+	console.log('00 40 15 daily dailyArrangeInvestmemtjob started');
 
-		await updateInvestmentPrice();
-		sendBalanceUpdateNotification();
-	}, () => {
-		/* This function is executed when the job stops */
-		console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');
-	},
-	true, /* Start the job right now */
-	'Asia/Seoul' /* Time zone of this job. */
+	await updateInvestmentPrice();
+	sendBalanceUpdateNotification();
+}, () => {
+	/* This function is executed when the job stops */
+	console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');
+},
+true, /* Start the job right now */
+'Asia/Seoul' /* Time zone of this job. */
 );
 
 var monthlyUpdateHistoricaljob = new CronJob('00 33 05 1 * *', async () => {
-		/*
+	/*
 		 * update historical automation.
 		 * Runs every 1st day of month, and write last day of previous month price
 		 * at 03:00:00 AM.
 		 */
-		console.log('00 33 05 monthly monthlyUpdateHistoricaljob started');
-		const filePath = path.resolve(__dirname, 'historical.json');
-		const { investments } =  money;
-		const historical = await readFileAsync(filePath).then(data => {
-			const result = JSON.parse(data);
-			return result;
-		});
+	console.log('00 33 05 monthly monthlyUpdateHistoricaljob started');
+	const filePath = path.resolve(__dirname, 'historical.json');
+	const { investments } =  money;
+	const historical = await readFileAsync(filePath).then(data => {
+		const result = JSON.parse(data);
+		return result;
+	});
 
-		for (let i = 0; i < investments.length; i++) {
-			const key = investments[i].yahooSymbol;
-			const price = investments[i].price;
-			if (typeof historical[key] !== 'undefined') {
-				historical[key].unshift({
+	for (let i = 0; i < investments.length; i++) {
+		const key = investments[i].yahooSymbol;
+		const price = investments[i].price;
+		if (typeof historical[key] !== 'undefined') {
+			historical[key].unshift({
+				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+				close: price
+			});
+		} else {
+			historical[key] = [
+				{
 					date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
 					close: price
-				});
-			} else {
-				historical[key] = [
-					{
-						date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
-						close: price
-					}
-				];
-			}
+				}
+			];
 		}
-		writeFileAsync(filePath, historical);
-		await updateHistorical();
-		return true;
-	}, () => {
-		/* This function is executed when the job stops */
-		console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
-	},
-	true, /* Start the job right now */
-	'Asia/Seoul' /* Time zone of this job. */
+	}
+	writeFileAsync(filePath, historical);
+	await updateHistorical();
+	return true;
+}, () => {
+	/* This function is executed when the job stops */
+	console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
+},
+true, /* Start the job right now */
+'Asia/Seoul' /* Time zone of this job. */
 );
 
 var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
-		/*
+	/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
 		 * at 05:00:00 AM.
 		 */
-		console.log('00 00 03 weekly weeklyBackupjob started');
+	console.log('00 00 03 weekly weeklyBackupjob started');
 
-		const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}`;
+	const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}`;
 
-		exec(`mkdir ${backupDir}`, {cwd: __dirname});
-		exec(`cp *.qif ${backupDir}/`, {cwd: __dirname});
-		exec(`cp *.json ${backupDir}/`, {cwd: __dirname});
-		exec(`cp *.xlsx ${backupDir}/`, {cwd: __dirname});
-	}, () => {
-		/* This function is executed when the job stops */
-		console.log('00 00 03 weekly weeklyBackupjob ended');
-	},
-	true, /* Start the job right now */
-	'Asia/Seoul' /* Time zone of this job. */
+	exec(`mkdir ${backupDir}`, { cwd: __dirname });
+	exec(`cp *.qif ${backupDir}/`, { cwd: __dirname });
+	exec(`cp *.json ${backupDir}/`, { cwd: __dirname });
+	exec(`cp *.xlsx ${backupDir}/`, { cwd: __dirname });
+}, () => {
+	/* This function is executed when the job stops */
+	console.log('00 00 03 weekly weeklyBackupjob ended');
+},
+true, /* Start the job right now */
+'Asia/Seoul' /* Time zone of this job. */
 );

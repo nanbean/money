@@ -1,18 +1,25 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import Autocomplete from 'react-autocomplete';
+import TextField from '@material-ui/core/TextField';
 
-import './index.css';
+// TODO delete index.css and apply style in js
+
+const styles = theme => ({
+	input: {
+		paddingBottom: theme.spacing.unit
+	}
+});
 
 class AutoComplete extends Component {
 	matchStateToTerm = (state, value) => state.key.toLowerCase().indexOf(value.toLowerCase()) !== -1 || 	state.name.toLowerCase().indexOf(value.toLowerCase()) !== -1
 
 	render () {
-		const { value, items, placeholder, onChange, onSelect } = this.props;
+		const { classes, value, items, placeholder, onChange, onSelect } = this.props;
 
 		return (
 			<Autocomplete
-				className="input-fluid"
 				value={value}
 				items={items}
 				getItemValue={(item) => item.name}
@@ -20,7 +27,17 @@ class AutoComplete extends Component {
 				onChange={onChange}
 				onSelect={onSelect}
 				wrapperStyle={{ }}
-				renderInput={(props) => <div className="ui input full-width"><input placeholder={placeholder} {...props} /></div>}
+				renderInput={props => {
+					const { ref, ...rest } = props;
+					return (
+						<TextField className={classes.input} {...rest} inputRef={ref}
+							id="my-component"
+							value={value}
+							placeholder={placeholder}
+							fullWidth
+						/>
+					);
+				}}
 				renderMenu={children => (
 					<div className="autocomplete-menu">
 						{children}
@@ -40,6 +57,7 @@ class AutoComplete extends Component {
 }
 
 AutoComplete.propTypes = {
+	classes: PropTypes.object.isRequired,
 	items: PropTypes.array.isRequired,
 	onChange: PropTypes.func.isRequired,
 	onSelect: PropTypes.func.isRequired,
@@ -47,4 +65,4 @@ AutoComplete.propTypes = {
 	value: PropTypes.string
 };
 
-export default AutoComplete;
+export default withStyles(styles)(AutoComplete);

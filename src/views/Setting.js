@@ -1,7 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Button, Checkbox } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
+import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormGroup from '@material-ui/core/FormGroup';
+import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
 
 import TitleHeader from '../components/TitleHeader';
 
@@ -9,6 +14,28 @@ import {
 	requestPermissionAction,
 	removePermissionAction
 } from '../actions/messagingActions';
+
+const styles = theme => ({
+	container: {
+		maxWidth: 1200,
+		margin: '1em auto'
+	},
+	paper: {
+		[theme.breakpoints.up('lg')]: {
+			marginTop: theme.spacing.unit * 2
+		},
+		[theme.breakpoints.down('sm')]: {
+			marginTop: 0
+		},
+		display: 'flex',
+		flexDirection: 'column',
+		alignItems: 'center',
+		padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${theme.spacing.unit * 3}px`
+	},
+	log: {
+		marginTop: theme.spacing.unit * 3
+	}
+});
 
 class Setting extends Component {
 	handleRegisterMessagingToken = () => {
@@ -32,22 +59,31 @@ class Setting extends Component {
 	}
 
 	render () {
-		const { messagingToken } = this.props;
+		const { classes, messagingToken } = this.props;
 
 		return (
 			<div>
 				<TitleHeader title="Setting" />
-				<div className="container-full-page">
-					<div className="container-item">
-						<Checkbox toggle label="푸쉬 알림 받기" checked={messagingToken ? true : false} onChange={this.handlePushNotificationChange} />
-					</div>
-					<div className="container-item">
+				<div className={classes.container}>
+					<Paper className={classes.paper}>
+						<FormGroup>
+							<FormControlLabel
+								control={
+									<Switch checked={messagingToken ? true : false} onChange={this.handlePushNotificationChange} aria-label="PushSwitch" />
+								}
+								label="푸쉬 알림 받기"
+							/>
+						</FormGroup>
 						<Button
-							fluid
-							content="Notification Log"
+							fullWidth
+							variant="contained"
+							color="primary"
+							className={classes.log}
 							onClick={this.handleNotificationLog}
-						/>
-					</div>
+						>
+							Notification Log
+						</Button>
+					</Paper>
 				</div>
 			</div>
 		);
@@ -55,6 +91,7 @@ class Setting extends Component {
 }
 
 Setting.propTypes = {
+	classes: PropTypes.object.isRequired,
 	history: PropTypes.shape({
 		push: PropTypes.func.isRequired
 	}).isRequired,
@@ -79,4 +116,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Setting);
+)(withStyles(styles)(Setting));

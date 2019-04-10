@@ -1,8 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom';
-import { Button } from 'semantic-ui-react';
+
+import Paper from '@material-ui/core/Paper';
+import Button from '@material-ui/core/Button';
+import AddIcon from '@material-ui/icons/Add';
+import MoneyIcon from '@material-ui/icons/Money';
 
 import AccountInvestments from './AccountInvestments';
 import TitleHeader from '../components/TitleHeader';
@@ -26,6 +31,50 @@ import {
 	resetTransactionForm
 } from '../actions/ui/form/investmentTransaction';
 
+const styles = theme => ({
+	container: {
+		maxWidth: 1200,
+		[theme.breakpoints.up('lg')]: {
+			margin: '1em auto'
+		},
+		[theme.breakpoints.down('sm')]: {
+			margin: 0
+		}
+	},
+	paper: {
+		[theme.breakpoints.up('lg')]: {
+			marginTop: theme.spacing.unit * 2
+		},
+		[theme.breakpoints.down('sm')]: {
+			marginTop: 0
+		},
+		alignItems: 'center'
+	},
+	header: {
+		width: '100%',
+		position: 'sticky',
+		zIndex: theme.zIndex.drawer + 1,
+		[theme.breakpoints.down('sm')]: {
+			top: 56
+		},
+		[theme.breakpoints.up('sm')]: {
+			top: 64
+		},
+		backgroundColor: '#ffffff'
+	},
+	headerHalf: {
+		display: 'inline-block',
+		width: '50%'
+	},
+	rightIcon: {
+		marginLeft: theme.spacing.unit
+	},
+	link: {
+		textDecoration: 'none',
+		color: 'inherit'
+	}
+});
+
 export class Investment extends Component {
 	componentDidMount () {
 		const { match } = this.props;
@@ -40,49 +89,66 @@ export class Investment extends Component {
 	}
 
 	render () {
-		const { isMobile, account, investmentList, investmentAccountTransactions } = this.props;
+		const {
+			account,
+			classes,
+			investmentList, 
+			investmentAccountTransactions,
+			isMobile 
+		} = this.props;
 		const autocompleteInvestmentList = investmentList.map(i => ({ key: i.symbol, name: i.name }));
 
 		return (
 			<div>
 				<TitleHeader title={account} />
-				<div className="container-full-page">
-					<div className="container-header header-sticky">
-						<Button.Group basic fluid>
-							<Button
-								icon="plus"
-								labelPosition="right"
-								content="New"
-								onClick={this.props.openTransactionInModal}
-							/>
-							<Link to={`/bank/${account}_Cash`}>
+				<div className={classes.container}>
+					<Paper className={classes.paper}>
+						<div className={classes.header}>
+							<div className={classes.headerHalf}>
 								<Button
-									icon="right arrow"
-									labelPosition="right"
-									content="Cash"
-								/>
-							</Link>
-						</Button.Group>
-					</div>
-					<InvestmentTransactions
-						isMobile={isMobile}
-						investmentAccountTransactions={investmentAccountTransactions}
-						openTransactionInModal={this.props.openTransactionInModal}
-					/>
+									fullWidth
+									variant="outlined"
+									color="primary"
+									onClick={this.props.openTransactionInModal}
+								>
+								New
+									<AddIcon className={classes.rightIcon} />
+								</Button>
+							</div>
+							<div className={classes.headerHalf}>
+								<Link to={`/bank/${account}_Cash`} className={classes.link}>
+									<Button
+										fullWidth
+										variant="outlined"
+										color="primary"
+										onClick={this.props.openTransactionInModal}
+									>
+									Cash
+										<MoneyIcon className={classes.rightIcon} />
+									</Button>
+								</Link>
+							</div>
+						</div>
+						<InvestmentTransactions
+							isMobile={isMobile}
+							investmentAccountTransactions={investmentAccountTransactions}
+							openTransactionInModal={this.props.openTransactionInModal}
+						/>
 
-					<InvestmentTransactionModal
-						EditForm={InvestmentTransactionForm}
-						isOpen={this.props.isModalOpen}
-						isEdit={this.props.isEdit}
-						account={account}
-						investmentAccountTransactions={investmentAccountTransactions}
-						autocompleteInvestmentList={autocompleteInvestmentList}
-						resetTransactionForm={this.props.resetTransactionForm}
-						addInvestmentTransactionAction={this.props.addInvestmentTransactionAction}
-						deleteInvestmentTransactionAction={this.props.deleteInvestmentTransactionAction}
-						editInvestmentTransactionAction={this.props.editInvestmentTransactionAction}
-					/>
-					<AccountInvestments />
+						<InvestmentTransactionModal
+							EditForm={InvestmentTransactionForm}
+							isOpen={this.props.isModalOpen}
+							isEdit={this.props.isEdit}
+							account={account}
+							investmentAccountTransactions={investmentAccountTransactions}
+							autocompleteInvestmentList={autocompleteInvestmentList}
+							resetTransactionForm={this.props.resetTransactionForm}
+							addInvestmentTransactionAction={this.props.addInvestmentTransactionAction}
+							deleteInvestmentTransactionAction={this.props.deleteInvestmentTransactionAction}
+							editInvestmentTransactionAction={this.props.editInvestmentTransactionAction}
+						/>
+						<AccountInvestments />
+					</Paper>
 				</div>
 			</div>
 		);
@@ -93,6 +159,7 @@ Investment.propTypes = {
 	account: PropTypes.string.isRequired,
 	accountInvestments: PropTypes.array.isRequired,
 	addInvestmentTransactionAction: PropTypes.func.isRequired,
+	classes: PropTypes.object.isRequired,
 	deleteInvestmentTransactionAction: PropTypes.func.isRequired,
 	editInvestmentTransactionAction: PropTypes.func.isRequired,
 	getAccountInvestmentsAction: PropTypes.func.isRequired,
@@ -164,4 +231,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Investment);
+)(withStyles(styles)(Investment));

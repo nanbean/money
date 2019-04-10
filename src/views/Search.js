@@ -1,24 +1,56 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Input } from 'semantic-ui-react';
+import { withStyles } from '@material-ui/core/styles';
+
+import Paper from '@material-ui/core/Paper';
+import FormControl from '@material-ui/core/FormControl';
+import Input from '@material-ui/core/Input';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import SearchIcon from '@material-ui/icons/Search';
 
 import TitleHeader from '../components/TitleHeader';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
-import BankTransactionForm from '../components/BankTransactionForm';
 
 import { getAllAccountTransactionsAction } from '../actions/transactionActions';
 import { getCategoryListAction } from '../actions/categoryActions';
 import { getPayeeListAction } from '../actions/payeeActions';
 import {
-	deleteTransactionAction,
-	editTransactionAction
-} from '../actions/transactionActions';
-import {
 	openTransactionInModal,
 	resetTransactionForm
 } from '../actions/ui/form/bankTransaction';
+
+const styles = theme => ({
+	container: {
+		maxWidth: 1200,
+		[theme.breakpoints.up('lg')]: {
+			margin: '1em auto'
+		},
+		[theme.breakpoints.down('sm')]: {
+			margin: 0
+		}
+	},
+	paper: {
+		[theme.breakpoints.up('lg')]: {
+			marginTop: theme.spacing.unit * 2
+		},
+		[theme.breakpoints.down('sm')]: {
+			marginTop: 0
+		},
+		alignItems: 'center'
+	},
+	sticky: {
+		width: '100%',
+		position: 'sticky',
+		[theme.breakpoints.up('lg')]: {
+			top: 62
+		},
+		[theme.breakpoints.down('sm')]: {
+			top: 56
+		}
+	}
+});
 
 class Search extends Component {
 	constructor (props) {
@@ -105,45 +137,45 @@ class Search extends Component {
 	}
 
 	render () {
-		const { categoryList, payeeList } = this.props;
+		const { classes } = this.props;
 		const { filteredTransactions, keyword } = this.state;
-		const dropCategoryList = categoryList.map(i => ({ key: i, value: i, text: i }));
-		const dropPayeeList = payeeList.map(i => ({ key: i, name: i }));
 
 		return (
 			<div>
 				<TitleHeader title="Search" />
-				<div className="container-full-page">
-					<div className="container-header">
-						<Input
-							fluid
-							icon="search"
-							placeholder="Search..."
-							value={keyword}
-							onChange={this.onKeywordChange}
-							onKeyPress={this.onSearchKeyPress}
+				<div className={classes.container}>
+					<Paper className={classes.paper}>
+						<div className={classes.sticky}>
+							<FormControl margin="normal" required fullWidth>
+								<Input
+									id="search"
+									name="search"
+									autoComplete="search"
+									autoFocus
+									value={keyword}
+									onChange={this.onKeywordChange}
+									onKeyPress={this.onSearchKeyPress}
+									startAdornment={
+										<InputAdornment position="start">
+											<SearchIcon />
+										</InputAdornment>
+									}
+								/>
+							</FormControl>
+						</div>
+						{
+							filteredTransactions.length > 0 &&
+							<BankTransactions
+								showAccount
+								transactions={filteredTransactions}
+								openTransactionInModal={this.props.openTransactionInModal}
+							/>
+						}
+						<BankTransactionModal
+							isEdit={true}
+							transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
 						/>
-					</div>
-					{
-						filteredTransactions.length > 0 &&
-						<BankTransactions
-							showAccount
-							transactions={filteredTransactions}
-							openTransactionInModal={this.props.openTransactionInModal}
-						/>
-					}
-					<BankTransactionModal
-						EditForm={BankTransactionForm}
-						isOpen={this.props.isModalOpen}
-						isEdit={true}
-						account={''}
-						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
-						dropCategoryList={dropCategoryList}
-						dropPayeeList={dropPayeeList}
-						resetTransactionForm={this.props.resetTransactionForm}
-						deleteTransactionAction={this.props.deleteTransactionAction}
-						editTransactionAction={this.props.editTransactionAction}
-					/>
+					</Paper>
 				</div>
 			</div>
 		);
@@ -152,15 +184,12 @@ class Search extends Component {
 
 Search.propTypes = {
 	allAccountTransactions:  PropTypes.object.isRequired,
-	categoryList: PropTypes.array.isRequired,
-	deleteTransactionAction: PropTypes.func.isRequired,
-	editTransactionAction: PropTypes.func.isRequired,
+	classes: PropTypes.object.isRequired,
 	getAllAccountTransactionsAction: PropTypes.func.isRequired,
 	getCategoryListAction: PropTypes.func.isRequired,
 	getPayeeListAction: PropTypes.func.isRequired,
 	isModalOpen: PropTypes.bool.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired,
-	payeeList: PropTypes.array.isRequired,
 	resetTransactionForm: PropTypes.func.isRequired,
 	match: PropTypes.shape({
 		params: PropTypes.shape({
@@ -171,8 +200,6 @@ Search.propTypes = {
 
 const mapStateToProps = state => ({
 	allAccountTransactions: state.allAccountTransactions,
-	categoryList: state.categoryList,
-	payeeList: state.payeeList,
 	isModalOpen: state.ui.form.bankTransaction.isModalOpen
 });
 
@@ -186,12 +213,6 @@ const mapDispatchToProps = dispatch => ({
 	getPayeeListAction () {
 		dispatch(getPayeeListAction());
 	},
-	deleteTransactionAction (data) {
-		dispatch(deleteTransactionAction(data, 'search'));
-	},
-	editTransactionAction (data) {
-		dispatch(editTransactionAction(data, 'search'));
-	},
 	openTransactionInModal (params) {
 		dispatch(openTransactionInModal(params));
 	},
@@ -203,4 +224,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Search);
+)(withStyles(styles)(Search));

@@ -10,11 +10,11 @@ const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 const filePath = path.resolve(__dirname, 'notification.json');
 
-async function readNotificationFile() {
+async function readNotificationFile () {
 	return await readFile(filePath);
 }
 
-async function writeNotificationFile(data) {
+async function writeNotificationFile (data) {
 	return await writeFile(filePath, JSON.stringify(data, null, 2));
 }
 
@@ -52,7 +52,7 @@ const findCategoryByPayee = (transactions, transaction) => {
 	}
 
 	return transaction;
-}
+};
 
 const addHistory = function (packageName, text, transaction, result) {
 	readNotificationFile().then(data => {
@@ -71,9 +71,9 @@ const addHistory = function (packageName, text, transaction, result) {
 				transaction: transaction,
 				parsed: result ? '👍' : '⚠️'
 			}));
-		})
+		});
 	});
-}
+};
 
 exports.addTransaction = async function (body) {
 	let result = false;
@@ -188,7 +188,7 @@ exports.addTransaction = async function (body) {
 				payee: items[5],
 				category: '분류없음'
 			};
-		} else if (body.text.match(/SC은행BC\(5293\)승인/g)) {
+		} else if (body.text.match(/SC은행BC\(2029\)승인/g)) {
 			account = '생활비카드';
 			items = body.text.split('\n');
 			transaction = {
@@ -238,13 +238,13 @@ exports.addTransaction = async function (body) {
 	} else {
 		return false;
 	}
-}
+};
 
 exports.getHistory = async function (size) {
 	const history = await readNotificationFile().then(data => {
 		const result = JSON.parse(data);
 		return result.history.slice(size * -1);
-	})
+	});
 
 	return history;
-}
+};
