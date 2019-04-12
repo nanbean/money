@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 
 import Button from '@material-ui/core/Button';
 import Table from '@material-ui/core/Table';
@@ -10,13 +11,22 @@ import TableRow from '@material-ui/core/TableRow';
 
 import moment from 'moment';
 
-class MortgageSchedule extends Component {
-	constructor (props) {
-		super(props);
+const styles = theme => ({
+	table: {
 
-		this.renderMortgageSchedule = this.renderMortgageSchedule.bind(this);
+	},
+	cell: {
+		[theme.breakpoints.down('sm')]: {
+			padding: 0,
+			'&:last-child': {
+				padding: 0
+			}
+		},
+		fontSize: '0.9em'
 	}
+});
 
+class MortgageSchedule extends Component {
 	componentDidMount () {
 		this.props.getMortgageScheduleAction();
 	}
@@ -44,45 +54,6 @@ class MortgageSchedule extends Component {
 		this.props.addTransactionAction(interestData);
 	}
 
-	renderMortgageSchedule (schedule) {
-		return (
-			<Table.Row key={schedule.no}>
-				<Table.Cell>
-					{schedule.no}
-				</Table.Cell>
-				<Table.Cell>
-					{schedule.date}
-				</Table.Cell>
-				<Table.Cell>
-					{schedule.amount ? parseInt(schedule.amount, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-				</Table.Cell>
-				<Table.Cell>
-					{schedule.principal ? parseInt(schedule.principal, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-				</Table.Cell>
-				<Table.Cell>
-					{schedule.interest ? parseInt(schedule.interest, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-				</Table.Cell>
-				<Table.Cell textAlign="center">
-					{/* <Button
-						icon
-						floated="right"
-						size="mini"
-						no={schedule.no}
-						onClick={this.onAddClick}
-					>
-						<Icon name="add" />
-					</Button> */}
-					<Button
-						color="primary"
-						onClick={this.onAddClick(schedule.no)}
-					>
-						Add
-					</Button>
-				</Table.Cell>
-			</Table.Row>
-		);
-	}
-
 	render () {
 		const { classes, mortgageSchedule } = this.props;
 		const today = moment().format('YYYY-MM');
@@ -103,7 +74,7 @@ class MortgageSchedule extends Component {
 					</TableHead>
 					<TableBody>
 						{filteredMorageSchedule && filteredMorageSchedule.map(row => (
-							<TableRow key={row.name}>
+							<TableRow key={row.no}>
 								<TableCell component="th" scope="row" align="center" className={classes.cell}>
 									{row.no}
 								</TableCell>
@@ -124,7 +95,7 @@ class MortgageSchedule extends Component {
 										color="primary"
 										onClick={this.onAddClick(row.no)}
 									>
-						Add
+										Add
 									</Button>
 								</TableCell>
 							</TableRow>
@@ -143,4 +114,4 @@ MortgageSchedule.propTypes = {
 	mortgageSchedule:  PropTypes.array.isRequired
 };
 
-export default MortgageSchedule;
+export default withStyles(styles)(MortgageSchedule);

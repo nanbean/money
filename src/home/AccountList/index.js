@@ -28,7 +28,9 @@ const styles = theme => ({
 	cell: {
 		[theme.breakpoints.down('sm')]: {
 			padding: 0,
-			width: '33%'
+			'&:last-child': {
+				padding: 0
+			}
 		},
 		fontSize: '0.9em'
 	},
