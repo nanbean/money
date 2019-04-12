@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
 import moment from 'moment';
 
 import ResponsiveContainer from 'recharts/lib/component/ResponsiveContainer';
@@ -24,23 +23,6 @@ const week = [
 	'Day6',
 	'Day7'
 ];
-
-const styles = theme => ({
-	table: {
-		
-	},
-	cell: {
-		[theme.breakpoints.down('sm')]: {
-			padding: 0,
-			width: '33%'
-		},
-		fontSize: '0.9em'
-	},
-	link: {
-		textDecoration: 'none',
-		color: 'inherit'
-	}
-});
 
 export class WeeklyGraph extends Component {
 	componentDidMount () {
@@ -147,4 +129,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(withStyles(styles)(WeeklyGraph));
+)(WeeklyGraph);
