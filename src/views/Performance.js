@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 
 import TitleHeader from '../components/TitleHeader';
 import InvestmentPerformance from '../components/InvestmentPerformance';
@@ -8,6 +9,16 @@ import InvestmentPerformance from '../components/InvestmentPerformance';
 import { getInvestmentTransactionsAction } from '../actions/investmentActions';
 import { getInvestmentPriceAction } from '../actions/priceActions';
 import { getInvestmentPerformance } from '../utils/performance';
+
+const styles = theme => ({
+	container: {
+		flexGrow: 1,
+		padding: theme.spacing.unit * 3,
+		[theme.breakpoints.down('sm')]: {
+			padding: 0
+		}
+	}
+});
 
 class Performance extends Component {
 	componentDidMount () {
@@ -19,7 +30,7 @@ class Performance extends Component {
 	}
 
 	render () {
-		const { isMobile, investmentTransactions, investmentPrice } = this.props;
+		const { classes, isMobile, investmentTransactions, investmentPrice } = this.props;
 		const { match } = this.props;
 		const investment = match && match.params && match.params.investment;
 		const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
@@ -27,7 +38,7 @@ class Performance extends Component {
 		return (
 			<div>
 				<TitleHeader title={investment} />
-				<div className="container-full-page">
+				<div className={classes.container}>
 					<InvestmentPerformance
 						isMobile={isMobile}
 						investment={investment}
@@ -40,6 +51,7 @@ class Performance extends Component {
 }
 
 Performance.propTypes = {
+	classes: PropTypes.object.isRequired,
 	getInvestmentPriceAction: PropTypes.func.isRequired,
 	getInvestmentTransactionsAction: PropTypes.func.isRequired,
 	investmentPrice: PropTypes.number.isRequired,
@@ -70,4 +82,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Performance);
+)(withStyles(styles)(Performance));

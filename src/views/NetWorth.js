@@ -11,12 +11,10 @@ import { toCurrencyFormat } from '../utils/formatting';
 
 const styles = theme => ({
 	container: {
-		maxWidth: 1200,
-		[theme.breakpoints.up('lg')]: {
-			margin: '1em auto'
-		},
+		flexGrow: 1,
+		padding: theme.spacing.unit * 3,
 		[theme.breakpoints.down('sm')]: {
-			margin: 0
+			padding: 0
 		}
 	}
 });

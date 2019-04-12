@@ -8,7 +8,7 @@ import PerformanceGrid from '../components/PerformanceGrid';
 
 const styles = theme => ({
 	subject: {
-		margin: theme.spacing.unit
+		margin: theme.spacing.unit / 2
 	}
 });
 
@@ -57,7 +57,7 @@ class InvestmentPerformance extends Component {
 
 		return (
 			<div>
-				<Typography variant="h5" gutterBottom color="inherit" className={classes.subject}>
+				<Typography variant="subject1" className={classes.subject}>
 					{investment}
 				</Typography>
 				<PerformanceGrid

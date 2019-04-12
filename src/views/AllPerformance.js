@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
-import Paper from '@material-ui/core/Paper';
-import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
 
 import InvestmentPerformance from '../components/InvestmentPerformance';
@@ -21,22 +19,11 @@ import { getInvestmentPerformance } from '../utils/performance';
 
 const styles = theme => ({
 	container: {
-		maxWidth: 1200,
-		[theme.breakpoints.up('lg')]: {
-			margin: '1em auto'
-		},
+		flexGrow: 1,
+		padding: theme.spacing.unit * 3,
 		[theme.breakpoints.down('sm')]: {
-			margin: 0
+			padding: 0
 		}
-	},
-	paper: {
-		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing.unit * 2
-		},
-		[theme.breakpoints.down('sm')]: {
-			marginTop: 0
-		},
-		alignItems: 'center'
 	},
 	total: {
 		marginTop: theme.spacing.unit,
@@ -85,32 +72,28 @@ class AllPerformance extends Component {
 			<div>
 				<TitleHeader title="Performance" />
 				<div className={classes.container}>
-					<Paper className={classes.paper}>
-						<div className="container-header">
-							<InvestmentFilter
-								allInvestmentsPrice={allInvestmentsPrice}
-								filteredInvestments={filteredInvestments}
-								allInvestmentsFiltered={allInvestmentsFiltered}
-								setfilteredInvestments={this.props.setfilteredInvestments}
-							/>
-						</div>
-						<Divider />
-						<Typography variant="h6" color="inherit" gutterBottom align="right" className={classes.total}>
-							Grand Total : {toCurrencyFormat(grandTotalPerformance)}
-						</Typography>
-						{
-							filteredPerformance && filteredPerformance.map(i => {
-								return (
-									<InvestmentPerformance
-										key={i.investment}
-										isMobile={isMobile}
-										investment={i.investment}
-										performance={i.performance}
-									/>
-								);
-							})
-						}
-					</Paper>
+					<InvestmentFilter
+						allInvestmentsPrice={allInvestmentsPrice}
+						filteredInvestments={filteredInvestments}
+						allInvestmentsFiltered={allInvestmentsFiltered}
+						setfilteredInvestments={this.props.setfilteredInvestments}
+					/>
+					<Typography variant="subtitle1" align="right" className={classes.total}>
+						Grand Total : {toCurrencyFormat(grandTotalPerformance)}
+					</Typography>
+					{
+						filteredPerformance && filteredPerformance.map(i => {
+							return (
+								<InvestmentPerformance
+									key={i.investment}
+									isMobile={isMobile}
+									investment={i.investment}
+									performance={i.performance}
+								/>
+							);
+						})
+					}
+					
 				</div>
 			</div>
 		);

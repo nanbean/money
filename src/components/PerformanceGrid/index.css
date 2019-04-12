@@ -29,6 +29,8 @@
 	background-color: rgb(249, 250, 251);
 	border-top: 1px solid rgba(34,36,38,.1);
 	border-bottom: 1px solid rgba(34,36,38,.1);
+	border-left: 1px solid rgba(34,36,38,.1);
+	border-right: 1px solid rgba(34,36,38,.1);
 }
 
 .performance-grid .top-right-grid {
@@ -42,4 +44,6 @@
 .performance-grid .bottom-left-grid {
 	background-color: rgb(249, 250, 251);
 	overflow: hidden !important;
+	border-left: 1px solid rgba(34,36,38,.1);
+	border-right: 1px solid rgba(34,36,38,.1);
 }

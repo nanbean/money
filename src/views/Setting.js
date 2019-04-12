@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
+
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormGroup from '@material-ui/core/FormGroup';
@@ -17,8 +18,11 @@ import {
 
 const styles = theme => ({
 	container: {
-		maxWidth: 1200,
-		margin: '1em auto'
+		flexGrow: 1,
+		padding: theme.spacing.unit * 3,
+		[theme.breakpoints.down('sm')]: {
+			padding: 0
+		}
 	},
 	paper: {
 		[theme.breakpoints.up('lg')]: {

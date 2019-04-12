@@ -1,11 +1,23 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
+import { withStyles } from '@material-ui/core/styles';
 
 import TitleHeader from '../components/TitleHeader';
 
 import MonthlyExpense from './MonthlyExpense';
 import Dividend from './Dividend';
+
+const styles = theme => ({
+	container: {
+		flexGrow: 1,
+		padding: theme.spacing.unit * 3,
+		[theme.breakpoints.down('sm')]: {
+			padding: 0
+		}
+	}
+});
 
 class Report extends React.Component {
 	state = {
@@ -17,12 +29,13 @@ class Report extends React.Component {
 	}
 
 	render () {
+		const { classes } = this.props;
 		const { value } = this.state;
 		
 		return (
 			<div>
 				<TitleHeader title="Report" />
-				<div className="container-full-page">
+				<div className={classes.container}>
 					<Tabs value={value} onChange={this.handleChange}>
 						<Tab label="Monthly Expense" />
 						<Tab label="Dividend" />
@@ -36,4 +49,8 @@ class Report extends React.Component {
 	}
 }
 
-export default Report;
+Report.propTypes = {
+	classes: PropTypes.object.isRequired
+};
+
+export default withStyles(styles)(Report);

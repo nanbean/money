@@ -4,16 +4,24 @@ import { withStyles } from '@material-ui/core/styles';
 
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
+import Paper from '@material-ui/core/Paper';
 
 const styles = theme => ({
-	filter: {
-		padding: theme.spacing.unit * 3
+	paper: {
+		[theme.breakpoints.up('lg')]: {
+			marginTop: theme.spacing.unit * 2
+		},
+		[theme.breakpoints.down('sm')]: {
+			marginTop: 0
+		},
+		alignItems: 'center',
+		padding: theme.spacing.unit * 2
 	},
 	item: {
 		display: 'inline-block'
 	},
 	checkBox: {
-		padding: theme.spacing.unit
+		padding: theme.spacing.unit / 2
 	}
 });
 
@@ -67,7 +75,7 @@ class InvestmentFilter extends Component {
 		} = this.props;
 
 		return (
-			<div className={classes.filter}>
+			<Paper className={classes.paper}>
 				{
 					allInvestmentsPrice && allInvestmentsPrice.map(j => {
 						return (
@@ -84,11 +92,11 @@ class InvestmentFilter extends Component {
 				}
 				<FormControlLabel
 					control={
-						<Checkbox key="All" checked={allInvestmentsFiltered} onClick={this.onAllInvestementClick}/>
+						<Checkbox key="All" className={classes.checkBox} checked={allInvestmentsFiltered} onClick={this.onAllInvestementClick}/>
 					}
 					label="All"
 				/>
-			</div>
+			</Paper>
 		);
 	}
 }

@@ -1,11 +1,27 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
+
 import Paper from '@material-ui/core/Paper';
 
 import TitleHeader from '../components/TitleHeader';
 
 import { getNotificationsAction } from '../actions/notificationActions';
+
+const styles = theme => ({
+	container: {
+		flexGrow: 1,
+		padding: theme.spacing.unit * 3,
+		[theme.breakpoints.down('sm')]: {
+			padding: 0
+		}
+	},
+	paper: {
+		marginTop: theme.spacing.unit * 2,
+		padding: theme.spacing.unit
+	}
+});
 
 class NotificationLog extends Component {
 	componentDidMount () {
@@ -13,20 +29,18 @@ class NotificationLog extends Component {
 	}
 
 	render () {
-		const { notifications } = this.props;
+		const { classes, notifications } = this.props;
 
 		return (
 			<div>
 				<TitleHeader title="Notification Log" />
-				<div className="container-full-page">
+				<div className={classes.container}>
 					{
 						notifications.map(i => {
 							return (
-								<div className="container-item" key={i}>
-									<Paper >
-										{i}
-									</Paper >
-								</div>
+								<Paper key={i} className={classes.paper}>
+									{i}
+								</Paper >
 							);
 						})
 					}
@@ -37,6 +51,7 @@ class NotificationLog extends Component {
 }
 
 NotificationLog.propTypes = {
+	classes: PropTypes.object.isRequired,
 	getNotificationsAction: PropTypes.func.isRequired,
 	notifications: PropTypes.array.isRequired
 };
@@ -54,4 +69,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(NotificationLog);
+)(withStyles(styles)(NotificationLog));
