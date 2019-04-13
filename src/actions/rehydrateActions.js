@@ -9,6 +9,9 @@ export const rehydrateAction = () => {
 		try {
 			const messagingToken = window.localStorage.getItem('messagingToken');
 			payload.messagingToken = messagingToken;
+
+			const isSidebarOpen = window.localStorage.getItem('isSidebarOpen');
+			payload.isSidebarOpen = isSidebarOpen === 'true';
 		} catch (err) {
 			// do nothing
 		}

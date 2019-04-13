@@ -59,30 +59,30 @@ const styles = theme => ({
 	},
 	summaryPanel: {
 		flex: '1 1 auto',
-		minWidth: 360,
+		minWidth: 500,
 		[theme.breakpoints.down('sm')]: {
-			minWidth: 500
+			minWidth: 360
 		}
 	},
 	weeklyGraphPanel: {
 		flex: '1 1 auto',
-		minWidth: 360,
+		minWidth: 500,
 		[theme.breakpoints.down('sm')]: {
-			minWidth: 500
+			minWidth: 360
 		}
 	},
 	lastTransactionPanel: {
 		flex: '1 1 auto',
-		minWidth: 360,
+		minWidth: 500,
 		[theme.breakpoints.down('sm')]: {
-			minWidth: 500
+			minWidth: 360
 		}
 	},
 	accountPanel: {
 		flex: '1 1 auto',
-		minWidth: 360,
+		minWidth: 500,
 		[theme.breakpoints.down('sm')]: {
-			minWidth: 500
+			minWidth: 360
 		}
 	},
 	expansionSummary: {

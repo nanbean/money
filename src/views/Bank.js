@@ -31,12 +31,10 @@ import { toCurrencyFormat } from '../utils/formatting';
 
 const styles = theme => ({
 	container: {
-		maxWidth: 1200,
-		[theme.breakpoints.up('lg')]: {
-			margin: '1em auto'
-		},
+		flexGrow: 1,
+		padding: theme.spacing.unit * 3,
 		[theme.breakpoints.down('sm')]: {
-			margin: 0
+			padding: 0
 		}
 	},
 	paper: {
@@ -48,10 +46,17 @@ const styles = theme => ({
 		},
 		alignItems: 'center'
 	},
-	header: {
+	sticky: {
 		width: '100%',
+		position: 'sticky',
 		zIndex: theme.zIndex.drawer + 1,
-		backgroundColor: '#ffffff'
+		[theme.breakpoints.down('sm')]: {
+			top: 56
+		},
+		[theme.breakpoints.up('sm')]: {
+			top: 64
+		},
+		backgroundColor: 'white'
 	},
 	rightIcon: {
 		marginLeft: theme.spacing.unit
@@ -90,7 +95,7 @@ class Bank extends Component {
 				<TitleHeader title={account} />
 				<div className={classes.container}>
 					<Paper className={classes.paper}>
-						<div className={classes.header}>
+						<div className={classes.sticky}>
 							<Button
 								fullWidth
 								variant="outlined"
