@@ -1,8 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import { withStyles } from '@material-ui/core/styles';
+import AppBar from '@material-ui/core/AppBar';
 
 import TitleHeader from '../components/TitleHeader';
 
@@ -36,10 +38,12 @@ class Report extends React.Component {
 			<div>
 				<TitleHeader title="Report" />
 				<div className={classes.container}>
-					<Tabs value={value} onChange={this.handleChange}>
-						<Tab label="Monthly Expense" />
-						<Tab label="Dividend" />
-					</Tabs>
+					<AppBar position="static" color="default">
+						<Tabs value={value} onChange={this.handleChange}>
+							<Tab label="Monthly Expense" />
+							<Tab label="Dividend" />
+						</Tabs>
+					</AppBar>
 					{value === 0 && <MonthlyExpense />}
 					{value === 1 && <Dividend />}
 				</div>

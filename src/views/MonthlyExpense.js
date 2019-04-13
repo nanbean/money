@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
@@ -19,6 +20,15 @@ const month = Array.from({ length: 12 }, (v, k) => _.padStart(k + 1, 2, '0'));
 const startYear = 2005;
 const endYear = parseInt(moment().format('YYYY'), 10);
 const yearOptions = Array.from({ length: endYear - startYear + 1 }, (v, k) => k + startYear).map(i => ({ key: i, value: i, text: i }));
+
+const styles = theme => ({
+	header: {
+		paddingTop: theme.spacing.unit,
+		[theme.breakpoints.down('sm')]: {
+			paddingTop: 0
+		}
+	}
+});
 
 class MonthlyExpense extends Component {
 	constructor (props) {
@@ -64,7 +74,7 @@ class MonthlyExpense extends Component {
 	}
 
 	render () {
-		const { allAccountTransactions } = this.props;
+		const { allAccountTransactions, classes } = this.props;
 		const { year, livingExpenseOnly, livingExpenseCardOnly } = this.state;
 		let incomeTransactions = [];
 		let expenseTransactions = [];
@@ -220,7 +230,7 @@ class MonthlyExpense extends Component {
 
 		return (
 			<div>
-				<div className="container-header">
+				<div className={classes.header}>
 					<FormControl fullWidth>
 						<Select
 							value={year}
@@ -237,7 +247,7 @@ class MonthlyExpense extends Component {
 							}
 						</Select>
 					</FormControl>
-					<div className="detail-toggle">
+					<div>
 						<FormControlLabel
 							control={
 								<Switch
@@ -266,6 +276,7 @@ class MonthlyExpense extends Component {
 
 MonthlyExpense.propTypes = {
 	allAccountTransactions:  PropTypes.object.isRequired,
+	classes: PropTypes.object.isRequired,
 	getAllAccountTransactionsAction: PropTypes.func.isRequired
 };
 
@@ -282,4 +293,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(MonthlyExpense);
+)(withStyles(styles)(MonthlyExpense));

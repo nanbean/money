@@ -21,15 +21,10 @@ const endYear = parseInt(moment().format('YYYY'), 10);
 const yearOptions = Array.from({ length: endYear - startYear + 1 }, (v, k) => k + startYear).map(i => ({ key: i, value: i, text: i }));
 
 const styles = theme => ({
-	sticky: {
-		padding: '1em',
-		width: '100%',
-		position: 'sticky',
-		[theme.breakpoints.up('lg')]: {
-			top: 62
-		},
+	header: {
+		paddingTop: theme.spacing.unit,
 		[theme.breakpoints.down('sm')]: {
-			top: 56
+			paddingTop: 0
 		}
 	}
 });
@@ -100,7 +95,7 @@ class Dividend extends Component {
 		}
 		return (
 			<div>
-				<div className={classes.sticky}>
+				<div className={classes.header}>
 					<FormControl fullWidth>
 						<Select
 							value={year}

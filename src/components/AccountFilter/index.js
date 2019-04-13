@@ -13,7 +13,7 @@ const styles = theme => ({
 		display: 'inline-block'
 	},
 	checkBox: {
-		padding: theme.spacing.unit
+		padding: theme.spacing.unit / 2
 	}
 });
 
@@ -82,7 +82,6 @@ class AccountFilter extends Component {
 					}
 					label="All"
 				/>
-				
 			</div>
 		);
 	}
