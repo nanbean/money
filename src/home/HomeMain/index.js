@@ -14,7 +14,7 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import Summary from '../Summary';
-import LastTransactions from '../LastTransactions';
+import LatestTransactions from '../LatestTransactions';
 import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
 
@@ -25,7 +25,7 @@ import { updateInvestmentPriceAction } from '../../actions/priceActions';
 
 import {
 	changeAccountsExpanded,
-	changeLastTransactionsExpanded,
+	changeLatestTransactionsExpanded,
 	changeSummaryExpanded,
 	changeWeeklyGraphExpanded
 } from '../../actions/ui/homeActions';
@@ -71,7 +71,7 @@ const styles = theme => ({
 			minWidth: 360
 		}
 	},
-	lastTransactionPanel: {
+	latestTransactionPanel: {
 		flex: '1 1 auto',
 		minWidth: 500,
 		[theme.breakpoints.down('sm')]: {
@@ -119,7 +119,7 @@ const ExpansionPanel = withStyles({
 
 export class HomeMain extends Component {
 	state = {
-		lastTransactionsExpanded: true,
+		latestTransactionsExpanded: true,
 		accountsExpanded: true
 	};
 
@@ -131,8 +131,8 @@ export class HomeMain extends Component {
 		this.props.changeAccountsExpanded(expanded);
 	}
 
-	onLastTransactionsExpansionPanelChangeHalder = (event, expanded) => {
-		this.props.changeLastTransactionsExpanded(expanded);
+	onLatestTransactionsExpansionPanelChangeHalder = (event, expanded) => {
+		this.props.changeLatestTransactionsExpanded(expanded);
 	}
 
 	onSummaryExpansionPanelChangeHalder = (event, expanded) => {
@@ -151,7 +151,7 @@ export class HomeMain extends Component {
 		const {
 			accountsExpanded,
 			classes,
-			lastTransactionsExpanded,
+			latestTransactionsExpanded,
 			summaryExpanded,
 			updateInvestmentPriceFetching,
 			weeklyGraphExpanded
@@ -208,18 +208,18 @@ export class HomeMain extends Component {
 								</ExpansionPanelDetails>
 							</ExpansionPanel>
 						</div>
-						<div className={classes.lastTransactionPanel}>
+						<div className={classes.latestTransactionPanel}>
 							<ExpansionPanel
-								expanded={lastTransactionsExpanded}
-								onChange={this.onLastTransactionsExpansionPanelChangeHalder}
+								expanded={latestTransactionsExpanded}
+								onChange={this.onLatestTransactionsExpansionPanelChangeHalder}
 							>
 								<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
 									<Typography variant="subtitle1">
-									Last Transactions
+									Latest Transactions
 									</Typography>
 								</ExpansionPanelSummary>
 								<ExpansionPanelDetails className={classes.expansionDetails}>
-									<LastTransactions />
+									<LatestTransactions />
 								</ExpansionPanelDetails>
 							</ExpansionPanel>
 						</div>
@@ -249,12 +249,12 @@ HomeMain.propTypes = {
 	accountList:  PropTypes.array.isRequired,
 	accountsExpanded: PropTypes.bool.isRequired,
 	changeAccountsExpanded: PropTypes.func.isRequired,
-	changeLastTransactionsExpanded: PropTypes.func.isRequired,
+	changeLatestTransactionsExpanded: PropTypes.func.isRequired,
 	changeSummaryExpanded: PropTypes.func.isRequired,
 	changeWeeklyGraphExpanded: PropTypes.func.isRequired,
 	classes: PropTypes.object.isRequired,
 	getAccountListAction: PropTypes.func.isRequired,
-	lastTransactionsExpanded: PropTypes.bool.isRequired,
+	latestTransactionsExpanded: PropTypes.bool.isRequired,
 	summaryExpanded: PropTypes.bool.isRequired,
 	updateInvestmentPriceAction: PropTypes.func.isRequired,
 	updateInvestmentPriceFetching: PropTypes.bool.isRequired,
@@ -264,7 +264,7 @@ HomeMain.propTypes = {
 const mapStateToProps = state => ({
 	accountList: state.accountList,
 	accountsExpanded: state.ui.home.accountsExpanded,
-	lastTransactionsExpanded: state.ui.home.lastTransactionsExpanded,
+	latestTransactionsExpanded: state.ui.home.latestTransactionsExpanded,
 	summaryExpanded: state.ui.home.summaryExpanded,
 	updateInvestmentPriceFetching: state.updateInvestmentPriceFetching,
 	weeklyGraphExpanded: state.ui.home.weeklyGraphExpanded
@@ -274,7 +274,7 @@ export default connect(
 	mapStateToProps,
 	{
 		changeAccountsExpanded,
-		changeLastTransactionsExpanded,
+		changeLatestTransactionsExpanded,
 		changeSummaryExpanded,
 		changeWeeklyGraphExpanded,
 		getAccountListAction,
