@@ -19,7 +19,7 @@ const styles = theme => ({
 		textAlign: 'center',
 		[theme.breakpoints.down('sm')]: {
 			height: '80vh',
-			fontSize: '.8em',
+			fontSize: '.8em'
 		}
 	},
 	cell: {
@@ -50,8 +50,8 @@ const styles = theme => ({
 
 class ReportGrid extends Component {
 	render () {
-		const { classes, reportData } = this.props;
-		const isWidthUpLg = isWidthUp('lg', this.props.width);
+		const { classes, reportData, width } = this.props;
+		const isWidthUpLg = isWidthUp('lg', width);
 
 		return (
 			<div className={classes.reportGrid}>
@@ -94,7 +94,8 @@ class ReportGrid extends Component {
 
 ReportGrid.propTypes = {
 	classes: PropTypes.object.isRequired,
-	reportData: PropTypes.array
+	reportData: PropTypes.array.isRequired,
+	width: PropTypes.object.isRequired
 };
 
 export default withStyles(styles, { withTheme: true })(withWidth()(ReportGrid));

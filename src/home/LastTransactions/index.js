@@ -12,6 +12,7 @@ import TableRow from '@material-ui/core/TableRow';
 
 import Amount from '../../components/Amount';
 import BankTransactionModal from '../../components/BankTransactionModal';
+import Payee from '../../common/Payee';
 
 import { getlastTransactionsAction } from '../../actions/transactionActions';
 
@@ -106,10 +107,12 @@ export class LastTransactions extends Component {
 								</TableCell>
 								<TableCell align="center" className={classes.cell}>
 									<span>
-										{row.date}
+										{moment(row.date).format('MM-DD')}
 									</span>
 								</TableCell>
-								<TableCell align="center" className={classes.cell}>{row.payee}</TableCell>
+								<TableCell align="center" className={classes.cell}>
+									<Payee category={row.category} value={row.payee} />
+								</TableCell>
 								<TableCell align="center" className={classes.cell}><Amount value={row.amount} /></TableCell>
 							</TableRow>
 						))}

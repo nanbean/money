@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { AutoSizer, Column, Table } from 'react-virtualized';
 
 import Amount from '../Amount';
+import Payee from '../../common/Payee';
 
 import { toDateFormat } from '../../utils/formatting';
 
@@ -66,6 +67,8 @@ class BankTransactions extends Component {
 									label="Payee"
 									dataKey="payee"
 									width={width/2}
+									cellDataGetter={({ rowData }) => ({ category: rowData.category, payee: rowData.payee })}
+									cellRenderer={({ cellData }) => <Payee value={cellData.payee} category={cellData.category} />}
 								/>
 								<Column
 									width={width/4}
