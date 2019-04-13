@@ -111,7 +111,6 @@ export class WeeklyGraph extends Component {
 }
 
 WeeklyGraph.propTypes = {
-	classes: PropTypes.object.isRequired,
 	getWeeklyTransactionsAction: PropTypes.func.isRequired,
 	weeklyTransactions:  PropTypes.array.isRequired
 };

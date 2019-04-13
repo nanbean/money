@@ -57,7 +57,7 @@ class InvestmentPerformance extends Component {
 
 		return (
 			<div>
-				<Typography variant="subject1" className={classes.subject}>
+				<Typography variant="subtitle1" className={classes.subject}>
 					{investment}
 				</Typography>
 				<PerformanceGrid
