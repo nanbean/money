@@ -73,26 +73,27 @@ class InvestmentTransactionForm extends React.Component {
 
 	onAddButton = () => {
 		const data = {};
-		const { account, form } = this.props;
+		const { account, accountId, form } = this.props;
 
 		data.account = account;
+		data.accountId = accountId;
 		data.date = form.date;
 		data.investment = form.investment;
 		data.activity = form.activity;
-		data.quantity = form.quantity;
-		data.price = form.price;
+		data.quantity = Number(form.quantity);
+		data.price = Number(form.price);
 		if (form.commission) {
-			data.commission = form.commission;
+			data.commission = Number(form.commission);
 		}
-		data.amount = form.amount;
+		data.amount = Number(form.amount);
 
-		this.props.addInvestmentTransactionAction(data);
+		this.props.addTransactionAction(data);
 		this.props.resetTransactionForm();
 	}
 
 	onEditButton = () => {
-		const { account, form, investmentAccountTransactions } = this.props;
-		const transaction = investmentAccountTransactions[form.index];
+		const { account, form, transactions } = this.props;
+		const transaction = transactions[form.index];
 
 		transaction.account = account;
 		transaction.changed = {};
@@ -107,25 +108,25 @@ class InvestmentTransactionForm extends React.Component {
 			transaction.changed.activity = form.activity;
 		}
 		if (typeof form.quantity !== 'undefined') {
-			transaction.changed.quantity = form.quantity;
+			transaction.changed.quantity = Number(form.quantity);
 		}
 		if (typeof form.price !== 'undefined') {
-			transaction.changed.price = form.price;
+			transaction.changed.price = Number(form.price);
 		}
 		if (typeof form.commission !== 'undefined') {
-			transaction.changed.commission = form.commission;
+			transaction.changed.commission = Number(form.commission);
 		}
 		if (typeof form.amount !== 'undefined') {
-			transaction.changed.amount = form.amount;
+			transaction.changed.amount = Number(form.amount);
 		}
 
-		this.props.editInvestmentTransactionAction(transaction);
+		this.props.editTransactionAction(transaction);
 		this.props.resetTransactionForm();
 	}
 
 	onDeleteButton = handler => () => {
-		const transaction = {};
-		const { account, form } = this.props;
+		const { account, form, transactions } = this.props;
+		const transaction = transactions[form.index];
 
 		transaction.account = account;
 		if (typeof form.date !== 'undefined') {
@@ -260,7 +261,7 @@ class InvestmentTransactionForm extends React.Component {
 								variant="contained"
 								color="secondary"
 								className={classes.submit}
-								onClick={this.onDeleteButton(this.props.deleteInvestmentTransactionAction)}
+								onClick={this.onDeleteButton(this.props.deleteTransactionAction)}
 							>
 								Delete
 							</Button>
@@ -272,9 +273,10 @@ class InvestmentTransactionForm extends React.Component {
 }
 
 InvestmentTransactionForm.propTypes = {
+	account: PropTypes.string.isRequired,
+	accountId: PropTypes.string.isRequired,
 	classes: PropTypes.object.isRequired,
-	account: PropTypes.string,
-	addInvestmentTransactionAction: PropTypes.func,
+	addTransactionAction: PropTypes.func,
 	autocompleteInvestmentList: PropTypes.array,
 	changeActivity: PropTypes.func,
 	changeAmount: PropTypes.func,
@@ -283,8 +285,8 @@ InvestmentTransactionForm.propTypes = {
 	changeInvestment: PropTypes.func,
 	changePrice: PropTypes.func,
 	changeQuantity: PropTypes.func,
-	deleteInvestmentTransactionAction: PropTypes.func,
-	editInvestmentTransactionAction: PropTypes.func,
+	deleteTransactionAction: PropTypes.func,
+	editTransactionAction: PropTypes.func,
 	fillTransactionForm: PropTypes.func,
 	form: PropTypes.shape({
 		date: PropTypes.string,
@@ -293,10 +295,13 @@ InvestmentTransactionForm.propTypes = {
 		quantity: PropTypes.number,
 		price: PropTypes.number,
 		commission: PropTypes.number,
-		amount: PropTypes.number
+		amount: PropTypes.oneOfType([
+			PropTypes.string,
+			PropTypes.number
+		])
 	}),
-	investmentAccountTransactions: PropTypes.array,
-	resetTransactionForm: PropTypes.func
+	resetTransactionForm: PropTypes.func,
+	transactions: PropTypes.array
 };
 
 const mapStateToProps = state => ({

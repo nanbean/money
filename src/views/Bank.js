@@ -15,14 +15,12 @@ import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 
 import { getMortgageScheduleAction } from '../actions/mortgageActions';
-import { getCategoryListAction } from '../actions/categoryActions';
-import { getPayeeListAction } from '../actions/payeeActions';
+import { setAccountAction } from '../actions/accountActions';
 import {
-	getTransactionsAction,
 	addTransactionAction,
 	deleteTransactionAction,
 	editTransactionAction
-} from '../actions/transactionActions';
+} from '../actions/couchdbActions';
 import {
 	openTransactionInModal,
 	resetTransactionForm
@@ -72,23 +70,22 @@ class Bank extends Component {
 		const { match } = this.props;
 		const name = match && match.params && match.params.name;
 
-		this.props.getTransactionsAction(name);
-		this.props.getCategoryListAction();
-		this.props.getPayeeListAction();
+		this.props.setAccountAction(name);
 	}
 
 	render () {
 		const {
 			account,
+			allAccountsTransactions,
+			dropCategoryList,
 			classes,
-			transactions,
-			categoryList,
-			payeeList,
-			mortgageSchedule
+			match,
+			mortgageSchedule,
+			dropPayeeList
 		} = this.props;
+		const transactions = allAccountsTransactions.filter(i => i.accountId === `account${match.url.replace(/\//g, ':')}`);
 		const balance = transactions.length > 0 && transactions.map((i) => i.amount).reduce( (a, b) => a + b );
-		const dropCategoryList = categoryList.map(i => ({ key: i, value: i, text: i }));
-		const dropPayeeList = payeeList.map(i => ({ key: i, name: i }));
+		const accountId = `account${match.url.replace(/\//g, ':')}`;
 
 		return (
 			<div>
@@ -118,6 +115,7 @@ class Bank extends Component {
 							EditForm={BankTransactionForm}
 							isOpen={this.props.isModalOpen}
 							isEdit={this.props.isEdit}
+							accountId={accountId}
 							account={account}
 							transactions={transactions}
 							dropCategoryList={dropCategoryList}
@@ -144,22 +142,23 @@ class Bank extends Component {
 
 Bank.propTypes = {
 	account: PropTypes.string.isRequired,
+	addFetching: PropTypes.bool.isRequired,
 	addTransactionAction: PropTypes.func.isRequired,
-	categoryList: PropTypes.array.isRequired,
+	allAccountsTransactions: PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
+	deleteFetching: PropTypes.bool.isRequired,
 	deleteTransactionAction: PropTypes.func.isRequired,
+	dropCategoryList: PropTypes.array.isRequired,
+	dropPayeeList: PropTypes.array.isRequired,
+	editFetching: PropTypes.bool.isRequired,
 	editTransactionAction: PropTypes.func.isRequired,
-	getCategoryListAction: PropTypes.func.isRequired,
 	getMortgageScheduleAction: PropTypes.func.isRequired,
-	getPayeeListAction: PropTypes.func.isRequired,
-	getTransactionsAction: PropTypes.func.isRequired,
 	isEdit: PropTypes.bool.isRequired,
 	isModalOpen: PropTypes.bool.isRequired,
 	mortgageSchedule: PropTypes.array.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired,
-	payeeList: PropTypes.array.isRequired,
 	resetTransactionForm: PropTypes.func.isRequired,
-	transactions: PropTypes.array.isRequired,
+	setAccountAction: PropTypes.func.isRequired,
 	match: PropTypes.shape({
 		params: PropTypes.shape({
 			name: PropTypes.string.isRequired
@@ -168,25 +167,19 @@ Bank.propTypes = {
 };
 
 const mapStateToProps = state => ({
+	addFetching: state.addTransaction.fetching,
 	account: state.account,
-	categoryList: state.categoryList,
-	payeeList: state.payeeList,
-	transactions: state.transactions,
+	allAccountsTransactions: state.allAccountsTransactions,
+	deleteFetching: state.deleteTransaction.fetching,
+	dropCategoryList: state.dropCategoryList,
+	dropPayeeList: state.dropPayeeList,
+	editFetching: state.editTransaction.fetching,
 	mortgageSchedule: state.mortgageSchedule,
 	isModalOpen: state.ui.form.bankTransaction.isModalOpen,
 	isEdit: state.ui.form.bankTransaction.isEdit
 });
 
 const mapDispatchToProps = dispatch => ({
-	getCategoryListAction () {
-		dispatch(getCategoryListAction());
-	},
-	getPayeeListAction () {
-		dispatch(getPayeeListAction());
-	},
-	getTransactionsAction (params) {
-		dispatch(getTransactionsAction(params));
-	},
 	addTransactionAction (params) {
 		dispatch(addTransactionAction(params));
 	},
@@ -204,6 +197,9 @@ const mapDispatchToProps = dispatch => ({
 	},
 	getMortgageScheduleAction () {
 		dispatch(getMortgageScheduleAction());
+	},
+	setAccountAction (params) {
+		dispatch(setAccountAction(params));
 	}
 });
 

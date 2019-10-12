@@ -13,9 +13,6 @@ import TitleHeader from '../components/TitleHeader';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 
-import { getAllAccountTransactionsAction } from '../actions/transactionActions';
-import { getCategoryListAction } from '../actions/categoryActions';
-import { getPayeeListAction } from '../actions/payeeActions';
 import {
 	openTransactionInModal,
 	resetTransactionForm
@@ -73,48 +70,57 @@ class Search extends Component {
 		this.setState({
 			keyword
 		});
-		this.props.getAllAccountTransactionsAction();
-		this.props.getCategoryListAction();
-		this.props.getPayeeListAction();
 	}
 
-	updateFilteredTransactions (allAccountTransactions, keyword) {
+	updateFilteredTransactions (allAccountsTransactions, keyword) {
 		if (keyword) {
 			let filteredTransactions = [];
-			for (let i in allAccountTransactions) {
-				const account = allAccountTransactions[i];
-				if (account.type === 'CCard' || account.type === 'Bank' || account.type === 'Cash') {
-					const divisionTransaction = account.transactions.filter(k => k.division);
-					let divisions = [];
-					for (let l = 0; l < divisionTransaction.length; l++) {
-						const division = divisionTransaction[l].division;
-						const date = divisionTransaction[l].date;
-						for (let m = 0; m < division.length; m++) {
-							const divisionItem = division[m];
-							divisionItem.date = date;
-							divisionItem.payee = divisionItem.description;
-							divisions.push(divisionItem);
-						}
-					}
-					filteredTransactions = [
-						...filteredTransactions,
-						...account.transactions.filter(j => {
-							if (j.category.match(new RegExp(keyword, 'i')) || j.payee.match(new RegExp(keyword, 'i'))) {
-								return true;
-							} else if (j.subcategory && j.subcategory.match(new RegExp(keyword, 'i'))) {
-								return true;
-							} else if (j.memo && j.memo.match(new RegExp(keyword, 'i'))) {
-								return true;
-							} else {
-								return false;
-							}
-						}).map(k => {
-							k.account = i;
-							return k;
-						})
-					];
+
+			allAccountsTransactions.forEach(i => {
+				if (i.type === 'CCard' || i.type === 'Bank' || i.type === 'Cash') {
+					filteredTransactions.push(i);
 				}
-			}
+			});
+
+			filteredTransactions = filteredTransactions.filter(i => i.category.match(new RegExp(keyword, 'i')) || i.payee.match(new RegExp(keyword, 'i')) ||
+						(i.subcategory && i.subcategory.match(new RegExp(keyword, 'i'))) || (i.memo && i.memo.match(new RegExp(keyword, 'i')))
+			);
+	
+
+			// for (let i in allAccountTransactions) {
+			// 	const account = allAccountTransactions[i];
+			// 	if (account.type === 'CCard' || account.type === 'Bank' || account.type === 'Cash') {
+			// 		const divisionTransaction = account.transactions.filter(k => k.division);
+			// 		let divisions = [];
+			// 		for (let l = 0; l < divisionTransaction.length; l++) {
+			// 			const division = divisionTransaction[l].division;
+			// 			const date = divisionTransaction[l].date;
+			// 			for (let m = 0; m < division.length; m++) {
+			// 				const divisionItem = division[m];
+			// 				divisionItem.date = date;
+			// 				divisionItem.payee = divisionItem.description;
+			// 				divisions.push(divisionItem);
+			// 			}
+			// 		}
+			// 		filteredTransactions = [
+			// 			...filteredTransactions,
+			// 			...account.transactions.filter(j => {
+			// 				if (j.category.match(new RegExp(keyword, 'i')) || j.payee.match(new RegExp(keyword, 'i'))) {
+			// 					return true;
+			// 				} else if (j.subcategory && j.subcategory.match(new RegExp(keyword, 'i'))) {
+			// 					return true;
+			// 				} else if (j.memo && j.memo.match(new RegExp(keyword, 'i'))) {
+			// 					return true;
+			// 				} else {
+			// 					return false;
+			// 				}
+			// 			}).map(k => {
+			// 				k.account = i;
+			// 				return k;
+			// 			})
+			// 		];
+			// 	}
+			// }
 			this.setState({
 				filteredTransactions,
 				keyword
@@ -124,9 +130,9 @@ class Search extends Component {
 
 	onSearchKeyPress (e) {
 		if (e.key === 'Enter' && e.target.value) {
-			const { allAccountTransactions } = this.props;
+			const { allAccountsTransactions } = this.props;
 			const keyword = e.target.value;
-			this.updateFilteredTransactions(allAccountTransactions,  keyword);
+			this.updateFilteredTransactions(allAccountsTransactions,  keyword);
 		}
 	}
 
@@ -183,11 +189,8 @@ class Search extends Component {
 }
 
 Search.propTypes = {
-	allAccountTransactions:  PropTypes.object.isRequired,
+	allAccountsTransactions:  PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
-	getAllAccountTransactionsAction: PropTypes.func.isRequired,
-	getCategoryListAction: PropTypes.func.isRequired,
-	getPayeeListAction: PropTypes.func.isRequired,
 	isModalOpen: PropTypes.bool.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired,
 	resetTransactionForm: PropTypes.func.isRequired,
@@ -199,20 +202,11 @@ Search.propTypes = {
 };
 
 const mapStateToProps = state => ({
-	allAccountTransactions: state.allAccountTransactions,
+	allAccountsTransactions: state.allAccountsTransactions,
 	isModalOpen: state.ui.form.bankTransaction.isModalOpen
 });
 
 const mapDispatchToProps = dispatch => ({
-	getAllAccountTransactionsAction () {
-		dispatch(getAllAccountTransactionsAction());
-	},
-	getCategoryListAction () {
-		dispatch(getCategoryListAction());
-	},
-	getPayeeListAction () {
-		dispatch(getPayeeListAction());
-	},
 	openTransactionInModal (params) {
 		dispatch(openTransactionInModal(params));
 	},

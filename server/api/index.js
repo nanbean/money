@@ -1,22 +1,23 @@
-const router = require('koa-router')();
+const Router = require('koa-router');
 const xlsx = require('node-xlsx');
 const Excel = require('exceljs');
 const _ = require('lodash');
 const multer = require('koa-multer');
-const fs = require('fs');
-const fetch = require('node-fetch');
 const moment = require('moment');
-const streamifier = require('streamifier');
 
-const money = require('./transaction');
-const messaging = require('./messaging');
-const notification = require('./notification');
+const money = require('../transaction');
+const messaging = require('../messaging');
+const notification = require('../notification');
+const couchdb = require('../couchdb');
+
+const api = new Router();
+const auth = require('./auth');
 
 const upload = multer({
 	storage: multer.memoryStorage()
 });
 
-router.get('/api/getAccountList', (ctx, next) => {
+api.get('/getAccountList', (ctx, next) => {
 	let body = {};
 
 	body.count = money.accountList.length;
@@ -24,7 +25,7 @@ router.get('/api/getAccountList', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getTransactions', (ctx, next) => {
+api.get('/getTransactions', (ctx, next) => {
 	let body = {};
 	const account = ctx.request.query.account;
 
@@ -33,7 +34,7 @@ router.get('/api/getTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/transactions', (ctx, next) => {
+api.get('/transactions', (ctx, next) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 
@@ -42,7 +43,7 @@ router.get('/api/transactions', (ctx, next) => {
 	ctx.body = result.body;
 });
 
-router.get('/api/transactions/:account', (ctx, next) => {
+api.get('/transactions/:account', (ctx, next) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 	const account = ctx.params.account;
@@ -52,11 +53,11 @@ router.get('/api/transactions/:account', (ctx, next) => {
 	ctx.body = result.body;
 });
 
-router.get('/api/getAllAccountTransactions', (ctx, next) => {
+api.get('/getAllAccountTransactions', (ctx, next) => {
 	ctx.body = money.accounts;
 });
 
-// router.get('/api/getTransactionsByCategory', (ctx, next) => {
+// api.get('/getTransactionsByCategory', (ctx, next) => {
 // 	let body = {};
 // 	const category = ctx.request.query.category;
 // 	const result = [];
@@ -78,7 +79,7 @@ router.get('/api/getAllAccountTransactions', (ctx, next) => {
 // 	ctx.body = body;
 // });
 
-router.get('/api/getAllInvestmentsTransactions', (ctx, next) => {
+api.get('/getAllInvestmentsTransactions', (ctx, next) => {
 	const investment = ctx.request.query.investment;
 
 	const body = money.investments.map(i => {
@@ -106,7 +107,7 @@ router.get('/api/getAllInvestmentsTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getInvestmentAccountTransactions', (ctx, next) => {
+api.get('/getInvestmentAccountTransactions', (ctx, next) => {
 	let body = {};
 	const account = ctx.request.query.account;
 
@@ -115,7 +116,7 @@ router.get('/api/getInvestmentAccountTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getInvestmentTransactions', (ctx, next) => {
+api.get('/getInvestmentTransactions', (ctx, next) => {
 	let body = {};
 	const transactions = [];
 	const investment = ctx.request.query.investment;
@@ -137,7 +138,7 @@ router.get('/api/getInvestmentTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getAllInvestmentsTransactions', (ctx, next) => {
+api.get('/getAllInvestmentsTransactions', (ctx, next) => {
 	const investment = ctx.request.query.investment;
 
 	const body = money.investments.map(i => {
@@ -165,7 +166,7 @@ router.get('/api/getAllInvestmentsTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getCategoryList', (ctx, next) => {
+api.get('/getCategoryList', (ctx, next) => {
 	let body = {};
 
 	body.count = money.categories.length;
@@ -173,7 +174,7 @@ router.get('/api/getCategoryList', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getPayeeList', (ctx, next) => {
+api.get('/getPayeeList', (ctx, next) => {
 	let body = {};
 
 	body.count = money.payees.length;
@@ -181,7 +182,7 @@ router.get('/api/getPayeeList', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getInvestmentList', (ctx, next) => {
+api.get('/getInvestmentList', (ctx, next) => {
 	let body = {};
 
 	body.count = money.allinvestments.length;
@@ -189,7 +190,7 @@ router.get('/api/getInvestmentList', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getAccountInvestments', (ctx, next) => {
+api.get('/getAccountInvestments', (ctx, next) => {
 	let body = {};
 	const account = ctx.request.query.account;
 	const accountItem = money.accountList.find(i => i.name === account);
@@ -203,14 +204,14 @@ router.get('/api/getAccountInvestments', (ctx, next) => {
 	}
 });
 
-router.get('/api/updateInvestmentPrice', async (ctx, next) => {
-	let body = {};
+api.get('/updateInvestmentPrice', async (ctx, next) => {
+	// await money.updateInvestmentPrice();
+	await couchdb.updateInvestmentPrice();
 
-	const token = await money.updateInvestmentPrice();
-	ctx.body = { return: token };
+	ctx.body = { return: true };
 });
 
-router.post('/api/addTransaction', async (ctx, next) => {
+api.post('/addTransaction', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.amount && body.payee && body.category) {
@@ -257,7 +258,7 @@ router.post('/api/addTransaction', async (ctx, next) => {
 	}
 });
 
-router.post('/api/addTransactions', async (ctx, next) => {
+api.post('/addTransactions', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	console.log(body.account);
@@ -302,21 +303,21 @@ router.post('/api/addTransactions', async (ctx, next) => {
 	}
 });
 
-router.post('/api/addTransactionWithNotification', async (ctx, next) => {
+api.post('/addTransactionWithNotification', async (ctx, next) => {
 	const body = ctx.request.body;
 	const result = await notification.addTransaction(body);
 
 	ctx.body = { return: result };
 });
 
-router.get('/api/notifications', async (ctx, next) => {
+api.get('/notifications', async (ctx, next) => {
 	const size = ctx.request.query.size || 20;
 	const history = await notification.getHistory(size);
 
 	ctx.body = history;
 });
 
-router.post('/api/addInvestmentTransaction', async (ctx, next) => {
+api.post('/addInvestmentTransaction', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.investment &&	body.activity) {
@@ -378,7 +379,7 @@ router.post('/api/addInvestmentTransaction', async (ctx, next) => {
 	}
 });
 
-router.post('/api/deleteTransaction', async (ctx, next) => {
+api.post('/deleteTransaction', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.account) {
@@ -414,7 +415,7 @@ router.post('/api/deleteTransaction', async (ctx, next) => {
 	}
 });
 
-router.post('/api/deleteInvestmentTransaction', async (ctx, next) => {
+api.post('/deleteInvestmentTransaction', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.account) {
@@ -452,7 +453,7 @@ router.post('/api/deleteInvestmentTransaction', async (ctx, next) => {
 	}
 });
 
-router.post('/api/editTransaction', async (ctx, next) => {
+api.post('/editTransaction', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.amount && body.payee && body.category) {
@@ -527,7 +528,7 @@ router.post('/api/editTransaction', async (ctx, next) => {
 	}
 });
 
-router.post('/api/editInvestmentTransaction', async (ctx, next) => {
+api.post('/editInvestmentTransaction', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.investment && body.activity) {
@@ -604,7 +605,7 @@ router.post('/api/editInvestmentTransaction', async (ctx, next) => {
 	}
 });
 
-router.get('/api/getMortgageSchedule', (ctx, next) => {
+api.get('/getMortgageSchedule', (ctx, next) => {
 	workSheetsFromFile = xlsx.parse(`${__dirname}/아낌이모기지론.xlsx`);
 	const schedule = workSheetsFromFile[0].data.slice(2).map(i => {
 		return {
@@ -618,7 +619,7 @@ router.get('/api/getMortgageSchedule', (ctx, next) => {
 	ctx.body = { return: true, schedule: schedule };
 });
 
-router.get('/api/getNetWorth', (ctx, next) => {
+api.get('/getNetWorth', (ctx, next) => {
 	let body = {};
 	let dates = [];
 	const date = new Date();
@@ -651,7 +652,7 @@ router.get('/api/getNetWorth', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getInvestmentPrice', (ctx, next) => {
+api.get('/getInvestmentPrice', (ctx, next) => {
 	const investment = ctx.request.query.investment;
 	const body = {
 		investment: investment,
@@ -661,7 +662,7 @@ router.get('/api/getInvestmentPrice', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.get('/api/getAllInvestmentsPrice', (ctx, next) => {
+api.get('/getAllInvestmentsPrice', (ctx, next) => {
 	const body = money.investments.map(i => {
 		const investment = i.name;
 		return {
@@ -673,7 +674,7 @@ router.get('/api/getAllInvestmentsPrice', (ctx, next) => {
 	ctx.body = body;
 });
 
-router.post('/api/uploadTransactionsXls', upload.single('document'), async (ctx, next) => {
+api.post('/uploadTransactionsXls', upload.single('document'), async (ctx, next) => {
 	const { file } = ctx.req;
 	console.log(file);
 	// const body = {};
@@ -718,7 +719,7 @@ router.post('/api/uploadTransactionsXls', upload.single('document'), async (ctx,
 	ctx.body = body;
 });
 
-function getLifetimeFlowList () {
+function getLifetimeFlowList (accounts) {
 	return new Promise(resolve => {
 		const fileName = `${__dirname}/lifetimePlanner.xlsx`;
 		const workbook = new Excel.Workbook();
@@ -731,7 +732,7 @@ function getLifetimeFlowList () {
 				const data = [];
 
 				nameCol.eachCell(function (cell, rowNumber) {
-					const accountItem = money.accountList.find(i => i.name === cell.value && i.type == 'Invst');
+					const accountItem = accounts.find(i => i.name === cell.value && i.type == 'Invst');
 
 					if (accountItem) {
 						worksheet.getCell(`B${rowNumber}`).value = accountItem.balance;
@@ -763,15 +764,16 @@ function getLifetimeFlowList () {
 	});
 }
 
-router.get('/api/getLifetimeFlow', async (ctx, next) => {
-	const list = await getLifetimeFlowList();
+api.get('/getLifetimeFlow', async (ctx, next) => {
+	const accounts = await couchdb.getAccounts();
+	const list = await getLifetimeFlowList(accounts);
 	ctx.body = {
 		count: list.length,
 		list: list
 	};
 });
 
-router.post('/api/registerMessageToken', async (ctx, next) => {
+api.post('/registerMessageToken', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.messagingToken) {
@@ -783,7 +785,7 @@ router.post('/api/registerMessageToken', async (ctx, next) => {
 	}
 });
 
-router.post('/api/unRegisterMessageToken', async (ctx, next) => {
+api.post('/unRegisterMessageToken', async (ctx, next) => {
 	const body = ctx.request.body;
 
 	if (body && body.messagingToken) {
@@ -795,7 +797,7 @@ router.post('/api/unRegisterMessageToken', async (ctx, next) => {
 	}
 });
 
-router.get('/api/dividends', (ctx, next) => {
+api.get('/dividends', (ctx, next) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 
@@ -812,7 +814,7 @@ router.get('/api/dividends', (ctx, next) => {
 	ctx.body = result.body;
 });
 
-router.get('/api/dividends/:account', (ctx, next) => {
+api.get('/dividends/:account', (ctx, next) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 	const account = ctx.params.account;
@@ -830,4 +832,6 @@ router.get('/api/dividends/:account', (ctx, next) => {
 	ctx.body = result.body;
 });
 
-module.exports = router;
+api.use('/auth', auth.routes());
+
+module.exports = api;

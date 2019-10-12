@@ -20,7 +20,9 @@ import WeeklyGraph from '../WeeklyGraph';
 
 import TitleHeader from '../../components/TitleHeader';
 
-import { getAccountListAction } from '../../actions/accountActions';
+import {
+	getWeeklyTransactionsAction
+} from '../../actions/couchdbActions';
 import { updateInvestmentPriceAction } from '../../actions/priceActions';
 
 import {
@@ -124,7 +126,7 @@ export class HomeMain extends Component {
 	};
 
 	componentDidMount () {
-		this.props.getAccountListAction();
+		this.props.getWeeklyTransactionsAction();
 	}
 
 	onAccountsExpansionPanelChangeHalder = (event, expanded) => {
@@ -157,6 +159,7 @@ export class HomeMain extends Component {
 			weeklyGraphExpanded
 		} = this.props;
 
+		console.log('render HomeMain');
 		return (
 			<React.Fragment>
 				<TitleHeader title="Home" />
@@ -204,7 +207,7 @@ export class HomeMain extends Component {
 									</Typography>
 								</ExpansionPanelSummary>
 								<ExpansionPanelDetails className={classes.expansionDetails}>
-									<WeeklyGraph />
+									<WeeklyGraph/>
 								</ExpansionPanelDetails>
 							</ExpansionPanel>
 						</div>
@@ -219,7 +222,7 @@ export class HomeMain extends Component {
 									</Typography>
 								</ExpansionPanelSummary>
 								<ExpansionPanelDetails className={classes.expansionDetails}>
-									<LatestTransactions />
+									<LatestTransactions/>
 								</ExpansionPanelDetails>
 							</ExpansionPanel>
 						</div>
@@ -246,14 +249,13 @@ export class HomeMain extends Component {
 }
 
 HomeMain.propTypes = {
-	accountList:  PropTypes.array.isRequired,
 	accountsExpanded: PropTypes.bool.isRequired,
 	changeAccountsExpanded: PropTypes.func.isRequired,
 	changeLatestTransactionsExpanded: PropTypes.func.isRequired,
 	changeSummaryExpanded: PropTypes.func.isRequired,
 	changeWeeklyGraphExpanded: PropTypes.func.isRequired,
 	classes: PropTypes.object.isRequired,
-	getAccountListAction: PropTypes.func.isRequired,
+	getWeeklyTransactionsAction: PropTypes.func.isRequired,
 	latestTransactionsExpanded: PropTypes.bool.isRequired,
 	summaryExpanded: PropTypes.bool.isRequired,
 	updateInvestmentPriceAction: PropTypes.func.isRequired,
@@ -262,7 +264,6 @@ HomeMain.propTypes = {
 };
 
 const mapStateToProps = state => ({
-	accountList: state.accountList,
 	accountsExpanded: state.ui.home.accountsExpanded,
 	latestTransactionsExpanded: state.ui.home.latestTransactionsExpanded,
 	summaryExpanded: state.ui.home.summaryExpanded,
@@ -277,7 +278,7 @@ export default connect(
 		changeLatestTransactionsExpanded,
 		changeSummaryExpanded,
 		changeWeeklyGraphExpanded,
-		getAccountListAction,
-		updateInvestmentPriceAction
+		updateInvestmentPriceAction,
+		getWeeklyTransactionsAction
 	}
 )(withStyles(styles)(HomeMain));

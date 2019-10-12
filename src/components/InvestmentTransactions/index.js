@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { AutoSizer, Column, Table } from 'react-virtualized';
+import _ from 'lodash';
 
 import Amount from '../Amount';
 
@@ -10,9 +11,17 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
 
 class InvestmentTransactions extends Component {
+	shouldComponentUpdate (nextProps) {
+		if (_.isEqual(this.props.transactions, nextProps.transactions)) {
+			return false;
+		}
+
+		return true;
+	}
+
 	onRowSelect = ({ index }) => {
-		const { investmentAccountTransactions } = this.props;
-		const transaction = investmentAccountTransactions[index];
+		const { transactions } = this.props;
+		const transaction = transactions[index];
 
 		this.props.openTransactionInModal({
 			date: transaction.date,
@@ -28,13 +37,13 @@ class InvestmentTransactions extends Component {
 	}
 
 	render () {
-		const { isMobile, investmentAccountTransactions } = this.props;
+		const { isMobile, transactions } = this.props;
 
 		return (
 			<div className="investment-transaction">
 				<div style={{ flex: '1 0.8 auto' }}>
 					{
-						investmentAccountTransactions &&
+						transactions &&
 						<AutoSizer>
 							{({ height, width }) => (
 								<Table
@@ -42,9 +51,9 @@ class InvestmentTransactions extends Component {
 									height={height}
 									headerHeight={20}
 									rowHeight={30}
-									scrollToIndex={investmentAccountTransactions.length-1}
-									rowCount={investmentAccountTransactions.length}
-									rowGetter={({ index }) => investmentAccountTransactions[index]}
+									scrollToIndex={transactions.length-1}
+									rowCount={transactions.length}
+									rowGetter={({ index }) => transactions[index]}
 									onRowClick={this.onRowSelect}
 								>
 									<Column
@@ -101,9 +110,9 @@ class InvestmentTransactions extends Component {
 }
 
 InvestmentTransactions.propTypes = {
-	investmentAccountTransactions: PropTypes.array,
 	isMobile: PropTypes.bool,
-	openTransactionInModal: PropTypes.func
+	openTransactionInModal: PropTypes.func,
+	transactions: PropTypes.array
 };
 
 export default InvestmentTransactions;

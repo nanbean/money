@@ -79,14 +79,15 @@ class BankTransactionForm extends React.Component {
 
 	onAddButton = ()=> {
 		const data = {};
-		const { account, form } = this.props;
+		const { account, accountId, form } = this.props;
 		const categoryArray = form.category.split(':');
 
 		data.account = form.account || account;
+		data.accountId = accountId;
 		data.date = form.date;
 		data.payee = form.payee;
 		data.category = form.category;
-		data.amount = form.amount;
+		data.amount = Number(form.amount);
 		if (form.memo) {
 			data.memo = form.memo;
 		}
@@ -118,7 +119,7 @@ class BankTransactionForm extends React.Component {
 			transaction.changed.payee = form.payee;
 		}
 		if (transaction.amount !== form.amount) {
-			transaction.changed.amount = form.amount;
+			transaction.changed.amount = Number(form.amount);
 		}
 		if (transaction.memo !== form.memo) {
 			transaction.changed.memo = form.memo;
@@ -129,14 +130,17 @@ class BankTransactionForm extends React.Component {
 		if (categoryArray[1] && transaction.subcategory !== categoryArray[1]) {
 			transaction.changed.subcategory = categoryArray[1];
 		}
+		if (!categoryArray[1]) {
+			transaction.changed.subcategory = '';
+		}
 
 		this.props.editTransactionAction(transaction);
 		this.props.resetTransactionForm();
 	}
 
 	onDeleteButton = handler => () => {
-		const transaction = {};
-		const { account, form } = this.props;
+		const { account, form, transactions } = this.props;
+		const transaction = transactions[form.index];
 		const categoryArray = form.category.split(':');
 
 		transaction.account = form.account || account;
@@ -247,6 +251,7 @@ class BankTransactionForm extends React.Component {
 }
 
 BankTransactionForm.propTypes = {
+	accountId: PropTypes.string.isRequired,
 	classes: PropTypes.object.isRequired,
 	account: PropTypes.string,
 	addTransactionAction: PropTypes.func,
@@ -265,7 +270,10 @@ BankTransactionForm.propTypes = {
 		date: PropTypes.string,
 		payee: PropTypes.string,
 		category: PropTypes.string,
-		amount: PropTypes.number,
+		amount: PropTypes.oneOfType([
+			PropTypes.string,
+			PropTypes.number
+		]),
 		memo: PropTypes.string
 	}),
 	resetTransactionForm: PropTypes.func,

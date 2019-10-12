@@ -15,17 +15,14 @@ import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 
-import { setAccount } from '../actions/accountActions';
+import { setAccountAction } from '../actions/accountActions';
+
 import {
-	getInvestmentListAction,
-	getAllInvestmentsTransactionsAction,
-	getAllInvestmentsPriceAction,
-	getInvestmentAccountTransactionsAction,
 	getAccountInvestmentsAction,
-	addInvestmentTransactionAction,
-	deleteInvestmentTransactionAction,
-	editInvestmentTransactionAction
-} from '../actions/investmentActions';
+	addTransactionAction,
+	editTransactionAction,
+	deleteTransactionAction
+} from '../actions/couchdbActions';
 import {
 	openTransactionInModal,
 	resetTransactionForm
@@ -77,24 +74,23 @@ export class Investment extends Component {
 	componentDidMount () {
 		const { match } = this.props;
 		const name = match && match.params && match.params.name;
+		const accountId = `account${match.url.replace(/\//g, ':')}`;
 
-		this.props.setAccount(name);
-		this.props.getAllInvestmentsTransactionsAction();
-		this.props.getAllInvestmentsPriceAction();
-		this.props.getInvestmentAccountTransactionsAction(name);
-		this.props.getInvestmentListAction();
-		this.props.getAccountInvestmentsAction(name);
+		this.props.setAccountAction(name);
+		this.props.getAccountInvestmentsAction( accountId );
 	}
 
 	render () {
 		const {
 			account,
+			allAccountsTransactions,
 			classes,
-			investmentList, 
-			investmentAccountTransactions,
-			isMobile 
+			dropInvestmentList, 
+			isMobile,
+			match
 		} = this.props;
-		const autocompleteInvestmentList = investmentList.map(i => ({ key: i.symbol, name: i.name }));
+		const accountId = `account${match.url.replace(/\//g, ':')}`;
+		const accountTransactions = allAccountsTransactions.filter(i => i.accountId === `account${match.url.replace(/\//g, ':')}`);
 
 		return (
 			<div>
@@ -114,12 +110,11 @@ export class Investment extends Component {
 								</Button>
 							</div>
 							<div className={classes.headerHalf}>
-								<Link to={`/bank/${account}_Cash`} className={classes.link}>
+								<Link to={`/Bank/${account}_Cash`} className={classes.link}>
 									<Button
 										fullWidth
 										variant="outlined"
 										color="primary"
-										onClick={this.props.openTransactionInModal}
 									>
 									Cash
 										<MoneyIcon className={classes.rightIcon} />
@@ -129,7 +124,7 @@ export class Investment extends Component {
 						</div>
 						<InvestmentTransactions
 							isMobile={isMobile}
-							investmentAccountTransactions={investmentAccountTransactions}
+							transactions={accountTransactions}
 							openTransactionInModal={this.props.openTransactionInModal}
 						/>
 
@@ -138,12 +133,13 @@ export class Investment extends Component {
 							isOpen={this.props.isModalOpen}
 							isEdit={this.props.isEdit}
 							account={account}
-							investmentAccountTransactions={investmentAccountTransactions}
-							autocompleteInvestmentList={autocompleteInvestmentList}
+							accountId={accountId}
+							transactions={accountTransactions}
+							autocompleteInvestmentList={dropInvestmentList}
 							resetTransactionForm={this.props.resetTransactionForm}
-							addInvestmentTransactionAction={this.props.addInvestmentTransactionAction}
-							deleteInvestmentTransactionAction={this.props.deleteInvestmentTransactionAction}
-							editInvestmentTransactionAction={this.props.editInvestmentTransactionAction}
+							addTransactionAction={this.props.addTransactionAction}
+							deleteTransactionAction={this.props.deleteTransactionAction}
+							editTransactionAction={this.props.editTransactionAction}
 						/>
 						<AccountInvestments />
 					</Paper>
@@ -156,23 +152,19 @@ export class Investment extends Component {
 Investment.propTypes = {
 	account: PropTypes.string.isRequired,
 	accountInvestments: PropTypes.array.isRequired,
-	addInvestmentTransactionAction: PropTypes.func.isRequired,
+	addTransactionAction: PropTypes.func.isRequired,
+	allAccountsTransactions: PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
-	deleteInvestmentTransactionAction: PropTypes.func.isRequired,
-	editInvestmentTransactionAction: PropTypes.func.isRequired,
+	deleteTransactionAction: PropTypes.func.isRequired,
+	dropInvestmentList: PropTypes.array.isRequired,
+	editTransactionAction: PropTypes.func.isRequired,
 	getAccountInvestmentsAction: PropTypes.func.isRequired,
-	getAllInvestmentsPriceAction: PropTypes.func.isRequired,
-	getAllInvestmentsTransactionsAction: PropTypes.func.isRequired,
-	getInvestmentAccountTransactionsAction: PropTypes.func.isRequired,
-	getInvestmentListAction: PropTypes.func.isRequired,
-	investmentAccountTransactions: PropTypes.array.isRequired,
-	investmentList: PropTypes.array.isRequired,
 	isEdit: PropTypes.bool.isRequired,
 	isMobile: PropTypes.bool.isRequired,
 	isModalOpen: PropTypes.bool.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired,
 	resetTransactionForm: PropTypes.func.isRequired,
-	setAccount: PropTypes.func.isRequired,
+	setAccountAction: PropTypes.func.isRequired,
 	match: PropTypes.shape({
 		params: PropTypes.shape({
 			name: PropTypes.string.isRequired
@@ -184,39 +176,27 @@ const mapStateToProps = state => ({
 	isMobile: state.ui.isMobile,
 	account: state.account,
 	accountInvestments: state.accountInvestments,
-	investmentList: state.investmentList,
-	investmentAccountTransactions: state.investmentAccountTransactions,
+	allAccountsTransactions: state.allAccountsTransactions,
+	dropInvestmentList: state.dropInvestmentList,
 	isModalOpen: state.ui.form.investmentTransaction.isModalOpen,
 	isEdit: state.ui.form.investmentTransaction.isEdit
 });
 
 const mapDispatchToProps = dispatch => ({
-	getAllInvestmentsTransactionsAction () {
-		dispatch(getAllInvestmentsTransactionsAction());
-	},
-	getAllInvestmentsPriceAction () {
-		dispatch(getAllInvestmentsPriceAction());
-	},
-	getInvestmentListAction () {
-		dispatch(getInvestmentListAction());
-	},
 	getAccountInvestmentsAction (params) {
 		dispatch(getAccountInvestmentsAction(params));
 	},
-	getInvestmentAccountTransactionsAction (params) {
-		dispatch(getInvestmentAccountTransactionsAction(params));
+	addTransactionAction (params) {
+		dispatch(addTransactionAction(params));
 	},
-	addInvestmentTransactionAction (params) {
-		dispatch(addInvestmentTransactionAction(params));
+	deleteTransactionAction (params) {
+		dispatch(deleteTransactionAction(params));
 	},
-	deleteInvestmentTransactionAction (params) {
-		dispatch(deleteInvestmentTransactionAction(params));
+	editTransactionAction (params) {
+		dispatch(editTransactionAction(params));
 	},
-	editInvestmentTransactionAction (params) {
-		dispatch(editInvestmentTransactionAction(params));
-	},
-	setAccount (params) {
-		dispatch(setAccount(params));
+	setAccountAction (params) {
+		dispatch(setAccountAction(params));
 	},
 	openTransactionInModal (params) {
 		dispatch(openTransactionInModal(params));

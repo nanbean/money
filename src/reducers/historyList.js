@@ -2,11 +2,11 @@ import * as actions from '../actions/actionTypes';
 
 const initialState = [];
 
-export default function payeeList (state = initialState, action) {
+export default function historyList (state = initialState, action) {
 	switch (action.type) {
-	case actions.SET_PAYEE_LIST:
-		if (action.payload.list) {
-			return action.payload.list;
+	case actions.SET_HISTORY_LIST:
+		if (action.payload) {
+			return action.payload;
 		} else {
 			return state;
 		}

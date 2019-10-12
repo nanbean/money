@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import moment from 'moment';
+import _ from 'lodash';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -13,8 +14,6 @@ import TableRow from '@material-ui/core/TableRow';
 import Amount from '../../components/Amount';
 import BankTransactionModal from '../../components/BankTransactionModal';
 import Payee from '../../common/Payee';
-
-import { getlastTransactionsAction } from '../../actions/transactionActions';
 
 import {
 	openTransactionInModal
@@ -49,24 +48,22 @@ const styles = theme => ({
 });
 
 export class LastTransactions extends Component {
-	componentDidMount () {
-		this.props.getlastTransactionsAction(moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'));
-	}
+	shouldComponentUpdate (nextProps) {
+		const prevLatestTransactions = this.props.latestTransactions.map(i => ({ type: i.type, account: i.account, date: i.date, category: i.category, payee: i.payee, amount: i.amount }));
+		const nextLatestTransactions = nextProps.latestTransactions.map(i => ({ type: i.type, account: i.account, date: i.date, category: i.category, payee: i.payee, amount: i.amount }));
 
-	componentDidUpdate (prevProps) {
-		if (prevProps.editFetching === true && this.props.editFetching === false && this.props.editStatus === 200) {
-			this.props.getlastTransactionsAction(moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'));
+		if (_.isEqual(prevLatestTransactions, nextLatestTransactions)) {
+			return false;
 		}
-		if (prevProps.deleteFetching === true && this.props.deleteFetching === false && this.props.deleteStatus === 200) {
-			this.props.getlastTransactionsAction(moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'));
-		}
+
+		return true;
 	}
 
 	onRowSelect = (index) => () => {
 		const {
-			lastTransactions
+			latestTransactions
 		} = this.props;
-		const transaction = lastTransactions[index];
+		const transaction = latestTransactions[index];
 
 		this.props.openTransactionInModal({
 			account: transaction.account,
@@ -83,8 +80,10 @@ export class LastTransactions extends Component {
 	render () {
 		const {
 			classes,
-			lastTransactions
+			latestTransactions
 		} = this.props;
+
+		console.log('render LastTransactions');
 
 		return (
 			<React.Fragment>
@@ -98,7 +97,7 @@ export class LastTransactions extends Component {
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{lastTransactions && lastTransactions.map((row, index) => (
+						{latestTransactions && latestTransactions.map((row, index) => (
 							<TableRow key={index} onClick={this.onRowSelect(index)}>
 								<TableCell component="th" scope="row" align="center" className={classes.cell}>
 									<span>
@@ -120,7 +119,7 @@ export class LastTransactions extends Component {
 				</Table>
 				<BankTransactionModal
 					isEdit={true}
-					transactions={lastTransactions}
+					transactions={latestTransactions}
 				/>
 			</React.Fragment>
 		);
@@ -133,23 +132,19 @@ LastTransactions.propTypes = {
 	deleteStatus: PropTypes.string.isRequired,
 	editFetching: PropTypes.bool.isRequired,
 	editStatus: PropTypes.string.isRequired,
-	getlastTransactionsAction: PropTypes.func.isRequired,
-	lastTransactions:  PropTypes.array.isRequired,
+	latestTransactions:  PropTypes.array.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
 	deleteFetching: state.deleteTransaction.fetching,
 	deleteStatus: state.deleteTransaction.status,
 	editFetching: state.editTransaction.fetching,
 	editStatus: state.editTransaction.status,
-	lastTransactions: state.lastTransactions
+	latestTransactions: state.latestTransactions
 });
 
 const mapDispatchToProps = dispatch => ({
-	getlastTransactionsAction (start, end) {
-		dispatch(getlastTransactionsAction(start, end));
-	},
 	openTransactionInModal (params) {
 		dispatch(openTransactionInModal(params));
 	}

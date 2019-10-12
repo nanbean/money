@@ -44,19 +44,22 @@ const styles = theme => ({
 export class Summary extends Component {
 	render () {
 		const { accountList, classes } = this.props;
+		const summaryAccountList = accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
 		let sum = 0;
 		let financeSum = 0;
 		let quickassets = 0;
 
-		if (accountList.length > 0) {
-			sum = accountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
-			financeSum = accountList.filter(i => i.type !== 'Oth A')
+		if (summaryAccountList.length > 0) {
+			sum = summaryAccountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
+			financeSum = summaryAccountList.filter(i => i.type !== 'Oth A')
 				.map((i) => i.balance)
 				.reduce( (prev, curr) => prev + curr );
-			quickassets = accountList.filter(i => quickAssetAccount.find(j => j === i.name))
+			quickassets = summaryAccountList.filter(i => quickAssetAccount.find(j => j === i.name))
 				.map((i) => i.balance)
 				.reduce( (prev, curr) => prev + curr );
 		}
+
+		console.log('render Summary');
 
 		return (
 			<Table className={classes.table}>

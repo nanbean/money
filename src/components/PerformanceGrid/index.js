@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { AutoSizer, ColumnSizer, MultiGrid } from 'react-virtualized';
+import _ from 'lodash';
 
 import { toCurrencyFormat } from '../../utils/formatting';
 
@@ -11,6 +12,14 @@ const ROW_HEIGHT = 60;
 const COLUMN_MIN_WIDTH = 100;
 
 class PerformanceGrid extends Component {
+	shouldComponentUpdate (nextProps) {
+		if (_.isEqual(this.props.performanceData, nextProps.performanceData)) {
+			return false;
+		}
+
+		return true;
+	}
+
 	render () {
 		const { performanceData } = this.props;
 

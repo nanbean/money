@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -13,8 +12,6 @@ import _ from 'lodash';
 
 import DividendGrid from '../components/DividendGrid';
 import AccountFilter from '../components/AccountFilter';
-
-import { getAllDividendsAction } from '../actions/dividendActions';
 
 const startYear = 2005;
 const endYear = parseInt(moment().format('YYYY'), 10);
@@ -35,23 +32,10 @@ class Dividend extends Component {
 		filteredAccounts: []
 	}
 
-	componentDidMount () {
-		this.props.getAllDividendsAction();
-	}
-
-	componentDidUpdate (prevProps) {
-		if (!_.isEqual(prevProps.allDividends, this.props.allDividends)) {
-			this.setState({
-				filteredAccounts: this.props.allDividends.map(i => i.account)
-			});
-		}
-	}
-
 	onYearChange = event => {
 		this.setState({
 			year: event.target.value
 		});
-		this.props.getAllDividendsAction(moment().year(event.target.value).startOf('year').format('YYYY-MM-DD'), moment().year(event.target.value).endOf('year').format('YYYY-MM-DD'));
 	}
 
 	onFilteredAccountsChange = (e) => {
@@ -61,17 +45,23 @@ class Dividend extends Component {
 	}
 
 	render () {
-		const { allDividends, classes, dividendFetching } = this.props;
+		const { allAccountsTransactions, classes } = this.props;
 		const { filteredAccounts, year } = this.state;
-		const allAccounts = allDividends.map(i => i.account);
-		const dividendData = allDividends.filter(i => filteredAccounts.includes(i.account)).map(i => {
-			return [
-				i.account,
-				i.transactions.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
-				i.transactions.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
-				(i.transactions.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) -
-				i.transactions.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ))
-			];
+		const startDate = moment().year(year).startOf('year').format('YYYY-MM-DD');
+		const endDate = moment().year(year).endOf('year').format('YYYY-MM-DD');
+		const dividendTransactions = allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
+			.filter(i => i.date >= startDate && i.date <= endDate);
+		const allAccounts = Object.keys(_.groupBy(dividendTransactions, 'account')).map(account => account);
+
+		const dividendData = [];
+		_.forEach(_.groupBy(dividendTransactions.filter(i => filteredAccounts.includes(i.account)), 'account'), (value, key) => {
+			dividendData.push([
+				key,
+				value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
+				value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
+				(value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) -
+				value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ))
+			]);
 		});
 
 		const dividendGridata = [
@@ -90,9 +80,6 @@ class Dividend extends Component {
 			]
 		];
 
-		if (dividendFetching) {
-			return <CircularProgress />;
-		}
 		return (
 			<div>
 				<div className={classes.header}>
@@ -136,24 +123,15 @@ class Dividend extends Component {
 }
 
 Dividend.propTypes = {
-	allDividends:  PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired,
-	dividendFetching: PropTypes.bool.isRequired,
-	getAllDividendsAction: PropTypes.func.isRequired
+	allAccountsTransactions: PropTypes.array.isRequired,
+	classes: PropTypes.object.isRequired
 };
 
 const mapStateToProps = state => ({
-	dividendFetching: state.ui.dividend.fetching,
-	allDividends: state.allDividends
-});
-
-const mapDispatchToProps = dispatch => ({
-	getAllDividendsAction (start, end) {
-		dispatch(getAllDividendsAction(start, end));
-	}
+	allAccountsTransactions: state.allAccountsTransactions
 });
 
 export default connect(
 	mapStateToProps,
-	mapDispatchToProps
+	null
 )(withStyles(styles)(Dividend));

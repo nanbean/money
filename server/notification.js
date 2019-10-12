@@ -2,9 +2,11 @@ const path = require('path');
 const fs = require('fs');
 const util = require('util');
 const moment = require('moment');
+const uuidv1 = require('uuid/v1');
 
 const money = require('./transaction');
 const messaging = require('./messaging');
+const couchdb = require('./couchdb');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
@@ -188,7 +190,7 @@ exports.addTransaction = async function (body) {
 				payee: items[5],
 				category: '분류없음'
 			};
-		} else if (body.text.match(/SC은행BC\(2029\)승인/g)) {
+		} else if (body.text.match(/SC은행BC\(2314\)승인/g)) {
 			account = '생활비카드';
 			items = body.text.split('\n');
 			transaction = {
@@ -220,12 +222,25 @@ exports.addTransaction = async function (body) {
 		}
 
 		if (account && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
-			const transactions = money.accounts[account].transactions;
-			transaction = findCategoryByPayee(transactions, transaction);
+			//const transactions = money.accounts[account].transactions;
+			//transaction = findCategoryByPayee(transactions, transaction);
 
-			transactions.push(transaction);
+			//transactions.push(transaction);
 
-			const token = await money.updateqifFile(account);
+			//const token = await money.updateqifFile(account);
+
+			const couchTransactions = await couchdb.getTransactions();
+			transaction = findCategoryByPayee(couchTransactions, transaction);
+			transaction._id = `${transaction.date}:${account}:${uuidv1()}`;
+			transaction.accountId = account === '급여계좌' ?`account:Bank:${account}` : `account:CCard:${account}`;
+			await couchdb.addTransaction(transaction);
+			await couchdb.addNotification({
+				_id: `${transaction.date}:${uuidv1()}`,
+				packageName: body.packageName,
+				text: body.text,
+				transaction: transaction
+			});
+
 			result = true;
 		} else {
 			result = false;

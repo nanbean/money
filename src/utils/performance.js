@@ -1,19 +1,15 @@
+import _ from 'lodash';
+
 export function getShrsOutMeanPrice (investmentTransactions, account, date, quantity) {
 	if (investmentTransactions.length > 0) {
-		const targetInvestmentTransactions = investmentTransactions.find(i => {
-			if (i.account === account) {
-				return false;
-			}
-			if (i.transactions.find(j => j.date === date && j.quantity === quantity)) {
-				return true;
-			}
-			return false;
-		});
+		const shrsOutAccount = investmentTransactions.find(i => i.account !== account && i.activity === 'ShrsOut' &&
+														i.date === date && i.quantity === quantity).account;
+		const targetInvestmentTransactions = investmentTransactions.filter(i => i.account === shrsOutAccount);
 		if (targetInvestmentTransactions) {
 			let remainQuantity = 0;
 			let meanPrice = 0;
-			for (let j = 0; j < targetInvestmentTransactions.transactions.length; j++) {
-				const transaction = targetInvestmentTransactions.transactions[j];
+			for (let j = 0; j < targetInvestmentTransactions.length; j++) {
+				const transaction = targetInvestmentTransactions[j];
 				if (transaction.activity === 'Buy') {
 					if (meanPrice === 0) {
 						meanPrice = transaction.price;
@@ -45,14 +41,16 @@ export function getShrsOutMeanPrice (investmentTransactions, account, date, quan
 
 export function getInvestmentPerformance (investmentTransactions, investmentPrice) {
 	if (investmentTransactions.length > 0 && investmentPrice) {
-		return investmentTransactions.map(i => {
+		const grouped = _.groupBy(investmentTransactions, 'account');
+
+		return Object.keys(grouped).map(account => {
 			let periodGain = 0;
 			let periodDiv = 0;
 			let periodMiscExp = 0;
 			let remainQuantity = 0;
 			let meanPrice = 0;
-			for (let j = 0; j < i.transactions.length; j++) {
-				const transaction = i.transactions[j];
+			for (let j = 0; j < grouped[account].length; j++) {
+				const transaction = grouped[account][j];
 				if (transaction.activity === 'Buy') {
 					periodGain -= (transaction.commission ? transaction.commission : 0);
 					if (meanPrice === 0) {
@@ -72,7 +70,7 @@ export function getInvestmentPerformance (investmentTransactions, investmentPric
 				} else if (transaction.activity === 'ShrsOut') {
 					remainQuantity -= transaction.quantity;
 				} else if (transaction.activity === 'ShrsIn') {
-					const shrsOutMeanPrice = getShrsOutMeanPrice(investmentTransactions, i.account, transaction.date, transaction.quantity);
+					const shrsOutMeanPrice = getShrsOutMeanPrice(investmentTransactions, account, transaction.date, transaction.quantity);
 					if (meanPrice === 0) {
 						meanPrice = shrsOutMeanPrice;
 					} else {
@@ -82,7 +80,7 @@ export function getInvestmentPerformance (investmentTransactions, investmentPric
 				}
 			}
 			return {
-				account: i.account,
+				account,
 				costBasis: meanPrice * remainQuantity,
 				marketValue: investmentPrice * remainQuantity,
 				periodGain: periodGain + periodDiv + periodMiscExp,
@@ -91,34 +89,67 @@ export function getInvestmentPerformance (investmentTransactions, investmentPric
 			};
 		});
 	}
-
 	return [];
+}
+
+export function getAccountInvestmentPerformance (account, investment, price, investmentTransactions) {
+	let periodGain = 0;
+	let periodDiv = 0;
+	let periodMiscExp = 0;
+	let remainQuantity = 0;
+	let meanPrice = 0;
+	for (let j = 0; j < investmentTransactions.length; j++) {
+		const transaction = investmentTransactions[j];
+		if (transaction.account === account) {
+			if (transaction.activity === 'Buy') {
+				periodGain -= (transaction.commission ? transaction.commission : 0);
+				if (meanPrice === 0) {
+					meanPrice = transaction.price;
+				} else {
+					meanPrice = (meanPrice * remainQuantity + transaction.price * transaction.quantity) / (remainQuantity + transaction.quantity);
+				}
+				remainQuantity += transaction.quantity;
+			} else if (transaction.activity === 'MiscExp') {
+				periodMiscExp -= transaction.amount;
+			} else if (transaction.activity === 'Sell') {
+				periodGain -= (transaction.commission ? transaction.commission : 0);
+				periodGain += ((transaction.price - meanPrice) * transaction.quantity);
+				remainQuantity -= transaction.quantity;
+			} else if (transaction.activity === 'Div') {
+				periodDiv += transaction.amount;
+			} else if (transaction.activity === 'ShrsOut') {
+				remainQuantity -= transaction.quantity;
+			} else if (transaction.activity === 'ShrsIn') {
+				const shrsOutMeanPrice = getShrsOutMeanPrice(investmentTransactions, account, transaction.date, transaction.quantity);
+				if (meanPrice === 0) {
+					meanPrice = shrsOutMeanPrice;
+				} else {
+					meanPrice = (meanPrice * remainQuantity + shrsOutMeanPrice * transaction.quantity) / (remainQuantity + transaction.quantity);
+				}
+				remainQuantity += transaction.quantity;
+			}
+		}
+	}
+	return {
+		name: investment,
+		price,
+		costBasis: meanPrice * remainQuantity,
+		marketValue: price * remainQuantity,
+		periodGain: periodGain + periodDiv + periodMiscExp,
+		periodReturn: periodGain + periodDiv + periodMiscExp + (remainQuantity * (price - meanPrice)),
+		quantity: remainQuantity
+	};
 }
 
 export function getAccountPerformance (account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice) {
 	if (account && accountInvestments.length > 0 && allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0) {
-		const accountRemainInvestments = accountInvestments.filter(i => i.quantity > 0);
-		return accountRemainInvestments.map(j => {
-			const findAllInvestmentsPrice = allInvestmentsPrice.find(k => k.investment === j.name);
-			const investmentPrice = findAllInvestmentsPrice && findAllInvestmentsPrice.price ? findAllInvestmentsPrice.price : j.price;
-			const findAllInvestmentsTransactions = allInvestmentsTransactions.find(l => l.investment === j.name);
-			const investmentTransactions = findAllInvestmentsTransactions && findAllInvestmentsTransactions.transactions ? findAllInvestmentsTransactions.transactions : [];
-			const investmentPerformances = getInvestmentPerformance(investmentTransactions, investmentPrice);
-			const investmentPerformance = investmentPerformances.find(m => m.account === account);
-
-			if (investmentPerformance) {
-				return {
-					name: j.name,
-					price: investmentPrice,
-					costBasis: investmentPerformance.costBasis,
-					marketValue: investmentPerformance.marketValue,
-					periodGain: investmentPerformance.periodGain,
-					periodReturn: investmentPerformance.periodReturn,
-					quantity: investmentPerformance.quantity
-				};
-			} else {
-				return {};
-			}
+		return accountInvestments.filter(i => i.quantity > 0).map(j => {
+			return getAccountInvestmentPerformance(
+				account,
+				j.name,
+				allInvestmentsPrice.find(k => k.name === j.name).price,
+				allInvestmentsTransactions.filter(l => l.investment === j.name)
+			);
 		});
 	}
 
