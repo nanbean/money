@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import moment from 'moment';
+import _ from 'lodash';
 
 import ResponsiveContainer from 'recharts/lib/component/ResponsiveContainer';
 import {
@@ -11,8 +12,6 @@ import {
 	YAxis,
 	CartesianGrid
 } from 'recharts';
-
-import { getWeeklyTransactionsAction } from '../../actions/transactionActions';
 
 import {
 	getCategoryColor
@@ -29,10 +28,17 @@ const week = [
 ];
 
 export class WeeklyGraph extends Component {
-	componentDidMount () {
-		this.props.getWeeklyTransactionsAction(moment().subtract(1, 'weeks').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'));
+	shouldComponentUpdate (nextProps) {
+		const prevWeeklyTransactions = this.props.weeklyTransactions.map(i => ({ type: i.type, account: i.account, date: i.date, category: i.category, payee: i.payee, amount: i.amount }));
+		const nextWeeklyTransactions = nextProps.weeklyTransactions.map(i => ({ type: i.type, account: i.account, date: i.date, category: i.category, payee: i.payee, amount: i.amount }));
+
+		if (_.isEqual(prevWeeklyTransactions, nextWeeklyTransactions)) {
+			return false;
+		}
+
+		return true;
 	}
-  
+
 	render () {
 		const { weeklyTransactions } = this.props;
 		const filteredTransactions = weeklyTransactions.filter(i => i.type === 'Bank' || i.type === 'CCard' || i.type === 'Cash');
@@ -76,6 +82,8 @@ export class WeeklyGraph extends Component {
 			};
 		});
 
+		console.log('render WeeklyGraph');
+
 		return (
 			<ResponsiveContainer width="99%" height={200}>
 				<BarChart
@@ -115,21 +123,18 @@ export class WeeklyGraph extends Component {
 }
 
 WeeklyGraph.propTypes = {
-	getWeeklyTransactionsAction: PropTypes.func.isRequired,
-	weeklyTransactions:  PropTypes.array.isRequired
+	deleteFetching: PropTypes.bool.isRequired,
+	editFetching: PropTypes.bool.isRequired,
+	weeklyTransactions: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({
+	deleteFetching: state.deleteTransaction.fetching,
+	editFetching: state.editTransaction.fetching,
 	weeklyTransactions: state.weeklyTransactions
-});
-
-const mapDispatchToProps = dispatch => ({
-	getWeeklyTransactionsAction (start, end) {
-		dispatch(getWeeklyTransactionsAction(start, end));
-	}
 });
 
 export default connect(
 	mapStateToProps,
-	mapDispatchToProps
+	null
 )(WeeklyGraph);

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { AutoSizer, Column, Table } from 'react-virtualized';
+import _ from 'lodash';
 
 import Amount from '../Amount';
 import Payee from '../../common/Payee';
@@ -11,6 +12,14 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
 
 class BankTransactions extends Component {
+	shouldComponentUpdate (nextProps) {
+		if (_.isEqual(this.props.transactions, nextProps.transactions)) {
+			return false;
+		}
+
+		return true;
+	}
+
 	onRowSelect = ({ index }) => {
 		const { account, transactions } = this.props;
 		const transaction = transactions[index];

@@ -1,4 +1,3 @@
-export { default as Home } from './Home';
 export { default as Bank } from './Bank';
 export { default as Investment } from './Investment';
 export { default as NetWorth } from './NetWorth';

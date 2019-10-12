@@ -7,34 +7,22 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 import BankTransactionForm from './BankTransactionForm';
 
-import { getCategoryListAction } from '../actions/categoryActions';
-import { getPayeeListAction } from '../actions/payeeActions';
-
 import {
 	addTransactionAction,
 	deleteTransactionAction,
-	editTransactionAction
-} from '../actions/transactionActions';
+	editTransactionAction,
+	getPayeeListAction,
+	getCategoryListAction
+} from '../actions/couchdbActions';
 import {
 	resetTransactionForm
 } from '../actions/ui/form/bankTransaction';
 
 class BankTransactionModal extends Component {
-	componentDidMount () {
-		const { dropCategoryList, dropPayeeList } = this.props;
-
-		if (dropCategoryList.length < 1) {
-			this.props.getCategoryListAction();
-		}
-
-		if (dropPayeeList.length < 1) {
-			this.props.getPayeeListAction();
-		}
-	}
-
 	render () {
 		const {
 			account,
+			accountId,
 			dropCategoryList,
 			dropPayeeList,
 			isEdit,
@@ -54,6 +42,7 @@ class BankTransactionModal extends Component {
 						isOpen &&
 						<BankTransactionForm
 							account={account}
+							accountId={accountId}
 							transactions={transactions}
 							dropCategoryList={dropCategoryList}
 							dropPayeeList={dropPayeeList}
@@ -70,6 +59,7 @@ class BankTransactionModal extends Component {
 
 BankTransactionModal.propTypes = {
 	account: PropTypes.string,
+	accountId: PropTypes.string,
 	addTransactionAction: PropTypes.func,
 	deleteTransactionAction: PropTypes.func,
 	dropCategoryList: PropTypes.array,

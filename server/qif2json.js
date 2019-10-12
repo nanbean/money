@@ -7,10 +7,10 @@
  */
 'use strict';
 var fs = require('fs'),
-		jschardet = require('jschardet'),
-		Iconv = require('iconv').Iconv;
+	jschardet = require('jschardet'),
+	Iconv = require('iconv').Iconv;
 
-function parseDate(str, format) {
+function parseDate (str, format) {
 	// var date = str.replace(' ', '').split(/[^0-9]/);
 	//
 	// if (date[0].length < 2) {
@@ -34,18 +34,18 @@ function parseDate(str, format) {
 	return str;
 }
 
-exports.parse = function(qif, options) {
+exports.parse = function (qif, options) {
 	var lines = qif.split('\n'),
-			line = lines.shift(),
-			type = /!Type:([^$]*)$/.exec(line.trim()),
-			data = {},
-			transactions = data.transactions = [],
-			transaction = {},
+		line = lines.shift(),
+		type = /!Type:([^$]*)$/.exec(line.trim()),
+		data = {},
+		transactions = data.transactions = [],
+		transaction = {},
 
-	options = options || {};
+		options = options || {};
 
 	if (!type || !type.length) {
-			throw new Error('File does not appear to be a valid qif file: ' + line);
+		throw new Error('File does not appear to be a valid qif file: ' + line);
 	}
 	data.type = type[1];
 
@@ -60,121 +60,125 @@ exports.parse = function(qif, options) {
 		}
 		if (data.type === 'Invst') {
 			switch (line[0]) {
-				case 'D':
-					transaction.date = parseDate(line.substring(1), options.dateFormat);
-					break;
-				case 'T':
-					transaction.amount = parseFloat(line.substring(1).replace(/,/g, ''));
-					break;
-				case 'N':
-					transaction.activity = line.substring(1);
-					break;
-				case 'M':
-					transaction.memo = line.substring(1);
-					break;
-				case 'A':
-					transaction.address = (transaction.address || []).concat(line.substring(1));
-					break;
-				case 'P':
-					transaction.payee = line.substring(1).replace(/&amp;/g, '&');
-					break;
-				case 'L':
-					var lArray = line.substring(1).split(':');
-					transaction.category = lArray[0];
-					if (lArray[1] !== undefined) {
-							transaction.subcategory = lArray[1];
-					}
-					break;
-				case 'C':
-					transaction.clearedStatus = line.substring(1);
-					break;
-				case 'S':
-					var sArray = line.substring(1).split(':');
-					division.category = sArray[0];
-					if (sArray[1] !== undefined) {
-							division.subcategory = sArray[1];
-					}
-					break;
-				case 'E':
-					division.description = line.substring(1);
-					break;
-				case 'Y':
-					transaction.investment = line.substring(1);
-					break;
-				case 'I':
-					transaction.price = parseFloat(line.substring(1).replace(/,/g, ''));
-					break;
-				case 'Q':
-					transaction.quantity = parseFloat(line.substring(1).replace(/,/g, ''));
-					break;
-				case 'O':
-					transaction.commission = parseFloat(line.substring(1).replace(/,/g, ''));
-					break;
-				case '$':
-					division.amount = parseFloat(line.substring(1).replace(/,/g, ''));
-					if (!(transaction.division instanceof Array)) {
-							transaction.division = [];
-					}
-					transaction.division.push(division);
-					division = {};
+			case 'D':
+				transaction.date = parseDate(line.substring(1), options.dateFormat);
+				break;
+			case 'T':
+				transaction.amount = parseFloat(line.substring(1).replace(/,/g, ''));
+				break;
+			case 'N':
+				transaction.activity = line.substring(1);
+				break;
+			case 'M':
+				transaction.memo = line.substring(1);
+				break;
+			case 'A':
+				transaction.address = (transaction.address || []).concat(line.substring(1));
+				break;
+			case 'P':
+				transaction.payee = line.substring(1).replace(/&amp;/g, '&');
+				break;
+			case 'L':
+				var lArray = line.substring(1).split(':');
+				transaction.category = lArray[0];
+				if (lArray[1] !== undefined) {
+					transaction.subcategory = lArray[1];
+				} else {
+					transaction.subcategory = '';
+				}
+				break;
+			case 'C':
+				transaction.clearedStatus = line.substring(1);
+				break;
+			case 'S':
+				var sArray = line.substring(1).split(':');
+				division.category = sArray[0];
+				if (sArray[1] !== undefined) {
+					division.subcategory = sArray[1];
+				}
+				break;
+			case 'E':
+				division.description = line.substring(1);
+				break;
+			case 'Y':
+				transaction.investment = line.substring(1);
+				break;
+			case 'I':
+				transaction.price = parseFloat(line.substring(1).replace(/,/g, ''));
+				break;
+			case 'Q':
+				transaction.quantity = parseFloat(line.substring(1).replace(/,/g, ''));
+				break;
+			case 'O':
+				transaction.commission = parseFloat(line.substring(1).replace(/,/g, ''));
+				break;
+			case '$':
+				division.amount = parseFloat(line.substring(1).replace(/,/g, ''));
+				if (!(transaction.division instanceof Array)) {
+					transaction.division = [];
+				}
+				transaction.division.push(division);
+				division = {};
 
-					break;
+				break;
 
-				default:
-					throw new Error('Unknown Detail Code: ' + line[0]);
+			default:
+				throw new Error('Unknown Detail Code: ' + line[0]);
 			}
 		} else {
 			switch (line[0]) {
-				case 'D':
-					transaction.date = parseDate(line.substring(1), options.dateFormat);
-					break;
-				case 'T':
-					transaction.amount = parseFloat(line.substring(1).replace(/,/g, ''));
-					break;
-				case 'N':
-					transaction.number = line.substring(1);
-					break;
-				case 'M':
-					transaction.memo = line.substring(1);
-					break;
-				case 'A':
-					transaction.address = (transaction.address || []).concat(line.substring(1));
-					break;
-				case 'P':
-					transaction.payee = line.substring(1).replace(/&amp;/g, '&');
-					break;
-				case 'L':
-					var lArray = line.substring(1).split(':');
-					transaction.category = lArray[0];
-					if (lArray[1] !== undefined) {
-							transaction.subcategory = lArray[1];
-					}
-					break;
-				case 'C':
-					transaction.clearedStatus = line.substring(1);
-					break;
-				case 'S':
-					var sArray = line.substring(1).split(':');
-					division.category = sArray[0];
-					if (sArray[1] !== undefined) {
-							division.subcategory = sArray[1];
-					}
-					break;
-				case 'E':
-					division.description = line.substring(1);
-					break;
-				case '$':
-					division.amount = parseFloat(line.substring(1).replace(/,/g, ''));
-					if (!(transaction.division instanceof Array)) {
-							transaction.division = [];
-					}
-					transaction.division.push(division);
-					division = {};
+			case 'D':
+				transaction.date = parseDate(line.substring(1), options.dateFormat);
+				break;
+			case 'T':
+				transaction.amount = parseFloat(line.substring(1).replace(/,/g, ''));
+				break;
+			case 'N':
+				transaction.number = line.substring(1);
+				break;
+			case 'M':
+				transaction.memo = line.substring(1);
+				break;
+			case 'A':
+				transaction.address = (transaction.address || []).concat(line.substring(1));
+				break;
+			case 'P':
+				transaction.payee = line.substring(1).replace(/&amp;/g, '&');
+				break;
+			case 'L':
+				var lArray = line.substring(1).split(':');
+				transaction.category = lArray[0];
+				if (lArray[1] !== undefined) {
+					transaction.subcategory = lArray[1];
+				} else {
+					transaction.subcategory = '';
+				}
+				break;
+			case 'C':
+				transaction.clearedStatus = line.substring(1);
+				break;
+			case 'S':
+				var sArray = line.substring(1).split(':');
+				division.category = sArray[0];
+				if (sArray[1] !== undefined) {
+					division.subcategory = sArray[1];
+				}
+				break;
+			case 'E':
+				division.description = line.substring(1);
+				break;
+			case '$':
+				division.amount = parseFloat(line.substring(1).replace(/,/g, ''));
+				if (!(transaction.division instanceof Array)) {
+					transaction.division = [];
+				}
+				transaction.division.push(division);
+				division = {};
 
-					break;
+				break;
 
-				default:
-					throw new Error('Unknown Detail Code: ' + line[0]);
+			default:
+				throw new Error('Unknown Detail Code: ' + line[0]);
 			}
 		}
 	}
@@ -186,9 +190,9 @@ exports.parse = function(qif, options) {
 	return data;
 };
 
-exports.parseInput = function(qifData, options, callback) {
+exports.parseInput = function (qifData, options, callback) {
 	var encoding = jschardet.detect(qifData).encoding,
-			iconv, err;
+		iconv, err;
 
 	if (!callback) {
 		callback = options;
@@ -225,26 +229,26 @@ exports.parseInput = function(qifData, options, callback) {
 	callback(err || undefined, qifData);
 };
 
-exports.parseStream = function(stream, options, callback) {
+exports.parseStream = function (stream, options, callback) {
 	var qifData = '';
 	if (!callback) {
 		callback = options;
 		options = {};
 	}
-	stream.on('data', function(chunk) {
+	stream.on('data', function (chunk) {
 		qifData += chunk;
 	});
-	stream.on('end', function() {
+	stream.on('end', function () {
 		exports.parseInput(qifData, options, callback);
 	});
 };
 
-exports.parseFile = function(qifFile, options, callback) {
+exports.parseFile = function (qifFile, options, callback) {
 	if (!callback) {
 		callback = options;
 		options = {};
 	}
-	fs.readFile(qifFile, function(err, qifData) {
+	fs.readFile(qifFile, function (err, qifData) {
 		if (err) {
 			return callback(err);
 		}

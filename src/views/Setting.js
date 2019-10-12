@@ -54,8 +54,8 @@ class Setting extends Component {
 		this.props.history.push('/notificationlog');
 	}
 
-	handlePushNotificationChange = (e, data) => {
-		if (data.checked) {
+	handlePushNotificationChange = (event) => {
+		if (event.target.checked) {
 			this.props.requestPermissionAction();
 		} else {
 			this.props.removePermissionAction();

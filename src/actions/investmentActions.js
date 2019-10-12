@@ -2,10 +2,8 @@ import { getAccountListAction } from './accountActions';
 
 import {
 	SET_INVESTMENT_LIST,
-	SET_ALL_INVESTMENTS_TRANSACTIONS,
 	SET_ALL_INVESTMENTS_PRICE,
 	SET_FILTERED_INVESTMENTS,
-	SET_ALL_INVESTMENTS_FILTERED,
 	SET_INVESTMENT_PRICE,
 	SET_INVESTMENT_TRANSACTIONS,
 	SET_INVESTMENT_ACCOUNT_TRANSACTIONS,
@@ -29,25 +27,6 @@ export const getInvestmentListAction = () => (dispatch) => {
 		.then(res => res.json())
 		.then(body => dispatch(fetchGetInvestmentListSuccess(body)))
 		.catch(ex => dispatch(fetchGetInvestmentListFailure(ex)));
-};
-
-const fetchGetAllInvestmentsTransactionsSuccess = params => ({
-	type: SET_ALL_INVESTMENTS_TRANSACTIONS,
-	payload: params
-});
-
-const fetchGetAllInvestmentsTransactionsFailure = () => ({
-	type: SET_ALL_INVESTMENTS_TRANSACTIONS,
-	payload: []
-});
-
-export const getAllInvestmentsTransactionsAction = () => (dispatch) => {
-	const apiUrl = '/api/getAllInvestmentsTransactions';
-
-	return fetch(apiUrl)
-		.then(res => res.json())
-		.then(body => dispatch(fetchGetAllInvestmentsTransactionsSuccess(body)))
-		.catch(ex => dispatch(fetchGetAllInvestmentsTransactionsFailure(ex)));
 };
 
 const fetchGetAllInvestmentsPriceSuccess = params => ({
@@ -193,16 +172,10 @@ export const editInvestmentTransactionAction = (data) => (dispatch) => {
 	}
 };
 
-export const setfilteredInvestments = params => (dispatch, getState) => {
-	const allInvestmentsList = getState().allInvestmentsList;
+export const setfilteredInvestments = params => (dispatch) => {
 	dispatch({
 		type: SET_FILTERED_INVESTMENTS,
 		payload: params
-	});
-
-	dispatch({
-		type: SET_ALL_INVESTMENTS_FILTERED,
-		payload: allInvestmentsList.length === params.length
 	});
 };
 

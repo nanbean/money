@@ -14,27 +14,29 @@ const InvestmentTransactionModal = props => (
 		<DialogContent>
 			<props.EditForm
 				account={props.account}
-				investmentAccountTransactions={props.investmentAccountTransactions}
+				accountId={props.accountId}
+				transactions={props.transactions}
 				autocompleteInvestmentList={props.autocompleteInvestmentList}
-				addInvestmentTransactionAction={props.addInvestmentTransactionAction}
-				deleteInvestmentTransactionAction={props.deleteInvestmentTransactionAction}
-				editInvestmentTransactionAction={props.editInvestmentTransactionAction}
+				addTransactionAction={props.addTransactionAction}
+				editTransactionAction={props.editTransactionAction}
+				deleteTransactionAction={props.deleteTransactionAction}
 			/>
 		</DialogContent>
 	</Dialog>
 );
 
 InvestmentTransactionModal.propTypes = {
-	account: PropTypes.string,
-	addInvestmentTransactionAction: PropTypes.func,
+	account: PropTypes.string.isRequired,
+	accountId: PropTypes.string.isRequired,
+	addTransactionAction: PropTypes.func,
 	autocompleteInvestmentList: PropTypes.array,
-	deleteInvestmentTransactionAction: PropTypes.func,
+	deleteTransactionAction: PropTypes.func,
 	EditForm: PropTypes.func,
-	editInvestmentTransactionAction: PropTypes.func,
-	investmentAccountTransactions: PropTypes.array,
+	editTransactionAction: PropTypes.func,
 	isEdit: PropTypes.bool,
 	isOpen: PropTypes.bool,
-	resetTransactionForm: PropTypes.func
+	resetTransactionForm: PropTypes.func,
+	transactions: PropTypes.array
 };
 
 export default InvestmentTransactionModal;

@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import {
+	withRouter
+} from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -23,39 +26,74 @@ const styles = theme => ({
 	},
 	grow: {
 		flexGrow: 1
+	},
+	link: {
+		textDecoration: 'none',
+		color: 'inherit'
 	}
 });
 
-const Header = ({
-	classes,
-	toggleSidebar
-}) => (
-	<AppBar
-		position="fixed"
-		className={classes.appBar}
-	>
-		<Toolbar>
-			<IconButton
-				color="inherit"
-				aria-label="Open drawer"
-				className={classes.menuButton}
-				onClick={toggleSidebar}
+class Header extends Component {
+	render () {
+		const {
+			classes,
+			toggleSidebar
+		} = this.props;
+		
+		return (
+			<AppBar
+				position="fixed"
+				className={classes.appBar}
 			>
-				<MenuIcon />
-			</IconButton>
-			<Typography variant="h6" color="inherit" className={classes.grow}>
-				Money
-			</Typography>
-		</Toolbar>
-	</AppBar>
-);
+				<Toolbar>
+					<IconButton
+						color="inherit"
+						aria-label="Open drawer"
+						className={classes.menuButton}
+						onClick={toggleSidebar}
+					>
+						<MenuIcon />
+					</IconButton>
+					<Typography variant="h6" color="inherit" className={classes.grow}>
+						Moneyy
+					</Typography>
+					{/* <div>
+						{
+							username &&
+								<Link key="/logOut" to="/" className={classes.link}>
+									<Button color="inherit" onClick={this.handleSignout}>Signout</Button>
+								</Link>
+						}
+						{
+							!username &&
+								<Link key="/signin" to="/signin" className={classes.link}>
+									<Button color="inherit">Signin</Button>
+								</Link>
+						}
+						{
+							!username &&
+								<Link key="/signup" to="/signup" className={classes.link}>
+									<Button color="inherit">Signup</Button>
+								</Link>
+						}
+					</div> */}
+				</Toolbar>
+			</AppBar>
+		);
+	}
+}
 
 Header.propTypes = {
 	classes: PropTypes.object.isRequired,
-	toggleSidebar: PropTypes.func.isRequired
+	toggleSidebar: PropTypes.func.isRequired,
+	username: PropTypes.string.isRequired
 };
 
-export default connect(
-	null,
+const mapStateToProps = state => ({
+	username: state.username
+});
+
+export default withRouter(connect(
+	mapStateToProps,
 	{ toggleSidebar }
-)(withStyles(styles)(Header));
+)(withStyles(styles)(Header)));

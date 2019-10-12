@@ -26,11 +26,11 @@ const styles = theme => ({
 });
 
 class InvestmentFilter extends Component {
-	onFilteredInvestmentsChange = investment => event => {
+	onFilteredInvestmentsChange = name => event => {
 		const { filteredInvestments } = this.props;
 		const checked = event.target.checked;
 
-		const findIndex = filteredInvestments.findIndex(i => i === investment);
+		const findIndex = filteredInvestments.findIndex(i => i === name);
 
 		if ( checked === true) {
 			if (findIndex >= 0) {
@@ -38,7 +38,7 @@ class InvestmentFilter extends Component {
 			} else {
 				this.props.setfilteredInvestments([
 					...filteredInvestments,
-					investment
+					name
 				]);
 			}
 		} else if (findIndex >= 0) {
@@ -54,7 +54,7 @@ class InvestmentFilter extends Component {
 	onAllInvestementClick = event => {
 		const checked = event.target.checked;
 		const { allInvestmentsPrice } = this.props;
-		const allInvestments = allInvestmentsPrice.map(j => j.investment);
+		const allInvestments = allInvestmentsPrice.map(j => j.name);
 
 		if ( checked === true) {
 			this.props.setfilteredInvestments([
@@ -68,7 +68,6 @@ class InvestmentFilter extends Component {
 
 	render () {
 		const {
-			allInvestmentsFiltered,
 			allInvestmentsPrice,
 			classes,
 			filteredInvestments
@@ -79,12 +78,12 @@ class InvestmentFilter extends Component {
 				{
 					allInvestmentsPrice && allInvestmentsPrice.map(j => {
 						return (
-							<div key={j.investment} className={classes.item}>
+							<div key={j.name} className={classes.item}>
 								<FormControlLabel
 									control={
-										<Checkbox className={classes.checkBox} checked={filteredInvestments.find(q => q === j.investment) ? true : false} onChange={this.onFilteredInvestmentsChange(j.investment)}/>
+										<Checkbox className={classes.checkBox} checked={filteredInvestments.find(q => q === j.name) ? true : false} onChange={this.onFilteredInvestmentsChange(j.name)}/>
 									}
-									label={j.investment}
+									label={j.name}
 								/>
 							</div>
 						);
@@ -92,7 +91,7 @@ class InvestmentFilter extends Component {
 				}
 				<FormControlLabel
 					control={
-						<Checkbox key="All" className={classes.checkBox} checked={allInvestmentsFiltered} onClick={this.onAllInvestementClick}/>
+						<Checkbox key="All" className={classes.checkBox} checked={filteredInvestments.length === allInvestmentsPrice.length} onClick={this.onAllInvestementClick}/>
 					}
 					label="All"
 				/>
@@ -102,7 +101,6 @@ class InvestmentFilter extends Component {
 }
 
 InvestmentFilter.propTypes = {
-	allInvestmentsFiltered: PropTypes.bool.isRequired,
 	allInvestmentsPrice: PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
 	filteredInvestments: PropTypes.array.isRequired,

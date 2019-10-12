@@ -14,8 +14,10 @@ import {
 } from '../../../actions/ui/form/investmentTransaction';
 
 const initialState = {
+	isEdit: false,
 	isModalOpen: false,
-	date: moment().format('YYYY-MM-DD')
+	date: moment().format('YYYY-MM-DD'),
+	activity: ''
 };
 
 export default handleActions(

@@ -20,7 +20,6 @@ import TitleHeader from '../components/TitleHeader';
 import Amount from '../components/Amount';
 
 import { updateInvestmentPriceAction } from '../actions/priceActions';
-import { getAccountListAction } from '../actions/accountActions';
 
 const typeEmoji = {
 	'Bank': '🏦',
@@ -107,10 +106,6 @@ export class Home extends Component {
 		this.onRefreshClick = this.onRefreshClick.bind(this);
 	}
 
-	componentDidMount () {
-		this.props.getAccountListAction();
-	}
-
 	onRefreshClick () {
 		this.props.updateInvestmentPriceAction();
 	}
@@ -195,7 +190,6 @@ export class Home extends Component {
 Home.propTypes = {
 	accountList:  PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
-	getAccountListAction: PropTypes.func.isRequired,
 	updateInvestmentPriceAction: PropTypes.func.isRequired,
 	updateInvestmentPriceFetching: PropTypes.bool.isRequired
 };
@@ -206,9 +200,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-	getAccountListAction () {
-		dispatch(getAccountListAction());
-	},
 	updateInvestmentPriceAction () {
 		dispatch(updateInvestmentPriceAction());
 	}

@@ -527,27 +527,27 @@ const updateHistorical = async () => {
 };
 
 const init = () => {
-	money.accountList = [];
-	money.shrsInOut = [];
-	money.accounts = {};
+	// money.accountList = [];
+	// money.shrsInOut = [];
+	// money.accounts = {};
 
-	var queue = async.queue((task, callback) => {
-		parseFile(task.file, callback);
-	}, 1);
+	// var queue = async.queue((task, callback) => {
+	// 	parseFile(task.file, callback);
+	// }, 1);
 
-	queue.drain = async () => {
-		await updateInvestmentPrice();
-		arrangeCategory();
-		arrangePayee();
-	};
+	// queue.drain = async () => {
+	// 	await updateInvestmentPrice();
+	// 	arrangeCategory();
+	// 	arrangePayee();
+	// };
 
-	fs.readdir(path.resolve(__dirname), (err, files) => {
-		for (let i = 0; i < files.length; i++) {
-			if (files[i].match(/\.qif/i)) {
-				queue.push({ file: files[i] });
-			}
-		}
-	});
+	// fs.readdir(path.resolve(__dirname), (err, files) => {
+	// 	for (let i = 0; i < files.length; i++) {
+	// 		if (files[i].match(/\.qif/i)) {
+	// 			queue.push({ file: files[i] });
+	// 		}
+	// 	}
+	// });
 };
 
 exports.updateqifFile = async (account) => {
@@ -746,7 +746,7 @@ const sendBalanceUpdateNotification = () => {
 
 init();
 
-var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', async () => {
+var dailyArrangeInvestmemtjob = new CronJob('00 50 15 * * 1-5', async () => {
 	/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
@@ -755,7 +755,7 @@ var dailyArrangeInvestmemtjob = new CronJob('00 40 15 * * 1-5', async () => {
 	console.log('00 40 15 daily dailyArrangeInvestmemtjob started');
 
 	await updateInvestmentPrice();
-	sendBalanceUpdateNotification();
+	// sendBalanceUpdateNotification();
 }, () => {
 	/* This function is executed when the job stops */
 	console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');

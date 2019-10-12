@@ -1,5 +1,3 @@
-import { getAccountListAction } from './accountActions';
-
 import {
 	SET_INVESTMENT_PRICE,
 	SET_UPDATE_INVESTMENT_PRICE_FETCHING
@@ -39,7 +37,7 @@ export const updateInvestmentPriceAction = () => (dispatch) => {
 		.then(res => res.json())
 		.then(body => {
 			if (body.return) {
-				dispatch(getAccountListAction());
+				// dispatch(getAccountListAction());
 				dispatch(getInvestmentPriceFetching(false));
 			}
 		})

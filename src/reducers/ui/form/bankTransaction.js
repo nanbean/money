@@ -14,7 +14,8 @@ import {
 const initialState = {
 	isEdit: false,
 	isModalOpen: false,
-	date: moment().format('YYYY-MM-DD')
+	date: moment().format('YYYY-MM-DD'),
+	category: ''
 };
 
 export default handleActions(
@@ -45,7 +46,7 @@ export default handleActions(
 		}),
 		[changeAmount]: (state, { payload }) => ({
 			...state,
-			amount: Number(payload)
+			amount: payload
 		}),
 		[changeMemo]: (state, { payload }) => ({
 			...state,

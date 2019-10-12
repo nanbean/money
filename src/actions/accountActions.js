@@ -3,14 +3,14 @@ import {
 	SET_ACCOUNT_LIST
 } from './actionTypes';
 
-export const setAccount = params => ({
+export const setAccountAction = params => ({
 	type: SET_ACCOUNT,
 	payload: params
 });
 
 export const fetchGetAccountListSuccess = params => ({
 	type: SET_ACCOUNT_LIST,
-	payload: params
+	payload: params.list
 });
 
 export const fetchGetAccountListFailure = () => ({

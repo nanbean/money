@@ -6,8 +6,6 @@ import { withStyles } from '@material-ui/core/styles';
 import TitleHeader from '../components/TitleHeader';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 
-import { getInvestmentTransactionsAction } from '../actions/investmentActions';
-import { getInvestmentPriceAction } from '../actions/priceActions';
 import { getInvestmentPerformance } from '../utils/performance';
 
 const styles = theme => ({
@@ -21,18 +19,18 @@ const styles = theme => ({
 });
 
 class Performance extends Component {
-	componentDidMount () {
-		const { match } = this.props;
-		const investment = match && match.params && match.params.investment;
-
-		this.props.getInvestmentTransactionsAction(investment);
-		this.props.getInvestmentPriceAction(investment);
-	}
-
 	render () {
-		const { classes, isMobile, investmentTransactions, investmentPrice } = this.props;
+		const {
+			allAccountsTransactions,
+			allInvestments,
+			classes, 
+			isMobile
+		} = this.props;
 		const { match } = this.props;
 		const investment = match && match.params && match.params.investment;
+		const investmentItem = allInvestments.find(i => i.name === investment);
+		const investmentPrice = investmentItem && investmentItem.price;
+		const investmentTransactions = allAccountsTransactions.filter(i => i.investment && i.investment === match.params.investment);
 		const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
 
 		return (
@@ -51,11 +49,9 @@ class Performance extends Component {
 }
 
 Performance.propTypes = {
+	allAccountsTransactions: PropTypes.array.isRequired,
+	allInvestments: PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
-	getInvestmentPriceAction: PropTypes.func.isRequired,
-	getInvestmentTransactionsAction: PropTypes.func.isRequired,
-	investmentPrice: PropTypes.number.isRequired,
-	investmentTransactions: PropTypes.array.isRequired,
 	isMobile: PropTypes.bool,
 	match: PropTypes.shape({
 		params: PropTypes.shape({
@@ -65,21 +61,12 @@ Performance.propTypes = {
 };
 
 const mapStateToProps = state => ({
-	isMobile: state.ui.isMobile,
-	investmentPrice: state.investmentPrice,
-	investmentTransactions: state.investmentTransactions
-});
-
-const mapDispatchToProps = dispatch => ({
-	getInvestmentTransactionsAction (params) {
-		dispatch(getInvestmentTransactionsAction(params));
-	},
-	getInvestmentPriceAction (params) {
-		dispatch(getInvestmentPriceAction(params));
-	}
+	allAccountsTransactions: state.allAccountsTransactions,
+	allInvestments: state.allInvestments,
+	isMobile: state.ui.isMobile
 });
 
 export default connect(
 	mapStateToProps,
-	mapDispatchToProps
+	null
 )(withStyles(styles)(Performance));

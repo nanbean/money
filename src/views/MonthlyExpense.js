@@ -14,8 +14,6 @@ import _ from 'lodash';
 
 import ReportGrid from '../components/ReportGrid';
 
-import { getAllAccountTransactionsAction } from '../actions/transactionActions';
-
 const month = Array.from({ length: 12 }, (v, k) => _.padStart(k + 1, 2, '0'));
 const startYear = 2005;
 const endYear = parseInt(moment().format('YYYY'), 10);
@@ -31,19 +29,11 @@ const styles = theme => ({
 });
 
 class MonthlyExpense extends Component {
-	constructor (props) {
-		super(props);
-
-		this.state = {
-			year: parseInt(moment().format('YYYY'), 10),
-			livingExpenseOnly: false,
-			livingExpenseCardOnly: false
-		};
-	}
-
-	componentDidMount () {
-		this.props.getAllAccountTransactionsAction();
-	}
+	state = {
+		year: parseInt(moment().format('YYYY'), 10),
+		livingExpenseOnly: false,
+		livingExpenseCardOnly: false
+	};
 
 	onYearChange = event => {
 		this.setState({
@@ -74,7 +64,7 @@ class MonthlyExpense extends Component {
 	}
 
 	render () {
-		const { allAccountTransactions, classes } = this.props;
+		const { allAccountsTransactions, classes } = this.props;
 		const { year, livingExpenseOnly, livingExpenseCardOnly } = this.state;
 		let incomeTransactions = [];
 		let expenseTransactions = [];
@@ -87,36 +77,47 @@ class MonthlyExpense extends Component {
 		let totalMonthIncomeSum = [];
 		let totalIncomeSum = 0;
 
-		for (let i in allAccountTransactions) {
-			const account = allAccountTransactions[i];
-			if (account.type === 'CCard' || account.type === 'Bank' || account.type === 'Cash') {
-				const divisionTransaction = account.transactions.filter(k => k.division);
-				let divisions = [];
-				for (let l = 0; l < divisionTransaction.length; l++) {
-					const division = divisionTransaction[l].division;
-					const date = divisionTransaction[l].date;
-					for (let m = 0; m < division.length; m++) {
-						const divisionItem = division[m];
-						divisionItem.date = date;
-						divisionItem.payee = divisionItem.description;
-						divisions.push(divisionItem);
+		allAccountsTransactions.forEach(i => {
+			if (i.type === 'CCard' || i.type === 'Bank' || i.type === 'Cash') {
+				if (livingExpenseCardOnly && i.account !== '생활비카드') {
+					return;
+				}
+				if (i.amount > 0 && !i.category.startsWith('[') && !i.division) {
+					incomeTransactions.push(i);
+				}
+				if (i.amount < 0 && !i.category.startsWith('[') && !i.division) {
+					expenseTransactions.push(i);
+				}
+				if (i.division) {
+					for (let j = 0; j < i.division.length; j++) {
+						const transaction = i.division[j];
+						if (transaction.amount > 0 && !transaction.category.startsWith('[')) {
+							incomeTransactions.push({
+								date: i.date,
+								category: transaction.category,
+								subcategory: transaction.subcategory,
+								payee: transaction.description,
+								amount: transaction.amount
+							});
+						} else if (transaction.amount < 0 && !transaction.category.startsWith('[') && transaction.payee !== 'Principal') {
+							expenseTransactions.push({
+								date: i.date,
+								category: transaction.category,
+								subcategory: transaction.subcategory,
+								payee: transaction.description,
+								amount: transaction.amount
+							});
+						}
 					}
 				}
-				if (livingExpenseCardOnly && i !== '생활비카드') {
-					continue;
-				}
-				incomeTransactions = [
-					...incomeTransactions,
-					...account.transactions.filter(j => j.amount > 0 && !j.category.startsWith('[') && !j.division),
-					...divisions.filter(j => j.amount > 0 && !j.category.startsWith('['))
-				];
-				expenseTransactions = [
-					...expenseTransactions,
-					...account.transactions.filter(j => j.amount < 0 && !j.category.startsWith('[') && !j.division),
-					...divisions.filter(j => j.amount < 0 && !j.category.startsWith('[') && j.payee !== 'Principal')
-				];
 			}
+		});
+
+		if (livingExpenseCardOnly) {
+			incomeTransactions = incomeTransactions.filter(i => i.account === '생활비카드');
+			expenseTransactions = expenseTransactions.filter(i => i.account === '생활비카드');
 		}
+
 		if (incomeTransactions.length > 0) {
 			const groupedIncomeData = _
 				.chain(incomeTransactions.filter(k => k.date >= startDate &&  k.date <= endDate))
@@ -275,22 +276,15 @@ class MonthlyExpense extends Component {
 }
 
 MonthlyExpense.propTypes = {
-	allAccountTransactions:  PropTypes.object.isRequired,
-	classes: PropTypes.object.isRequired,
-	getAllAccountTransactionsAction: PropTypes.func.isRequired
+	allAccountsTransactions:  PropTypes.array.isRequired,
+	classes: PropTypes.object.isRequired
 };
 
 const mapStateToProps = state => ({
-	allAccountTransactions: state.allAccountTransactions
-});
-
-const mapDispatchToProps = dispatch => ({
-	getAllAccountTransactionsAction () {
-		dispatch(getAllAccountTransactionsAction());
-	}
+	allAccountsTransactions: state.allAccountsTransactions
 });
 
 export default connect(
 	mapStateToProps,
-	mapDispatchToProps
+	null
 )(withStyles(styles)(MonthlyExpense));

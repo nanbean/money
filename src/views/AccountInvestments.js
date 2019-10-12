@@ -8,11 +8,11 @@ import { getAccountPerformance } from '../utils/performance';
 
 class AccountInvestments extends Component {
 	render () {
-		const { account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice } = this.props;
-		const cash = accountInvestments.length > 0 ? accountInvestments.find(i => i.name === 'cash').amount : 0;
+		const { account, accountInvestments, allAccountsTransactions, allInvestmentsPrice } = this.props;
+		const allInvestmentsTransactions = allAccountsTransactions.filter(i => i.accountId && i.accountId.startsWith('account:Invst'));
 		const accountPerformance = getAccountPerformance(account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice);
 		const totalCostBasis = accountPerformance.length > 0 ? accountPerformance.map(i => i.costBasis).reduce((a, b) => a + b) : 0;
-		const totalMarketValue = accountPerformance.length > 0 ? (accountPerformance.map(i => i.marketValue).reduce((a, b) => a + b) + cash) : 0;
+		const totalMarketValue = accountPerformance.length > 0 ? accountPerformance.map(i => i.marketValue).reduce((a, b) => a + b) : 0;
 		const totalPeriodGain = accountPerformance.length > 0 ? accountPerformance.map(i => i.periodGain).reduce((a, b) => a + b) : 0;
 		const totalPeriodReturn = accountPerformance.length > 0 ? accountPerformance.map(i => i.periodReturn).reduce((a, b) => a + b) : 0;
 
@@ -40,16 +40,6 @@ class AccountInvestments extends Component {
 				];
 			}),
 			[
-				'Cash',
-				'',
-				'',
-				'',
-				cash,
-				'',
-				'',
-				''
-			],
-			[
 				'',
 				'',
 				'',
@@ -74,16 +64,14 @@ class AccountInvestments extends Component {
 AccountInvestments.propTypes = {
 	account: PropTypes.string.isRequired,
 	accountInvestments: PropTypes.array.isRequired,
-	accountList:  PropTypes.array.isRequired,
-	allInvestmentsPrice: PropTypes.array.isRequired,
-	allInvestmentsTransactions: PropTypes.array.isRequired
+	allAccountsTransactions: PropTypes.array.isRequired,
+	allInvestmentsPrice: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({
 	account: state.account,
-	allInvestmentsTransactions: state.allInvestmentsTransactions,
+	allAccountsTransactions: state.allAccountsTransactions,
 	allInvestmentsPrice: state.allInvestmentsPrice,
-	accountList: state.accountList,
 	accountInvestments: state.accountInvestments
 });
 

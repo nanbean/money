@@ -20,6 +20,7 @@ import {
 } from './views';
 
 import HomeMain from './home/HomeMain';
+import Signin from './user/Signin';
 
 const styles = theme => ({
 	root: {
@@ -44,7 +45,13 @@ function Routes ({ classes }) {
 					<Switch>
 						<Route exact path="/" component={HomeMain} />
 						<Route path="/bank/:name" component={Bank} />
+						<Route path="/Bank/:name" component={Bank} />
+						<Route path="/CCard/:name" component={Bank} />
+						<Route path="/Cash/:name" component={Bank} />
+						<Route path="/Oth A/:name" component={Bank} />
+						<Route path="/Oth L/:name" component={Bank} />
 						<Route path="/investment/:name" component={Investment} />
+						<Route path="/Invst/:name" component={Investment} />
 						<Route exact path="/networth" component={NetWorth} />
 						<Route path="/lifetimeplanner" component={LifetimePlanner} />
 						<Route path="/performance/:investment" component={Performance} />
@@ -54,6 +61,7 @@ function Routes ({ classes }) {
 						<Route path="/search/:keyword" component={Search} />
 						<Route exact path="/setting" component={Setting} />
 						<Route exact path="/notificationlog" component={NotificationLog} />
+						<Route exact path="/signin" component={Signin} />
 					</Switch>
 				</main>
 			</div>
