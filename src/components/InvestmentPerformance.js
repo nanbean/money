@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import _ from 'lodash';
 
 import Typography from '@material-ui/core/Typography';
 
@@ -13,6 +14,13 @@ const styles = theme => ({
 });
 
 class InvestmentPerformance extends Component {
+	shouldComponentUpdate (nextProps) {
+		if (_.isEqual(this.props.performance, nextProps.performance)) {
+			return false;
+		}
+
+		return true;
+	}
 
 	render () {
 		const {

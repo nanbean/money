@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import withWidth, { isWidthUp } from '@material-ui/core/withWidth';
 import { AutoSizer, MultiGrid } from 'react-virtualized';
+import _ from 'lodash';
 
 import { toCurrencyFormat } from '../../utils/formatting';
 
@@ -49,6 +50,14 @@ const styles = theme => ({
 });
 
 class ReportGrid extends Component {
+	shouldComponentUpdate (nextProps) {
+		if (_.isEqual(this.props.reportData, nextProps.reportData)) {
+			return false;
+		}
+
+		return true;
+	}
+
 	render () {
 		const { classes, reportData, width } = this.props;
 		const isWidthUpLg = isWidthUp('lg', width);
