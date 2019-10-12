@@ -1,12 +1,12 @@
 import firebase from 'firebase';
 
 const config = {
-	apiKey: 'AIzaSyCS_k9S2lcnWtSo01jw0ohaHTkn6a4tZI8',
-	authDomain: 'nanbean-money.firebaseapp.com',
-	databaseURL: 'https://nanbean-money.firebaseio.com',
-	projectId: 'nanbean-money',
-	storageBucket: 'nanbean-money.appspot.com',
-	messagingSenderId: '532962069139'
+	apiKey: 'your_api_key',
+	authDomain: 'project_id.firebaseapp.com',
+	databaseURL: 'https://project_id.firebaseio.com',
+	projectId: 'project_id',
+	storageBucket: 'project_id.appspot.com',
+	messagingSenderId: 'your_sender_id'
 };
 
 firebase.initializeApp(config);
