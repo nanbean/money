@@ -82,8 +82,6 @@ export class WeeklyGraph extends Component {
 			};
 		});
 
-		console.log('render WeeklyGraph');
-
 		return (
 			<ResponsiveContainer width="99%" height={200}>
 				<BarChart

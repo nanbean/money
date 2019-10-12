@@ -59,8 +59,6 @@ export class Summary extends Component {
 				.reduce( (prev, curr) => prev + curr );
 		}
 
-		console.log('render Summary');
-
 		return (
 			<Table className={classes.table}>
 				<TableBody>

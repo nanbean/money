@@ -83,8 +83,6 @@ export class LastTransactions extends Component {
 			latestTransactions
 		} = this.props;
 
-		console.log('render LastTransactions');
-
 		return (
 			<React.Fragment>
 				<Table className={classes.table}>

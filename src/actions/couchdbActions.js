@@ -22,7 +22,8 @@ import {
 	SET_HISTORY_LIST,
 	SET_PAYEE_LIST,
 	SET_CATEGORY_LIST,
-	SET_WEEKLY_TRANSACTIONS
+	SET_WEEKLY_TRANSACTIONS,
+	SET_TRANSACTIONS_FETCHING
 } from './actionTypes';
 
 PouchDB.plugin(pouchdbAuthentication);
@@ -254,7 +255,7 @@ export const initCouchdbAction = username => {
 				// updateAllTransactionsDebounce(dispatch);
 				// handle change
 				if (deleted) {
-					console.log(change);
+					// console.log(change);
 					for (let i = 0; i < change.docs.length; i++) {
 						dispatch({
 							type: DELETE_ALL_ACCOUNTS_TRANSACTIONS,
@@ -262,7 +263,7 @@ export const initCouchdbAction = username => {
 						});
 					}
 				} else {
-					console.log(change);
+					// console.log(change);
 					for (let i = 0; i < change.docs.length; i++) {
 						dispatch({
 							type: ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS,
@@ -273,12 +274,14 @@ export const initCouchdbAction = username => {
 			}).on('paused', function () {
 				// updateAllTransactionsDebounce();
 				// replication paused (e.g. replication up to date, user went offline)
+				dispatch(setTranscationsFetchingAction(false));
 			}).on('active', function () {
 				// replicate resumed (e.g. new changes replicating, user went back online)
 			}).on('denied', function () {
 				// a document failed to replicate (e.g. due to permissions)
 			}).on('complete', function () {
 				// handle complete
+				// console.log('complete');
 			}).on('error', function () {
 				// handle error
 			});
@@ -530,3 +533,8 @@ export const getCategoryListAction = () => {
 		});
 	};
 };
+
+export const setTranscationsFetchingAction = value => ({
+	type: SET_TRANSACTIONS_FETCHING,
+	payload: value
+});

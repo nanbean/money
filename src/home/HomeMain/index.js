@@ -155,16 +155,16 @@ export class HomeMain extends Component {
 			classes,
 			latestTransactionsExpanded,
 			summaryExpanded,
+			trascationsFetching,
 			updateInvestmentPriceFetching,
 			weeklyGraphExpanded
 		} = this.props;
 
-		console.log('render HomeMain');
 		return (
 			<React.Fragment>
 				<TitleHeader title="Home" />
 				{
-					updateInvestmentPriceFetching &&
+					(updateInvestmentPriceFetching || trascationsFetching) &&
 					<LinearProgress color="secondary" className={classes.progress} />
 				}
 				<div className={classes.container}>
@@ -258,6 +258,7 @@ HomeMain.propTypes = {
 	getWeeklyTransactionsAction: PropTypes.func.isRequired,
 	latestTransactionsExpanded: PropTypes.bool.isRequired,
 	summaryExpanded: PropTypes.bool.isRequired,
+	trascationsFetching: PropTypes.bool.isRequired,
 	updateInvestmentPriceAction: PropTypes.func.isRequired,
 	updateInvestmentPriceFetching: PropTypes.bool.isRequired,
 	weeklyGraphExpanded: PropTypes.bool.isRequired
@@ -267,6 +268,7 @@ const mapStateToProps = state => ({
 	accountsExpanded: state.ui.home.accountsExpanded,
 	latestTransactionsExpanded: state.ui.home.latestTransactionsExpanded,
 	summaryExpanded: state.ui.home.summaryExpanded,
+	trascationsFetching: state.trascationsFetching,
 	updateInvestmentPriceFetching: state.updateInvestmentPriceFetching,
 	weeklyGraphExpanded: state.ui.home.weeklyGraphExpanded
 });
