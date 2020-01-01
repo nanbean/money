@@ -4,11 +4,11 @@ const router = require('koa-router')();
 
 const _users = nano.use('_users');
 
-router.post('/signin', (ctx, next) => {
+router.post('/signin', (ctx) => {
 	ctx.body = { return: true };
 });
 
-router.post('/signup', async (ctx, next) => {
+router.post('/signup', async (ctx) => {
 	const { name, password } = ctx.request.body;
 	const user = {
 		name,

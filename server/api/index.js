@@ -1,6 +1,5 @@
 const Router = require('koa-router');
 const xlsx = require('node-xlsx');
-const Excel = require('exceljs');
 const _ = require('lodash');
 const multer = require('koa-multer');
 const moment = require('moment');
@@ -12,13 +11,12 @@ const couchdb = require('../couchdb');
 
 const api = new Router();
 const auth = require('./auth');
-const lifetimePlanner = require('./lifetimePlanner');
 
 const upload = multer({
 	storage: multer.memoryStorage()
 });
 
-api.get('/getAccountList', (ctx, next) => {
+api.get('/getAccountList', (ctx) => {
 	let body = {};
 
 	body.count = money.accountList.length;
@@ -26,7 +24,7 @@ api.get('/getAccountList', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getTransactions', (ctx, next) => {
+api.get('/getTransactions', (ctx) => {
 	let body = {};
 	const account = ctx.request.query.account;
 
@@ -35,7 +33,7 @@ api.get('/getTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/transactions', (ctx, next) => {
+api.get('/transactions', (ctx) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 
@@ -44,7 +42,7 @@ api.get('/transactions', (ctx, next) => {
 	ctx.body = result.body;
 });
 
-api.get('/transactions/:account', (ctx, next) => {
+api.get('/transactions/:account', (ctx) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 	const account = ctx.params.account;
@@ -54,7 +52,7 @@ api.get('/transactions/:account', (ctx, next) => {
 	ctx.body = result.body;
 });
 
-api.get('/getAllAccountTransactions', (ctx, next) => {
+api.get('/getAllAccountTransactions', (ctx) => {
 	ctx.body = money.accounts;
 });
 
@@ -80,9 +78,7 @@ api.get('/getAllAccountTransactions', (ctx, next) => {
 // 	ctx.body = body;
 // });
 
-api.get('/getAllInvestmentsTransactions', (ctx, next) => {
-	const investment = ctx.request.query.investment;
-
+api.get('/getAllInvestmentsTransactions', (ctx) => {
 	const body = money.investments.map(i => {
 		const item = {};
 		const transactions = [];
@@ -108,7 +104,7 @@ api.get('/getAllInvestmentsTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getInvestmentAccountTransactions', (ctx, next) => {
+api.get('/getInvestmentAccountTransactions', (ctx) => {
 	let body = {};
 	const account = ctx.request.query.account;
 
@@ -117,7 +113,7 @@ api.get('/getInvestmentAccountTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getInvestmentTransactions', (ctx, next) => {
+api.get('/getInvestmentTransactions', (ctx) => {
 	let body = {};
 	const transactions = [];
 	const investment = ctx.request.query.investment;
@@ -139,9 +135,7 @@ api.get('/getInvestmentTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getAllInvestmentsTransactions', (ctx, next) => {
-	const investment = ctx.request.query.investment;
-
+api.get('/getAllInvestmentsTransactions', (ctx) => {
 	const body = money.investments.map(i => {
 		const item = {};
 		const transactions = [];
@@ -167,7 +161,7 @@ api.get('/getAllInvestmentsTransactions', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getCategoryList', (ctx, next) => {
+api.get('/getCategoryList', (ctx) => {
 	let body = {};
 
 	body.count = money.categories.length;
@@ -175,7 +169,7 @@ api.get('/getCategoryList', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getPayeeList', (ctx, next) => {
+api.get('/getPayeeList', (ctx) => {
 	let body = {};
 
 	body.count = money.payees.length;
@@ -183,7 +177,7 @@ api.get('/getPayeeList', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getInvestmentList', (ctx, next) => {
+api.get('/getInvestmentList', (ctx) => {
 	let body = {};
 
 	body.count = money.allinvestments.length;
@@ -191,7 +185,7 @@ api.get('/getInvestmentList', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getAccountInvestments', (ctx, next) => {
+api.get('/getAccountInvestments', (ctx) => {
 	let body = {};
 	const account = ctx.request.query.account;
 	const accountItem = money.accountList.find(i => i.name === account);
@@ -205,14 +199,14 @@ api.get('/getAccountInvestments', (ctx, next) => {
 	}
 });
 
-api.get('/updateInvestmentPrice', async (ctx, next) => {
+api.get('/updateInvestmentPrice', async (ctx) => {
 	// await money.updateInvestmentPrice();
 	await couchdb.updateInvestmentPrice();
 
 	ctx.body = { return: true };
 });
 
-api.post('/addTransaction', async (ctx, next) => {
+api.post('/addTransaction', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.amount && body.payee && body.category) {
@@ -231,7 +225,7 @@ api.post('/addTransaction', async (ctx, next) => {
 		}
 		transactions.push(transaction);
 
-		const token = await money.updateqifFile(body.account);
+		await money.updateqifFile(body.account);
 		if (body.category.startsWith('[')) {
 			let counterAccount;
 			if (body.category.match(/(Cash)/) || body.category.match(/(Contributions)/)) {
@@ -239,7 +233,7 @@ api.post('/addTransaction', async (ctx, next) => {
 			} else {
 				counterAccount = body.category.substr(1, body.category.length - 2);
 			}
-			console.log(counterAccount);
+			// console.log(counterAccount);
 			const counterTransactions = money.accounts[counterAccount].transactions;
 			const counterTransaction = {
 				date: body.date,
@@ -250,7 +244,7 @@ api.post('/addTransaction', async (ctx, next) => {
 			};
 			counterTransactions.push(counterTransaction);
 
-			const token2 = await money.updateqifFile(counterAccount);
+			await money.updateqifFile(counterAccount);
 		}
 
 		ctx.body = { return: true };
@@ -259,11 +253,11 @@ api.post('/addTransaction', async (ctx, next) => {
 	}
 });
 
-api.post('/addTransactions', async (ctx, next) => {
+api.post('/addTransactions', async (ctx) => {
 	const body = ctx.request.body;
 
-	console.log(body.account);
-	console.log(body.transactions);
+	// console.log(body.account);
+	// console.log(body.transactions);
 	if (body && body.account && body.transactions) {
 		for (let i = 0; i < body.transactions.length; i++) {
 			const transactions = money.accounts[body.account].transactions;
@@ -276,11 +270,11 @@ api.post('/addTransactions', async (ctx, next) => {
 			if (body.transactions[i].subcategory) {
 				transaction.subcategory = body.transactions[i].subcategory;
 			}
-			console.log(transaction);
+			// console.log(transaction);
 			transactions.push(transaction);
 		}
 
-		const token = await money.updateqifFile(body.account);
+		await money.updateqifFile(body.account);
 
 		for (let j = 0; j < body.transactions.length; j++) {
 			if (body.transactions[j].category.startsWith('[')) {
@@ -294,7 +288,7 @@ api.post('/addTransactions', async (ctx, next) => {
 				};
 				counterTransactions.push(counterTransaction);
 
-				const token2 = await money.updateqifFile(counterAccount);
+				await money.updateqifFile(counterAccount);
 			}
 		}
 
@@ -304,21 +298,21 @@ api.post('/addTransactions', async (ctx, next) => {
 	}
 });
 
-api.post('/addTransactionWithNotification', async (ctx, next) => {
+api.post('/addTransactionWithNotification', async (ctx) => {
 	const body = ctx.request.body;
 	const result = await notification.addTransaction(body);
 
 	ctx.body = { return: result };
 });
 
-api.get('/notifications', async (ctx, next) => {
+api.get('/notifications', async (ctx) => {
 	const size = ctx.request.query.size || 20;
 	const history = await notification.getHistory(size);
 
 	ctx.body = history;
 });
 
-api.post('/addInvestmentTransaction', async (ctx, next) => {
+api.post('/addInvestmentTransaction', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.investment && body.activity) {
@@ -373,14 +367,14 @@ api.post('/addInvestmentTransaction', async (ctx, next) => {
 
 		transactions.push(transaction);
 
-		token = await money.updateqifFile(body.account);
+		await money.updateqifFile(body.account);
 		ctx.body = { return: true };
 	} else {
 		ctx.body = { return: false };
 	}
 });
 
-api.post('/deleteTransaction', async (ctx, next) => {
+api.post('/deleteTransaction', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.account) {
@@ -393,7 +387,7 @@ api.post('/deleteTransaction', async (ctx, next) => {
 
 		if (idx >= 0) {
 			money.accounts[body.account].transactions.splice(idx, 1);
-			const token = await money.updateqifFile(body.account);
+			await money.updateqifFile(body.account);
 		}
 
 		if (body.category.startsWith('[')) {
@@ -407,7 +401,7 @@ api.post('/deleteTransaction', async (ctx, next) => {
 
 			if (counterIdx >= 0) {
 				money.accounts[counterAccount].transactions.splice(counterIdx, 1);
-				const token2 = await money.updateqifFile(counterAccount);
+				await money.updateqifFile(counterAccount);
 			}
 		}
 		ctx.body = { return: true };
@@ -416,12 +410,11 @@ api.post('/deleteTransaction', async (ctx, next) => {
 	}
 });
 
-api.post('/deleteInvestmentTransaction', async (ctx, next) => {
+api.post('/deleteInvestmentTransaction', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.account) {
 		let idx;
-		let transaction;
 		if (body.activity === 'Buy' || body.activity === 'Sell') {
 			if (typeof body.commission !== 'undefined' && body.commission) {
 				idx = money.accounts[body.account].transactions.findIndex(
@@ -445,7 +438,7 @@ api.post('/deleteInvestmentTransaction', async (ctx, next) => {
 
 		if (idx >= 0) {
 			money.accounts[body.account].transactions.splice(idx, 1);
-			const token = await money.updateqifFile(body.account);
+			await money.updateqifFile(body.account);
 		}
 
 		ctx.body = { return: true };
@@ -454,7 +447,7 @@ api.post('/deleteInvestmentTransaction', async (ctx, next) => {
 	}
 });
 
-api.post('/editTransaction', async (ctx, next) => {
+api.post('/editTransaction', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.amount && body.payee && body.category) {
@@ -486,7 +479,7 @@ api.post('/editTransaction', async (ctx, next) => {
 					transaction.memo = body.changed.memo;
 				}
 			}
-			const token = await money.updateqifFile(body.account);
+			await money.updateqifFile(body.account);
 
 			if (body.category.startsWith('[')) {
 				let counterTransaction;
@@ -517,7 +510,7 @@ api.post('/editTransaction', async (ctx, next) => {
 							counterTransaction.subcategory = body.changed.memo;
 						}
 					}
-					const token2 = await money.updateqifFile(counterAccount);
+					await money.updateqifFile(counterAccount);
 				}
 			}
 			ctx.body = { return: true, index: body.index };
@@ -529,7 +522,7 @@ api.post('/editTransaction', async (ctx, next) => {
 	}
 });
 
-api.post('/editInvestmentTransaction', async (ctx, next) => {
+api.post('/editInvestmentTransaction', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.account && body.date && body.investment && body.activity) {
@@ -599,15 +592,15 @@ api.post('/editInvestmentTransaction', async (ctx, next) => {
 				}
 			}
 		}
-		const token = await money.updateqifFile(body.account);
+		await money.updateqifFile(body.account);
 		ctx.body = { return: true, index: body.index };
 	} else {
 		ctx.body = { return: false };
 	}
 });
 
-api.get('/getMortgageSchedule', (ctx, next) => {
-	workSheetsFromFile = xlsx.parse(`${__dirname}/아낌이모기지론.xlsx`);
+api.get('/getMortgageSchedule', (ctx) => {
+	const workSheetsFromFile = xlsx.parse(`${__dirname}/아낌이모기지론.xlsx`);
 	const schedule = workSheetsFromFile[0].data.slice(2).map(i => {
 		return {
 			no: parseFloat(i[0].replace(/,/g, '')),
@@ -620,7 +613,7 @@ api.get('/getMortgageSchedule', (ctx, next) => {
 	ctx.body = { return: true, schedule: schedule };
 });
 
-api.get('/getNetWorth', (ctx, next) => {
+api.get('/getNetWorth', (ctx) => {
 	let body = {};
 	let dates = [];
 	const date = new Date();
@@ -653,7 +646,7 @@ api.get('/getNetWorth', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getInvestmentPrice', (ctx, next) => {
+api.get('/getInvestmentPrice', (ctx) => {
 	const investment = ctx.request.query.investment;
 	const body = {
 		investment: investment,
@@ -663,7 +656,7 @@ api.get('/getInvestmentPrice', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.get('/getAllInvestmentsPrice', (ctx, next) => {
+api.get('/getAllInvestmentsPrice', (ctx) => {
 	const body = money.investments.map(i => {
 		const investment = i.name;
 		return {
@@ -675,13 +668,13 @@ api.get('/getAllInvestmentsPrice', (ctx, next) => {
 	ctx.body = body;
 });
 
-api.post('/uploadTransactionsXls', upload.single('document'), async (ctx, next) => {
+api.post('/uploadTransactionsXls', upload.single('document'), async (ctx) => {
 	const { file } = ctx.req;
-	console.log(file);
+	// console.log(file);
 	// const body = {};
 	const workSheetsFromBuffer = xlsx.parse(file.buffer);
 
-	console.log(workSheetsFromBuffer[0].data);
+	// console.log(workSheetsFromBuffer[0].data);
 	const body = workSheetsFromBuffer[0].data.map(i => {
 		const dateString = i[0];
 		let date = '';
@@ -708,19 +701,10 @@ api.post('/uploadTransactionsXls', upload.single('document'), async (ctx, next) 
 		return 0;
 	});
 
-	//
-
-	// var workbook = new Excel.stream.xlsx.WorkbookReader();
-	// workbook.xlsx.read(streamifier.createReadStream(file.buffer))
-	// .then(function() {
-	// 	const worksheet = workbook.getWorksheet(1);
-	// 	console.log(worksheet)
-	// });
-
 	ctx.body = body;
 });
 
-api.get('/getLifetimeFlow', async (ctx, next) => {
+api.get('/getLifetimeFlow', async (ctx) => {
 	const list = await couchdb.getLifetimeFlowList();
 	ctx.body = {
 		count: list.length,
@@ -728,7 +712,7 @@ api.get('/getLifetimeFlow', async (ctx, next) => {
 	};
 });
 
-api.post('/registerMessageToken', async (ctx, next) => {
+api.post('/registerMessageToken', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.messagingToken) {
@@ -740,7 +724,7 @@ api.post('/registerMessageToken', async (ctx, next) => {
 	}
 });
 
-api.post('/unRegisterMessageToken', async (ctx, next) => {
+api.post('/unRegisterMessageToken', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.messagingToken) {
@@ -752,7 +736,7 @@ api.post('/unRegisterMessageToken', async (ctx, next) => {
 	}
 });
 
-api.get('/dividends', (ctx, next) => {
+api.get('/dividends', (ctx) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 
@@ -769,7 +753,7 @@ api.get('/dividends', (ctx, next) => {
 	ctx.body = result.body;
 });
 
-api.get('/dividends/:account', (ctx, next) => {
+api.get('/dividends/:account', (ctx) => {
 	let start = ctx.request.query.start;
 	let end = ctx.request.query.end;
 	const account = ctx.params.account;
