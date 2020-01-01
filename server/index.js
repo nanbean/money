@@ -8,7 +8,6 @@ const app = new Koa();
 const router = new Router();
 
 const api = require('./api');
-const transaction = require('./transaction');
 
 const PORT = process.env.PORT || 3004;
 const indexHtml = fs.readFileSync(path.resolve(__dirname, '../build/index.html'), { encoding: 'utf8' });

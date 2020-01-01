@@ -6,6 +6,8 @@ const moment = require('moment');
 
 const messaging = require('./messaging');
 
+const lifetimePlanner = require('./api/lifetimePlanner');
+
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
 	for (let i = 0; i < transactions.length; i++) {
@@ -17,15 +19,15 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 				if (investmentIdx >= 0) {
 					investments[investmentIdx].price = (investments[investmentIdx].price * investments[investmentIdx].quantity + transaction.price * transaction.quantity) / (investments[investmentIdx].quantity + transaction.quantity);
 					investments[investmentIdx].quantity += transaction.quantity;
-					investments[investmentIdx].gain -= transaction.commission ? transaction.commission:0;
-					investments[investmentIdx].amount += (transaction.amount );
+					investments[investmentIdx].gain -= transaction.commission ? transaction.commission : 0;
+					investments[investmentIdx].amount += (transaction.amount);
 				} else {
 					investments.push({
 						name: transaction.investment,
 						quantity: transaction.quantity,
 						price: transaction.price,
 						amount: transaction.amount,
-						gain: transaction.commission ? -transaction.commission:0
+						gain: transaction.commission ? -transaction.commission : 0
 					});
 				}
 			} else if (transaction.activity === 'Sell') {
@@ -55,7 +57,7 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 							quantity: transaction.quantity,
 							price: shrsOutTransactionPrice,
 							amount: transaction.amount,
-							gain: transaction.commission ? -transaction.commission:0
+							gain: transaction.commission ? -transaction.commission : 0
 						});
 					}
 				} catch (err) {
@@ -91,14 +93,14 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 				purchasedValue: i.price * i.quantity,
 				appraisedValue: i.price * i.quantity
 			};
-		}	
+		}
 	});
 };
 
 const getInvestmentBalance = (investments) => {
 	let balance = 0;
 	if (investments.length > 0) {
-		balance = investments.map((i) => i.price * i.quantity).reduce( (prev, curr) => prev + curr );
+		balance = investments.map((i) => i.price * i.quantity).reduce((prev, curr) => prev + curr);
 	}
 
 	return balance;
@@ -135,24 +137,26 @@ const updateAccountList = async () => {
 	console.log('updateAccountList start', new Date());
 	const accountsDB = nano.use('accounts_nanbean');
 	const transactionsDB = nano.use('transactions_nanbean');
-	const investmentsDB = nano.use('investments_nanbean');
+	const kospiDB = nano.use('kospi');
+	const kosdaqDB = nano.use('kosdaq');
 
 	try {
 		const accountsResponse = await accountsDB.list({ include_docs: true });
 		const allAccounts = accountsResponse.rows.map(i => i.doc);
 		const transactionsResponse = await transactionsDB.list({ include_docs: true });
 		const allTransactions = transactionsResponse.rows.map(i => i.doc);
-		const investmentsResponse = await investmentsDB.list({ include_docs: true });
-		const allInvestments = investmentsResponse.rows.map(i => i.doc);
+		const kospiResponse = await kospiDB.get('all');
+		const kosdaqResponse = await kosdaqDB.get('all');
+		const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data];
 
 		for (let i = 0; i < allAccounts.length; i++) {
 			const account = allAccounts[i];
 			const type = account.type;
 			const name = account.name;
-			
+
 			let balance = 0;
 			let investments = [];
-			
+
 			if (type === 'Invst') {
 				investments = getInvestmentList(allInvestments, allTransactions, allTransactions.filter(i => i.accountId === `account:${type}:${name}`));
 				balance = getInvestmentBalance(investments);
@@ -174,7 +178,8 @@ const updateAccountList = async () => {
 
 const arrangeInvestmemt = async () => {
 	return new Promise(function (resolve, reject) {
-		const investmentsDB = nano.use('investments_nanbean');
+		const kospiDB = nano.use('kospi');
+		const kosdaqDB = nano.use('kosdaq');
 
 		console.log('couchdb arrangeInvestmemt start', new Date());
 
@@ -196,13 +201,13 @@ const arrangeInvestmemt = async () => {
 
 			spooky.start('http://finance.daum.net/domestic/all_stocks?market=KOSPI');
 
-			spooky.wait(1500, function () {});
+			spooky.wait(1500, function () { });
 
 			spooky.then(function () {
 				this.click('#orderStock');
 			});
 
-			spooky.wait(4000, function () {});
+			spooky.wait(4000, function () { });
 
 			spooky.then(function () {
 				var investment1 = this.evaluate(function () {
@@ -240,13 +245,13 @@ const arrangeInvestmemt = async () => {
 
 			spooky.thenOpen('http://finance.daum.net/domestic/all_stocks?market=KOSDAQ');
 
-			spooky.wait(1500, function () {});
+			spooky.wait(1500, function () { });
 
 			spooky.then(function () {
 				this.click('#orderStock');
 			});
 
-			spooky.wait(4000, function () {});
+			spooky.wait(4000, function () { });
 
 			spooky.then(function () {
 				var investment1 = this.evaluate(function () {
@@ -288,25 +293,21 @@ const arrangeInvestmemt = async () => {
 		spooky.on('kospiParsed', async (investments, symbol, price) => {
 			console.log('couchdb arrangeInvestmemt kospiParsed', new Date());
 			try {
-				const investmentsResponse = await investmentsDB.list({ include_docs: true });
-				const oldInvestments = investmentsResponse.rows.map(i => i.doc);
+				const oldKospi = await kospiDB.get('all', { revs_info: true });
 
-				await investmentsDB.bulk({
-					docs: investments.map((i, index) => {
-						const oldInvestment = oldInvestments.find(i => i._id === `investment:${symbol[index]}`);
-						const ret = {
-							_id: `investment:${symbol[index]}`,
-							name: i,
-							googleSymbol: `KRX:${symbol[index]}`,
-							yahooSymbol : `${symbol[index]}.KS`,
-							price: parseFloat(price[index].replace(/,/g, ''))
-						};
-						if (oldInvestment && oldInvestment._rev) {
-							ret._rev = oldInvestment._rev;
-						}
-						return ret;
-					})
-				});
+				const transaction = {
+					_id: 'all',
+					_rev: oldKospi._rev,
+					data: investments.map((i, index) => ({
+						_id: `investment:${symbol[index]}`,
+						name: i,
+						googleSymbol: `KRX:${symbol[index]}`,
+						yahooSymbol: `${symbol[index]}.KS`,
+						price: parseFloat(price[index].replace(/,/g, ''))
+					}))
+				};
+
+				await kospiDB.insert(transaction);
 			} catch (err) {
 				console.log(err);
 			}
@@ -316,31 +317,27 @@ const arrangeInvestmemt = async () => {
 		spooky.on('kodaqParsed', async (investments, symbol, price) => {
 			console.log('couchdb arrangeInvestmemt kodaqParsed', new Date());
 			try {
-				const investmentsResponse = await investmentsDB.list({ include_docs: true });
-				const oldInvestments = investmentsResponse.rows.map(i => i.doc);
+				const oldKosdaq = await kosdaqDB.get('all', { revs_info: true });
 
-				await investmentsDB.bulk({
-					docs: investments.map((i, index) => {
-						const oldInvestment = oldInvestments.find(i => i._id === `investment:${symbol[index]}`);
-						const ret = {
-							_id: `investment:${symbol[index]}`,
-							name: i,
-							googleSymbol: `KOSDAQ:${symbol[index]}`,
-							yahooSymbol : `${symbol[index]}.KQ`,
-							price: parseFloat(price[index].replace(/,/g, ''))
-						};
-						if (oldInvestment && oldInvestment._rev) {
-							ret._rev = oldInvestment._rev;
-						}
-						return ret;
-					})
-				});
+				const transaction = {
+					_id: 'all',
+					_rev: oldKosdaq._rev,
+					data: investments.map((i, index) => ({
+						_id: `investment:${symbol[index]}`,
+						name: i,
+						googleSymbol: `KOSDAQ:${symbol[index]}`,
+						yahooSymbol: `${symbol[index]}.KQ`,
+						price: parseFloat(price[index].replace(/,/g, ''))
+					}))
+				};
+
+				await kosdaqDB.insert(transaction);
 			} catch (err) {
 				console.log(err);
 			}
 
 			console.log('couchdb arrangeInvestmemt done', new Date());
-      
+
 			resolve('done');
 		});
 
@@ -393,9 +390,43 @@ exports.addNotification = async (notification) => {
 
 const sendBalanceUpdateNotification = async () => {
 	const allAccounts = await getAllAccounts();
-	const balance = allAccounts.filter(i => !i.name.match(/_Cash/i)).map((i) => i.balance).reduce( (prev, curr) => prev + curr );
+	const balance = allAccounts.filter(i => !i.name.match(/_Cash/i)).map((i) => i.balance).reduce((prev, curr) => prev + curr);
 	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	messaging.sendNotification('NetWorth Update', `Today's NetWorth is ${netWorth}`);
+};
+
+const updateLifeTimePlanner = async () => {
+	console.log('updateLifeTimePlanner start', new Date());
+	const reportsDB = nano.use('reports_nanbean');
+	let oldLifeTimePlanner;
+
+	try {
+		oldLifeTimePlanner = await reportsDB.get('lifetimeplanner', { revs_info: true });
+	} catch (err) {
+		console.log(err);
+	}
+
+	const accounts = await getAllAccounts();
+	const data = await lifetimePlanner.getLifetimeFlowList(accounts);
+	const transaction = {
+		_id: 'lifetimeplanner',
+		date: new Date(),
+		data
+	};
+
+	if (oldLifeTimePlanner) {
+		transaction._rev = oldLifeTimePlanner._rev;
+	}
+
+	await reportsDB.insert(transaction);
+
+	console.log('updateLifeTimePlanner done');
+};
+
+exports.getLifetimeFlowList = async () => {
+	const reportsDB = nano.use('reports_nanbean');
+	const lifeTimePlanner = await reportsDB.get('lifetimeplanner', { revs_info: true });
+	return lifeTimePlanner.data;
 };
 
 new CronJob('00 33 05 1 * *', async () => {
@@ -406,9 +437,11 @@ new CronJob('00 33 05 1 * *', async () => {
 		 */
 	console.log('couchdb 00 34 05 monthly monthlyUpdateHistoricaljob started');
 	const historiesDB = nano.use('histories_nanbean');
-	const investmentsDB = nano.use('investments_nanbean');
-	const investmentsResponse = await investmentsDB.list({ include_docs: true });
-	const investments = investmentsResponse.rows.map(i => i.doc);
+	const kospiDB = nano.use('kospi');
+	const kosdaqDB = nano.use('kosdaq');
+	const kospiResponse = await kospiDB.get('all');
+	const kosdaqResponse = await kosdaqDB.get('all');
+	const investments = [...kospiResponse.data, ...kosdaqResponse.data];
 	const historiesResponse = await historiesDB.list({ include_docs: true });
 	const oldHistories = historiesResponse.rows.map(i => i.doc);
 	const newHistories = oldHistories.map(i => ({
@@ -456,6 +489,7 @@ new CronJob('00 40 15 * * 1-5', async () => {
 
 	await arrangeInvestmemt();
 	await updateAccountList();
+	await updateLifeTimePlanner();
 	await sendBalanceUpdateNotification();
 }, () => {
 	/* This function is executed when the job stops */

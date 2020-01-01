@@ -12,6 +12,7 @@ const couchdb = require('../couchdb');
 
 const api = new Router();
 const auth = require('./auth');
+const lifetimePlanner = require('./lifetimePlanner');
 
 const upload = multer({
 	storage: multer.memoryStorage()
@@ -234,9 +235,9 @@ api.post('/addTransaction', async (ctx, next) => {
 		if (body.category.startsWith('[')) {
 			let counterAccount;
 			if (body.category.match(/(Cash)/) || body.category.match(/(Contributions)/)) {
-				counterAccount = body.category.substr(1, body.category.length-2).split(' ')[0] + '_Cash';
+				counterAccount = body.category.substr(1, body.category.length - 2).split(' ')[0] + '_Cash';
 			} else {
-				counterAccount = body.category.substr(1, body.category.length-2);
+				counterAccount = body.category.substr(1, body.category.length - 2);
 			}
 			console.log(counterAccount);
 			const counterTransactions = money.accounts[counterAccount].transactions;
@@ -283,7 +284,7 @@ api.post('/addTransactions', async (ctx, next) => {
 
 		for (let j = 0; j < body.transactions.length; j++) {
 			if (body.transactions[j].category.startsWith('[')) {
-				const counterAccount = body.transactions[j].category.substr(1, body.transactions[j].category.length-2);
+				const counterAccount = body.transactions[j].category.substr(1, body.transactions[j].category.length - 2);
 				const counterTransactions = money.accounts[counterAccount].transactions;
 				const counterTransaction = {
 					date: body.transactions[j].date,
@@ -320,7 +321,7 @@ api.get('/notifications', async (ctx, next) => {
 api.post('/addInvestmentTransaction', async (ctx, next) => {
 	const body = ctx.request.body;
 
-	if (body && body.account && body.date && body.investment &&	body.activity) {
+	if (body && body.account && body.date && body.investment && body.activity) {
 		const transactions = money.accounts[body.account].transactions;
 		const transaction = {
 			date: body.date,
@@ -396,12 +397,12 @@ api.post('/deleteTransaction', async (ctx, next) => {
 		}
 
 		if (body.category.startsWith('[')) {
-			const counterAccount = body.category.substr(1, body.category.length-2);
+			const counterAccount = body.category.substr(1, body.category.length - 2);
 			let counterIdx;
 			if (body.subcategory) {
-				counterIdx = money.accounts[counterAccount].transactions.findIndex(i => i.date === body.date && i.amount === (body.amount *(-1)) && i.payee === body.payee && i.category === `[${body.account}]` && i.subcategory === body.subcategory);
+				counterIdx = money.accounts[counterAccount].transactions.findIndex(i => i.date === body.date && i.amount === (body.amount * (-1)) && i.payee === body.payee && i.category === `[${body.account}]` && i.subcategory === body.subcategory);
 			} else {
-				counterIdx = money.accounts[counterAccount].transactions.findIndex(i => i.date === body.date && i.amount === (body.amount *(-1)) && i.payee === body.payee && i.category === `[${body.account}]`);
+				counterIdx = money.accounts[counterAccount].transactions.findIndex(i => i.date === body.date && i.amount === (body.amount * (-1)) && i.payee === body.payee && i.category === `[${body.account}]`);
 			}
 
 			if (counterIdx >= 0) {
@@ -425,21 +426,21 @@ api.post('/deleteInvestmentTransaction', async (ctx, next) => {
 			if (typeof body.commission !== 'undefined' && body.commission) {
 				idx = money.accounts[body.account].transactions.findIndex(
 					i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-					i.quantity === body.quantity && i.price === body.price && i.amount === body.amount &&
-					i.commission === body.commission);
+						i.quantity === body.quantity && i.price === body.price && i.amount === body.amount &&
+						i.commission === body.commission);
 			} else {
 				idx = money.accounts[body.account].transactions.findIndex(
 					i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-					i.quantity === body.quantity && i.price === body.price && i.amount === body.amount);
+						i.quantity === body.quantity && i.price === body.price && i.amount === body.amount);
 			}
 		} else if (body.activity === 'Div' || body.activity === 'MiscExp') {
 			idx = money.accounts[body.account].transactions.findIndex(
 				i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-				i.amount === body.amount);
+					i.amount === body.amount);
 		} else if (body.activity === 'ShrsOut' || body.activity === 'ShrsIn') {
 			idx = money.accounts[body.account].transactions.findIndex(
 				i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-				i.quantity === body.quantity);
+					i.quantity === body.quantity);
 		}
 
 		if (idx >= 0) {
@@ -489,11 +490,11 @@ api.post('/editTransaction', async (ctx, next) => {
 
 			if (body.category.startsWith('[')) {
 				let counterTransaction;
-				const counterAccount = body.category.substr(1, body.category.length-2);
+				const counterAccount = body.category.substr(1, body.category.length - 2);
 				if (body.subcategory) {
-					counterTransaction = money.accounts[counterAccount].transactions.find(i => i.date === body.date && i.amount === (body.amount *(-1)) && i.payee === body.payee && i.category === `[${body.account}]` && i.subcategory === body.subcategory);
+					counterTransaction = money.accounts[counterAccount].transactions.find(i => i.date === body.date && i.amount === (body.amount * (-1)) && i.payee === body.payee && i.category === `[${body.account}]` && i.subcategory === body.subcategory);
 				} else {
-					counterTransaction = money.accounts[counterAccount].transactions.find(i => i.date === body.date && i.amount === (body.amount *(-1)) && i.payee === body.payee && i.category === `[${body.account}]`);
+					counterTransaction = money.accounts[counterAccount].transactions.find(i => i.date === body.date && i.amount === (body.amount * (-1)) && i.payee === body.payee && i.category === `[${body.account}]`);
 				}
 				if (counterTransaction) {
 					if (body.changed) {
@@ -538,21 +539,21 @@ api.post('/editInvestmentTransaction', async (ctx, next) => {
 			if (typeof body.commission !== 'undefined' && body.commission) {
 				transaction = money.accounts[body.account].transactions.find(
 					i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-					i.quantity === body.quantity && i.price === body.price && i.amount === body.amount &&
-					i.commission === body.commission);
+						i.quantity === body.quantity && i.price === body.price && i.amount === body.amount &&
+						i.commission === body.commission);
 			} else {
 				transaction = money.accounts[body.account].transactions.find(
 					i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-					i.quantity === body.quantity && i.price === body.price && i.amount === body.amount);
+						i.quantity === body.quantity && i.price === body.price && i.amount === body.amount);
 			}
 		} else if (body.activity === 'Div' || body.activity === 'MiscExp') {
 			transaction = money.accounts[body.account].transactions.find(
 				i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-				i.amount === body.amount);
+					i.amount === body.amount);
 		} else if (body.activity === 'ShrsOut' || body.activity === 'ShrsIn') {
 			transaction = money.accounts[body.account].transactions.find(
 				i => i.date === body.date && i.investment === body.investment && i.activity === body.activity &&
-				i.quantity === body.quantity);
+					i.quantity === body.quantity);
 		}
 
 		if (body.changed) {
@@ -565,7 +566,7 @@ api.post('/editInvestmentTransaction', async (ctx, next) => {
 			if (typeof body.changed.activity !== 'undefined') {
 				transaction.activity = body.changed.activity;
 			}
-			if (body.activity !== 'Div' && body.activity !== 'Div' ) {
+			if (body.activity !== 'Div' && body.activity !== 'Div') {
 				if (typeof body.changed.quantity !== 'undefined') {
 					transaction.quantity = body.changed.quantity;
 				}
@@ -644,7 +645,7 @@ api.get('/getNetWorth', (ctx, next) => {
 	body.count = dates.length;
 	body.list = dates.map(i => {
 		return {
-			date: i.substr(0,7),
+			date: i.substr(0, 7),
 			netWorth: money.getNetWorth(i),
 			assetNetWorth: money.getAssetNetWorth(i)
 		};
@@ -695,7 +696,7 @@ api.post('/uploadTransactionsXls', upload.single('document'), async (ctx, next) 
 			date: date,
 			payee: i[1],
 			category: '',
-			amount: (typeof i[2] === 'string' ? parseFloat(i[2].replace(/,/g, '')) : parseFloat(i[2]))* (-1)
+			amount: (typeof i[2] === 'string' ? parseFloat(i[2].replace(/,/g, '')) : parseFloat(i[2])) * (-1)
 		};
 	}).sort((a, b) => {
 		if (a.date < b.date) {
@@ -719,54 +720,8 @@ api.post('/uploadTransactionsXls', upload.single('document'), async (ctx, next) 
 	ctx.body = body;
 });
 
-function getLifetimeFlowList (accounts) {
-	return new Promise(resolve => {
-		const fileName = `${__dirname}/lifetimePlanner.xlsx`;
-		const workbook = new Excel.Workbook();
-		workbook.xlsx.readFile(fileName)
-			.then(function () {
-				const worksheet = workbook.getWorksheet(1);
-				const nameCol = worksheet.getColumn('A');
-				let yearRowNum = -1;
-				let flowRowNum = -1;
-				const data = [];
-
-				nameCol.eachCell(function (cell, rowNumber) {
-					const accountItem = accounts.find(i => i.name === cell.value && i.type == 'Invst');
-
-					if (accountItem) {
-						worksheet.getCell(`B${rowNumber}`).value = accountItem.balance;
-					}
-					if (cell.value === 'Year') {
-						yearRowNum = rowNumber;
-					}
-					if (cell.value === '자산') {
-						flowRowNum = rowNumber;
-					}
-				});
-				var yearList = worksheet.getRow(yearRowNum).values.filter(i => Number.isInteger(i)).map(i => i);
-				var flowList = worksheet.getRow(flowRowNum).values.filter(i => i.result).map(i => i.result);
-				var flowInflationList = worksheet.getRow(flowRowNum+1).values.filter(i => i.result).map(i => i.result);
-
-				for (let i = 0; i < yearList.length; i++) {
-					data.push({
-						year: yearList[i],
-						amount: flowInflationList[i],
-						amountInflation: flowList[i]
-					});
-				}
-
-				workbook.xlsx.writeFile(fileName).then(function () {
-				});
-
-				resolve(data);
-			});
-	});
-}
-
 api.get('/getLifetimeFlow', async (ctx, next) => {
-	const accounts = await couchdb.getAccounts();
-	const list = await getLifetimeFlowList(accounts);
+	const list = await couchdb.getLifetimeFlowList();
 	ctx.body = {
 		count: list.length,
 		list: list

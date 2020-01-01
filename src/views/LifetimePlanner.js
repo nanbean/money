@@ -7,7 +7,7 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 
 import TitleHeader from '../components/TitleHeader';
 
-import { getLifetimeFlowAction } from '../actions/lifetimePlannerActions';
+import { getLifetimeFlowAction } from '../actions/couchdbActions';
 import { toCurrencyFormat } from '../utils/formatting';
 
 const styles = theme => ({
@@ -52,9 +52,9 @@ class LifetimePlanner extends Component {
 									data={lifetimePlannerFlow}
 									margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 								>
-									<XAxis dataKey="year"/>
-									<YAxis hide/>
-									<CartesianGrid strokeDasharray="3 3"/>
+									<XAxis dataKey="year" />
+									<YAxis hide />
+									<CartesianGrid strokeDasharray="3 3" />
 									<Tooltip formatter={this.formatter} />
 									<Bar dataKey="amountInflation" name="Amount(Inflation)" fill="#8884d8" />
 									<Bar dataKey="amount" name="Amount" fill="#82ca9d" />
@@ -79,7 +79,7 @@ class LifetimePlanner extends Component {
 LifetimePlanner.propTypes = {
 	classes: PropTypes.object.isRequired,
 	getLifetimeFlowAction: PropTypes.func.isRequired,
-	lifetimePlannerFlow:  PropTypes.array.isRequired
+	lifetimePlannerFlow: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({

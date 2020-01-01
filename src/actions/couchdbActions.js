@@ -23,7 +23,8 @@ import {
 	SET_PAYEE_LIST,
 	SET_CATEGORY_LIST,
 	SET_WEEKLY_TRANSACTIONS,
-	SET_TRANSACTIONS_FETCHING
+	SET_TRANSACTIONS_FETCHING,
+	SET_LIFETIME_PLANNER_FLOW
 } from './actionTypes';
 
 PouchDB.plugin(pouchdbAuthentication);
@@ -31,13 +32,17 @@ PouchDB.plugin(pouchdbFind);
 
 let accountsDB = new PouchDB('accounts');
 let transactionsDB = new PouchDB('transactions');
-let investmentsDB = new PouchDB('investments');
-let historiesDB =  new PouchDB('histories');
+let kospiDB = new PouchDB('kospi');
+let kosdaqDB = new PouchDB('kosdaq');
+let historiesDB = new PouchDB('histories');
+let reportsDB = new PouchDB('reports');
 
 let accountsSync;
 let transactionsSync;
-let investmentsSync;
-let historiessSync;
+let kospiSync;
+let kosdaqSync;
+let historiesSync;
+let reportsSync;
 
 // const updateAllTransactions = async (dispatch) => {
 // 	dispatch(getAllAccountsTransactions());
@@ -74,8 +79,12 @@ const getAllAccounts = async () => {
 };
 
 const getAllInvestments = async () => {
-	const investmentsResponse = await investmentsDB.allDocs({ include_docs: true }); // eslint-disable-line camelcase
-	const allInvestments = investmentsResponse.rows.map(i => i.doc);
+	const kospi = await kospiDB.get('all'); // eslint-disable-line camelcase
+	const kosdaq = await kosdaqDB.get('all'); // eslint-disable-line camelcase
+	const allInvestments = [
+		...kospi.data,
+		...kosdaq.data
+	];
 
 	return allInvestments;
 };
@@ -98,15 +107,15 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 				if (investmentIdx >= 0) {
 					investments[investmentIdx].price = (investments[investmentIdx].price * investments[investmentIdx].quantity + transaction.price * transaction.quantity) / (investments[investmentIdx].quantity + transaction.quantity);
 					investments[investmentIdx].quantity += transaction.quantity;
-					investments[investmentIdx].gain -= transaction.commission ? transaction.commission:0;
-					investments[investmentIdx].amount += (transaction.amount );
+					investments[investmentIdx].gain -= transaction.commission ? transaction.commission : 0;
+					investments[investmentIdx].amount += (transaction.amount);
 				} else {
 					investments.push({
 						name: transaction.investment,
 						quantity: transaction.quantity,
 						price: transaction.price,
 						amount: transaction.amount,
-						gain: transaction.commission ? -transaction.commission:0
+						gain: transaction.commission ? -transaction.commission : 0
 					});
 				}
 			} else if (transaction.activity === 'Sell') {
@@ -134,7 +143,7 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 							quantity: transaction.quantity,
 							price: shrsOutTransactionPrice,
 							amount: transaction.amount,
-							gain: transaction.commission ? -transaction.commission:0
+							gain: transaction.commission ? -transaction.commission : 0
 						});
 					}
 				} catch (err) {
@@ -168,14 +177,14 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 				purchasedValue: i.price * i.quantity,
 				appraisedValue: i.price * i.quantity
 			};
-		}	
+		}
 	});
 };
 
 const getInvestmentBalance = (investments) => {
 	let balance = 0;
 	if (investments.length > 0) {
-		balance = investments.map((i) => i.price * i.quantity).reduce( (prev, curr) => prev + curr );
+		balance = investments.map((i) => i.price * i.quantity).reduce((prev, curr) => prev + curr);
 	}
 
 	return balance;
@@ -237,17 +246,17 @@ export const initCouchdbAction = username => {
 		accountsSync = accountsDB.sync(remoteAccountsDB, { live: true, retry: true })
 			.on('change', function () {
 				updateAllAccountsDebounce(dispatch);
-			// handle change
+				// handle change
 			}).on('paused', function () {
-			// replication paused (e.g. replication up to date, user went offline)
+				// replication paused (e.g. replication up to date, user went offline)
 			}).on('active', function () {
-			// replicate resumed (e.g. new changes replicating, user went back online)
+				// replicate resumed (e.g. new changes replicating, user went back online)
 			}).on('denied', function () {
-			// a document failed to replicate (e.g. due to permissions)
+				// a document failed to replicate (e.g. due to permissions)
 			}).on('complete', function () {
-			// handle complete
+				// handle complete
 			}).on('error', function () {
-			// handle error
+				// handle error
 			});
 		let remoteTransactionsDB = new PouchDB(`https://couchdb.nanbean.net/transactions_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
 		transactionsSync = transactionsDB.sync(remoteTransactionsDB, { live: true, retry: true })
@@ -285,8 +294,25 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteInvestmentsDB = new PouchDB(`https://couchdb.nanbean.net/investments_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		investmentsSync = investmentsDB.sync(remoteInvestmentsDB, { live: true, retry: true })
+		let remoteKospiDB = new PouchDB('https://couchdb.nanbean.net/kospi', { skip_setup: true }); // eslint-disable-line camelcase
+		kospiSync = kospiDB.sync(remoteKospiDB, { live: true, retry: true })
+			.on('change', function () {
+				updateAllInvestmentsDebounce(dispatch);
+				// handle change
+			}).on('paused', function () {
+				// updateAllInvestmentsDebounce();
+				// replication paused (e.g. replication up to date, user went offline)
+			}).on('active', function () {
+				// replicate resumed (e.g. new changes replicating, user went back online)
+			}).on('denied', function () {
+				// a document failed to replicate (e.g. due to permissions)
+			}).on('complete', function () {
+				// handle complete
+			}).on('error', function () {
+				// handle error
+			});
+		let remoteKosdaqDB = new PouchDB('https://couchdb.nanbean.net/kosdaq', { skip_setup: true }); // eslint-disable-line camelcase
+		kosdaqSync = kosdaqDB.sync(remoteKosdaqDB, { live: true, retry: true })
 			.on('change', function () {
 				updateAllInvestmentsDebounce(dispatch);
 				// handle change
@@ -303,7 +329,22 @@ export const initCouchdbAction = username => {
 				// handle error
 			});
 		let remoteHistoriesDB = new PouchDB(`https://couchdb.nanbean.net/histories_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		historiessSync = historiesDB.sync(remoteHistoriesDB, { live: true, retry: true })
+		historiesSync = historiesDB.sync(remoteHistoriesDB, { live: true, retry: true })
+			.on('change', function () {
+				// handle change
+			}).on('paused', function () {
+				// replication paused (e.g. replication up to date, user went offline)
+			}).on('active', function () {
+				// replicate resumed (e.g. new changes replicating, user went back online)
+			}).on('denied', function () {
+				// a document failed to replicate (e.g. due to permissions)
+			}).on('complete', function () {
+				// handle complete
+			}).on('error', function () {
+				// handle error
+			});
+		let remoteReportsDB = new PouchDB(`https://couchdb.nanbean.net/reports_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		reportsSync = reportsDB.sync(remoteReportsDB, { live: true, retry: true })
 			.on('change', function () {
 				// handle change
 			}).on('paused', function () {
@@ -324,8 +365,10 @@ export const finalizeCouchdbAction = () => {
 	return async () => {
 		accountsSync && accountsSync.cancel();
 		transactionsSync && transactionsSync.cancel();
-		investmentsSync && investmentsSync.cancel();
-		historiessSync && historiessSync.cancel();
+		kospiSync && kospiSync.cancel();
+		kosdaqSync && kosdaqSync.cancel();
+		historiesSync && historiesSync.cancel();
+		reportsSync && reportsSync.cancel();
 	};
 };
 
@@ -340,14 +383,14 @@ export const addTransactionAction = param => {
 			const transaction = { ...param, _id: `${param.date}:${param.account}:${uuidv1()}` };
 			delete param.account;
 			delete param.type;
-      
+
 			dispatch(setAddTransactionFetchingAction(true));
 			dispatch({
 				type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
 				payload: transaction
 			});
 			await transactionsDB.put(transaction);
-      
+
 			await updateAccount(transaction.accountId);
 			// dispatch(setAddTransactionFetchingAction(false));
 			// dispatch(getAllAccountsTransactionsAction());
@@ -377,7 +420,7 @@ export const editTransactionAction = param => {
 			await transactionsDB.put({
 				...transaction
 			});
-      
+
 			await updateAccount(accountId);
 			// dispatch(getAccountList());
 			// dispatch(setEditTransactionFetchingAction(false));
@@ -400,7 +443,7 @@ export const deleteTransactionAction = params => {
 				payload: params._id
 			});
 			await transactionsDB.remove(params._id, params._rev);
-      
+
 			await updateAccount(params.accountId);
 			// dispatch(getAccountList());
 			// dispatch(setDeleteTransactionFetchingAction(false));
@@ -451,7 +494,7 @@ export const getWeeklyTransactionsAction = () => {
 const getAllAccountsTransactions = () => {
 	return async dispatch => {
 		const allTransactions = await getAllTransactions();
-	
+
 		dispatch({
 			type: SET_ALL_ACCOUNTS_TRANSACTIONS,
 			payload: allTransactions.map(i => ({ ...i, type: i.accountId.split(':')[1], account: i.accountId.split(':')[2] }))
@@ -538,3 +581,14 @@ export const setTranscationsFetchingAction = value => ({
 	type: SET_TRANSACTIONS_FETCHING,
 	payload: value
 });
+
+export const getLifetimeFlowAction = () => {
+	return async dispatch => {
+		const lifetimeplanner = await reportsDB.get('lifetimeplanner');
+
+		dispatch({
+			type: SET_LIFETIME_PLANNER_FLOW,
+			payload: lifetimeplanner.data
+		});
+	};
+};

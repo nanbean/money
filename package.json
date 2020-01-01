@@ -8,7 +8,7 @@
     "async": "^2.6.0",
     "casperjs": "^1.1.4",
     "cron": "^1.3.0",
-    "exceljs": "^1.6.2",
+    "exceljs": "^3.5.0",
     "firebase": "^5.1.0",
     "firebase-admin": "^5.12.1",
     "google-finance": "^0.1.11",
