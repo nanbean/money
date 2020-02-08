@@ -16,3 +16,12 @@ export const SHOPPING_COLOR_CATEGORY = ['생활용품비', '의류', '대출이�
 export const MEDICAL_COLOR_CATEGORY = ['의료비'];
 export const HOBBY_COLOR_CATEGORY = ['취미-레저'];
 export const ETC_COLOR_CATEGORY = ['기타 지출', '실제지출아님'];
+
+export const TYPE_EMOJI = {
+	'Bank': '🏦',
+	'CCard': '💳',
+	'Cash': '💵',
+	'Invst': '📈',
+	'Oth L': '🏧',
+	'Oth A': '🏠'
+};

@@ -24,7 +24,8 @@ import {
 	SET_CATEGORY_LIST,
 	SET_WEEKLY_TRANSACTIONS,
 	SET_TRANSACTIONS_FETCHING,
-	SET_LIFETIME_PLANNER_FLOW
+	SET_LIFETIME_PLANNER_FLOW,
+	SET_NET_WORTH_FLOW
 } from './actionTypes';
 
 PouchDB.plugin(pouchdbAuthentication);
@@ -295,7 +296,7 @@ export const initCouchdbAction = username => {
 				// handle error
 			});
 		let remoteKospiDB = new PouchDB('https://couchdb.nanbean.net/kospi', { skip_setup: true }); // eslint-disable-line camelcase
-		kospiSync = kospiDB.sync(remoteKospiDB, { live: true, retry: true })
+		kospiSync = kospiDB.sync(remoteKospiDB, {})
 			.on('change', function () {
 				updateAllInvestmentsDebounce(dispatch);
 				// handle change
@@ -312,7 +313,7 @@ export const initCouchdbAction = username => {
 				// handle error
 			});
 		let remoteKosdaqDB = new PouchDB('https://couchdb.nanbean.net/kosdaq', { skip_setup: true }); // eslint-disable-line camelcase
-		kosdaqSync = kosdaqDB.sync(remoteKosdaqDB, { live: true, retry: true })
+		kosdaqSync = kosdaqDB.sync(remoteKosdaqDB, {})
 			.on('change', function () {
 				updateAllInvestmentsDebounce(dispatch);
 				// handle change
@@ -329,7 +330,7 @@ export const initCouchdbAction = username => {
 				// handle error
 			});
 		let remoteHistoriesDB = new PouchDB(`https://couchdb.nanbean.net/histories_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		historiesSync = historiesDB.sync(remoteHistoriesDB, { live: true, retry: true })
+		historiesSync = historiesDB.sync(remoteHistoriesDB, {})
 			.on('change', function () {
 				// handle change
 			}).on('paused', function () {
@@ -344,7 +345,7 @@ export const initCouchdbAction = username => {
 				// handle error
 			});
 		let remoteReportsDB = new PouchDB(`https://couchdb.nanbean.net/reports_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		reportsSync = reportsDB.sync(remoteReportsDB, { live: true, retry: true })
+		reportsSync = reportsDB.sync(remoteReportsDB, {})
 			.on('change', function () {
 				// handle change
 			}).on('paused', function () {
@@ -589,6 +590,17 @@ export const getLifetimeFlowAction = () => {
 		dispatch({
 			type: SET_LIFETIME_PLANNER_FLOW,
 			payload: lifetimeplanner.data
+		});
+	};
+};
+
+export const getNetWorthFlowAction = () => {
+	return async dispatch => {
+		const netWorth = await reportsDB.get('netWorth');
+
+		dispatch({
+			type: SET_NET_WORTH_FLOW,
+			payload: netWorth.data
 		});
 	};
 };

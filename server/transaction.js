@@ -746,84 +746,84 @@ const sendBalanceUpdateNotification = () => {
 
 init();
 
-var dailyArrangeInvestmemtjob = new CronJob('00 50 15 * * 1-5', async () => {
-	/*
-		 * investment update automation.
-		 * Runs week day (Monday through Friday)
-		 * at 05:00:00 AM.
-		 */
-	console.log('00 40 15 daily dailyArrangeInvestmemtjob started');
+// var dailyArrangeInvestmemtjob = new CronJob('00 50 15 * * 1-5', async () => {
+// 	/*
+// 		 * investment update automation.
+// 		 * Runs week day (Monday through Friday)
+// 		 * at 05:00:00 AM.
+// 		 */
+// 	console.log('00 40 15 daily dailyArrangeInvestmemtjob started');
 
-	await updateInvestmentPrice();
-	// sendBalanceUpdateNotification();
-}, () => {
-	/* This function is executed when the job stops */
-	console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');
-},
-true, /* Start the job right now */
-'Asia/Seoul' /* Time zone of this job. */
-);
+// 	await updateInvestmentPrice();
+// 	// sendBalanceUpdateNotification();
+// }, () => {
+// 	/* This function is executed when the job stops */
+// 	console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');
+// },
+// true, /* Start the job right now */
+// 'Asia/Seoul' /* Time zone of this job. */
+// );
 
-var monthlyUpdateHistoricaljob = new CronJob('00 33 05 1 * *', async () => {
-	/*
-		 * update historical automation.
-		 * Runs every 1st day of month, and write last day of previous month price
-		 * at 03:00:00 AM.
-		 */
-	console.log('00 33 05 monthly monthlyUpdateHistoricaljob started');
-	const filePath = path.resolve(__dirname, 'historical.json');
-	const { investments } =  money;
-	const historical = await readFileAsync(filePath).then(data => {
-		const result = JSON.parse(data);
-		return result;
-	});
+// var monthlyUpdateHistoricaljob = new CronJob('00 33 05 1 * *', async () => {
+// 	/*
+// 		 * update historical automation.
+// 		 * Runs every 1st day of month, and write last day of previous month price
+// 		 * at 03:00:00 AM.
+// 		 */
+// 	console.log('00 33 05 monthly monthlyUpdateHistoricaljob started');
+// 	const filePath = path.resolve(__dirname, 'historical.json');
+// 	const { investments } =  money;
+// 	const historical = await readFileAsync(filePath).then(data => {
+// 		const result = JSON.parse(data);
+// 		return result;
+// 	});
 
-	for (let i = 0; i < investments.length; i++) {
-		const key = investments[i].yahooSymbol;
-		const price = investments[i].price;
-		if (typeof historical[key] !== 'undefined') {
-			historical[key].unshift({
-				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
-				close: price
-			});
-		} else {
-			historical[key] = [
-				{
-					date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
-					close: price
-				}
-			];
-		}
-	}
-	writeFileAsync(filePath, historical);
-	await updateHistorical();
-	return true;
-}, () => {
-	/* This function is executed when the job stops */
-	console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
-},
-true, /* Start the job right now */
-'Asia/Seoul' /* Time zone of this job. */
-);
+// 	for (let i = 0; i < investments.length; i++) {
+// 		const key = investments[i].yahooSymbol;
+// 		const price = investments[i].price;
+// 		if (typeof historical[key] !== 'undefined') {
+// 			historical[key].unshift({
+// 				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+// 				close: price
+// 			});
+// 		} else {
+// 			historical[key] = [
+// 				{
+// 					date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+// 					close: price
+// 				}
+// 			];
+// 		}
+// 	}
+// 	writeFileAsync(filePath, historical);
+// 	await updateHistorical();
+// 	return true;
+// }, () => {
+// 	/* This function is executed when the job stops */
+// 	console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
+// },
+// true, /* Start the job right now */
+// 'Asia/Seoul' /* Time zone of this job. */
+// );
 
-var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
-	/*
-		 * investment update automation.
-		 * Runs week day (Monday through Friday)
-		 * at 05:00:00 AM.
-		 */
-	console.log('00 00 03 weekly weeklyBackupjob started');
+// var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
+// 	/*
+// 		 * investment update automation.
+// 		 * Runs week day (Monday through Friday)
+// 		 * at 05:00:00 AM.
+// 		 */
+// 	console.log('00 00 03 weekly weeklyBackupjob started');
 
-	const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}`;
+// 	const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}`;
 
-	exec(`mkdir ${backupDir}`, { cwd: __dirname });
-	exec(`cp *.qif ${backupDir}/`, { cwd: __dirname });
-	exec(`cp *.json ${backupDir}/`, { cwd: __dirname });
-	exec(`cp *.xlsx ${backupDir}/`, { cwd: __dirname });
-}, () => {
-	/* This function is executed when the job stops */
-	console.log('00 00 03 weekly weeklyBackupjob ended');
-},
-true, /* Start the job right now */
-'Asia/Seoul' /* Time zone of this job. */
-);
+// 	exec(`mkdir ${backupDir}`, { cwd: __dirname });
+// 	exec(`cp *.qif ${backupDir}/`, { cwd: __dirname });
+// 	exec(`cp *.json ${backupDir}/`, { cwd: __dirname });
+// 	exec(`cp *.xlsx ${backupDir}/`, { cwd: __dirname });
+// }, () => {
+// 	/* This function is executed when the job stops */
+// 	console.log('00 00 03 weekly weeklyBackupjob ended');
+// },
+// true, /* Start the job right now */
+// 'Asia/Seoul' /* Time zone of this job. */
+// );

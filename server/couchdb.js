@@ -3,6 +3,7 @@ const nano = require('nano')(`http://${config.couchDBAdminId}:${config.couchDBAd
 const Spooky = require('spooky');
 const CronJob = require('cron').CronJob;
 const moment = require('moment');
+const _ = require('lodash');
 
 const messaging = require('./messaging');
 
@@ -97,16 +98,37 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	});
 };
 
-const getInvestmentBalance = (investments) => {
+const getInvestmentBalance = (investments, date, histories) => {
+	const currentYearMonth = moment().format('YYYY-MM');
 	let balance = 0;
 	if (investments.length > 0) {
-		balance = investments.map((i) => i.price * i.quantity).reduce((prev, curr) => prev + curr);
+		balance = investments.map(i => {
+			if (date && histories) {
+				if (i.quantity > 0) {
+					const dateYearMonth = date.substr(0,7);
+					const investment = investments.find(j => j.name === i.name);
+					const history = histories.find(j => j.name === i.name);
+					const historical = history && history.data.filter(k => {
+						return k.date.substr(0,7) === dateYearMonth;
+					});
+					const historicalPrice = historical && historical.length > 0 && historical[historical.length - 1].close;
+					if (currentYearMonth === dateYearMonth) {
+						return investment.price * i.quantity;
+					}
+					if (historicalPrice) {
+						return historicalPrice * i.quantity;
+					}
+				}
+			}
+			return i.price * i.quantity
+		})
+		.reduce((prev, curr) => prev + curr);
 	}
 
 	return balance;
 };
 
-const getBalance = (name, allTransactions, transactions) => {
+const getBalance = (name, allTransactions, transactions, date) => {
 	let balance = 0;
 	for (let i = 0; i < transactions.length; i++) {
 		const transaction = transactions[i];
@@ -118,7 +140,7 @@ const getBalance = (name, allTransactions, transactions) => {
 	// We have to subtract ivestment in investment cash account
 	if (name.match(/_Cash/i)) {
 		const accountId = `account:Invst:${name.split('_')[0]}`;
-		const investmemtTransaction = allTransactions.filter(i => i.accountId === accountId);
+		const investmemtTransaction = date ? allTransactions.filter(i => i.accountId === accountId && i.date <= date) : allTransactions.filter(i => i.accountId === accountId);
 
 		for (let i = 0; i < investmemtTransaction.length; i++) {
 			const transaction = investmemtTransaction[i];
@@ -429,6 +451,92 @@ exports.getLifetimeFlowList = async () => {
 	return lifeTimePlanner.data;
 };
 
+const getNetWorth = (allAccounts, allTransactions, allInvestments, histories, date, assetOnly) => {
+	const dateAccounts = {};
+	let netWorth = 0;
+
+	for (const account of allAccounts) {
+		const transactions = allTransactions.filter(i => i.date <= date).filter(i => i.accountId === `account:${account.type}:${account.name}`);
+		if (transactions.length > 0) {
+			if (assetOnly) {
+				if (account.type === 'Oth A') {
+					netWorth += getBalance(account.name, allTransactions, transactions, date);
+				}
+			} else {
+				if (account.type === 'Invst') {
+					const investments = getInvestmentList(allInvestments, allTransactions, transactions);
+					netWorth += getInvestmentBalance(investments, date, histories);
+				} else {
+					netWorth += getBalance(account.name, allTransactions, transactions, date);
+				}
+			}
+		}
+	}
+	
+	return netWorth;
+};
+
+const updateNetWorth = async () => {
+	console.log('updateNetWorth start', new Date());
+	let dates = [];
+	const date = new Date();
+	const currentYear = date.getFullYear();
+	const currentMonth = date.getMonth() + 1;
+
+	for (let i = 2005; i <= currentYear; i++) {
+		for (let j = 1; j <= (i === currentYear ? currentMonth : 12); j++) {
+			if (j == 1 || j == 3 || j == 5 || j == 7 || j == 8 || j == 10 || j == 12) {
+				dates.push(`${i}-${_.padStart(j, 2, '0')}-31`);
+			} else if (j == 2) {
+				if (((i % 4 == 0) && (i % 100 != 0)) || (i % 400 == 0)) {
+					dates.push(`${i}-${_.padStart(j, 2, '0')}-29`);
+				} else {
+					dates.push(`${i}-${_.padStart(j, 2, '0')}-28`);
+				}
+			} else {
+				dates.push(`${i}-${_.padStart(j, 2, '0')}-30`);
+			}
+		}
+	}
+
+	const data = dates.map(i => ({date: i}))
+
+	const accountsDB = nano.use('accounts_nanbean');
+	const accountsResponse = await accountsDB.list({ include_docs: true });
+	const allAccounts = accountsResponse.rows.map(i => i.doc);
+	const transactionsDB = nano.use('transactions_nanbean');
+	const transactionsResponse = await transactionsDB.list({ include_docs: true });
+	const allTransactions = transactionsResponse.rows.map(i => i.doc);
+	const kospiDB = nano.use('kospi');
+	const kosdaqDB = nano.use('kosdaq');
+	const kospiResponse = await kospiDB.get('all');
+	const kosdaqResponse = await kosdaqDB.get('all');
+	const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data];
+	const historiesDB = nano.use('histories_nanbean');
+	const historiesResponse = await historiesDB.list({ include_docs: true });
+	const histories = historiesResponse.rows.map(i => i.doc);
+	const reportsDB = nano.use('reports_nanbean');
+	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true });
+
+	for (const item of data) {
+		item.netWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
+		item.assetNetWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date, true);
+  }
+	const netWorth = {
+		_id: 'netWorth',
+		date: new Date(),
+		data
+	};
+
+	if (oldNetWorth) {
+		netWorth._rev = oldNetWorth._rev;
+	}
+
+	await reportsDB.insert(netWorth);
+
+	console.log('updateNetWorth done');
+};
+
 new CronJob('00 33 05 1 * *', async () => {
 	/*
 		 * update historical automation.
@@ -490,6 +598,7 @@ new CronJob('00 40 15 * * 1-5', async () => {
 	await arrangeInvestmemt();
 	await updateAccountList();
 	await updateLifeTimePlanner();
+	await updateNetWorth();
 	await sendBalanceUpdateNotification();
 }, () => {
 	/* This function is executed when the job stops */

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -80,13 +80,6 @@ const styles = theme => ({
 			minWidth: 360
 		}
 	},
-	accountPanel: {
-		flex: '1 1 auto',
-		minWidth: 500,
-		[theme.breakpoints.down('sm')]: {
-			minWidth: 360
-		}
-	},
 	expansionSummary: {
 
 	},
@@ -119,136 +112,125 @@ const ExpansionPanel = withStyles({
 	}
 })(MuiExpansionPanel);
 
-export class HomeMain extends Component {
-	state = {
-		latestTransactionsExpanded: true,
-		accountsExpanded: true
-	};
+export function HomeMain({
+	accountList,
+	accountsExpanded,
+	classes,
+	latestTransactionsExpanded,
+	summaryExpanded,
+	trascationsFetching,
+	updateInvestmentPriceFetching,
+	weeklyGraphExpanded,
+	changeAccountsExpanded,
+	changeLatestTransactionsExpanded,
+	changeSummaryExpanded,
+	changeWeeklyGraphExpanded,
+	getWeeklyTransactionsAction,
+	updateInvestmentPriceAction
+}) {
+	useEffect(() => {
+		getWeeklyTransactionsAction();
+  }, []);
 
-	componentDidMount () {
-		this.props.getWeeklyTransactionsAction();
+	const onAccountsExpansionPanelChangeHalder = (event, expanded) => {
+		changeAccountsExpanded(expanded);
 	}
 
-	onAccountsExpansionPanelChangeHalder = (event, expanded) => {
-		this.props.changeAccountsExpanded(expanded);
+	const onLatestTransactionsExpansionPanelChangeHalder = (event, expanded) => {
+		changeLatestTransactionsExpanded(expanded);
 	}
 
-	onLatestTransactionsExpansionPanelChangeHalder = (event, expanded) => {
-		this.props.changeLatestTransactionsExpanded(expanded);
-	}
-
-	onSummaryExpansionPanelChangeHalder = (event, expanded) => {
-		this.props.changeSummaryExpanded(expanded);
+	const onSummaryExpansionPanelChangeHalder = (event, expanded) => {
+		changeSummaryExpanded(expanded);
 	}
 	
-	onWeeklyGraphExpansionPanelChangeHalder = (event, expanded) => {
-		this.props.changeWeeklyGraphExpanded(expanded);
+	const onWeeklyGraphExpansionPanelChangeHalder = (event, expanded) => {
+		changeWeeklyGraphExpanded(expanded);
 	}
 
-	onRefreshClick = () => {
-		this.props.updateInvestmentPriceAction();
+	const onRefreshClick = () => {
+		updateInvestmentPriceAction();
 	}
 
-	render () {
-		const {
-			accountsExpanded,
-			classes,
-			latestTransactionsExpanded,
-			summaryExpanded,
-			trascationsFetching,
-			updateInvestmentPriceFetching,
-			weeklyGraphExpanded
-		} = this.props;
-
-		return (
-			<React.Fragment>
-				<TitleHeader title="Home" />
-				{
-					(updateInvestmentPriceFetching || trascationsFetching) &&
-					<LinearProgress color="secondary" className={classes.progress} />
-				}
-				<div className={classes.container}>
-					<div className={classes.sticky}>
-						<Button
-							fullWidth
-							variant="outlined"
-							color="primary"
-							onClick={this.onRefreshClick}
-						>
-								Refresh
-							<RefreshIcon className={classes.rightIcon} />
-						</Button>
-					</div>
-
-					<div className={classes.expansionWrapper}>
-						<div className={classes.summaryPanel}>
-							<ExpansionPanel
-								expanded={summaryExpanded}
-								onChange={this.onSummaryExpansionPanelChangeHalder}
-							>
-								<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} className={classes.expansionSummary}>
-									<Typography variant="subtitle1">
-									Summary
-									</Typography>
-								</ExpansionPanelSummary>
-								<ExpansionPanelDetails className={classes.expansionDetails}>
-									<Summary />
-								</ExpansionPanelDetails>
-							</ExpansionPanel>
-						</div>
-						<div className={classes.weeklyGraphPanel}>
-							<ExpansionPanel
-								expanded={weeklyGraphExpanded}
-								onChange={this.onWeeklyGraphExpansionPanelChangeHalder}
-							>
-								<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-									<Typography variant="subtitle1">
-									Weekly Graph
-									</Typography>
-								</ExpansionPanelSummary>
-								<ExpansionPanelDetails className={classes.expansionDetails}>
-									<WeeklyGraph/>
-								</ExpansionPanelDetails>
-							</ExpansionPanel>
-						</div>
-						<div className={classes.latestTransactionPanel}>
-							<ExpansionPanel
-								expanded={latestTransactionsExpanded}
-								onChange={this.onLatestTransactionsExpansionPanelChangeHalder}
-							>
-								<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-									<Typography variant="subtitle1">
-									Latest Transactions
-									</Typography>
-								</ExpansionPanelSummary>
-								<ExpansionPanelDetails className={classes.expansionDetails}>
-									<LatestTransactions/>
-								</ExpansionPanelDetails>
-							</ExpansionPanel>
-						</div>
-						<div className={classes.accountPanel}>
-							<ExpansionPanel
-								expanded={accountsExpanded}
-								onChange={this.onAccountsExpansionPanelChangeHalder}
-							>
-								<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-									<Typography variant="subtitle1">
-										Accounts
-									</Typography>
-								</ExpansionPanelSummary>
-								<ExpansionPanelDetails className={classes.expansionDetails}>
-									<AccountList />
-								</ExpansionPanelDetails>
-							</ExpansionPanel>
-						</div>
-					</div>					
+	return (
+		<React.Fragment>
+			<TitleHeader title="Home" />
+			{
+				(updateInvestmentPriceFetching || trascationsFetching) &&
+				<LinearProgress color="secondary" className={classes.progress} />
+			}
+			<div className={classes.container}>
+				<div className={classes.sticky}>
+					<Button
+						fullWidth
+						variant="outlined"
+						color="primary"
+						onClick={onRefreshClick}
+					>
+							Refresh
+						<RefreshIcon className={classes.rightIcon} />
+					</Button>
 				</div>
-			</React.Fragment>
-		);
-	}
+
+				<div className={classes.expansionWrapper}>
+					<div className={classes.summaryPanel}>
+						<ExpansionPanel
+							expanded={summaryExpanded}
+							onChange={onSummaryExpansionPanelChangeHalder}
+						>
+							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} className={classes.expansionSummary}>
+								<Typography variant="subtitle1">
+								Summary
+								</Typography>
+							</ExpansionPanelSummary>
+							<ExpansionPanelDetails className={classes.expansionDetails}>
+								<Summary />
+							</ExpansionPanelDetails>
+						</ExpansionPanel>
+					</div>
+					<div className={classes.weeklyGraphPanel}>
+						<ExpansionPanel
+							expanded={weeklyGraphExpanded}
+							onChange={onWeeklyGraphExpansionPanelChangeHalder}
+						>
+							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+								<Typography variant="subtitle1">
+								Weekly Graph
+								</Typography>
+							</ExpansionPanelSummary>
+							<ExpansionPanelDetails className={classes.expansionDetails}>
+								<WeeklyGraph/>
+							</ExpansionPanelDetails>
+						</ExpansionPanel>
+					</div>
+					<div className={classes.latestTransactionPanel}>
+						<ExpansionPanel
+							expanded={latestTransactionsExpanded}
+							onChange={onLatestTransactionsExpansionPanelChangeHalder}
+						>
+							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+								<Typography variant="subtitle1">
+								Latest Transactions
+								</Typography>
+							</ExpansionPanelSummary>
+							<ExpansionPanelDetails className={classes.expansionDetails}>
+								<LatestTransactions/>
+							</ExpansionPanelDetails>
+						</ExpansionPanel>
+					</div>
+						<AccountList
+							accountList={accountList}
+							accountsExpanded={accountsExpanded}
+							onAccountsExpansionPanelChangeHalder={onAccountsExpansionPanelChangeHalder}
+						/>
+				</div>					
+			</div>
+		</React.Fragment>
+	);
 }
 
 HomeMain.propTypes = {
+	accountList:  PropTypes.array.isRequired,
 	accountsExpanded: PropTypes.bool.isRequired,
 	changeAccountsExpanded: PropTypes.func.isRequired,
 	changeLatestTransactionsExpanded: PropTypes.func.isRequired,
@@ -265,6 +247,7 @@ HomeMain.propTypes = {
 };
 
 const mapStateToProps = state => ({
+	accountList: state.accountList,
 	accountsExpanded: state.ui.home.accountsExpanded,
 	latestTransactionsExpanded: state.ui.home.latestTransactionsExpanded,
 	summaryExpanded: state.ui.home.summaryExpanded,

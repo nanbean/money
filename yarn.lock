@@ -10674,7 +10674,7 @@ pouchdb-utils@7.1.1:
     pouchdb-md5 "7.1.1"
     uuid "3.2.1"
 
-pouchdb@^7.0.0:
+pouchdb@^7.1.1:
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/pouchdb/-/pouchdb-7.1.1.tgz#f5f8dcd1fc440fb76651cb26f6fc5d97a39cd6ce"
   integrity sha512-8bXWclixNJZqokvxGHRsG19zehSJiaZaz4dVYlhXhhUctz7gMcNTElHjPBzBdZlKKvt9aFDndmXN1VVE53Co8g==

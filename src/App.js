@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import throttle from 'lodash/throttle';
@@ -22,29 +22,38 @@ import theme from './theme';
 
 import './App.css';
 
-class App extends React.Component {
-	componentDidMount () {
-		this.props.rehydrateAction();
-		this.props.getAuthAction();
-		this.props.getAccountListAction();
+function App ({
+	getAccountListAction,
+	getAllAccountsTransactionsAction,
+	getAllInvestmentsListAction,
+	getAuthAction,
+	getCategoryListAction,
+	getPayeeListAction,
+	rehydrateAction, windowResize
+}) {
 
-		window.addEventListener('resize', throttle(this.props.windowResize, 500));
+	useEffect(() => {
+		rehydrateAction();
+		getAuthAction();
+		getAccountListAction();
 
-		setTimeout(() => {
-			this.props.getAllAccountsTransactionsAction();
-			this.props.getAllInvestmentsListAction();
-			this.props.getCategoryListAction();
-			this.props.getPayeeListAction();
-		}, 1000);
-	}
+		window.addEventListener('resize', throttle(windowResize, 500));
 
-	render () {
-		return (
-			<MuiThemeProvider theme={theme}>
-				<Routes />
-			</MuiThemeProvider>
-		);
-	}
+		getAllAccountsTransactionsAction();
+		getAllInvestmentsListAction();
+		getCategoryListAction();
+		getPayeeListAction();
+
+    return () => {
+			window.removeEventListener('resize');
+		};
+  }, []);
+
+	return (
+		<MuiThemeProvider theme={theme}>
+			<Routes />
+		</MuiThemeProvider>
+	);
 }
 
 App.propTypes = {

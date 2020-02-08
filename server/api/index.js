@@ -613,39 +613,6 @@ api.get('/getMortgageSchedule', (ctx) => {
 	ctx.body = { return: true, schedule: schedule };
 });
 
-api.get('/getNetWorth', (ctx) => {
-	let body = {};
-	let dates = [];
-	const date = new Date();
-	const currentYear = date.getFullYear();
-	const currentMonth = date.getMonth() + 1;
-
-	for (let i = 2005; i <= currentYear; i++) {
-		for (let j = 1; j <= (i === currentYear ? currentMonth : 12); j++) {
-			if (j == 1 || j == 3 || j == 5 || j == 7 || j == 8 || j == 10 || j == 12) {
-				dates.push(`${i}-${_.padStart(j, 2, '0')}-31`);
-			} else if (j == 2) {
-				if (((i % 4 == 0) && (i % 100 != 0)) || (i % 400 == 0)) {
-					dates.push(`${i}-${_.padStart(j, 2, '0')}-29`);
-				} else {
-					dates.push(`${i}-${_.padStart(j, 2, '0')}-28`);
-				}
-			} else {
-				dates.push(`${i}-${_.padStart(j, 2, '0')}-30`);
-			}
-		}
-	}
-	body.count = dates.length;
-	body.list = dates.map(i => {
-		return {
-			date: i.substr(0, 7),
-			netWorth: money.getNetWorth(i),
-			assetNetWorth: money.getAssetNetWorth(i)
-		};
-	});
-	ctx.body = body;
-});
-
 api.get('/getInvestmentPrice', (ctx) => {
 	const investment = ctx.request.query.investment;
 	const body = {

@@ -1,28 +1,33 @@
-import React, { Component } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom';
-import _ from 'lodash';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Typography from '@material-ui/core/Typography';
+
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+
+import ExpansionPanel from '../../components/ExpansionPanel';
+import ExpansionPanelSummary from '../../components/ExpansionPanelSummary';
+import ExpansionPanelDetails from '../../components/ExpansionPanelDetails';
 
 import Amount from '../../components/Amount';
 
-const typeEmoji = {
-	'Bank': '🏦',
-	'CCard': '💳',
-	'Cash': '💵',
-	'Invst': '📈',
-	'Oth L': '🏧',
-	'Oth A': '🏠'
-};
+import { TYPE_EMOJI } from '../../constants';
 
 const styles = theme => ({
+	accountPanel: {
+		flex: '1 1 auto',
+		minWidth: 500,
+		[theme.breakpoints.down('sm')]: {
+			minWidth: 360
+		}
+	},
 	table: {
 		
 	},
@@ -41,51 +46,52 @@ const styles = theme => ({
 	}
 });
 
-export class AccountList extends Component {
-	shouldComponentUpdate (nextProps) {
-		const prevAccountList = this.props.accountList.map(i => ({ type: i.type, name: i.name, balance: i.balance }));
-		const nextAccountList = nextProps.accountList.map(i => ({ type: i.type, name: i.name, balance: i.balance }));
+export function AccountList ({ accountsExpanded, accountList, classes, onAccountsExpansionPanelChangeHalder }) {
+	const filterAccountList = () => accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
+	const filteredAccountList = useMemo(() => filterAccountList());
 
-		if (_.isEqual(prevAccountList, nextAccountList)) {
-			return false;
-		}
-
-		return true;
-	}
-
-	render () {
-		const { accountList, classes } = this.props;
-		const filteredAccountList = accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
-
-		return (
-			<Table className={classes.table}>
-				<TableHead>
-					<TableRow>
-						<TableCell align="center" className={classes.cell}>Type</TableCell>
-						<TableCell align="center" className={classes.cell}>Account</TableCell>
-						<TableCell align="center" className={classes.cell}>Amount</TableCell>
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					{filteredAccountList && filteredAccountList.map(row => (
-						<TableRow key={row.name}>
-							<TableCell component="th" scope="row" align="center" className={classes.cell}>
-								<span>
-									{`${typeEmoji[row.type]} ${row.type}`}
-								</span>
-							</TableCell>
-							<TableCell align="center" className={classes.cell}>
-								<span>
-									<Link to={`/${row.type}/${row.name}`} className={classes.link}>{row.name}</Link>
-								</span>
-							</TableCell>
-							<TableCell align="center" className={classes.cell}><Amount value={row.balance} /></TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-		);
-	}
+	return (
+		<div className={classes.accountPanel}>
+			<ExpansionPanel
+				expanded={accountsExpanded}
+				onChange={onAccountsExpansionPanelChangeHalder}
+			>
+				<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+					<Typography variant="subtitle1">
+						Accounts
+					</Typography>
+				</ExpansionPanelSummary>
+				<ExpansionPanelDetails className={classes.expansionDetails}>
+					<Table className={classes.table}>
+						<TableHead>
+							<TableRow>
+								<TableCell align="center" className={classes.cell}>Type</TableCell>
+								<TableCell align="center" className={classes.cell}>Account</TableCell>
+								<TableCell align="center" className={classes.cell}>Amount</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							{filteredAccountList && filteredAccountList.map(row => (
+								<TableRow key={row.name}>
+									<TableCell component="th" scope="row" align="center" className={classes.cell}>
+										<span>
+											{`${TYPE_EMOJI[row.type]} ${row.type}`}
+										</span>
+									</TableCell>
+									<TableCell align="center" className={classes.cell}>
+										<span>
+											<Link to={`/${row.type}/${row.name}`} className={classes.link}>{row.name}</Link>
+										</span>
+									</TableCell>
+									<TableCell align="center" className={classes.cell}><Amount value={row.balance} /></TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</ExpansionPanelDetails>
+			</ExpansionPanel>
+		</div>
+	);
 }
 
 AccountList.propTypes = {
@@ -93,11 +99,4 @@ AccountList.propTypes = {
 	classes: PropTypes.object.isRequired
 };
 
-const mapStateToProps = state => ({
-	accountList: state.accountList
-});
-
-export default connect(
-	mapStateToProps,
-	null
-)(withStyles(styles)(AccountList));
+export default withStyles(styles)(AccountList);
