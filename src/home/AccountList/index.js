@@ -46,7 +46,12 @@ const styles = theme => ({
 	}
 });
 
-export function AccountList ({ accountsExpanded, accountList, classes, onAccountsExpansionPanelChangeHalder }) {
+export function AccountList ({
+	accountsExpanded,
+	accountList,
+	classes,
+	onAccountsExpansionPanelChangeHalder
+}) {
 	const filterAccountList = () => accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
 	const filteredAccountList = useMemo(() => filterAccountList());
 

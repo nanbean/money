@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -41,36 +41,36 @@ const styles = theme => ({
 	}
 });
 
-export class Summary extends Component {
-	render () {
-		const { accountList, classes } = this.props;
-		const summaryAccountList = accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
-		let sum = 0;
-		let financeSum = 0;
-		let quickassets = 0;
+export function Summary({
+	accountList,
+	classes
+}) {
+	const summaryAccountList = accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
+	let sum = 0;
+	let financeSum = 0;
+	let quickassets = 0;
 
-		if (summaryAccountList.length > 0) {
-			sum = summaryAccountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
-			financeSum = summaryAccountList.filter(i => i.type !== 'Oth A')
-				.map((i) => i.balance)
-				.reduce( (prev, curr) => prev + curr );
-			quickassets = summaryAccountList.filter(i => quickAssetAccount.find(j => j === i.name))
-				.map((i) => i.balance)
-				.reduce( (prev, curr) => prev + curr );
-		}
-
-		return (
-			<Table className={classes.table}>
-				<TableBody>
-					<TableRow>
-						<TableCell align="center" className={classes.cell}><Amount value={sum} /></TableCell>
-						<TableCell align="center" className={classes.cell}><Amount value={quickassets} /></TableCell>
-						<TableCell align="center" className={classes.cell}><Amount value={financeSum} /></TableCell>
-					</TableRow>
-				</TableBody>
-			</Table>
-		);
+	if (summaryAccountList.length > 0) {
+		sum = summaryAccountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
+		financeSum = summaryAccountList.filter(i => i.type !== 'Oth A')
+			.map((i) => i.balance)
+			.reduce( (prev, curr) => prev + curr );
+		quickassets = summaryAccountList.filter(i => quickAssetAccount.find(j => j === i.name))
+			.map((i) => i.balance)
+			.reduce( (prev, curr) => prev + curr );
 	}
+
+	return (
+		<Table className={classes.table}>
+			<TableBody>
+				<TableRow>
+					<TableCell align="center" className={classes.cell}><Amount value={sum} /></TableCell>
+					<TableCell align="center" className={classes.cell}><Amount value={quickassets} /></TableCell>
+					<TableCell align="center" className={classes.cell}><Amount value={financeSum} /></TableCell>
+				</TableRow>
+			</TableBody>
+		</Table>
+	);
 }
 
 Summary.propTypes = {

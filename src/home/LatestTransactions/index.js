@@ -1,9 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import moment from 'moment';
-import _ from 'lodash';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -47,25 +46,15 @@ const styles = theme => ({
 	}
 });
 
-export class LastTransactions extends Component {
-	shouldComponentUpdate (nextProps) {
-		const prevLatestTransactions = this.props.latestTransactions.map(i => ({ type: i.type, account: i.account, date: i.date, category: i.category, payee: i.payee, amount: i.amount }));
-		const nextLatestTransactions = nextProps.latestTransactions.map(i => ({ type: i.type, account: i.account, date: i.date, category: i.category, payee: i.payee, amount: i.amount }));
-
-		if (_.isEqual(prevLatestTransactions, nextLatestTransactions)) {
-			return false;
-		}
-
-		return true;
-	}
-
-	onRowSelect = (index) => () => {
-		const {
-			latestTransactions
-		} = this.props;
+export function LastTransactions({
+	classes,
+	latestTransactions,
+	openTransactionInModal
+}) {
+	const onRowSelect = (index) => () => {
 		const transaction = latestTransactions[index];
 
-		this.props.openTransactionInModal({
+		openTransactionInModal({
 			account: transaction.account,
 			date: transaction.date,
 			payee: transaction.payee,
@@ -76,52 +65,45 @@ export class LastTransactions extends Component {
 			index: index
 		});
 	}
-  
-	render () {
-		const {
-			classes,
-			latestTransactions
-		} = this.props;
 
-		return (
-			<React.Fragment>
-				<Table className={classes.table}>
-					<TableHead>
-						<TableRow>
-							<TableCell align="center" className={classes.cell}>Account</TableCell>
-							<TableCell align="center" className={classes.cell}>Date</TableCell>
-							<TableCell align="center" className={classes.cell}>Payee</TableCell>
-							<TableCell align="center" className={classes.cell}>Amount</TableCell>
+	return (
+		<React.Fragment>
+			<Table className={classes.table}>
+				<TableHead>
+					<TableRow>
+						<TableCell align="center" className={classes.cell}>Account</TableCell>
+						<TableCell align="center" className={classes.cell}>Date</TableCell>
+						<TableCell align="center" className={classes.cell}>Payee</TableCell>
+						<TableCell align="center" className={classes.cell}>Amount</TableCell>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					{latestTransactions && latestTransactions.map((row, index) => (
+						<TableRow key={index} onClick={onRowSelect(index)}>
+							<TableCell component="th" scope="row" align="center" className={classes.cell}>
+								<span>
+									{`${typeEmoji[row.type]} ${row.account}`}
+								</span>
+							</TableCell>
+							<TableCell align="center" className={classes.cell}>
+								<span>
+									{moment(row.date).format('MM-DD')}
+								</span>
+							</TableCell>
+							<TableCell align="center" className={classes.cell}>
+								<Payee category={row.category} value={row.payee} />
+							</TableCell>
+							<TableCell align="center" className={classes.cell}><Amount value={row.amount} /></TableCell>
 						</TableRow>
-					</TableHead>
-					<TableBody>
-						{latestTransactions && latestTransactions.map((row, index) => (
-							<TableRow key={index} onClick={this.onRowSelect(index)}>
-								<TableCell component="th" scope="row" align="center" className={classes.cell}>
-									<span>
-										{`${typeEmoji[row.type]} ${row.account}`}
-									</span>
-								</TableCell>
-								<TableCell align="center" className={classes.cell}>
-									<span>
-										{moment(row.date).format('MM-DD')}
-									</span>
-								</TableCell>
-								<TableCell align="center" className={classes.cell}>
-									<Payee category={row.category} value={row.payee} />
-								</TableCell>
-								<TableCell align="center" className={classes.cell}><Amount value={row.amount} /></TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-				<BankTransactionModal
-					isEdit={true}
-					transactions={latestTransactions}
-				/>
-			</React.Fragment>
-		);
-	}
+					))}
+				</TableBody>
+			</Table>
+			<BankTransactionModal
+				isEdit={true}
+				transactions={latestTransactions}
+			/>
+		</React.Fragment>
+	);
 }
 
 LastTransactions.propTypes = {
