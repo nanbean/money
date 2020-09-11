@@ -199,6 +199,15 @@ exports.addTransaction = async function (body) {
 				payee: items[5],
 				category: '분류없음'
 			};
+		} else if (body.text.match(/현대카드 승인/g)) {
+			account = '생활비카드';
+			items = body.text.split('\n');
+			transaction = {
+				date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
+				amount: items[3] && parseInt(items[3].replace(',', '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g,''), 10) * (-1),
+				payee: items[5],
+				category: '분류없음'
+			};
 		} else if (body.text.match(/하나/g)) {
 			account = '급여계좌';
 			items = body.text.split(' ');

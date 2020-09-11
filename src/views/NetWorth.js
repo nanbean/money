@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
-import { ResponsiveContainer, ComposedChart, Bar, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 import TitleHeader from '../components/TitleHeader';
@@ -11,6 +11,8 @@ import {
 	getNetWorthFlowAction
 } from '../actions/couchdbActions';
 import { toCurrencyFormat } from '../utils/formatting';
+
+import toolTipStyles from '../assets/jss/components/toolTip.js';
 
 const styles = theme => ({
 	container: {
@@ -30,6 +32,21 @@ const styles = theme => ({
 	}
 });
 
+const CustomTooltip = ({ active, payload, label }) => {
+	if (active) {
+		return (
+			<div style={{ ...toolTipStyles.root }} >
+				<div style={{ ...toolTipStyles.label }} >{`${label.substring(0, 7)}`}</div>
+				<div style={{ ...toolTipStyles.item }} >{`Net Worth : ${toCurrencyFormat(payload[0].value + payload[1].value)}`}</div>
+				<div style={{ ...toolTipStyles.item }} >{`Movable Asset : ${toCurrencyFormat(payload[1].value)}`}</div>
+				<div style={{ ...toolTipStyles.item }} >{`Real Estate : ${toCurrencyFormat(payload[0].value)}`}</div>
+			</div>
+		);
+	}
+
+	return null;
+};
+
 function NetWorth ({
 	classes,
 	getNetWorthFlowAction,
@@ -37,11 +54,7 @@ function NetWorth ({
 }) {
 	useEffect(() => {
 		getNetWorthFlowAction();
-  }, []);
-
-	const formatter = data => {
-		return toCurrencyFormat(data);
-	}
+	}, []);
 
 	if (netWorthFlow.length > 0) {
 		return (
@@ -58,9 +71,9 @@ function NetWorth ({
 								<XAxis dataKey="date"/>
 								<YAxis hide/>
 								<CartesianGrid strokeDasharray="3 3"/>
-								<Tooltip formatter={formatter} />
-								<Area type="monotone" dataKey="assetNetWorth" fill="#999999" stroke="#999999" />
-								<Bar dataKey="netWorth" fill="#8884d8" />
+								<Tooltip content={<CustomTooltip />} />
+								<Bar dataKey="assetNetWorth" stackId="a" fill="#3d397d" />
+								<Bar dataKey="movableAsset" stackId="a" fill="#8884d8" />
 							</ComposedChart>
 						</ResponsiveContainer>
 					}
