@@ -1,10 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import Autocomplete from 'react-autocomplete';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 import TextField from '@material-ui/core/TextField';
-
-// TODO delete index.css and apply style in js
 
 const styles = theme => ({
 	input: {
@@ -12,56 +10,36 @@ const styles = theme => ({
 	}
 });
 
-class AutoComplete extends Component {
-	matchStateToTerm = (state, value) => state.key.toLowerCase().indexOf(value.toLowerCase()) !== -1 || 	state.name.toLowerCase().indexOf(value.toLowerCase()) !== -1
+export function AutoComplete ({
+	classes,
+	items,
+	onChange,
+	onInputChange,
+	placeholder,
+	value
+}) {
+	const defaultValue = value && items.length > 0 && items.find(i => i.name === value);
 
-	render () {
-		const { classes, value, items, placeholder, onChange, onSelect } = this.props;
-
-		return (
-			<Autocomplete
-				value={value}
-				items={items}
-				getItemValue={(item) => item.name}
-				shouldItemRender={this.matchStateToTerm}
-				onChange={onChange}
-				onSelect={onSelect}
-				wrapperStyle={{ }}
-				renderInput={props => {
-					const { ref, ...rest } = props;
-					return (
-						<TextField className={classes.input} {...rest} inputRef={ref}
-							id="my-component"
-							value={value}
-							placeholder={placeholder}
-							fullWidth
-						/>
-					);
-				}}
-				renderMenu={children => (
-					<div className="autocomplete-menu">
-						{children}
-					</div>
-				)}
-				renderItem={(item, isHighlighted) =>
-					<div
-						className={`autocomplete-item ${isHighlighted ? 'autocomplete-item-highlighted' : ''}`}
-						key={item.name}
-					>
-						{item.name}
-					</div>
-				}
-			/>
-		);
-	}
+  return (
+    <Autocomplete
+      options={items}
+      getOptionLabel={(option) => option.name}
+			defaultValue={defaultValue}
+			onInputChange={onInputChange}
+			onChange={onChange}
+			renderInput={(params) => <TextField className={classes.input} {...params} placeholder={placeholder} />}
+			freeSolo
+			fullWidth
+    />
+  );
 }
 
 AutoComplete.propTypes = {
 	classes: PropTypes.object.isRequired,
 	items: PropTypes.array.isRequired,
 	onChange: PropTypes.func.isRequired,
-	onSelect: PropTypes.func.isRequired,
 	placeholder: PropTypes.string.isRequired,
+	onInputChange: PropTypes.func,
 	value: PropTypes.string
 };
 

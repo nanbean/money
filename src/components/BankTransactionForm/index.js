@@ -58,13 +58,14 @@ class BankTransactionForm extends React.Component {
 
 	onPayeeChange = handler => (event, value) => handler(value)
 
-	onPayeeSelect = handler => (val) => {
+	onPayeeSelect = handler => (event, value) => {
 		const { transactions, form } = this.props;
-		const matchIndex = _.findLastIndex(transactions, i => i.payee === val);
+		const matchIndex = _.findLastIndex(transactions, i => i.payee === value.name);
 		const matchTransaction = matchIndex >= 0 && transactions[matchIndex];
 		const transaction = {
-			payee: val
+			payee: value.name
 		};
+		
 		if (matchTransaction) {
 			transaction.amount = form.amount || matchTransaction.amount;
 			if (matchTransaction.category && matchTransaction.subcategory) {
@@ -77,7 +78,7 @@ class BankTransactionForm extends React.Component {
 		return handler(transaction);
 	}
 
-	onAddButton = ()=> {
+	onAddButton = () => {
 		const data = {};
 		const { account, accountId, form } = this.props;
 		const categoryArray = form.category.split(':');
@@ -186,8 +187,8 @@ class BankTransactionForm extends React.Component {
 							value={form.payee}
 							items={dropPayeeList}
 							placeholder="Payee"
-							onChange={this.onPayeeChange(this.props.changePayee)}
-							onSelect={this.onPayeeSelect(this.props.fillTransactionForm)}
+							onInputChange={this.onPayeeChange(this.props.changePayee)}
+							onChange={this.onPayeeSelect(this.props.fillTransactionForm)}
 						/>
 					</FormControl>
 					<FormControl required fullWidth>

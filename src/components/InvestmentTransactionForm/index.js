@@ -67,9 +67,7 @@ class InvestmentTransactionForm extends React.Component {
 
 	onChange = handler => event => handler(event.target.value)
 
-	onInvestmentChange = handler => (event, value) => handler(value)
-
-	onInvestmentSelect = handler => (value) => handler(value)
+	onInvestmentChange = handler => (event, value) => handler(value.name)
 
 	onAddButton = () => {
 		const data = {};
@@ -183,7 +181,6 @@ class InvestmentTransactionForm extends React.Component {
 						items={autocompleteInvestmentList}
 						placeholder="Investment"
 						onChange={this.onInvestmentChange(this.props.changeInvestment)}
-						onSelect={this.onInvestmentSelect(this.props.changeInvestment)}
 					/>
 					<FormControl required fullWidth>
 						<Select

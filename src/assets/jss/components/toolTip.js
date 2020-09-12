@@ -1,3 +1,5 @@
+import {defaultFont} from '../root.js';
+
 const toolTip = {
 	root: {
 		padding: '5px',
@@ -6,11 +8,13 @@ const toolTip = {
 		backgroundColor: 'white'
 	},
 	label: {
+		...defaultFont,
 		fontWeight: '500',
 		fontSize: '1.1em',
 		width: '100%'
 	},
 	item: {
+		...defaultFont,
 		fontWeight: '400',
 		fontSize: '0.9em',
 		width: '100%'
