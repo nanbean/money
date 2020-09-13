@@ -5,10 +5,11 @@ import { withStyles } from '@material-ui/core/styles';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 
+import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import Typography from '@material-ui/core/Typography';
-import MuiExpansionPanel from '@material-ui/core/ExpansionPanel';
+
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -19,6 +20,7 @@ import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
 
 import TitleHeader from '../../components/TitleHeader';
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 
 import {
 	getWeeklyTransactionsAction
@@ -55,34 +57,6 @@ const styles = theme => ({
 	rightIcon: {
 		marginLeft: theme.spacing.unit
 	},
-	expansionWrapper: {
-		display: 'flex',
-		flexFlow: 'row wrap'
-	},
-	summaryPanel: {
-		flex: '1 1 auto',
-		minWidth: 500,
-		[theme.breakpoints.down('sm')]: {
-			minWidth: 360
-		}
-	},
-	weeklyGraphPanel: {
-		flex: '1 1 auto',
-		minWidth: 500,
-		[theme.breakpoints.down('sm')]: {
-			minWidth: 360
-		}
-	},
-	latestTransactionPanel: {
-		flex: '1 1 auto',
-		minWidth: 500,
-		[theme.breakpoints.down('sm')]: {
-			minWidth: 360
-		}
-	},
-	expansionSummary: {
-
-	},
 	expansionDetails: {
 		padding: 0
 	},
@@ -95,22 +69,6 @@ const styles = theme => ({
 		}
 	}
 });
-
-const ExpansionPanel = withStyles({
-	root: {
-		border: '1px solid rgba(0,0,0,.125)',
-		boxShadow: 'none',
-		'&:not(:last-child)': {
-			borderBottom: 0
-		},
-		'&:before': {
-			display: 'none'
-		}
-	},
-	expanded: {
-		margin: 0
-	}
-})(MuiExpansionPanel);
 
 export function HomeMain({
 	accountList,
@@ -171,14 +129,13 @@ export function HomeMain({
 						<RefreshIcon className={classes.rightIcon} />
 					</Button>
 				</div>
-
-				<div className={classes.expansionWrapper}>
-					<div className={classes.summaryPanel}>
+				<Grid container>
+					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
 						<ExpansionPanel
 							expanded={summaryExpanded}
 							onChange={onSummaryExpansionPanelChangeHalder}
 						>
-							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} className={classes.expansionSummary}>
+							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
 								Summary
 								</Typography>
@@ -187,8 +144,8 @@ export function HomeMain({
 								<Summary />
 							</ExpansionPanelDetails>
 						</ExpansionPanel>
-					</div>
-					<div className={classes.weeklyGraphPanel}>
+					</Grid>
+					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
 						<ExpansionPanel
 							expanded={weeklyGraphExpanded}
 							onChange={onWeeklyGraphExpansionPanelChangeHalder}
@@ -202,8 +159,8 @@ export function HomeMain({
 								<WeeklyGraph/>
 							</ExpansionPanelDetails>
 						</ExpansionPanel>
-					</div>
-					<div className={classes.latestTransactionPanel}>
+					</Grid>
+					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
 						<ExpansionPanel
 							expanded={latestTransactionsExpanded}
 							onChange={onLatestTransactionsExpansionPanelChangeHalder}
@@ -217,13 +174,15 @@ export function HomeMain({
 								<LatestTransactions/>
 							</ExpansionPanelDetails>
 						</ExpansionPanel>
-					</div>
+					</Grid>
+					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
 						<AccountList
 							accountList={accountList}
 							accountsExpanded={accountsExpanded}
 							onAccountsExpansionPanelChangeHalder={onAccountsExpansionPanelChangeHalder}
 						/>
-				</div>					
+					</Grid>
+				</Grid>
 			</div>
 		</React.Fragment>
 	);
