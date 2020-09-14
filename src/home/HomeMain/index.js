@@ -52,6 +52,9 @@ const styles = theme => ({
 		[theme.breakpoints.up('sm')]: {
 			top: 64
 		},
+		[theme.breakpoints.up('md')]: {
+			marginBottom: 10
+		},
 		backgroundColor: 'white'
 	},
 	rightIcon: {

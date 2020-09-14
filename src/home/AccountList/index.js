@@ -33,7 +33,7 @@ const styles = theme => ({
 	},
 	cell: {
 		[theme.breakpoints.down('sm')]: {
-			padding: 0,
+			padding: 5,
 			'&:last-child': {
 				padding: 0
 			}
