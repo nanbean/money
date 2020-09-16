@@ -31,13 +31,13 @@ const styles = theme => ({
 	table: {
 		
 	},
-	cell: {
-		[theme.breakpoints.down('sm')]: {
-			padding: 5,
-			'&:last-child': {
-				padding: 0
-			}
+	row: {
+		'&:hover': {
+			cursor: 'pointer'
 		}
+	},
+	cell: {
+
 	},
 	link: {
 		textDecoration: 'none',
@@ -78,7 +78,7 @@ export function LastTransactions({
 				</TableHead>
 				<TableBody>
 					{latestTransactions && latestTransactions.map((row, index) => (
-						<TableRow key={index} onClick={onRowSelect(index)}>
+						<TableRow key={index} className={classes.row} onClick={onRowSelect(index)}>
 							<TableCell component="th" scope="row" align="center" className={classes.cell}>
 								<span>
 									{`${typeEmoji[row.type]} ${row.account}`}

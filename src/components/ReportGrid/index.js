@@ -1,11 +1,10 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import withWidth, { isWidthUp } from '@material-ui/core/withWidth';
 import { AutoSizer, MultiGrid } from 'react-virtualized';
-import _ from 'lodash';
 
-import { toCurrencyFormat } from '../../utils/formatting';
+import Amount from '../Amount';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
 
@@ -16,12 +15,7 @@ const styles = theme => ({
 	reportGrid: {
 		display: 'flex',
 		height: '65vh',
-		fontSize: '.9em',
-		textAlign: 'center',
-		[theme.breakpoints.down('sm')]: {
-			height: '80vh',
-			fontSize: '.8em'
-		}
+		textAlign: 'center'
 	},
 	cell: {
 		display: 'flex',
@@ -49,56 +43,49 @@ const styles = theme => ({
 	}
 });
 
-class ReportGrid extends Component {
-	shouldComponentUpdate (nextProps) {
-		if (_.isEqual(this.props.reportData, nextProps.reportData)) {
-			return false;
-		}
+export function ReportGrid({
+	classes,
+	reportData,
+	width
+}) {
+	const isWidthUpLg = isWidthUp('lg', width);
 
-		return true;
-	}
+	return (
+		<div className={classes.reportGrid}>
+			{
+				<AutoSizer>
+					{({ width, height }) => (
+						<MultiGrid
+							fixedRowCount={1}
+							fixedColumnCount={1}
+							cellRenderer={({ columnIndex, key, rowIndex, style }) => {
+								const value = reportData[rowIndex][columnIndex];
+								const parseValue = parseInt(value, 10);
+								const isNumber = !Number.isNaN(parseValue);
 
-	render () {
-		const { classes, reportData, width } = this.props;
-		const isWidthUpLg = isWidthUp('lg', width);
-
-		return (
-			<div className={classes.reportGrid}>
-				{
-					<AutoSizer>
-						{({ width, height }) => (
-							<MultiGrid
-								fixedRowCount={1}
-								fixedColumnCount={1}
-								cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-									const value = reportData[rowIndex][columnIndex];
-									const parseValue = parseInt(value, 10);
-									const isNumber = !Number.isNaN(parseValue);
-
-									return (
-										<div className={classes.cell} key={key} style={style}>
-											{isNumber ? toCurrencyFormat(parseValue) : value}
-										</div>
-									);
-								}}
-								columnWidth={isWidthUpLg ? width / 14 - 2 : COLUMN_WIDTH}
-								columnCount={reportData[0].length}
-								enableFixedColumnScroll
-								enableFixedRowScroll
-								width={width}
-								height={height}
-								rowHeight={ROW_HEIGHT}
-								rowCount={reportData.length}
-								classNameTopLeftGrid={classes.topLeftGrid}
-								classNameBottomLeftGrid={classes.bottomLeftGrid}
-								classNameTopRightGrid={classes.topRightGrid}
-							/>
-						)}
-					</AutoSizer>
-				}
-			</div>
-		);
-	}
+								return (
+									<div className={classes.cell} key={key} style={style}>
+										{isNumber ? <Amount value={parseValue} /> : value}
+									</div>
+								);
+							}}
+							columnWidth={isWidthUpLg ? width / 14 - 2 : COLUMN_WIDTH}
+							columnCount={reportData[0].length}
+							enableFixedColumnScroll
+							enableFixedRowScroll
+							width={width}
+							height={height}
+							rowHeight={ROW_HEIGHT}
+							rowCount={reportData.length}
+							classNameTopLeftGrid={classes.topLeftGrid}
+							classNameBottomLeftGrid={classes.bottomLeftGrid}
+							classNameTopRightGrid={classes.topRightGrid}
+						/>
+					)}
+				</AutoSizer>
+			}
+		</div>
+	);
 }
 
 ReportGrid.propTypes = {
