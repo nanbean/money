@@ -17,12 +17,12 @@ const styles = theme => ({
 	},
 	cell: {
 		[theme.breakpoints.down('sm')]: {
+			fontSize: '0.8rem',
 			padding: 0,
 			'&:last-child': {
 				padding: 0
 			}
-		},
-		fontSize: '0.9em'
+		}
 	}
 });
 

@@ -1,7 +1,7 @@
 .bank-transaction {
 	display: flex;
 	height: 73vh;
-	font-size: .9em;
+	font-size: .9rem;
 	text-align: center;
 }
 

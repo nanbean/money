@@ -6,9 +6,19 @@ import TextField from '@material-ui/core/TextField';
 
 const styles = theme => ({
 	input: {
-		paddingBottom: theme.spacing.unit
+		paddingBottom: theme.spacing.unit,
+		fontSize: '0.8rem'
 	}
 });
+
+const MyAutocomplete = withStyles({
+	root: {
+
+	},
+	listbox: {
+		margin: 0
+	}
+})(Autocomplete);
 
 export function AutoComplete ({
 	classes,
@@ -21,7 +31,7 @@ export function AutoComplete ({
 	const defaultValue = value && items.length > 0 && items.find(i => i.name === value);
 
   return (
-    <Autocomplete
+    <MyAutocomplete
       options={items}
       getOptionLabel={(option) => option.name}
 			defaultValue={defaultValue}

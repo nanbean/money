@@ -32,7 +32,10 @@ const styles = theme => ({
 		
 	},
 	cell: {
-
+		[theme.breakpoints.down('sm')]: {
+			fontSize: '0.8rem',
+			padding: theme.spacing(1)
+		}
 	},
 	link: {
 		textDecoration: 'none',

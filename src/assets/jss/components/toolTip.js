@@ -16,7 +16,6 @@ const toolTip = {
 	item: {
 		...defaultFont,
 		fontWeight: '400',
-		fontSize: '0.9em',
 		width: '100%'
 	}
 };
