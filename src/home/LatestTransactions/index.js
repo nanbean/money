@@ -37,8 +37,7 @@ const styles = theme => ({
 			'&:last-child': {
 				padding: 0
 			}
-		},
-		fontSize: '0.9em'
+		}
 	},
 	link: {
 		textDecoration: 'none',

@@ -2,10 +2,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Paper from '@material-ui/core/Paper';
-
-import FormControlLabel from '../../components/FormControlLabel';
 
 const styles = theme => ({
 	paper: {
@@ -82,7 +81,7 @@ class InvestmentFilter extends Component {
 							<div key={j.name} className={classes.item}>
 								<FormControlLabel
 									control={
-										<Checkbox className={classes.checkBox} size="small" checked={filteredInvestments.find(q => q === j.name) ? true : false} onChange={this.onFilteredInvestmentsChange(j.name)}/>
+										<Checkbox className={classes.checkBox} checked={filteredInvestments.find(q => q === j.name) ? true : false} onChange={this.onFilteredInvestmentsChange(j.name)}/>
 									}
 									label={j.name}
 								/>
@@ -92,7 +91,7 @@ class InvestmentFilter extends Component {
 				}
 				<FormControlLabel
 					control={
-						<Checkbox key="All" className={classes.checkBox} size="small" checked={filteredInvestments.length === allInvestmentsPrice.length} onClick={this.onAllInvestementClick}/>
+						<Checkbox key="All" className={classes.checkBox} checked={filteredInvestments.length === allInvestmentsPrice.length} onClick={this.onAllInvestementClick}/>
 					}
 					label="All"
 				/>
