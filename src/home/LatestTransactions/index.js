@@ -6,9 +6,10 @@ import moment from 'moment';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+
+import TableCell from '../../components/TableCell';
 
 import Amount from '../../components/Amount';
 import BankTransactionModal from '../../components/BankTransactionModal';
@@ -27,19 +28,10 @@ const typeEmoji = {
 	'Oth A': '🏠'
 };
 
-const styles = theme => ({
-	table: {
-		
-	},
+const styles = () => ({
 	row: {
 		'&:hover': {
 			cursor: 'pointer'
-		}
-	},
-	cell: {
-		[theme.breakpoints.down('sm')]: {
-			fontSize: '0.8rem',
-			padding: theme.spacing(1)
 		}
 	},
 	link: {
@@ -48,7 +40,7 @@ const styles = theme => ({
 	}
 });
 
-export function LastTransactions({
+export function LastTransactions ({
 	classes,
 	latestTransactions,
 	openTransactionInModal
@@ -66,36 +58,36 @@ export function LastTransactions({
 			isEdit: true,
 			index: index
 		});
-	}
+	};
 
 	return (
 		<React.Fragment>
-			<Table className={classes.table}>
+			<Table>
 				<TableHead>
 					<TableRow>
-						<TableCell align="center" className={classes.cell}>Account</TableCell>
-						<TableCell align="center" className={classes.cell}>Date</TableCell>
-						<TableCell align="center" className={classes.cell}>Payee</TableCell>
-						<TableCell align="center" className={classes.cell}>Amount</TableCell>
+						<TableCell align="center">Account</TableCell>
+						<TableCell align="center">Date</TableCell>
+						<TableCell align="center">Payee</TableCell>
+						<TableCell align="center">Amount</TableCell>
 					</TableRow>
 				</TableHead>
 				<TableBody>
 					{latestTransactions && latestTransactions.map((row, index) => (
 						<TableRow key={index} className={classes.row} onClick={onRowSelect(index)}>
-							<TableCell component="th" scope="row" align="center" className={classes.cell}>
+							<TableCell component="th" scope="row" align="center">
 								<span>
 									{`${typeEmoji[row.type]} ${row.account}`}
 								</span>
 							</TableCell>
-							<TableCell align="center" className={classes.cell}>
+							<TableCell align="center">
 								<span>
 									{moment(row.date).format('MM-DD')}
 								</span>
 							</TableCell>
-							<TableCell align="center" className={classes.cell}>
+							<TableCell align="center">
 								<Payee category={row.category} value={row.payee} />
 							</TableCell>
-							<TableCell align="center" className={classes.cell}><Amount value={row.amount} /></TableCell>
+							<TableCell align="center"><Amount value={row.amount} /></TableCell>
 						</TableRow>
 					))}
 				</TableBody>
@@ -110,19 +102,11 @@ export function LastTransactions({
 
 LastTransactions.propTypes = {
 	classes: PropTypes.object.isRequired,
-	deleteFetching: PropTypes.bool.isRequired,
-	deleteStatus: PropTypes.string.isRequired,
-	editFetching: PropTypes.bool.isRequired,
-	editStatus: PropTypes.string.isRequired,
 	latestTransactions:  PropTypes.array.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state) => ({
-	deleteFetching: state.deleteTransaction.fetching,
-	deleteStatus: state.deleteTransaction.status,
-	editFetching: state.editTransaction.fetching,
-	editStatus: state.editTransaction.status,
 	latestTransactions: state.latestTransactions
 });
 

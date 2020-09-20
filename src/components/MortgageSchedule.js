@@ -1,29 +1,18 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import moment from 'moment';
 
 import Button from '@material-ui/core/Button';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 
-import moment from 'moment';
+import TableCell from '../components/TableCell';
 
-const styles = theme => ({
-	table: {
+const styles = () => ({
 
-	},
-	cell: {
-		[theme.breakpoints.down('sm')]: {
-			fontSize: '0.8rem',
-			padding: 0,
-			'&:last-child': {
-				padding: 0
-			}
-		}
-	}
 });
 
 class MortgageSchedule extends Component {
@@ -64,33 +53,33 @@ class MortgageSchedule extends Component {
 				<Table className={classes.table}>
 					<TableHead>
 						<TableRow>
-							<TableCell align="center" className={classes.cell}>No.</TableCell>
-							<TableCell align="center" className={classes.cell}>Date</TableCell>
-							<TableCell align="center" className={classes.cell}>Amount</TableCell>
-							<TableCell align="center" className={classes.cell}>Principal</TableCell>
-							<TableCell align="center" className={classes.cell}>Interest</TableCell>
-							<TableCell align="center" className={classes.cell}>Add</TableCell>
+							<TableCell align="center">No.</TableCell>
+							<TableCell align="center">Date</TableCell>
+							<TableCell align="center">Amount</TableCell>
+							<TableCell align="center">Principal</TableCell>
+							<TableCell align="center">Interest</TableCell>
+							<TableCell align="center">Add</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
 						{filteredMorageSchedule && filteredMorageSchedule.map(row => (
 							<TableRow key={row.no}>
-								<TableCell component="th" scope="row" align="center" className={classes.cell}>
+								<TableCell component="th" scope="row" align="center">
 									{row.no}
 								</TableCell>
-								<TableCell align="center" className={classes.cell}>
+								<TableCell align="center">
 									{row.date}
 								</TableCell>
-								<TableCell align="center" className={classes.cell}>
+								<TableCell align="center">
 									{row.amount ? parseInt(row.amount, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 								</TableCell>
-								<TableCell align="center" className={classes.cell}>
+								<TableCell align="center">
 									{row.principal ? parseInt(row.principal, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 								</TableCell>
-								<TableCell align="center" className={classes.cell}>
+								<TableCell align="center">
 									{row.interest ? parseInt(row.interest, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
 								</TableCell>
-								<TableCell align="center" className={classes.cell}>
+								<TableCell align="center">
 									<Button
 										color="primary"
 										onClick={this.onAddClick(row.no)}

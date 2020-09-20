@@ -73,8 +73,7 @@ const styles = theme => ({
 	}
 });
 
-export function HomeMain({
-	accountList,
+export function HomeMain ({
 	accountsExpanded,
 	classes,
 	latestTransactionsExpanded,
@@ -89,29 +88,17 @@ export function HomeMain({
 	getWeeklyTransactionsAction,
 	updateInvestmentPriceAction
 }) {
-	useEffect(() => {
-		getWeeklyTransactionsAction();
-  }, []);
+	useEffect(() => getWeeklyTransactionsAction(), []);
 
-	const onAccountsExpansionPanelChangeHalder = (event, expanded) => {
-		changeAccountsExpanded(expanded);
-	}
+	const onAccountsExpansionPanelChangeHalder = (event, expanded) => changeAccountsExpanded(expanded);
 
-	const onLatestTransactionsExpansionPanelChangeHalder = (event, expanded) => {
-		changeLatestTransactionsExpanded(expanded);
-	}
+	const onLatestTransactionsExpansionPanelChangeHalder = (event, expanded) => changeLatestTransactionsExpanded(expanded);
 
-	const onSummaryExpansionPanelChangeHalder = (event, expanded) => {
-		changeSummaryExpanded(expanded);
-	}
+	const onSummaryExpansionPanelChangeHalder = (event, expanded) => changeSummaryExpanded(expanded);
 	
-	const onWeeklyGraphExpansionPanelChangeHalder = (event, expanded) => {
-		changeWeeklyGraphExpanded(expanded);
-	}
+	const onWeeklyGraphExpansionPanelChangeHalder = (event, expanded) => changeWeeklyGraphExpanded(expanded);
 
-	const onRefreshClick = () => {
-		updateInvestmentPriceAction();
-	}
+	const onRefreshClick = () => updateInvestmentPriceAction();
 
 	return (
 		<React.Fragment>
@@ -133,7 +120,7 @@ export function HomeMain({
 					</Button>
 				</div>
 				<Grid container>
-					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
+					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
 						<ExpansionPanel
 							expanded={summaryExpanded}
 							onChange={onSummaryExpansionPanelChangeHalder}
@@ -148,7 +135,7 @@ export function HomeMain({
 							</ExpansionPanelDetails>
 						</ExpansionPanel>
 					</Grid>
-					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
+					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
 						<ExpansionPanel
 							expanded={weeklyGraphExpanded}
 							onChange={onWeeklyGraphExpansionPanelChangeHalder}
@@ -163,7 +150,7 @@ export function HomeMain({
 							</ExpansionPanelDetails>
 						</ExpansionPanel>
 					</Grid>
-					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
+					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
 						<ExpansionPanel
 							expanded={latestTransactionsExpanded}
 							onChange={onLatestTransactionsExpansionPanelChangeHalder}
@@ -178,12 +165,20 @@ export function HomeMain({
 							</ExpansionPanelDetails>
 						</ExpansionPanel>
 					</Grid>
-					<Grid item xl={6} md={6} lg={4} sm={12} xs={12}>
-						<AccountList
-							accountList={accountList}
-							accountsExpanded={accountsExpanded}
-							onAccountsExpansionPanelChangeHalder={onAccountsExpansionPanelChangeHalder}
-						/>
+					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
+						<ExpansionPanel
+							expanded={accountsExpanded}
+							onChange={onAccountsExpansionPanelChangeHalder}
+						>
+							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+								<Typography variant="subtitle1">
+									Accounts
+								</Typography>
+							</ExpansionPanelSummary>
+							<ExpansionPanelDetails className={classes.expansionDetails}>
+								<AccountList/>
+							</ExpansionPanelDetails>
+						</ExpansionPanel>
 					</Grid>
 				</Grid>
 			</div>
@@ -192,7 +187,6 @@ export function HomeMain({
 }
 
 HomeMain.propTypes = {
-	accountList:  PropTypes.array.isRequired,
 	accountsExpanded: PropTypes.bool.isRequired,
 	changeAccountsExpanded: PropTypes.func.isRequired,
 	changeLatestTransactionsExpanded: PropTypes.func.isRequired,
@@ -209,7 +203,6 @@ HomeMain.propTypes = {
 };
 
 const mapStateToProps = state => ({
-	accountList: state.accountList,
 	accountsExpanded: state.ui.home.accountsExpanded,
 	latestTransactionsExpanded: state.ui.home.latestTransactionsExpanded,
 	summaryExpanded: state.ui.home.summaryExpanded,

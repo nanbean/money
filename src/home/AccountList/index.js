@@ -1,98 +1,62 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import Typography from '@material-ui/core/Typography';
 
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-
-import ExpansionPanel from '../../components/ExpansionPanel';
-import ExpansionPanelSummary from '../../components/ExpansionPanelSummary';
-import ExpansionPanelDetails from '../../components/ExpansionPanelDetails';
+import TableCell from '../../components/TableCell';
 
 import Amount from '../../components/Amount';
 
 import { TYPE_EMOJI } from '../../constants';
 
-const styles = theme => ({
-	accountPanel: {
-		flex: '1 1 auto',
-		minWidth: 500,
-		[theme.breakpoints.down('sm')]: {
-			minWidth: 360
-		}
-	},
-	table: {
-		
-	},
-	cell: {
-		[theme.breakpoints.down('sm')]: {
-			fontSize: '0.8rem',
-			padding: theme.spacing(1)
-		}
-	},
+const styles = () => ({
 	link: {
 		textDecoration: 'none',
 		color: 'inherit'
 	}
 });
 
+const filterAccountList = accountList => accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
+
 export function AccountList ({
-	accountsExpanded,
 	accountList,
-	classes,
-	onAccountsExpansionPanelChangeHalder
+	classes
 }) {
-	const filterAccountList = () => accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
-	const filteredAccountList = useMemo(() => filterAccountList());
+	const filteredAccountList = useMemo(() => filterAccountList(accountList), [accountList]);
 
 	return (
-		<div className={classes.accountPanel}>
-			<ExpansionPanel
-				expanded={accountsExpanded}
-				onChange={onAccountsExpansionPanelChangeHalder}
-			>
-				<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-					<Typography variant="subtitle1">
-						Accounts
-					</Typography>
-				</ExpansionPanelSummary>
-				<ExpansionPanelDetails className={classes.expansionDetails}>
-					<Table className={classes.table}>
-						<TableHead>
-							<TableRow>
-								<TableCell align="center" className={classes.cell}>Type</TableCell>
-								<TableCell align="center" className={classes.cell}>Account</TableCell>
-								<TableCell align="center" className={classes.cell}>Amount</TableCell>
-							</TableRow>
-						</TableHead>
-						<TableBody>
-							{filteredAccountList && filteredAccountList.map(row => (
-								<TableRow key={row.name}>
-									<TableCell component="th" scope="row" align="center" className={classes.cell}>
-										<span>
-											{`${TYPE_EMOJI[row.type]} ${row.type}`}
-										</span>
-									</TableCell>
-									<TableCell align="center" className={classes.cell}>
-										<span>
-											<Link to={`/${row.type}/${row.name}`} className={classes.link}>{row.name}</Link>
-										</span>
-									</TableCell>
-									<TableCell align="center" className={classes.cell}><Amount value={row.balance} /></TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</ExpansionPanelDetails>
-			</ExpansionPanel>
-		</div>
+		<Table className={classes.table}>
+			<TableHead>
+				<TableRow>
+					<TableCell align="center">Type</TableCell>
+					<TableCell align="center">Account</TableCell>
+					<TableCell align="center">Amount</TableCell>
+				</TableRow>
+			</TableHead>
+			<TableBody>
+				{filteredAccountList && filteredAccountList.map(row => (
+					<TableRow key={row.name}>
+						<TableCell component="th" scope="row" align="center">
+							<span>
+								{`${TYPE_EMOJI[row.type]} ${row.type}`}
+							</span>
+						</TableCell>
+						<TableCell align="center">
+							<span>
+								<Link to={`/${row.type}/${row.name}`} className={classes.link}>{row.name}</Link>
+							</span>
+						</TableCell>
+						<TableCell align="center"><Amount value={row.balance} /></TableCell>
+					</TableRow>
+				))}
+			</TableBody>
+		</Table>
 	);
 }
 
@@ -101,4 +65,10 @@ AccountList.propTypes = {
 	classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(AccountList);
+const mapStateToProps = (state) => ({
+	accountList: state.accountList
+});
+
+export default connect(
+	mapStateToProps
+)(withStyles(styles)(AccountList));

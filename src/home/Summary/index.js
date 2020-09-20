@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
+
+import TableCell from '../../components/TableCell';
 
 import Amount from '../../components/Amount';
 
@@ -26,44 +27,31 @@ const quickAssetAccount = [
 	'IRP오은미'
 ];
 
-const styles = theme => ({
-	table: {
+const styles = () => ({
+	root: {
 		
-	},
-	cell: {
-		[theme.breakpoints.down('sm')]: {
-			fontSize: '0.9rem',
-			padding: theme.spacing(1)
-		}
 	}
 });
 
-export function Summary({
-	accountList,
-	classes
-}) {
-	const summaryAccountList = accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
-	let sum = 0;
-	let financeSum = 0;
-	let quickassets = 0;
+const getSum = accounts => accounts.map(i => i.balance).reduce((sum, i) => sum + i, 0);
+const getFinanceSum = accounts => accounts.filter(i => i.type !== 'Oth A').map(i => i.balance).reduce((sum, i) => sum + i, 0);
+const getQuickAssetsSum = accounts => accounts.filter(i => quickAssetAccount.find(j => j === i.name)).map(i => i.balance).reduce((sum, i) => sum + i, 0);
 
-	if (summaryAccountList.length > 0) {
-		sum = summaryAccountList.map((i) => i.balance).reduce( (prev, curr) => prev + curr );
-		financeSum = summaryAccountList.filter(i => i.type !== 'Oth A')
-			.map((i) => i.balance)
-			.reduce( (prev, curr) => prev + curr );
-		quickassets = summaryAccountList.filter(i => quickAssetAccount.find(j => j === i.name))
-			.map((i) => i.balance)
-			.reduce( (prev, curr) => prev + curr );
-	}
+export function Summary ({
+	accountList
+}) {
+	const summaryAccountList = useMemo(() => accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i)), [accountList]);
+	const sum = useMemo(() => getSum(summaryAccountList), [summaryAccountList]);
+	const financeSum = useMemo(() => getFinanceSum(summaryAccountList), [summaryAccountList]);
+	const quickAssetsSum = useMemo(() => getQuickAssetsSum(summaryAccountList), [summaryAccountList]);
 
 	return (
-		<Table className={classes.table}>
+		<Table>
 			<TableBody>
 				<TableRow>
-					<TableCell align="center" className={classes.cell}><Amount value={sum} /></TableCell>
-					<TableCell align="center" className={classes.cell}><Amount value={quickassets} /></TableCell>
-					<TableCell align="center" className={classes.cell}><Amount value={financeSum} /></TableCell>
+					<TableCell align="center"><Amount value={sum} /></TableCell>
+					<TableCell align="center"><Amount value={quickAssetsSum} /></TableCell>
+					<TableCell align="center"><Amount value={financeSum} /></TableCell>
 				</TableRow>
 			</TableBody>
 		</Table>
@@ -71,8 +59,7 @@ export function Summary({
 }
 
 Summary.propTypes = {
-	accountList:  PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired
+	accountList:  PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({

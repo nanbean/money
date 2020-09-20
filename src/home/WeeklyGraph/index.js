@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import moment from 'moment';
@@ -26,49 +26,50 @@ const week = [
 	'Day7'
 ];
 
-export function WeeklyGraph({
+const getData = (week, filteredTransactions) => week.map((i, index) => {
+	const day = moment().subtract(6 - index, 'days').format('YYYY-MM-DD');
+	const dayofWeek = moment().subtract(6 - index, 'days').format('ddd');
+	const totalExpense = {
+		'교통비': 0,
+		'식비': 0,
+		'의료비': 0,
+		'교육': 0,
+		'육아': 0,
+		'생활용품비': 0,
+		'의류': 0,
+		'대출이자': 0,
+		'공과금': 0,
+		'미용': 0,
+		'보험': 0,
+		'수수료': 0,
+		'통신비': 0,
+		'회비': 0,
+		'취미-레저': 0,
+		'문화생활': 0,
+		'기타 지출': 0,
+		'경조사-선물': 0,
+		'실제지출아님': 0
+	};
+	for (var k = 0; k < filteredTransactions.length; k++) {
+		if (day === filteredTransactions[k].date) {
+			const transaction = filteredTransactions[k];
+			if (transaction.amount < 0) {
+				totalExpense[transaction.category] += Math.abs(transaction.amount);
+			}
+			
+		}
+	}
+	return {
+		dayofWeek,
+		...totalExpense
+	};
+});
+
+export function WeeklyGraph ({
 	weeklyTransactions
 }) {
-	const filteredTransactions = weeklyTransactions.filter(i => i.type === 'Bank' || i.type === 'CCard' || i.type === 'Cash');
-	
-	const data = week.map((i, index) => {
-		const day = moment().subtract(6 - index, 'days').format('YYYY-MM-DD');
-		const dayofWeek = moment().subtract(6 - index, 'days').format('ddd');
-		const totalExpense = {
-			'교통비': 0,
-			'식비': 0,
-			'의료비': 0,
-			'교육': 0,
-			'육아': 0,
-			'생활용품비': 0,
-			'의류': 0,
-			'대출이자': 0,
-			'공과금': 0,
-			'미용': 0,
-			'보험': 0,
-			'수수료': 0,
-			'통신비': 0,
-			'회비': 0,
-			'취미-레저': 0,
-			'문화생활': 0,
-			'기타 지출': 0,
-			'경조사-선물': 0,
-			'실제지출아님': 0
-		};
-		for (var k = 0; k < filteredTransactions.length; k++) {
-			if (day === filteredTransactions[k].date) {
-				const transaction = filteredTransactions[k];
-				if (transaction.amount < 0) {
-					totalExpense[transaction.category] += Math.abs(transaction.amount);
-				}
-				
-			}
-		}
-		return {
-			dayofWeek,
-			...totalExpense
-		};
-	});
+	const filteredTransactions = useMemo(() => weeklyTransactions.filter(i => i.type === 'Bank' || i.type === 'CCard' || i.type === 'Cash'), [weeklyTransactions]);
+	const data = useMemo(() => getData(week, filteredTransactions), [week, filteredTransactions]);
 
 	return (
 		<ResponsiveContainer width="99%" height={200}>
@@ -108,14 +109,10 @@ export function WeeklyGraph({
 }
 
 WeeklyGraph.propTypes = {
-	deleteFetching: PropTypes.bool.isRequired,
-	editFetching: PropTypes.bool.isRequired,
 	weeklyTransactions: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => ({
-	deleteFetching: state.deleteTransaction.fetching,
-	editFetching: state.editTransaction.fetching,
 	weeklyTransactions: state.weeklyTransactions
 });
 
