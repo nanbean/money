@@ -30,14 +30,14 @@ import { toCurrencyFormat } from '../utils/formatting';
 const styles = theme => ({
 	container: {
 		flexGrow: 1,
-		padding: theme.spacing.unit * 3,
+		padding: theme.spacing(3),
 		[theme.breakpoints.down('sm')]: {
 			padding: 0
 		}
 	},
 	paper: {
 		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing.unit * 2
+			marginTop: theme.spacing(2)
 		},
 		[theme.breakpoints.down('sm')]: {
 			marginTop: 0
@@ -57,11 +57,11 @@ const styles = theme => ({
 		backgroundColor: 'white'
 	},
 	rightIcon: {
-		marginLeft: theme.spacing.unit
+		marginLeft: theme.spacing(1)
 	},
 	total: {
-		marginTop: theme.spacing.unit,
-		marginRight: theme.spacing.unit
+		marginTop: theme.spacing(1),
+		marginRight: theme.spacing(1)
 	}
 });
 

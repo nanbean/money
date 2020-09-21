@@ -9,7 +9,7 @@ import PerformanceGrid from '../components/PerformanceGrid';
 
 const styles = theme => ({
 	subject: {
-		margin: theme.spacing.unit / 2
+		margin: theme.spacing(1) / 2
 	}
 });
 

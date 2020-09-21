@@ -12,14 +12,14 @@ import { getNotificationsAction } from '../actions/notificationActions';
 const styles = theme => ({
 	container: {
 		flexGrow: 1,
-		padding: theme.spacing.unit * 3,
+		padding: theme.spacing(3),
 		[theme.breakpoints.down('sm')]: {
 			padding: 0
 		}
 	},
 	paper: {
-		marginTop: theme.spacing.unit * 2,
-		padding: theme.spacing.unit
+		marginTop: theme.spacing(2),
+		padding: theme.spacing(1)
 	}
 });
 

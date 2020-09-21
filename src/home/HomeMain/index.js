@@ -10,8 +10,7 @@ import Button from '@material-ui/core/Button';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import Typography from '@material-ui/core/Typography';
 
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import { Accordion, AccordionSummary, AccordionDetails} from '@material-ui/core';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import Summary from '../Summary';
@@ -20,7 +19,6 @@ import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
 
 import TitleHeader from '../../components/TitleHeader';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 
 import {
 	getWeeklyTransactionsAction
@@ -37,7 +35,7 @@ import {
 const styles = theme => ({
 	container: {
 		flexGrow: 1,
-		padding: theme.spacing.unit * 3,
+		padding: theme.spacing(3),
 		[theme.breakpoints.down('sm')]: {
 			padding: 0
 		}
@@ -58,7 +56,7 @@ const styles = theme => ({
 		backgroundColor: 'white'
 	},
 	rightIcon: {
-		marginLeft: theme.spacing.unit
+		marginLeft: theme.spacing(1)
 	},
 	expansionDetails: {
 		padding: 0
@@ -88,7 +86,9 @@ export function HomeMain ({
 	getWeeklyTransactionsAction,
 	updateInvestmentPriceAction
 }) {
-	useEffect(() => getWeeklyTransactionsAction(), []);
+	useEffect(() => {
+		getWeeklyTransactionsAction()
+	}, []);
 
 	const onAccountsExpansionPanelChangeHalder = (event, expanded) => changeAccountsExpanded(expanded);
 
@@ -121,64 +121,64 @@ export function HomeMain ({
 				</div>
 				<Grid container>
 					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
-						<ExpansionPanel
+						<Accordion
 							expanded={summaryExpanded}
 							onChange={onSummaryExpansionPanelChangeHalder}
 						>
-							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
 								Summary
 								</Typography>
-							</ExpansionPanelSummary>
-							<ExpansionPanelDetails className={classes.expansionDetails}>
+							</AccordionSummary>
+							<AccordionDetails className={classes.expansionDetails}>
 								<Summary />
-							</ExpansionPanelDetails>
-						</ExpansionPanel>
+							</AccordionDetails>
+						</Accordion>
 					</Grid>
 					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
-						<ExpansionPanel
+						<Accordion
 							expanded={weeklyGraphExpanded}
 							onChange={onWeeklyGraphExpansionPanelChangeHalder}
 						>
-							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
 								Weekly Graph
 								</Typography>
-							</ExpansionPanelSummary>
-							<ExpansionPanelDetails className={classes.expansionDetails}>
+							</AccordionSummary>
+							<AccordionDetails className={classes.expansionDetails}>
 								<WeeklyGraph/>
-							</ExpansionPanelDetails>
-						</ExpansionPanel>
+							</AccordionDetails>
+						</Accordion>
 					</Grid>
 					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
-						<ExpansionPanel
+						<Accordion
 							expanded={latestTransactionsExpanded}
 							onChange={onLatestTransactionsExpansionPanelChangeHalder}
 						>
-							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
 								Latest Transactions
 								</Typography>
-							</ExpansionPanelSummary>
-							<ExpansionPanelDetails className={classes.expansionDetails}>
+							</AccordionSummary>
+							<AccordionDetails className={classes.expansionDetails}>
 								<LatestTransactions/>
-							</ExpansionPanelDetails>
-						</ExpansionPanel>
+							</AccordionDetails>
+						</Accordion>
 					</Grid>
 					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
-						<ExpansionPanel
+						<Accordion
 							expanded={accountsExpanded}
 							onChange={onAccountsExpansionPanelChangeHalder}
 						>
-							<ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
 									Accounts
 								</Typography>
-							</ExpansionPanelSummary>
-							<ExpansionPanelDetails className={classes.expansionDetails}>
+							</AccordionSummary>
+							<AccordionDetails className={classes.expansionDetails}>
 								<AccountList/>
-							</ExpansionPanelDetails>
-						</ExpansionPanel>
+							</AccordionDetails>
+						</Accordion>
 					</Grid>
 				</Grid>
 			</div>

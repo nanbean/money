@@ -9,19 +9,19 @@ import Paper from '@material-ui/core/Paper';
 const styles = theme => ({
 	paper: {
 		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing.unit * 2
+			marginTop: theme.spacing(2)
 		},
 		[theme.breakpoints.down('sm')]: {
 			marginTop: 0
 		},
 		alignItems: 'center',
-		padding: theme.spacing.unit * 2
+		padding: theme.spacing(2)
 	},
 	item: {
 		display: 'inline-block'
 	},
 	checkBox: {
-		padding: theme.spacing.unit / 2
+		padding: theme.spacing(2)
 	}
 });
 

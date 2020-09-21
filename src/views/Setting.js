@@ -19,14 +19,14 @@ import {
 const styles = theme => ({
 	container: {
 		flexGrow: 1,
-		padding: theme.spacing.unit * 3,
+		padding: theme.spacing(3),
 		[theme.breakpoints.down('sm')]: {
 			padding: 0
 		}
 	},
 	paper: {
 		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing.unit * 2
+			marginTop: theme.spacing(2)
 		},
 		[theme.breakpoints.down('sm')]: {
 			marginTop: 0
@@ -34,10 +34,10 @@ const styles = theme => ({
 		display: 'flex',
 		flexDirection: 'column',
 		alignItems: 'center',
-		padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${theme.spacing.unit * 3}px`
+		padding: `${theme.spacing(2)}px ${theme.spacing(3)}px ${theme.spacing(3)}px`
 	},
 	log: {
-		marginTop: theme.spacing.unit * 3
+		marginTop: theme.spacing(3)
 	}
 });
 

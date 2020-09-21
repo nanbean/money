@@ -19,7 +19,7 @@ const yearOptions = Array.from({ length: endYear - startYear + 1 }, (v, k) => k 
 
 const styles = theme => ({
 	header: {
-		paddingTop: theme.spacing.unit,
+		paddingTop: theme.spacing(1),
 		[theme.breakpoints.down('sm')]: {
 			paddingTop: 0
 		}

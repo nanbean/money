@@ -11,7 +11,7 @@ import { getInvestmentPerformance } from '../utils/performance';
 const styles = theme => ({
 	container: {
 		flexGrow: 1,
-		padding: theme.spacing.unit * 3,
+		padding: theme.spacing(3),
 		[theme.breakpoints.down('sm')]: {
 			padding: 0
 		}

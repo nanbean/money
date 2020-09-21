@@ -31,14 +31,14 @@ import {
 const styles = theme => ({
 	container: {
 		flexGrow: 1,
-		padding: theme.spacing.unit * 3,
+		padding: theme.spacing(3),
 		[theme.breakpoints.down('sm')]: {
 			padding: 0
 		}
 	},
 	paper: {
 		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing.unit * 2
+			marginTop: theme.spacing(2)
 		},
 		[theme.breakpoints.down('sm')]: {
 			marginTop: 0
@@ -62,7 +62,7 @@ const styles = theme => ({
 		width: '50%'
 	},
 	rightIcon: {
-		marginLeft: theme.spacing.unit
+		marginLeft: theme.spacing(1)
 	},
 	link: {
 		textDecoration: 'none',

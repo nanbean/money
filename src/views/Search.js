@@ -21,14 +21,14 @@ import {
 const styles = theme => ({
 	container: {
 		flexGrow: 1,
-		padding: theme.spacing.unit * 3,
+		padding: theme.spacing(3),
 		[theme.breakpoints.down('sm')]: {
 			padding: 0
 		}
 	},
 	paper: {
 		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing.unit * 2
+			marginTop: theme.spacing(2)
 		},
 		[theme.breakpoints.down('sm')]: {
 			marginTop: 0
@@ -38,8 +38,8 @@ const styles = theme => ({
 	sticky: {
 		width: '100%',
 		position: 'sticky',
-		paddingLeft: theme.spacing.unit,
-		paddingRight: theme.spacing.unit,
+		paddingLeft: theme.spacing(1),
+		paddingRight: theme.spacing(1),
 		[theme.breakpoints.up('lg')]: {
 			top: 62
 		},
