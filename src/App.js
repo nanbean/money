@@ -1,13 +1,10 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import throttle from 'lodash/throttle';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 
 import Routes from './routes';
 
-// TODO remove windowResize
-import { windowResize } from './actions/ui/windowResize';
 import { rehydrateAction } from './actions/rehydrateActions';
 import { getAuthAction } from './actions/authActions';
 import {
@@ -29,7 +26,7 @@ function App ({
 	getAuthAction,
 	getCategoryListAction,
 	getPayeeListAction,
-	rehydrateAction, windowResize
+	rehydrateAction
 }) {
 
 	useEffect(() => {
@@ -37,16 +34,10 @@ function App ({
 		getAuthAction();
 		getAccountListAction();
 
-		window.addEventListener('resize', throttle(windowResize, 500));
-
 		getAllAccountsTransactionsAction();
 		getAllInvestmentsListAction();
 		getCategoryListAction();
 		getPayeeListAction();
-
-    return () => {
-			window.removeEventListener('resize');
-		};
   }, []);
 
 	return (
@@ -63,8 +54,7 @@ App.propTypes = {
 	getAuthAction: PropTypes.func.isRequired,
 	getCategoryListAction: PropTypes.func.isRequired,
 	getPayeeListAction: PropTypes.func.isRequired,
-	rehydrateAction: PropTypes.func.isRequired,
-	windowResize: PropTypes.func.isRequired
+	rehydrateAction: PropTypes.func.isRequired
 };
 
 const mapDispatchToProps = dispatch => ({
@@ -88,9 +78,6 @@ const mapDispatchToProps = dispatch => ({
 	},
 	rehydrateAction () {
 		dispatch(rehydrateAction());
-	},
-	windowResize () {
-		dispatch(windowResize());
 	}
 });
 

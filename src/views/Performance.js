@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -18,41 +18,38 @@ const styles = theme => ({
 	}
 });
 
-class Performance extends Component {
-	render () {
-		const {
-			allAccountsTransactions,
-			allInvestments,
-			classes, 
-			isMobile
-		} = this.props;
-		const { match } = this.props;
-		const investment = match && match.params && match.params.investment;
-		const investmentItem = allInvestments.find(i => i.name === investment);
-		const investmentPrice = investmentItem && investmentItem.price;
-		const investmentTransactions = allAccountsTransactions.filter(i => i.investment && i.investment === match.params.investment);
-		const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
+const getInvestmentItem = (investments, name) => investments.find(i => i.name === name);
+const getInvestmentTransactions = (transactions, investment) => transactions.filter(i => i.investment && i.investment === investment);
 
-		return (
-			<div>
-				<TitleHeader title={investment} />
-				<div className={classes.container}>
-					<InvestmentPerformance
-						isMobile={isMobile}
-						investment={investment}
-						performance={performance}
-					/>
-				</div>
+export function Performance ({
+	allAccountsTransactions,
+	allInvestments,
+	classes,
+	match
+}) {
+	const investment = match && match.params && match.params.investment;
+	const investmentItem = useMemo(() => getInvestmentItem(allInvestments, investment), [allInvestments, investment]);
+	const investmentPrice = investmentItem && investmentItem.price;
+	const investmentTransactions = useMemo(() => getInvestmentTransactions(allAccountsTransactions, investment), [allAccountsTransactions, investment]);
+	const performance = useMemo(() => getInvestmentPerformance(investmentTransactions, investmentPrice), [investmentTransactions, investmentPrice]);
+
+	return (
+		<React.Fragment>
+			<TitleHeader title={investment} />
+			<div className={classes.container}>
+				<InvestmentPerformance
+					investment={investment}
+					performance={performance}
+				/>
 			</div>
-		);
-	}
+		</React.Fragment>
+	);
 }
 
 Performance.propTypes = {
 	allAccountsTransactions: PropTypes.array.isRequired,
 	allInvestments: PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
-	isMobile: PropTypes.bool,
 	match: PropTypes.shape({
 		params: PropTypes.shape({
 			name: PropTypes.string.isRequired
@@ -62,11 +59,9 @@ Performance.propTypes = {
 
 const mapStateToProps = state => ({
 	allAccountsTransactions: state.allAccountsTransactions,
-	allInvestments: state.allInvestments,
-	isMobile: state.ui.isMobile
+	allInvestments: state.allInvestments
 });
 
 export default connect(
-	mapStateToProps,
-	null
+	mapStateToProps
 )(withStyles(styles)(Performance));

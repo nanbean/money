@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -70,83 +70,88 @@ const styles = theme => ({
 	}
 });
 
-export class Investment extends Component {
-	componentDidMount () {
-		const { match } = this.props;
-		const name = match && match.params && match.params.name;
-		const accountId = `account${match.url.replace(/\//g, ':')}`;
+const getAccountId = url => `account${url.replace(/\//g, ':')}`;
+const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
 
-		this.props.setAccountAction(name);
-		this.props.getAccountInvestmentsAction( accountId );
-	}
+export function Investment ({
+	account,
+	addTransactionAction,
+	allAccountsTransactions,
+	classes,
+	deleteTransactionAction,
+	dropInvestmentList,
+	editTransactionAction,
+	getAccountInvestmentsAction,
+	isEdit,
+	isModalOpen,
+	match,
+	openTransactionInModal,
+	resetTransactionForm,
+	setAccountAction
+}) {
+	const name = match && match.params && match.params.name;
+	const url = match.url;
+	const accountId = useMemo(() => getAccountId(url), [url]);
+	const accountTransactions = useMemo(() => getAccountTransactions(allAccountsTransactions, accountId), [allAccountsTransactions, accountId]);
 
-	render () {
-		const {
-			account,
-			allAccountsTransactions,
-			classes,
-			dropInvestmentList, 
-			isMobile,
-			match
-		} = this.props;
-		const accountId = `account${match.url.replace(/\//g, ':')}`;
-		const accountTransactions = allAccountsTransactions.filter(i => i.accountId === `account${match.url.replace(/\//g, ':')}`);
-
-		return (
-			<div>
-				<TitleHeader title={account} />
-				<div className={classes.container}>
-					<Paper className={classes.paper}>
-						<div className={classes.sticky}>
-							<div className={classes.headerHalf}>
+	useEffect(() => {
+		setAccountAction(name);
+		getAccountInvestmentsAction( accountId );
+	}, [accountId, name]);
+	
+	return (
+		<React.Fragment>
+			<TitleHeader title={account} />
+			<div className={classes.container}>
+				<Paper className={classes.paper}>
+					<div className={classes.sticky}>
+						<div className={classes.headerHalf}>
+							<Button
+								fullWidth
+								variant="outlined"
+								color="primary"
+								onClick={openTransactionInModal}
+							>
+								New
+								<AddIcon className={classes.rightIcon} />
+							</Button>
+						</div>
+						<div className={classes.headerHalf}>
+							<Link to={`/Bank/${account}_Cash`} className={classes.link}>
 								<Button
 									fullWidth
 									variant="outlined"
 									color="primary"
-									onClick={this.props.openTransactionInModal}
 								>
-								New
-									<AddIcon className={classes.rightIcon} />
+								Cash
+									<MoneyIcon className={classes.rightIcon} />
 								</Button>
-							</div>
-							<div className={classes.headerHalf}>
-								<Link to={`/Bank/${account}_Cash`} className={classes.link}>
-									<Button
-										fullWidth
-										variant="outlined"
-										color="primary"
-									>
-									Cash
-										<MoneyIcon className={classes.rightIcon} />
-									</Button>
-								</Link>
-							</div>
+							</Link>
 						</div>
-						<InvestmentTransactions
-							isMobile={isMobile}
-							transactions={accountTransactions}
-							openTransactionInModal={this.props.openTransactionInModal}
-						/>
+					</div>
+					<InvestmentTransactions
+						openTransactionInModal={openTransactionInModal}
+						transactions={accountTransactions}
+					/>
 
-						<InvestmentTransactionModal
-							EditForm={InvestmentTransactionForm}
-							isOpen={this.props.isModalOpen}
-							isEdit={this.props.isEdit}
-							account={account}
-							accountId={accountId}
-							transactions={accountTransactions}
-							autocompleteInvestmentList={dropInvestmentList}
-							resetTransactionForm={this.props.resetTransactionForm}
-							addTransactionAction={this.props.addTransactionAction}
-							deleteTransactionAction={this.props.deleteTransactionAction}
-							editTransactionAction={this.props.editTransactionAction}
-						/>
-						<AccountInvestments />
-					</Paper>
-				</div>
+					<InvestmentTransactionModal
+						EditForm={InvestmentTransactionForm}
+						isOpen={isModalOpen}
+						isEdit={isEdit}
+						account={account}
+						accountId={accountId}
+						transactions={accountTransactions}
+						autocompleteInvestmentList={dropInvestmentList}
+						resetTransactionForm={resetTransactionForm}
+						addTransactionAction={addTransactionAction}
+						deleteTransactionAction={deleteTransactionAction}
+						editTransactionAction={editTransactionAction}
+					/>
+					<AccountInvestments />
+				</Paper>
 			</div>
-		);
-	}
+		</React.Fragment>
+	);
 }
 
 Investment.propTypes = {
@@ -160,7 +165,6 @@ Investment.propTypes = {
 	editTransactionAction: PropTypes.func.isRequired,
 	getAccountInvestmentsAction: PropTypes.func.isRequired,
 	isEdit: PropTypes.bool.isRequired,
-	isMobile: PropTypes.bool.isRequired,
 	isModalOpen: PropTypes.bool.isRequired,
 	openTransactionInModal: PropTypes.func.isRequired,
 	resetTransactionForm: PropTypes.func.isRequired,
@@ -173,7 +177,6 @@ Investment.propTypes = {
 };
 
 const mapStateToProps = state => ({
-	isMobile: state.ui.isMobile,
 	account: state.account,
 	accountInvestments: state.accountInvestments,
 	allAccountsTransactions: state.allAccountsTransactions,

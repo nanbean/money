@@ -23,7 +23,7 @@ import SettingsIcon from '@material-ui/icons/Settings';
 
 import { toggleSidebar } from '../../actions/uiActions';
 
-// import './index.css';
+import useMobile from '../../hooks/useMobile';
 
 const drawerWidth = 240;
 
@@ -109,8 +109,10 @@ const anotherRoutes = [
 	}
 ];
 
-function SidebarMenu ({ classes, isMobile, isSidebarOpen, location, toggleSidebar }) {
-	function onClickHandler () {
+function SidebarMenu ({ classes, isSidebarOpen, location, toggleSidebar }) {
+	const isMobile = useMobile();
+
+	const onClickHandler = () => {
 		if (isMobile) {
 			toggleSidebar();
 		}
@@ -168,14 +170,12 @@ function SidebarMenu ({ classes, isMobile, isSidebarOpen, location, toggleSideba
 
 SidebarMenu.propTypes = {
 	classes: PropTypes.object.isRequired,
-	isMobile: PropTypes.bool.isRequired,
 	isSidebarOpen: PropTypes.bool.isRequired,
 	location: PropTypes.object.isRequired,
 	toggleSidebar: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({
-	isMobile: state.ui.isMobile,
 	isSidebarOpen: state.ui.isSidebarOpen
 });
 

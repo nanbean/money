@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -13,6 +13,7 @@ import TitleHeader from '../components/TitleHeader';
 import {
 	setfilteredInvestments
 } from '../actions/investmentActions';
+
 import { toCurrencyFormat } from '../utils/formatting';
 import { getInvestmentPerformance } from '../utils/performance';
 
@@ -38,75 +39,71 @@ const styles = theme => ({
 	}
 });
 
-class AllPerformance extends Component {
-	render () {
-		const {
-			isMobile,
-			allAccountsTransactions,
-			allInvestmentsPrice,
-			filteredInvestments,
-			classes
-		} = this.props;
-		const allInvestmentsTransactions = allAccountsTransactions.filter(i => i.accountId && i.accountId.startsWith('account:Invst'));
+export function AllPerformance ({
+	allAccountsTransactions,
+	allInvestmentsPrice,
+	classes,
+	filteredInvestments,
+	setfilteredInvestments
+}) {
+	const allInvestmentsTransactions = allAccountsTransactions.filter(i => i.accountId && i.accountId.startsWith('account:Invst'));
 
-		const allPerformance = allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0 && 
-			allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(i => {
-				const investmentTransactions = allInvestmentsTransactions.filter(j => j.investment === i.name);
-				const investmentPrice = i.price;
-				const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
-				const totalPerformance = performance.length > 0 && performance.map(l => l.periodReturn).reduce((a, b) => a + b);
-				const totalQuantity = performance.length > 0 && performance.map(m => m.quantity).reduce((a, b) => a + b);
+	const allPerformance = allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0 && 
+		allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(i => {
+			const investmentTransactions = allInvestmentsTransactions.filter(j => j.investment === i.name);
+			const investmentPrice = i.price;
+			const performance = getInvestmentPerformance(investmentTransactions, investmentPrice);
+			const totalPerformance = performance.length > 0 && performance.map(l => l.periodReturn).reduce((a, b) => a + b);
+			const totalQuantity = performance.length > 0 && performance.map(m => m.quantity).reduce((a, b) => a + b);
 
-				return {
-					investment: i.name,
-					performance: performance,
-					totalPerformance: totalPerformance,
-					totalQuantity: totalQuantity
-				};
-			});
+			return {
+				investment: i.name,
+				performance: performance,
+				totalPerformance: totalPerformance,
+				totalQuantity: totalQuantity
+			};
+		});
 
-		if (allPerformance.length > 0) {
-			const filteredPerformance = allPerformance.length > 0 && allPerformance.filter(i => {
-				return filteredInvestments.find(j => j === i.investment);
-			});
-			const grandTotalPerformance = filteredPerformance.length > 0 ? filteredPerformance.map(l => l.totalPerformance).reduce((a, b) => a + b) : 0;
+	if (allPerformance.length > 0) {
+		const filteredPerformance = allPerformance.length > 0 && allPerformance.filter(i => {
+			return filteredInvestments.find(j => j === i.investment);
+		});
+		const grandTotalPerformance = filteredPerformance.length > 0 ? filteredPerformance.map(l => l.totalPerformance).reduce((a, b) => a + b) : 0;
 
-			return (
-				<div>
-					<TitleHeader title="Performance" />
-					<div className={classes.container}>
-						<InvestmentFilter
-							allInvestmentsPrice={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name))}
-							filteredInvestments={filteredInvestments}
-							setfilteredInvestments={this.props.setfilteredInvestments}
-						/>
-						<Typography variant="subtitle1" align="right" className={classes.total}>
-							Grand Total : {toCurrencyFormat(grandTotalPerformance)}
-						</Typography>
-						{
-							filteredPerformance && filteredPerformance.map(i => {
-								return (
-									<InvestmentPerformance
-										key={i.investment}
-										isMobile={isMobile}
-										investment={i.investment}
-										performance={i.performance}
-									/>
-								);
-							})
-						}
-						
-					</div>
+		return (
+			<div>
+				<TitleHeader title="Performance" />
+				<div className={classes.container}>
+					<InvestmentFilter
+						allInvestmentsPrice={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name))}
+						filteredInvestments={filteredInvestments}
+						setfilteredInvestments={setfilteredInvestments}
+					/>
+					<Typography variant="subtitle1" align="right" className={classes.total}>
+						Grand Total : {toCurrencyFormat(grandTotalPerformance)}
+					</Typography>
+					{
+						filteredPerformance && filteredPerformance.map(i => {
+							return (
+								<InvestmentPerformance
+									key={i.investment}
+									investment={i.investment}
+									performance={i.performance}
+								/>
+							);
+						})
+					}
+					
 				</div>
-			);
-		} else {
-			return (
-				<div>
-					<TitleHeader title="Performance" />
-					<LinearProgress color="secondary" className={classes.progress} />
-				</div>
-			);
-		}
+			</div>
+		);
+	} else {
+		return (
+			<div>
+				<TitleHeader title="Performance" />
+				<LinearProgress color="secondary" className={classes.progress} />
+			</div>
+		);
 	}
 }
 
@@ -116,13 +113,11 @@ AllPerformance.propTypes = {
 	allInvestmentsPrice: PropTypes.array.isRequired,
 	classes: PropTypes.object.isRequired,
 	filteredInvestments: PropTypes.array.isRequired,
-	setfilteredInvestments: PropTypes.func.isRequired,
-	isMobile: PropTypes.bool
+	setfilteredInvestments: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({
 	allAccountsTransactions: state.allAccountsTransactions,
-	isMobile: state.ui.isMobile,
 	allInvestmentsList: state.allInvestmentsList,
 	allInvestmentsPrice: state.allInvestmentsPrice,
 	filteredInvestments: state.filteredInvestments
