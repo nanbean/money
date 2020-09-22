@@ -11,7 +11,7 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 const ROW_HEIGHT = 40;
 const COLUMN_WIDTH = 84;
 
-const styles = theme => ({
+const styles = () => ({
 	reportGrid: {
 		display: 'flex',
 		height: '65vh',
@@ -43,7 +43,7 @@ const styles = theme => ({
 	}
 });
 
-export function ReportGrid({
+export function ReportGrid ({
 	classes,
 	reportData,
 	width

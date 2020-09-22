@@ -1,4 +1,4 @@
-import {defaultFont} from '../root.js';
+import { defaultFont } from '../root.js';
 
 const toolTip = {
 	root: {

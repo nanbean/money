@@ -31,7 +31,7 @@ export function InvestmentTransactions ({
 			isEdit: true,
 			index: index
 		});
-	}
+	};
 
 	return (
 		<div className="investment-transaction">

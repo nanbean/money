@@ -10,7 +10,7 @@ import Button from '@material-ui/core/Button';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import Typography from '@material-ui/core/Typography';
 
-import { Accordion, AccordionSummary, AccordionDetails} from '@material-ui/core';
+import { Accordion, AccordionSummary, AccordionDetails } from '@material-ui/core';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import Summary from '../Summary';
@@ -87,7 +87,7 @@ export function HomeMain ({
 	updateInvestmentPriceAction
 }) {
 	useEffect(() => {
-		getWeeklyTransactionsAction()
+		getWeeklyTransactionsAction();
 	}, []);
 
 	const onAccountsExpansionPanelChangeHalder = (event, expanded) => changeAccountsExpanded(expanded);

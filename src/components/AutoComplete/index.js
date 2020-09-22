@@ -30,18 +30,18 @@ export function AutoComplete ({
 }) {
 	const defaultValue = value && items.length > 0 && items.find(i => i.name === value);
 
-  return (
-    <MyAutocomplete
-      options={items}
-      getOptionLabel={(option) => option.name}
+	return (
+		<MyAutocomplete
+			options={items}
+			getOptionLabel={(option) => option.name}
 			defaultValue={defaultValue}
 			onInputChange={onInputChange}
 			onChange={onChange}
 			renderInput={(params) => <TextField className={classes.input} {...params} placeholder={placeholder} />}
 			freeSolo
 			fullWidth
-    />
-  );
+		/>
+	);
 }
 
 AutoComplete.propTypes = {

@@ -7,7 +7,6 @@ export default function latestTransactions (state = initialState, action) {
 	switch (action.type) {
 	case actions.SET_WEEKLY_TRANSACTIONS:
 	case actions.SET_ALL_ACCOUNTS_TRANSACTIONS:
-		console.log(action.type)
 		if (action.payload) {
 			const start = moment().subtract(2, 'days').format('YYYY-MM-DD');
 			const end = moment().format('YYYY-MM-DD');
@@ -21,12 +20,12 @@ export default function latestTransactions (state = initialState, action) {
 			if (findIndex >= 0) {
 				return state.map((item, index) => {
 					if (index !== findIndex) {
-						return item
+						return item;
 					}
 					return {
 						...item,
 						...action.payload
-					}
+					};
 				});
 			}
 		}

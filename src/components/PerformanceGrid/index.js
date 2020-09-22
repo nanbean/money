@@ -10,10 +10,10 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 const ROW_HEIGHT = 60;
 const COLUMN_MIN_WIDTH = 100;
 
-const styles = theme => ({
+const styles = () => ({
 	performanceGrid: {
 		display: 'flex',
-		textAlign: 'center',
+		textAlign: 'center'
 	},
 	cell: {
 		display: 'flex',
@@ -41,7 +41,7 @@ const styles = theme => ({
 	}
 });
 
-export function PerformanceGrid({
+export function PerformanceGrid ({
 	classes,
 	performanceData
 }) {
@@ -93,7 +93,8 @@ export function PerformanceGrid({
 }
 
 PerformanceGrid.propTypes = {
-	performanceData: PropTypes.array
+	classes: PropTypes.object.isRequired,
+	performanceData: PropTypes.array.isRequired
 };
 
 export default withStyles(styles)(PerformanceGrid);

@@ -35,11 +35,11 @@ function LifetimePlanner ({
 }) {
 	useEffect(() => {
 		getLifetimeFlowAction();
-  }, []);
+	}, []);
 
 	const formatter = data => {
 		return toCurrencyFormat(data);
-	}
+	};
 
 	if (lifetimePlannerFlow.length > 0) {
 		return (

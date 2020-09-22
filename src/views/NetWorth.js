@@ -47,6 +47,12 @@ const CustomTooltip = ({ active, payload, label }) => {
 	return null;
 };
 
+CustomTooltip.propTypes = {
+	active: PropTypes.bool.isRequired,
+	label: PropTypes.string.isRequired,
+	payload:  PropTypes.array.isRequired
+};
+
 function NetWorth ({
 	classes,
 	getNetWorthFlowAction,

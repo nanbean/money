@@ -116,7 +116,7 @@ function SidebarMenu ({ classes, isSidebarOpen, location, toggleSidebar }) {
 		if (isMobile) {
 			toggleSidebar();
 		}
-	}
+	};
 
 	return (
 		<Drawer

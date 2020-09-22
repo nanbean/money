@@ -38,7 +38,7 @@ function App ({
 		getAllInvestmentsListAction();
 		getCategoryListAction();
 		getPayeeListAction();
-  }, []);
+	}, []);
 
 	return (
 		<MuiThemeProvider theme={theme}>
