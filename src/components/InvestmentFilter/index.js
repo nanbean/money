@@ -21,7 +21,7 @@ const styles = theme => ({
 		display: 'inline-block'
 	},
 	checkBox: {
-		padding: theme.spacing(2)
+		padding: theme.spacing(1) / 2
 	}
 });
 
@@ -81,7 +81,7 @@ class InvestmentFilter extends Component {
 							<div key={j.name} className={classes.item}>
 								<FormControlLabel
 									control={
-										<Checkbox className={classes.checkBox} checked={filteredInvestments.find(q => q === j.name) ? true : false} onChange={this.onFilteredInvestmentsChange(j.name)}/>
+										<Checkbox className={classes.checkBox} size="small" checked={filteredInvestments.find(q => q === j.name) ? true : false} onChange={this.onFilteredInvestmentsChange(j.name)}/>
 									}
 									label={j.name}
 								/>
@@ -91,7 +91,7 @@ class InvestmentFilter extends Component {
 				}
 				<FormControlLabel
 					control={
-						<Checkbox key="All" className={classes.checkBox} checked={filteredInvestments.length === allInvestmentsPrice.length} onClick={this.onAllInvestementClick}/>
+						<Checkbox key="All" className={classes.checkBox} size="small" checked={filteredInvestments.length === allInvestmentsPrice.length} onClick={this.onAllInvestementClick}/>
 					}
 					label="All"
 				/>
