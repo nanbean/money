@@ -7,6 +7,7 @@ const _ = require('lodash');
 const exec = require('child_process').exec;
 
 const messaging = require('./messaging');
+const calendar = require('./calendar');
 
 const lifetimePlanner = require('./api/lifetimePlanner');
 
@@ -597,12 +598,15 @@ new CronJob('00 40 15 * * 1-5', async () => {
 		 * at 05:00:00 AM.
 		 */
 	console.log('couchdb 00 40 15 daily dailyArrangeInvestmemtjob started');
-
-	await arrangeInvestmemt();
-	await updateAccountList();
-	await updateLifeTimePlanner();
-	await updateNetWorth();
-	await sendBalanceUpdateNotification();
+	if (!calendar.isHoliday()) {
+		await arrangeInvestmemt();
+		await updateAccountList();
+		await updateLifeTimePlanner();
+		await updateNetWorth();
+		await sendBalanceUpdateNotification();
+	} else {
+		console.log('holiday, dailyArrangeInvestmemtjob skip');
+	}
 }, () => {
 	/* This function is executed when the job stops */
 	console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');
