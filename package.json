@@ -27,7 +27,7 @@
     "lodash.debounce": "^4.0.8",
     "moment": "^2.20.1",
     "nano": "^8.0.1",
-    "node-fetch": "^1.7.3",
+    "node-fetch": "^2.6.1",
     "node-xlsx": "0.14.1",
     "pouchdb": "^7.1.1",
     "pouchdb-authentication": "^1.1.3",
