@@ -1,24 +1,8 @@
-const path = require('path');
-const fs = require('fs');
-const util = require('util');
 const moment = require('moment');
 const uuidv1 = require('uuid/v1');
 
-const money = require('./transaction');
 const messaging = require('./messaging');
 const couchdb = require('./couchdb');
-
-const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
-const filePath = path.resolve(__dirname, 'notification.json');
-
-async function readNotificationFile () {
-	return await readFile(filePath);
-}
-
-async function writeNotificationFile (data) {
-	return await writeFile(filePath, JSON.stringify(data, null, 2));
-}
 
 const findCategoryByPayee = (transactions, transaction) => {
 	const matchTransaction = transactions.find(i => i.payee === transaction.payee);
@@ -56,31 +40,15 @@ const findCategoryByPayee = (transactions, transaction) => {
 	return transaction;
 };
 
-const addHistory = function (packageName, text, transaction, result) {
-	readNotificationFile().then(data => {
-		const result = JSON.parse(data);
-		let history = result.history;
-		history.push(JSON.stringify({
-			originalPackageName: packageName,
-			originalText: text,
-			transaction: transaction,
-			parsed: result ? '👍' : '⚠️'
-		}));
-		writeNotificationFile(result).then(() => {
-			console.log(JSON.stringify({
-				originalPackageName: packageName,
-				originalText: text,
-				transaction: transaction,
-				parsed: result ? '👍' : '⚠️'
-			}));
-		});
-	});
-};
-
 exports.addTransaction = async function (body) {
 	let result = false;
 
 	if (body && body.packageName && body.text) {
+		const isDuplicated = await couchdb.isDuplicatedNotification(body.packageName, body.text);
+		if (isDuplicated) {
+			console.log('duplicated transaction');
+			return false;
+		}
 		let account = '';
 		if (body.packageName.match(/com\.kbcard\.kbkookmincard/i)) {
 			account = 'KB카드';
@@ -231,13 +199,6 @@ exports.addTransaction = async function (body) {
 		}
 
 		if (account && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
-			//const transactions = money.accounts[account].transactions;
-			//transaction = findCategoryByPayee(transactions, transaction);
-
-			//transactions.push(transaction);
-
-			//const token = await money.updateqifFile(account);
-
 			const couchTransactions = await couchdb.getTransactions();
 			transaction = findCategoryByPayee(couchTransactions, transaction);
 			transaction._id = `${transaction.date}:${account}:${uuidv1()}`;
@@ -265,10 +226,6 @@ exports.addTransaction = async function (body) {
 };
 
 exports.getHistory = async function (size) {
-	const history = await readNotificationFile().then(data => {
-		const result = JSON.parse(data);
-		return result.history.slice(size * -1);
-	});
-
+	const history = await couchdb.listNotifications(size);
 	return history;
 };

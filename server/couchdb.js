@@ -412,6 +412,29 @@ exports.addNotification = async (notification) => {
 	await notificationsDB.insert(notification);
 };
 
+exports.listNotifications = async (size) => {
+	const notificationsDB = nano.use('notifications_nanbean');
+	const notifications = await notificationsDB.list({include_docs: true});
+	return notifications.rows.slice(notifications.rows.length - size, notifications.rows.length).map(i => i.doc.text);
+};
+
+exports.isDuplicatedNotification = async (packageName, text) => {
+	const notificationsDB = nano.use('notifications_nanbean');
+	const q = {
+		selector: {
+			packageName: { "$eq": packageName},
+			text: { "$eq": text}
+		},
+		fields: [ "packageName", "text" ],
+		limit: 1
+	};
+	const result = await notificationsDB.find(q);
+	if (result.docs && result.docs.length > 0) {
+		return true;
+	}
+	return false;
+};
+
 const sendBalanceUpdateNotification = async () => {
 	const allAccounts = await getAllAccounts();
 	const balance = allAccounts.filter(i => !i.name.match(/_Cash/i)).map((i) => i.balance).reduce((prev, curr) => prev + curr);
