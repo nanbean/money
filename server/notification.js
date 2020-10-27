@@ -6,20 +6,24 @@ const couchdb = require('./couchdb');
 
 const _lastTransaction = {
 	packageName: '',
-	text: ''
+	text: '',
+	date: new Date()
 };
 
 const isDuplicatedTransaction = (body) => {
 	if (_lastTransaction.packageName === body.packageName && _lastTransaction.text === body.text) {
-		return true;
+		const diff = new Date() - _lastTransaction.date;
+		if (diff < 10 * 1000) {
+			return true;
+		}
 	}
-
 	return false;
 }
 
 const setLastTransaction = (body) => {
 	_lastTransaction.packageName = body.packageName;
 	_lastTransaction.text = body.text;
+	_lastTransaction.date = new Date();
 }
 
 const findCategoryByPayee = (transactions, transaction) => {
@@ -67,6 +71,8 @@ exports.addTransaction = async function (body) {
 			console.log('duplicated transaction');
 			return false;
 		}
+		setLastTransaction(body);
+
 		let account = '';
 		let items = [];
 		let transaction = {};
@@ -229,7 +235,6 @@ exports.addTransaction = async function (body) {
 			result = false;
 		}
 
-		setLastTransaction(body);
 		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction).replace(/({|})/gi,'').replace(/,/gi, ',\n'), './notificationlog');
 
 		return result;
