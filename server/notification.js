@@ -4,6 +4,24 @@ const uuidv1 = require('uuid/v1');
 const messaging = require('./messaging');
 const couchdb = require('./couchdb');
 
+const _lastTransaction = {
+	packageName: '',
+	text: ''
+};
+
+const isDuplicatedTransaction = (body) => {
+	if (_lastTransaction.packageName === body.packageName && _lastTransaction.text === body.text) {
+		return true;
+	}
+
+	return false;
+}
+
+const setLastTransaction = (body) => {
+	_lastTransaction.packageName = body.packageName;
+	_lastTransaction.text = body.text;
+}
+
 const findCategoryByPayee = (transactions, transaction) => {
 	const matchTransaction = transactions.find(i => i.payee === transaction.payee);
 	if (matchTransaction) {
@@ -43,18 +61,13 @@ const findCategoryByPayee = (transactions, transaction) => {
 exports.addTransaction = async function (body) {
 	let result = false;
 
+	
 	if (body && body.packageName && body.text) {
-		const isDuplicated = await couchdb.isDuplicatedNotification(body.packageName, body.text);
-		if (isDuplicated) {
+		if (isDuplicatedTransaction(body)) {
 			console.log('duplicated transaction');
 			return false;
 		}
 		let account = '';
-		if (body.packageName.match(/com\.kbcard\.kbkookmincard/i)) {
-			account = 'KB카드';
-		} else if (body.packageName.match(/com\.ex\.hipasscard/i)) {
-			account = 'KB체크카드';
-		}
 		let items = [];
 		let transaction = {};
 
@@ -216,8 +229,8 @@ exports.addTransaction = async function (body) {
 			result = false;
 		}
 
+		setLastTransaction(body);
 		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction).replace(/({|})/gi,'').replace(/,/gi, ',\n'), './notificationlog');
-		addHistory(body.packageName, body.text, transaction, result);
 
 		return result;
 	} else {
