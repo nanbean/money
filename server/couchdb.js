@@ -375,6 +375,8 @@ const arrangeInvestmemt = async () => {
 exports.updateInvestmentPrice = async () => {
 	await arrangeInvestmemt();
 	await updateAccountList();
+	await updateLifeTimePlanner();
+	await updateNetWorth();
 };
 
 const getAllAccounts = async () => {
