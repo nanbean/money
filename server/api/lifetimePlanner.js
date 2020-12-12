@@ -18,8 +18,7 @@ exports.getLifetimeFlowList = (accounts) => {
 				const colIndex = [
 					...alphabet.slice(1, alphabet.length),
 					...alphabet.map((i, index) => 'A' + alphabet[index]),
-					'BA',
-					'BB'
+					'BA'
 				];
 
 				nameCol.eachCell(function (cell, rowNumber) {
