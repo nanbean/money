@@ -11,6 +11,8 @@ const calendar = require('./calendar');
 
 const lifetimePlanner = require('./api/lifetimePlanner');
 
+const couchdbUtil = require('./couchdbUtil');
+
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
 	for (let i = 0; i < transactions.length; i++) {
@@ -556,6 +558,9 @@ new CronJob('00 33 05 1 * *', async () => {
 		 * at 03:00:00 AM.
 		 */
 	console.log('couchdb 00 34 05 monthly monthlyUpdateHistoricaljob started');
+	const transactionsDB = nano.use('transactions_nanbean');
+	const transactionsResponse = await transactionsDB.list({ include_docs: true });
+	const allTransactions = transactionsResponse.rows.map(i => i.doc);
 	const historiesDB = nano.use('histories_nanbean');
 	const kospiDB = nano.use('kospi');
 	const kosdaqDB = nano.use('kosdaq');
@@ -576,6 +581,18 @@ new CronJob('00 33 05 1 * *', async () => {
 	}));
 	await historiesDB.bulk({
 		docs: newHistories
+	});
+	const newInvestments = couchdbUtil.getInvestmentsFromTransactions(investments, allTransactions).filter(i => !newHistories.find(j => j.name === i.name)).map(i => ({
+		...i,
+		data: [
+			{
+				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+				close: investments.find(j => j._id === i._id.replace('history', 'investment')) && investments.find(j => j._id === i._id.replace('history', 'investment')).price
+			}
+		]
+	}));
+	await historiesDB.bulk({
+		docs: newInvestments
 	});
 }, () => {
 	/* This function is executed when the job stops */

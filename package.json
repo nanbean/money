@@ -11,8 +11,8 @@
     "cron": "^1.3.0",
     "dayjs": "^1.9.0",
     "exceljs": "^3.5.0",
-    "firebase": "^5.1.0",
-    "firebase-admin": "^5.12.1",
+    "firebase": "^8.3.1",
+    "firebase-admin": "^9.5.0",
     "google-finance": "^0.1.11",
     "googleapis": "^60.0.1",
     "iconv": "^2.3.0",
@@ -54,6 +54,7 @@
   "scripts": {
     "start": "HTTPS=true react-scripts start",
     "start:server": "node server",
+    "test:server": "jest server",
     "build": "react-scripts build",
     "lint": "eslint",
     "test": "react-scripts test --env=jsdom",
@@ -67,6 +68,7 @@
     "eslint-plugin-jest": "21.22.0",
     "eslint-plugin-react": "7.11.1",
     "fetch-mock": "^6.0.0",
+    "jest": "^26.6.3",
     "redux-mock-store": "^1.5.1"
   },
   "browserslist": [
