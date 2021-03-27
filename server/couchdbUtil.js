@@ -1,3 +1,15 @@
+const getClosePriceWithHistory = (investments, history) => {
+	if (investments && history) {
+		const investment = investments.find(j => j._id === history._id.replace('history', 'investment'));
+		if (investment) {
+			return investment.price
+		}
+	}
+	return 0;
+};
+
+exports.getClosePriceWithHistory = getClosePriceWithHistory;
+
 const getSymbolWithName = (investments, name) => {
 	if (investments && name) {
 		const investment = investments && investments.find(i => i.name === name);

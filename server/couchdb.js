@@ -574,7 +574,7 @@ new CronJob('00 33 05 1 * *', async () => {
 		data: [
 			{
 				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
-				close: investments.find(j => j._id === i._id.replace('history', 'investment')) && investments.find(j => j._id === i._id.replace('history', 'investment')).price
+				close: couchdbUtil.getClosePriceWithHistory(investments, i)
 			},
 			...i.data
 		]
@@ -587,7 +587,7 @@ new CronJob('00 33 05 1 * *', async () => {
 		data: [
 			{
 				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
-				close: investments.find(j => j._id === i._id.replace('history', 'investment')) && investments.find(j => j._id === i._id.replace('history', 'investment')).price
+				close: couchdbUtil.getClosePriceWithHistory(investments, i)
 			}
 		]
 	}));
