@@ -466,6 +466,7 @@ exports.getLifetimeFlowList = async () => {
 const getNetWorth = (allAccounts, allTransactions, allInvestments, histories, date, assetOnly) => {
 	const dateAccounts = {};
 	let netWorth = 0;
+	let netInvestments = []
 
 	for (const account of allAccounts) {
 		const transactions = allTransactions.filter(i => i.date <= date).filter(i => i.accountId === `account:${account.type}:${account.name}`);
@@ -477,6 +478,7 @@ const getNetWorth = (allAccounts, allTransactions, allInvestments, histories, da
 			} else {
 				if (account.type === 'Invst') {
 					const investments = getInvestmentList(allInvestments, allTransactions, transactions);
+					netInvestments = [...netInvestments, ...investments];
 					netWorth += getInvestmentBalance(investments, date, histories);
 				} else {
 					netWorth += getBalance(account.name, allTransactions, transactions, date);
@@ -485,7 +487,10 @@ const getNetWorth = (allAccounts, allTransactions, allInvestments, histories, da
 		}
 	}
 	
-	return netWorth;
+	return {
+		netWorth,
+		netInvestments
+	};
 };
 
 const updateNetWorth = async () => {
@@ -531,8 +536,10 @@ const updateNetWorth = async () => {
 	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true });
 
 	for (const item of data) {
-		item.netWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
-		item.assetNetWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date, true);
+		const netWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
+		item.netWorth = netWorth.netWorth;
+		item.netInvestments = netWorth.netInvestments;
+		item.assetNetWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date, true).netWorth;
 		item.movableAsset = Math.max(item.netWorth - item.assetNetWorth, 0);
 	}
 	

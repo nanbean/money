@@ -10,6 +10,7 @@ import TitleHeader from '../components/TitleHeader';
 
 import MonthlyExpense from './MonthlyExpense';
 import Dividend from './Dividend';
+import InvestmentHistory from './InvestmentHistory';
 
 const styles = theme => ({
 	container: {
@@ -38,10 +39,12 @@ export function Report ({
 					<Tabs value={value} onChange={handleChange}>
 						<Tab label="Monthly Expense" />
 						<Tab label="Dividend" />
+						<Tab label="Investment History" />
 					</Tabs>
 				</AppBar>
 				{value === 0 && <MonthlyExpense />}
 				{value === 1 && <Dividend />}
+				{value === 2 && <InvestmentHistory />}
 			</div>
 		</React.Fragment>
 	);

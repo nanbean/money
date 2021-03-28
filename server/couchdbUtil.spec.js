@@ -101,4 +101,190 @@ describe('couchdbUtil', () => {
 			expect(couchdbUtil.getInvestmentsFromTransactions(investements, transactions)).toEqual([{_id: 'histories:123456', name: 'TESTSTOCK'}]);
 		});
 	});
+
+	describe('getBalanceDetail', () => {
+		it('should return default value when transactions is not present', () => {
+			expect(couchdbUtil.getBalanceDetail()).toEqual({balance: 0, detail: []});
+		});
+
+		it('should return value when transactions is present', () => {
+			const allTransactions = [
+				{
+					"date": "2005-01-06",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-16",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-26",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-06",
+					"amount": 610,
+					"activity": "Buy",
+					"investment": "TESTSTOCK2",
+					"price": 600,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-16",
+					"amount": 610,
+					"activity": "Buy",
+					"investment": "TESTSTOCK2",
+					"price": 600,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-26",
+					"amount": 610,
+					"activity": "Buy",
+					"investment": "TESTSTOCK2",
+					"price": 600,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-02-06",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-02-16",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-02-26",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-02-26",
+					"amount": 1190,
+					"activity": "Sell",
+					"investment": "TESTSTOCK1",
+					"price": 600,
+					"quantity": 2,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				}
+			];
+			const transactions = [
+				{
+					"date": "2005-01-06",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-16",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-26",
+					"amount": 510,
+					"activity": "Buy",
+					"investment": "TESTSTOCK1",
+					"price": 500,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-06",
+					"amount": 610,
+					"activity": "Buy",
+					"investment": "TESTSTOCK2",
+					"price": 600,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-16",
+					"amount": 610,
+					"activity": "Buy",
+					"investment": "TESTSTOCK2",
+					"price": 600,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				},
+				{
+					"date": "2005-01-26",
+					"amount": 610,
+					"activity": "Buy",
+					"investment": "TESTSTOCK2",
+					"price": 600,
+					"quantity": 1,
+					"commission": 10,
+					"accountId": "account:Invst:TestInvest1"
+				}
+			];
+			expect(couchdbUtil.getBalanceDetail('TestInvest1', allTransactions, transactions, '2005-01-31')).toEqual({
+				balance: 3360,
+				detail: [
+					{
+						"investment": "TESTSTOCK1",
+						"quantity": 3,
+					},
+					{
+						"investment": "TESTSTOCK2",
+						"quantity": 3,
+					}
+				]
+			});
+		});
+	});
 });
