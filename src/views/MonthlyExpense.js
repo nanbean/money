@@ -177,7 +177,8 @@ class MonthlyExpense extends Component {
 					'보험',
 					'실제지출아님',
 					'취미-레저:여행',
-					'교통비:차량구입비'
+					'교통비:차량구입비',
+					'건축'
 				];
 				expenseReport = expenseReport.filter(i => !exemptionCategory.find(j => i.category && i.category.startsWith(j)));
 			}

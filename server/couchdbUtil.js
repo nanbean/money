@@ -28,7 +28,7 @@ const getInvestmentsFromTransactions = (investements, transactions) => {
 	if (investements && transactions) {
 		const investmentsTransactions = transactions.filter(i => i.accountId && i.accountId.startsWith('account:Invst'));
 
-		return investmentsTransactions.map(i => ({_id: `histories:${getSymbolWithName(investements, i.investment)}`, name: i.investment}));
+		return investmentsTransactions.map(i => ({_id: `history:${getSymbolWithName(investements, i.investment)}`, name: i.investment}));
 	}
 
 	return [];

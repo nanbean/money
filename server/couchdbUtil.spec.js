@@ -98,7 +98,7 @@ describe('couchdbUtil', () => {
 					"accountId": "account:Invst:TestInvest"
 				}
 			];
-			expect(couchdbUtil.getInvestmentsFromTransactions(investements, transactions)).toEqual([{_id: 'histories:123456', name: 'TESTSTOCK'}]);
+			expect(couchdbUtil.getInvestmentsFromTransactions(investements, transactions)).toEqual([{_id: 'history:123456', name: 'TESTSTOCK'}]);
 		});
 	});
 
