@@ -87,7 +87,7 @@ exports.addTransaction = async function (body) {
 
 		if (body.text.match(/승인취소/g)) {
 			// do nothing
-		} else if (body.packageName.match(/com\.ex\.hipasscard/i)) {
+		} else if (body.packageName.match(/com\.ex\.plus_hipasscard/i)) {
 			account = 'KB체크카드';
 			transaction = {
 				date: moment().format('YYYY-MM-DD'),
@@ -177,7 +177,7 @@ exports.addTransaction = async function (body) {
 				payee: items[5],
 				category: '분류없음'
 			};
-		} else if (body.text.match(/SC은행BC\(2314\)승인/g)) {
+		} else if (body.text.match(/SC은행BC\(2314\)승인/g) || body.text.match(/SC제일BC\(2314\)승인/g)) {
 			account = '생활비카드';
 			items = body.text.split('\n');
 			transaction = {
