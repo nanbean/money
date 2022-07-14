@@ -13,9 +13,9 @@ import _ from 'lodash';
 import DividendGrid from '../components/DividendGrid';
 import AccountFilter from '../components/AccountFilter';
 
-const startYear = 2005;
-const endYear = parseInt(moment().format('YYYY'), 10);
-const yearOptions = Array.from({ length: endYear - startYear + 1 }, (v, k) => k + startYear).map(i => ({ key: i, value: i, text: i }));
+import {
+	YEAR_LIST
+} from '../constants';
 
 const styles = theme => ({
 	header: {
@@ -93,7 +93,7 @@ class Dividend extends Component {
 							}}
 						>
 							{
-								yearOptions.map(i => (
+								YEAR_LIST.map(i => (
 									<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
 								))
 							}
@@ -105,7 +105,7 @@ class Dividend extends Component {
 						value={year}
 						search
 						selection
-						options={yearOptions}
+						options={YEAR_LIST}
 						onChange={this.onYearChange}
 					/> */}
 					<AccountFilter

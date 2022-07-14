@@ -1,3 +1,6 @@
+import moment from 'moment';
+import _ from 'lodash';
+
 export const FOOD_COLOR = '#e4815f';
 export const TRANSPORT_COLOR = '#5e9cd4';
 export const CULTURAL_LIFE_COLOR = '#d071c8';
@@ -16,6 +19,11 @@ export const SHOPPING_COLOR_CATEGORY = ['생활용품비', '의류', '대출이�
 export const MEDICAL_COLOR_CATEGORY = ['의료비'];
 export const HOBBY_COLOR_CATEGORY = ['취미-레저'];
 export const ETC_COLOR_CATEGORY = ['기타 지출', '실제지출아님'];
+
+export const START_YEAR = 2005;
+export const END_YEAR = parseInt(moment().format('YYYY'), 10);
+export const YEAR_LIST = Array.from({ length: END_YEAR - START_YEAR + 1 }, (v, k) => k + START_YEAR).map(i => ({ key: i, value: i, text: i }));
+export const MONTH_LIST = Array.from({ length: 12 }, (v, k) => _.padStart(k + 1, 2, '0'));
 
 export const TYPE_EMOJI = {
 	'Bank': '🏦',

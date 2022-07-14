@@ -8,7 +8,7 @@ import AppBar from '@material-ui/core/AppBar';
 
 import TitleHeader from '../components/TitleHeader';
 
-import MonthlyExpense from './MonthlyExpense';
+import MonthlyExpense from '../report/MonthlyExpense';
 import Dividend from './Dividend';
 import InvestmentHistory from './InvestmentHistory';
 
