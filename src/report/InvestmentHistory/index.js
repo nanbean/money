@@ -6,18 +6,18 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import LinearProgress from '@material-ui/core/LinearProgress';
 import stc from 'string-to-color';
 
-import InvestmentFilter from '../components/InvestmentFilter';
-import TitleHeader from '../components/TitleHeader';
+import InvestmentFilter from '../../components/InvestmentFilter';
+import TitleHeader from '../../components/TitleHeader';
 
 import {
 	setfilteredInvestments
-} from '../actions/investmentActions';
+} from '../../actions/investmentActions';
 
 import {
 	getNetWorthFlowAction
-} from '../actions/couchdbActions';
+} from '../../actions/couchdbActions';
 
-import toolTipStyles from '../assets/jss/components/toolTip.js';
+import toolTipStyles from '../../assets/jss/components/toolTip.js';
 
 const styles = theme => ({
 	container: {

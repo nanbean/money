@@ -10,12 +10,12 @@ import MenuItem from '@material-ui/core/MenuItem';
 import moment from 'moment';
 import _ from 'lodash';
 
-import DividendGrid from '../components/DividendGrid';
-import AccountFilter from '../components/AccountFilter';
+import DividendGrid from '../../components/DividendGrid';
+import AccountFilter from '../../components/AccountFilter';
 
 import {
 	YEAR_LIST
-} from '../constants';
+} from '../../constants';
 
 const styles = theme => ({
 	header: {

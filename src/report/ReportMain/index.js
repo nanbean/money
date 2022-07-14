@@ -6,11 +6,11 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import AppBar from '@material-ui/core/AppBar';
 
-import TitleHeader from '../components/TitleHeader';
+import TitleHeader from '../../components/TitleHeader';
 
-import MonthlyExpense from '../report/MonthlyExpense';
-import Dividend from './Dividend';
-import InvestmentHistory from './InvestmentHistory';
+import MonthlyExpense from '../MonthlyExpense';
+import Dividend from '../Dividend';
+import InvestmentHistory from '../InvestmentHistory';
 
 const styles = theme => ({
 	container: {
@@ -22,7 +22,7 @@ const styles = theme => ({
 	}
 });
 
-export function Report ({
+export function ReportMain ({
 	classes
 }) {
 	const [value, setValue] = useState(0);
@@ -54,4 +54,4 @@ Report.propTypes = {
 	classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(Report);
+export default withStyles(styles)(ReportMain);

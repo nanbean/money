@@ -13,11 +13,11 @@ import {
 	LifetimePlanner,
 	Performance,
 	AllPerformance,
-	Report,
 	Search,
 	Setting,
 	NotificationLog
 } from './views';
+import ReportMain from './report/ReportMain'
 
 import HomeMain from './home/HomeMain';
 import Signin from './user/Signin';
@@ -56,7 +56,7 @@ function Routes ({ classes }) {
 						<Route path="/lifetimeplanner" component={LifetimePlanner} />
 						<Route path="/performance/:investment" component={Performance} />
 						<Route exact path="/allperformance" component={AllPerformance} />
-						<Route exact path="/report" component={Report} />
+						<Route exact path="/report" component={ReportMain} />
 						<Route exact path="/search" component={Search} />
 						<Route path="/search/:keyword" component={Search} />
 						<Route exact path="/setting" component={Setting} />
