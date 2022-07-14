@@ -67,7 +67,15 @@ const getAllTransactions = async () => {
 		startkey: moment().subtract(30, 'years').format('YYYY-MM-DD'),
 		endkey: `${moment().add(1, 'years').format('YYYY-MM-DD')}\ufff0`
 	});
-	const allTransactions = transactionsResponse.rows.map(i => i.doc);
+	const allTransactions = transactionsResponse.rows.map(i => i.doc).sort((a, b) => {
+	if (a.date > b.date) {
+		return 1;
+	}
+	if (a.date < b.date) {
+		return -1;
+	}
+	return 0;
+	});
 
 	return allTransactions;
 };
