@@ -50,7 +50,7 @@ export function ReportMain ({
 	);
 }
 
-Report.propTypes = {
+ReportMain.propTypes = {
 	classes: PropTypes.object.isRequired
 };
 

@@ -24,5 +24,5 @@ Invalid Host Problem
 you should change .env.development in root directory
 example
 ```bash
-HOST=8.8.8.8
+DANGEROUSLY_DISABLE_HOST_CHECK=true
 ```
