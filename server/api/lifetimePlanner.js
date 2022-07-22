@@ -17,9 +17,12 @@ exports.getLifetimeFlowList = (accounts) => {
 				const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 				const colIndex = [
 					...alphabet.slice(1, alphabet.length),
-					...alphabet.map((i, index) => 'A' + alphabet[index]),
-					'BA'
+					...alphabet.map((i, index) => 'A' + alphabet[index])
 				];
+				const yearTotalLength = moment('2072-01-01').year() - moment().year() + 1; // 2072 - current year
+				while (colIndex.length > yearTotalLength) {
+					colIndex.shift();
+				}
 
 				nameCol.eachCell(function (cell, rowNumber) {
 					const accountItem = accounts.find(i => i.name === cell.value && i.type == 'Invst');
@@ -56,10 +59,14 @@ exports.getLifetimeFlowList = (accounts) => {
 								const expectCell = '$A$74';
 								const expect = worksheet.getCell(expectCell).value;
 								const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1);
-								worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
-									formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))`,
-									result
-								};
+								if (result === 0) {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = 0;
+								} else {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
+										formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))`,
+										result
+									};
+								}
 								netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 							}
 						}
@@ -76,10 +83,14 @@ exports.getLifetimeFlowList = (accounts) => {
 								const savingCellValue = worksheet.getCell(savingCell).value;
 								const saving = savingCellValue && savingCellValue.formula ? savingCellValue.result : savingCellValue;
 								const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1) + saving * (isSecondYear ? monthGap / 12 : 1);
-								worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
-									formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)`,
-									result
-								};
+								if (result === 0) {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = 0;
+								} else {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
+										formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)`,
+										result
+									};
+								}
 								netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 							}
 						}
@@ -96,10 +107,14 @@ exports.getLifetimeFlowList = (accounts) => {
 								const savingCellValue = worksheet.getCell(savingCell).value;
 								const saving = savingCellValue && savingCellValue.formula ? savingCellValue.result : savingCellValue;
 								const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1) + saving * (isSecondYear ? monthGap / 12 : 1);
-								worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
-									formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)`,
-									result
-								};
+								if (result === 0) {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = 0;
+								} else {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
+										formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)`,
+										result
+									};
+								}
 								netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 							}
 						}
@@ -113,10 +128,14 @@ exports.getLifetimeFlowList = (accounts) => {
 								const expectCell = '$A$74';
 								const expect = worksheet.getCell(expectCell).value;
 								const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1);
-								worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
-									formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))`,
-									result
-								};
+								if (result === 0) {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = 0;
+								} else {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
+										formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))`,
+										result
+									};
+								}
 								netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 							}
 						}
@@ -136,10 +155,14 @@ exports.getLifetimeFlowList = (accounts) => {
 								const expenseCellValue = worksheet.getCell(expenseCell).value;
 								const expense = expenseCellValue && expenseCellValue.formula ? expenseCellValue.result : expenseCellValue;
 								const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1) + saving * (isSecondYear ? monthGap / 12 : 1) - expense;
-								worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
-									formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)-${expenseCell}`,
-									result
-								};
+								if (result === 0) {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = 0;
+								} else {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
+										formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)-${expenseCell}`,
+										result
+									};
+								}
 								netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 							}
 						}
@@ -159,10 +182,14 @@ exports.getLifetimeFlowList = (accounts) => {
 								const expenseCellValue = worksheet.getCell(expenseCell).value;
 								const expense = expenseCellValue && expenseCellValue.formula ? expenseCellValue.result : expenseCellValue;
 								const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1) + saving * (isSecondYear ? monthGap / 12 : 1) - expense;
-								worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
-									formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)-${expenseCell}`,
-									result
-								};
+								if (result === 0) {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = 0;
+								} else {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
+										formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)-${expenseCell}`,
+										result
+									};
+								}
 								netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 							}
 						}
@@ -182,10 +209,14 @@ exports.getLifetimeFlowList = (accounts) => {
 								const expenseCellValue = worksheet.getCell(expenseCell).value;
 								const expense = expenseCellValue && expenseCellValue.formula ? expenseCellValue.result : expenseCellValue;
 								const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1) + saving * (isSecondYear ? monthGap / 12 : 1) - expense;
-								worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
-									formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)-${expenseCell}`,
-									result
-								};
+								if (result === 0) {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = 0;
+								} else {
+									worksheet.getCell(`${colIndex[j]}${rowNumber}`).value = {
+										formula: `${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)-${expenseCell}`,
+										result
+									};
+								}
 								netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 							}
 						}

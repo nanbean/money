@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -41,57 +41,52 @@ const styles = theme => ({
 	}
 });
 
-class Setting extends Component {
-	handleRegisterMessagingToken = () => {
-		this.props.requestPermissionAction();
+export function Setting ({
+	classes,
+	history,
+	messagingToken,
+	removePermissionAction,
+	requestPermissionAction
+}) 
+{
+	const handleNotificationLog = () => {
+		history.push('/notificationlog');
 	}
 
-	handleUnregisterMessagingToken = () => {
-		this.props.removePermissionAction();
-	}
-
-	handleNotificationLog = () => {
-		this.props.history.push('/notificationlog');
-	}
-
-	handlePushNotificationChange = (event) => {
+	const handlePushNotificationChange = (event) => {
 		if (event.target.checked) {
-			this.props.requestPermissionAction();
+			requestPermissionAction();
 		} else {
-			this.props.removePermissionAction();
+			removePermissionAction();
 		}
 	}
 
-	render () {
-		const { classes, messagingToken } = this.props;
-
-		return (
-			<div>
-				<TitleHeader title="Setting" />
-				<div className={classes.container}>
-					<Paper className={classes.paper}>
-						<FormGroup>
-							<FormControlLabel
-								control={
-									<Switch checked={messagingToken ? true : false} onChange={this.handlePushNotificationChange} aria-label="PushSwitch" />
-								}
-								label="푸쉬 알림 받기"
-							/>
-						</FormGroup>
-						<Button
-							fullWidth
-							variant="contained"
-							color="primary"
-							className={classes.log}
-							onClick={this.handleNotificationLog}
-						>
-							Notification Log
-						</Button>
-					</Paper>
-				</div>
+	return (
+		<div>
+			<TitleHeader title="Setting" />
+			<div className={classes.container}>
+				<Paper className={classes.paper}>
+					<FormGroup>
+						<FormControlLabel
+							control={
+								<Switch checked={messagingToken ? true : false} onChange={handlePushNotificationChange} aria-label="PushSwitch" />
+							}
+							label="푸쉬 알림 받기"
+						/>
+					</FormGroup>
+					<Button
+						fullWidth
+						variant="contained"
+						color="primary"
+						className={classes.log}
+						onClick={handleNotificationLog}
+					>
+						Notification Log
+					</Button>
+				</Paper>
 			</div>
-		);
-	}
+		</div>
+	);
 }
 
 Setting.propTypes = {

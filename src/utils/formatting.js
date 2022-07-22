@@ -2,7 +2,11 @@ import moment from 'moment';
 
 export function toCurrencyFormat (number) {
 	if (number) {
-		return parseInt(number, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+		if (number % 1 !== 0) {
+			return parseFloat(number).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+		} else {
+			return parseInt(number, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');			
+		}
 	} else {
 		return 0;
 	}

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -49,30 +49,23 @@ const styles = theme => ({
 	}
 });
 
-class Search extends Component {
-	constructor (props) {
-		super(props);
+export function Search ({
+	allAccountsTransactions,
+	classes,
+	isModalOpen,
+	openTransactionInModal,
+	resetTransactionForm,
+	match
+}) 
+{
+	const [filteredTransactions, setFilteredTransactions] = useState([]);
+	const [keyword, setKeyword] = useState(match && match.params && match.params.keyword);
 
-		this.onSearchKeyPress = this.onSearchKeyPress.bind(this);
-		this.onKeywordChange = this.onKeywordChange.bind(this);
-		this.updateFilteredTransactions = this.updateFilteredTransactions.bind(this);
+	useEffect(() => {
+		updateFilteredTransactions(allAccountsTransactions, keyword);
+	}, [keyword, allAccountsTransactions]);
 
-		this.state = {
-			filteredTransactions: [],
-			keyword: ''
-		};
-	}
-
-	componentDidMount () {
-		const { match } = this.props;
-		const keyword = match && match.params && match.params.keyword;
-
-		this.setState({
-			keyword
-		});
-	}
-
-	updateFilteredTransactions (allAccountsTransactions, keyword) {
+	const updateFilteredTransactions = (allAccountsTransactions, keyword) => {
 		if (keyword) {
 			let filteredTransactions = [];
 
@@ -86,106 +79,60 @@ class Search extends Component {
 						(i.subcategory && i.subcategory.match(new RegExp(keyword, 'i'))) || (i.memo && i.memo.match(new RegExp(keyword, 'i')))
 			);
 	
-
-			// for (let i in allAccountTransactions) {
-			// 	const account = allAccountTransactions[i];
-			// 	if (account.type === 'CCard' || account.type === 'Bank' || account.type === 'Cash') {
-			// 		const divisionTransaction = account.transactions.filter(k => k.division);
-			// 		let divisions = [];
-			// 		for (let l = 0; l < divisionTransaction.length; l++) {
-			// 			const division = divisionTransaction[l].division;
-			// 			const date = divisionTransaction[l].date;
-			// 			for (let m = 0; m < division.length; m++) {
-			// 				const divisionItem = division[m];
-			// 				divisionItem.date = date;
-			// 				divisionItem.payee = divisionItem.description;
-			// 				divisions.push(divisionItem);
-			// 			}
-			// 		}
-			// 		filteredTransactions = [
-			// 			...filteredTransactions,
-			// 			...account.transactions.filter(j => {
-			// 				if (j.category.match(new RegExp(keyword, 'i')) || j.payee.match(new RegExp(keyword, 'i'))) {
-			// 					return true;
-			// 				} else if (j.subcategory && j.subcategory.match(new RegExp(keyword, 'i'))) {
-			// 					return true;
-			// 				} else if (j.memo && j.memo.match(new RegExp(keyword, 'i'))) {
-			// 					return true;
-			// 				} else {
-			// 					return false;
-			// 				}
-			// 			}).map(k => {
-			// 				k.account = i;
-			// 				return k;
-			// 			})
-			// 		];
-			// 	}
-			// }
-			this.setState({
-				filteredTransactions,
-				keyword
-			});
+			setFilteredTransactions(filteredTransactions);
+			setKeyword(keyword);
 		}
 	}
 
-	onSearchKeyPress (e) {
+	const onSearchKeyPress = (e) => {
 		if (e.key === 'Enter' && e.target.value) {
-			const { allAccountsTransactions } = this.props;
-			const keyword = e.target.value;
-			this.updateFilteredTransactions(allAccountsTransactions,  keyword);
+			updateFilteredTransactions(allAccountsTransactions, e.target.value);
 		}
 	}
 
-	onKeywordChange (e) {
-		this.setState({
-			keyword: e.target.value
-		});
+	const onKeywordChange = (e) => {
+		setKeyword(e.target.value);
 	}
 
-	render () {
-		const { classes } = this.props;
-		const { filteredTransactions, keyword } = this.state;
-
-		return (
-			<div>
-				<TitleHeader title="Search" />
-				<div className={classes.container}>
-					<Paper className={classes.paper}>
-						<div className={classes.sticky}>
-							<FormControl margin="normal" required fullWidth>
-								<Input
-									id="search"
-									name="search"
-									autoComplete="search"
-									autoFocus
-									value={keyword}
-									onChange={this.onKeywordChange}
-									onKeyPress={this.onSearchKeyPress}
-									startAdornment={
-										<InputAdornment position="start">
-											<SearchIcon />
-										</InputAdornment>
-									}
-								/>
-							</FormControl>
-						</div>
-						{
-							filteredTransactions.length > 0 &&
-							<BankTransactions
-								showAccount
-								transactions={filteredTransactions}
-								openTransactionInModal={this.props.openTransactionInModal}
+	return (
+		<div>
+			<TitleHeader title="Search" />
+			<div className={classes.container}>
+				<Paper className={classes.paper}>
+					<div className={classes.sticky}>
+						<FormControl margin="normal" required fullWidth>
+							<Input
+								id="search"
+								name="search"
+								autoComplete="search"
+								autoFocus
+								value={keyword}
+								onChange={onKeywordChange}
+								onKeyPress={onSearchKeyPress}
+								startAdornment={
+									<InputAdornment position="start">
+										<SearchIcon />
+									</InputAdornment>
+								}
 							/>
-						}
-						<BankTransactionModal
-							isEdit={true}
-							transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
+						</FormControl>
+					</div>
+					{
+						filteredTransactions.length > 0 &&
+						<BankTransactions
+							showAccount
+							transactions={filteredTransactions}
+							openTransactionInModal={openTransactionInModal}
 						/>
-					</Paper>
-				</div>
+					}
+					<BankTransactionModal
+						isEdit={true}
+						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
+					/>
+				</Paper>
 			</div>
-		);
-	}
+		</div>
+	);
 }
 
 Search.propTypes = {
