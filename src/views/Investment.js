@@ -1,16 +1,18 @@
 import React, { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
-import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
-import Paper from '@material-ui/core/Paper';
-import Button from '@material-ui/core/Button';
-import AddIcon from '@material-ui/icons/Add';
-import MoneyIcon from '@material-ui/icons/Money';
+import { Link, useLocation, useParams } from 'react-router-dom';
+
+import { styled } from '@mui/material/styles';
+
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import AddIcon from '@mui/icons-material/Add';
+import MoneyIcon from '@mui/icons-material/Money';
 
 import AccountInvestments from './AccountInvestments';
 import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
 import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
@@ -18,119 +20,105 @@ import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 import { setAccountAction } from '../actions/accountActions';
 
 import {
-	getAccountInvestmentsAction,
-	addTransactionAction,
-	editTransactionAction,
-	deleteTransactionAction
+	getAccountInvestmentsAction
 } from '../actions/couchdbActions';
 import {
-	openTransactionInModal,
-	resetTransactionForm
+	openTransactionInModal
 } from '../actions/ui/form/investmentTransaction';
 
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
-	},
-	paper: {
-		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing(2)
-		},
-		[theme.breakpoints.down('sm')]: {
-			marginTop: 0
-		},
-		alignItems: 'center'
-	},
-	sticky: {
-		width: '100%',
-		position: 'sticky',
-		zIndex: theme.zIndex.drawer + 1,
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		},
-		[theme.breakpoints.up('sm')]: {
-			top: 64
-		},
-		backgroundColor: 'white'
-	},
-	headerHalf: {
-		display: 'inline-block',
-		width: '50%'
-	},
-	rightIcon: {
-		marginLeft: theme.spacing(1)
-	},
-	link: {
-		textDecoration: 'none',
-		color: 'inherit'
-	}
-});
+const linkStyle = {
+	textDecoration: 'none',
+	color: 'inherit'
+};
 
-const getAccountId = url => `account${url.replace(/\//g, ':')}`;
+const Sticky = styled('div')(({ theme }) => ({
+	width: '100%',
+	position: 'sticky',
+	zIndex: theme.zIndex.drawer + 1,
+	[theme.breakpoints.down('sm')]: {
+		top: 56
+	},
+	[theme.breakpoints.up('sm')]: {
+		top: 64
+	},
+	backgroundColor: 'white'
+}));
+
+const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
 const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
 
-export function Investment ({
-	account,
-	addTransactionAction,
-	allAccountsTransactions,
-	classes,
-	deleteTransactionAction,
-	dropInvestmentList,
-	editTransactionAction,
-	getAccountInvestmentsAction,
-	isEdit,
-	isModalOpen,
-	match,
-	openTransactionInModal,
-	resetTransactionForm,
-	setAccountAction
-}) {
-	const name = match && match.params && match.params.name;
-	const url = match.url;
-	const accountId = useMemo(() => getAccountId(url), [url]);
+export function Investment () {
+	const account = useSelector((state) => state.account);
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const dropInvestmentList = useSelector((state) => state.dropInvestmentList);
+	const isEdit = useSelector((state) => state.ui.form.investmentTransaction.isEdit);
+	const isModalOpen = useSelector((state) => state.ui.form.investmentTransaction.isModalOpen);
+
+	const { name } = useParams();
+	const { pathname } = useLocation();
+	const accountId = useMemo(() => getAccountId(pathname), [pathname]);
 	const accountTransactions = useMemo(() => getAccountTransactions(allAccountsTransactions, accountId), [allAccountsTransactions, accountId]);
 
+	const dispatch = useDispatch();
+
 	useEffect(() => {
-		setAccountAction(name);
-		getAccountInvestmentsAction( accountId );
+		dispatch(setAccountAction(name));
+		dispatch(getAccountInvestmentsAction(accountId));
 	}, [accountId, name]);
 	
+	const onNewClick = () => {
+		dispatch(openTransactionInModal());
+	};
+
 	return (
 		<React.Fragment>
 			<TitleHeader title={account} />
-			<div className={classes.container}>
-				<Paper className={classes.paper}>
-					<div className={classes.sticky}>
-						<div className={classes.headerHalf}>
+			<Container>
+				<Paper
+					sx={(theme) => ({
+						[theme.breakpoints.up('lg')]: {
+							marginTop: theme.spacing(2)
+						},
+						[theme.breakpoints.down('sm')]: {
+							marginTop: 0
+						},
+						alignItems: 'center'
+					})}
+				>
+					<Sticky>
+						<div style={{ display: 'inline-block', width: '50%' }}>
 							<Button
 								fullWidth
 								variant="outlined"
 								color="primary"
-								onClick={openTransactionInModal}
+								onClick={onNewClick}
 							>
 								New
-								<AddIcon className={classes.rightIcon} />
+								<AddIcon
+									sx={(theme) => ({
+										marginLeft: theme.spacing(1)
+									})}
+								/>
 							</Button>
 						</div>
-						<div className={classes.headerHalf}>
-							<Link to={`/Bank/${account}_Cash`} className={classes.link}>
+						<div style={{ display: 'inline-block', width: '50%' }}>
+							<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
 								<Button
 									fullWidth
 									variant="outlined"
 									color="primary"
 								>
 								Cash
-									<MoneyIcon className={classes.rightIcon} />
+									<MoneyIcon
+										sx={(theme) => ({
+											marginLeft: theme.spacing(1)
+										})}
+									/>
 								</Button>
 							</Link>
 						</div>
-					</div>
+					</Sticky>
 					<InvestmentTransactions
-						openTransactionInModal={openTransactionInModal}
 						transactions={accountTransactions}
 					/>
 
@@ -142,74 +130,12 @@ export function Investment ({
 						accountId={accountId}
 						transactions={accountTransactions}
 						autocompleteInvestmentList={dropInvestmentList}
-						resetTransactionForm={resetTransactionForm}
-						addTransactionAction={addTransactionAction}
-						deleteTransactionAction={deleteTransactionAction}
-						editTransactionAction={editTransactionAction}
 					/>
 					<AccountInvestments />
 				</Paper>
-			</div>
+			</Container>
 		</React.Fragment>
 	);
 }
 
-Investment.propTypes = {
-	account: PropTypes.string.isRequired,
-	accountInvestments: PropTypes.array.isRequired,
-	addTransactionAction: PropTypes.func.isRequired,
-	allAccountsTransactions: PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired,
-	deleteTransactionAction: PropTypes.func.isRequired,
-	dropInvestmentList: PropTypes.array.isRequired,
-	editTransactionAction: PropTypes.func.isRequired,
-	getAccountInvestmentsAction: PropTypes.func.isRequired,
-	isEdit: PropTypes.bool.isRequired,
-	isModalOpen: PropTypes.bool.isRequired,
-	openTransactionInModal: PropTypes.func.isRequired,
-	resetTransactionForm: PropTypes.func.isRequired,
-	setAccountAction: PropTypes.func.isRequired,
-	match: PropTypes.shape({
-		params: PropTypes.shape({
-			name: PropTypes.string.isRequired
-		}).isRequired
-	})
-};
-
-const mapStateToProps = state => ({
-	account: state.account,
-	accountInvestments: state.accountInvestments,
-	allAccountsTransactions: state.allAccountsTransactions,
-	dropInvestmentList: state.dropInvestmentList,
-	isModalOpen: state.ui.form.investmentTransaction.isModalOpen,
-	isEdit: state.ui.form.investmentTransaction.isEdit
-});
-
-const mapDispatchToProps = dispatch => ({
-	getAccountInvestmentsAction (params) {
-		dispatch(getAccountInvestmentsAction(params));
-	},
-	addTransactionAction (params) {
-		dispatch(addTransactionAction(params));
-	},
-	deleteTransactionAction (params) {
-		dispatch(deleteTransactionAction(params));
-	},
-	editTransactionAction (params) {
-		dispatch(editTransactionAction(params));
-	},
-	setAccountAction (params) {
-		dispatch(setAccountAction(params));
-	},
-	openTransactionInModal (params) {
-		dispatch(openTransactionInModal(params));
-	},
-	resetTransactionForm () {
-		dispatch(resetTransactionForm());
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(Investment));
+export default Investment;

@@ -1,40 +1,22 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import LinearProgress from '@material-ui/core/LinearProgress';
+import LinearProgress from '@mui/material/LinearProgress';
 
 import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
 
 import { getLifetimeFlowAction } from '../actions/couchdbActions';
 import { toCurrencyFormat } from '../utils/formatting';
 
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
-	},
-	progress: {
-		zIndex: theme.zIndex.drawer + 2,
-		position: 'sticky',
-		top: 64,
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		}
-	}
-});
+function LifetimePlanner () {
+	const lifetimePlannerFlow = useSelector((state) => state.lifetimePlannerFlow);
 
-function LifetimePlanner ({
-	classes,
-	getLifetimeFlowAction,
-	lifetimePlannerFlow
-}) {
+	const dispatch = useDispatch();
+
 	useEffect(() => {
-		getLifetimeFlowAction();
+		dispatch(getLifetimeFlowAction());
 	}, []);
 
 	const formatter = data => {
@@ -45,7 +27,7 @@ function LifetimePlanner ({
 		return (
 			<div>
 				<TitleHeader title="Lifetime Planner" />
-				<div className={classes.container}>
+				<Container>
 					{
 						lifetimePlannerFlow.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
@@ -62,37 +44,28 @@ function LifetimePlanner ({
 							</BarChart>
 						</ResponsiveContainer>
 					}
-				</div>
+				</Container>
 			</div>
 		);
 	} else {
 		return (
 			<div>
 				<TitleHeader title="Lifetime Planner" />
-				<LinearProgress color="secondary" className={classes.progress} />
+				<LinearProgress
+					color="secondary"
+					sx={(theme) => ({
+						zIndex: theme.zIndex.drawer + 2,
+						position: 'sticky',
+						top: 64,
+						[theme.breakpoints.down('sm')]: {
+							top: 56
+						}
+					})}
+				/>
 
 			</div>
 		);
 	}
 }
 
-LifetimePlanner.propTypes = {
-	classes: PropTypes.object.isRequired,
-	getLifetimeFlowAction: PropTypes.func.isRequired,
-	lifetimePlannerFlow: PropTypes.array.isRequired
-};
-
-const mapStateToProps = state => ({
-	lifetimePlannerFlow: state.lifetimePlannerFlow
-});
-
-const mapDispatchToProps = dispatch => ({
-	getLifetimeFlowAction () {
-		dispatch(getLifetimeFlowAction());
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(LifetimePlanner));
+export default LifetimePlanner;

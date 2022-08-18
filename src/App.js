@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { MuiThemeProvider } from '@material-ui/core/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider } from '@mui/material/styles';
 
 import Routes from './routes';
 
@@ -12,7 +13,8 @@ import {
 	getAllAccountsTransactionsAction,
 	getAllInvestmentsListAction,
 	getPayeeListAction,
-	getCategoryListAction
+	getCategoryListAction,
+	getSettingsAction
 } from './actions/couchdbActions';
 
 import theme from './theme';
@@ -26,6 +28,7 @@ function App ({
 	getAuthAction,
 	getCategoryListAction,
 	getPayeeListAction,
+	getSettingsAction,
 	rehydrateAction
 }) {
 
@@ -38,12 +41,14 @@ function App ({
 		getAllInvestmentsListAction();
 		getCategoryListAction();
 		getPayeeListAction();
+		getSettingsAction();
 	}, []);
 
 	return (
-		<MuiThemeProvider theme={theme}>
+		<ThemeProvider theme={theme}>
+			<CssBaseline />
 			<Routes />
-		</MuiThemeProvider>
+		</ThemeProvider >
 	);
 }
 
@@ -54,6 +59,7 @@ App.propTypes = {
 	getAuthAction: PropTypes.func.isRequired,
 	getCategoryListAction: PropTypes.func.isRequired,
 	getPayeeListAction: PropTypes.func.isRequired,
+	getSettingsAction: PropTypes.func.isRequired,
 	rehydrateAction: PropTypes.func.isRequired
 };
 
@@ -75,6 +81,9 @@ const mapDispatchToProps = dispatch => ({
 	},
 	getPayeeListAction () {
 		dispatch(getPayeeListAction());
+	},
+	getSettingsAction () {
+		dispatch(getSettingsAction());
 	},
 	rehydrateAction () {
 		dispatch(rehydrateAction());

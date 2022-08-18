@@ -1,25 +1,25 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import classNames from 'classnames';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-	withRouter,
+	useLocation,
 	Link
 } from 'react-router-dom';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import Divider from '@material-ui/core/Divider';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import CategoryIcon from '@material-ui/icons/Category';
-import HomeIcon from '@material-ui/icons/Home';
-import TableChartIcon from '@material-ui/icons/TableChart';
-import BarChartIcon from '@material-ui/icons/BarChart';
-import ShowChartIcon from '@material-ui/icons/ShowChart';
-import SearchIcon from '@material-ui/icons/Search';
-import SettingsIcon from '@material-ui/icons/Settings';
+
+import { styled } from '@mui/material/styles';
+
+import Drawer from '@mui/material/Drawer';
+import List from '@mui/material/List';
+import Divider from '@mui/material/Divider';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import CategoryIcon from '@mui/icons-material/Category';
+import HomeIcon from '@mui/icons-material/Home';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import SearchIcon from '@mui/icons-material/Search';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 import { toggleSidebar } from '../../actions/uiActions';
 
@@ -27,45 +27,10 @@ import useMobile from '../../hooks/useMobile';
 
 const drawerWidth = 240;
 
-const styles = theme => ({
-	drawer: {
-		width: drawerWidth,
-		flexShrink: 0,
-		whiteSpace: 'nowrap'
-	},
-	drawerOpen: {
-		transition: theme.transitions.create('width', {
-			easing: theme.transitions.easing.sharp,
-			duration: theme.transitions.duration.enteringScreen
-		}),
-		width: drawerWidth,
-		[theme.breakpoints.down('sm')]: {
-			width: theme.spacing(7) + 1
-		}
-	},
-	drawerClose: {
-		transition: theme.transitions.create('width', {
-			easing: theme.transitions.easing.sharp,
-			duration: theme.transitions.duration.leavingScreen
-		}),
-		overflowX: 'hidden',
-		width: theme.spacing(7) + 1,
-		[theme.breakpoints.down('sm')]: {
-			width: 0
-		}
-	},
-	toolbar: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'flex-end',
-		padding: '0 8px',
-		...theme.mixins.toolbar
-	},
-	link: {
-		textDecoration: 'none',
-		color: 'inherit'
-	}
-});
+const linkStyle = {
+	textDecoration: 'none',
+	color: 'inherit'
+};
 
 const routes = [
 	{
@@ -109,35 +74,92 @@ const anotherRoutes = [
 	}
 ];
 
-function SidebarMenu ({ classes, isSidebarOpen, location, toggleSidebar }) {
+const Toolbar = styled('div')(({ theme }) => ({
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'flex-end',
+	padding: '0 8px',
+	...theme.mixins.toolbar
+}));
+
+function SidebarMenu ()
+{
+	const isSidebarOpen = useSelector((state) => state.ui.isSidebarOpen);
+	const dispatch = useDispatch();
 	const isMobile = useMobile();
+	const location = useLocation();
 
 	const onClickHandler = () => {
 		if (isMobile) {
-			toggleSidebar();
+			dispatch(toggleSidebar());
 		}
 	};
 
 	return (
 		<Drawer
 			variant="permanent"
-			className={classNames(classes.drawer, {
-				[classes.drawerOpen]: isSidebarOpen,
-				[classes.drawerClose]: !isSidebarOpen
-			})}
-			classes={{
-				paper: classNames({
-					[classes.drawerOpen]: isSidebarOpen,
-					[classes.drawerClose]: !isSidebarOpen
-				})
+			sx={(theme) => {
+				if (isSidebarOpen) {
+					return {
+						position: 'relative',
+						boxSizing: 'border-box',
+						width: drawerWidth,
+						flexShrink: 0,
+						whiteSpace: 'nowrap',
+						transition: theme.transitions.create('width', {
+							easing: theme.transitions.easing.sharp,
+							duration: theme.transitions.duration.enteringScreen
+						}),
+						[theme.breakpoints.down('sm')]: {
+							width: theme.spacing(7)
+						},
+						'& .MuiDrawer-paper': {
+							width: drawerWidth,
+							transition: theme.transitions.create('width', {
+								easing: theme.transitions.easing.sharp,
+								duration: theme.transitions.duration.enteringScreen
+							}),
+							[theme.breakpoints.down('sm')]: {
+								width: theme.spacing(7)
+							}							
+						}
+					};
+				} else {
+					return {
+						position: 'relative',
+						boxSizing: 'border-box',
+						width: theme.spacing(7),
+						flexShrink: 0,
+						whiteSpace: 'nowrap',
+						transition: theme.transitions.create('width', {
+							easing: theme.transitions.easing.sharp,
+							duration: theme.transitions.duration.leavingScreen
+						}),
+						overflowX: 'hidden',
+						[theme.breakpoints.down('sm')]: {
+							width: 0
+						},
+						'& .MuiDrawer-paper': {
+							width: theme.spacing(7),
+							overflowX: 'hidden',
+							transition: theme.transitions.create('width', {
+								easing: theme.transitions.easing.sharp,
+								duration: theme.transitions.duration.leavingScreen
+							}),
+							[theme.breakpoints.down('sm')]: {
+								width: 0
+							}
+						}
+					};
+				}
 			}}
 			open={isSidebarOpen}
 		>
-			<div className={classes.toolbar} />
+			<Toolbar/>
 			<Divider />
 			<List>
 				{routes.map(item => (
-					<Link key={item.label} to={item.path} className={classes.link}>
+					<Link key={item.label} to={item.path} style={linkStyle}>
 						<ListItem
 							button
 							onClick={onClickHandler}
@@ -152,7 +174,7 @@ function SidebarMenu ({ classes, isSidebarOpen, location, toggleSidebar }) {
 			<Divider />
 			<List>
 				{anotherRoutes.map(item => (
-					<Link key={item.label} to={item.path} className={classes.link}>
+					<Link key={item.label} to={item.path} style={linkStyle}>
 						<ListItem
 							button
 							onClick={onClickHandler}
@@ -168,24 +190,4 @@ function SidebarMenu ({ classes, isSidebarOpen, location, toggleSidebar }) {
 	);
 }
 
-SidebarMenu.propTypes = {
-	classes: PropTypes.object.isRequired,
-	isSidebarOpen: PropTypes.bool.isRequired,
-	location: PropTypes.object.isRequired,
-	toggleSidebar: PropTypes.func.isRequired
-};
-
-const mapStateToProps = state => ({
-	isSidebarOpen: state.ui.isSidebarOpen
-});
-
-const mapDispatchToProps = dispatch => ({
-	toggleSidebar () {
-		dispatch(toggleSidebar());
-	}
-});
-
-export default withRouter(connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(SidebarMenu)));
+export default SidebarMenu;

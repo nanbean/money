@@ -1,8 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import withWidth, { isWidthUp } from '@material-ui/core/withWidth';
 import { AutoSizer, MultiGrid } from 'react-virtualized';
+
+import { styled } from '@mui/material/styles';
+
+import useWidth from '../../hooks/useWidth';
 
 import Amount from '../Amount';
 
@@ -11,47 +13,46 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 const ROW_HEIGHT = 40;
 const COLUMN_WIDTH = 84;
 
-const styles = () => ({
-	reportGrid: {
-		display: 'flex',
-		height: '65vh',
-		textAlign: 'center'
-	},
-	cell: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderBottom: '1px solid rgba(34,36,38,.1)',
-		borderRight: '1px solid rgba(34,36,38,.1)'
-	},
-	topLeftGrid: {
-		fontWeight: 'bold',
-		backgroundColor: 'rgb(249, 250, 251)',
-		borderTop: '1px solid rgba(34,36,38,.1)',
-		borderBottom: '1px solid rgba(34,36,38,.1)'
-	},
-	topRightGrid: {
-		fontWeight: 'bold',
-		backgroundColor: 'rgb(249, 250, 251)',
-		overflow: 'hidden !important',
-		borderTop: '1px solid rgba(34,36,38,.1)',
-		borderBottom: '1px solid rgba(34,36,38,.1)'
-	},
-	bottomLeftGrid: {
-		backgroundColor: 'rgb(249, 250, 251)',
-		overflow: 'hidden !important'
-	}
-});
+const styleTopLeftGrid = {
+	fontWeight: 'bold',
+	backgroundColor: 'rgb(249, 250, 251)',
+	borderTop: '1px solid rgba(34,36,38,.1)',
+	borderBottom: '1px solid rgba(34,36,38,.1)'
+};
+
+const styleTopRightGrid = {
+	fontWeight: 'bold',
+	backgroundColor: 'rgb(249, 250, 251)',
+	borderTop: '1px solid rgba(34,36,38,.1)',
+	borderBottom: '1px solid rgba(34,36,38,.1)'
+};
+
+const styleBottomLeftGrid = {
+	backgroundColor: 'rgb(249, 250, 251)'
+};
+
+const Cell = styled('div')(() => ({
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'center',
+	borderBottom: '1px solid rgba(34,36,38,.1)',
+	borderRight: '1px solid rgba(34,36,38,.1)'
+}));
 
 export function ReportGrid ({
-	classes,
-	reportData,
-	width
+	reportData
 }) {
-	const isWidthUpLg = isWidthUp('lg', width);
+	const width = useWidth();
+	const isWidthUpLg = width !== 'xs' && width !== 'sm' && width !== 'md';
 
 	return (
-		<div className={classes.reportGrid}>
+		<div
+			style={{
+				display: 'flex',
+				height: '65vh',
+				textAlign: 'center'
+			}}
+		>
 			{
 				<AutoSizer>
 					{({ width, height }) => (
@@ -64,22 +65,24 @@ export function ReportGrid ({
 								const isNumber = !Number.isNaN(parseValue);
 
 								return (
-									<div className={classes.cell} key={key} style={style}>
+									<Cell key={key} style={style}>
 										{isNumber ? <Amount value={parseValue} /> : value}
-									</div>
+									</Cell>
 								);
 							}}
 							columnWidth={isWidthUpLg ? width / 14 - 2 : COLUMN_WIDTH}
 							columnCount={reportData[0].length}
 							enableFixedColumnScroll
 							enableFixedRowScroll
+							hideTopRightGridScrollbar
+							hideBottomLeftGridScrollbar
 							width={width}
 							height={height}
 							rowHeight={ROW_HEIGHT}
 							rowCount={reportData.length}
-							classNameTopLeftGrid={classes.topLeftGrid}
-							classNameBottomLeftGrid={classes.bottomLeftGrid}
-							classNameTopRightGrid={classes.topRightGrid}
+							styleTopLeftGrid={styleTopLeftGrid}
+							styleTopRightGrid={styleTopRightGrid}
+							styleBottomLeftGrid={styleBottomLeftGrid}
 						/>
 					)}
 				</AutoSizer>
@@ -89,9 +92,7 @@ export function ReportGrid ({
 }
 
 ReportGrid.propTypes = {
-	classes: PropTypes.object.isRequired,
-	reportData: PropTypes.array.isRequired,
-	width: PropTypes.object.isRequired
+	reportData: PropTypes.array.isRequired
 };
 
-export default withStyles(styles, { withTheme: true })(withWidth()(ReportGrid));
+export default ReportGrid;

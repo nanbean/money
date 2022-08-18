@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 
-export function useMonthlyExpense(value) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref.current;
+export function useMonthlyExpense (value) {
+	const ref = useRef();
+	useEffect(() => {
+		ref.current = value;
+	}, [value]);
+	return ref.current;
 }

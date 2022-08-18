@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useDispatch, useSelector } from 'react-redux';
 
-import LinearProgress from '@material-ui/core/LinearProgress';
+import { styled } from '@mui/material/styles';
 
-import Grid from '@material-ui/core/Grid';
-import Button from '@material-ui/core/Button';
-import RefreshIcon from '@material-ui/icons/Refresh';
-import Typography from '@material-ui/core/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
 
-import { Accordion, AccordionSummary, AccordionDetails } from '@material-ui/core';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import Typography from '@mui/material/Typography';
+
+import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import Summary from '../Summary';
 import LatestTransactions from '../LatestTransactions';
@@ -19,6 +19,8 @@ import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
 
 import TitleHeader from '../../components/TitleHeader';
+
+import Container from '../../components/Container';
 
 import {
 	getWeeklyTransactionsAction
@@ -32,93 +34,64 @@ import {
 	changeWeeklyGraphExpanded
 } from '../../actions/ui/homeActions';
 
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
+const Sticky = styled('div')(({ theme }) => ({
+	width: '100%',
+	position: 'sticky',
+	zIndex: theme.zIndex.drawer + 1,
+	[theme.breakpoints.down('sm')]: {
+		top: 56
 	},
-	sticky: {
-		width: '100%',
-		position: 'sticky',
-		zIndex: theme.zIndex.drawer + 1,
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		},
-		[theme.breakpoints.up('sm')]: {
-			top: 64
-		},
-		[theme.breakpoints.up('md')]: {
-			marginBottom: 10
-		},
-		backgroundColor: 'white'
+	[theme.breakpoints.up('sm')]: {
+		top: 64
 	},
-	rightIcon: {
-		marginLeft: theme.spacing(1)
+	[theme.breakpoints.up('md')]: {
+		marginBottom: 10
 	},
-	expansionDetails: {
-		padding: 0
-	},
-	progress: {
-		zIndex: theme.zIndex.drawer + 2,
-		position: 'sticky',
-		top: 64,
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		}
-	}
-});
+	backgroundColor: 'white'
+}));
 
-export function HomeMain ({
-	accountsExpanded,
-	classes,
-	latestTransactionsExpanded,
-	summaryExpanded,
-	trascationsFetching,
-	updateInvestmentPriceFetching,
-	weeklyGraphExpanded,
-	changeAccountsExpanded,
-	changeLatestTransactionsExpanded,
-	changeSummaryExpanded,
-	changeWeeklyGraphExpanded,
-	getWeeklyTransactionsAction,
-	updateInvestmentPriceAction
-}) {
+export function HomeMain () {
+	const accountsExpanded = useSelector((state) => state.ui.home.accountsExpanded);
+	const latestTransactionsExpanded = useSelector((state) => state.ui.home.latestTransactionsExpanded);
+	const summaryExpanded = useSelector((state) => state.ui.home.summaryExpanded);
+	const trascationsFetching = useSelector((state) => state.trascationsFetching);
+	const updateInvestmentPriceFetching = useSelector((state) => state.updateInvestmentPriceFetching);
+	const weeklyGraphExpanded = useSelector((state) => state.ui.home.weeklyGraphExpanded);
+	const dispatch = useDispatch();
+
 	useEffect(() => {
-		getWeeklyTransactionsAction();
+		dispatch(getWeeklyTransactionsAction());
 	}, []);
 
-	const onAccountsExpansionPanelChangeHalder = (event, expanded) => changeAccountsExpanded(expanded);
+	const onAccountsExpansionPanelChangeHalder = (event, expanded) => dispatch(changeAccountsExpanded(expanded));
 
-	const onLatestTransactionsExpansionPanelChangeHalder = (event, expanded) => changeLatestTransactionsExpanded(expanded);
+	const onLatestTransactionsExpansionPanelChangeHalder = (event, expanded) => dispatch(changeLatestTransactionsExpanded(expanded));
 
-	const onSummaryExpansionPanelChangeHalder = (event, expanded) => changeSummaryExpanded(expanded);
+	const onSummaryExpansionPanelChangeHalder = (event, expanded) => dispatch(changeSummaryExpanded(expanded));
 	
-	const onWeeklyGraphExpansionPanelChangeHalder = (event, expanded) => changeWeeklyGraphExpanded(expanded);
+	const onWeeklyGraphExpansionPanelChangeHalder = (event, expanded) => dispatch(changeWeeklyGraphExpanded(expanded));
 
-	const onRefreshClick = () => updateInvestmentPriceAction();
+	const onRefreshClick = () => dispatch(updateInvestmentPriceAction());
 
 	return (
 		<React.Fragment>
 			<TitleHeader title="Home" />
 			{
 				(updateInvestmentPriceFetching || trascationsFetching) &&
-				<LinearProgress color="secondary" className={classes.progress} />
+				<LinearProgress color="secondary"/>
 			}
-			<div className={classes.container}>
-				<div className={classes.sticky}>
+			<Container>
+				<Sticky>
 					<Button
 						fullWidth
 						variant="outlined"
 						color="primary"
 						onClick={onRefreshClick}
 					>
-							Refresh
-						<RefreshIcon className={classes.rightIcon} />
+						Refresh
+						<RefreshIcon />
 					</Button>
-				</div>
+				</Sticky>
 				<Grid container>
 					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
 						<Accordion
@@ -130,7 +103,7 @@ export function HomeMain ({
 								Summary
 								</Typography>
 							</AccordionSummary>
-							<AccordionDetails className={classes.expansionDetails}>
+							<AccordionDetails sx={{ padding: 0 }}>
 								<Summary />
 							</AccordionDetails>
 						</Accordion>
@@ -145,7 +118,7 @@ export function HomeMain ({
 								Weekly Graph
 								</Typography>
 							</AccordionSummary>
-							<AccordionDetails className={classes.expansionDetails}>
+							<AccordionDetails sx={{ padding: 0 }}>
 								<WeeklyGraph/>
 							</AccordionDetails>
 						</Accordion>
@@ -160,7 +133,7 @@ export function HomeMain ({
 								Latest Transactions
 								</Typography>
 							</AccordionSummary>
-							<AccordionDetails className={classes.expansionDetails}>
+							<AccordionDetails sx={{ padding: 0 }}>
 								<LatestTransactions/>
 							</AccordionDetails>
 						</Accordion>
@@ -175,50 +148,15 @@ export function HomeMain ({
 									Accounts
 								</Typography>
 							</AccordionSummary>
-							<AccordionDetails className={classes.expansionDetails}>
+							<AccordionDetails sx={{ padding: 0 }}>
 								<AccountList/>
 							</AccordionDetails>
 						</Accordion>
 					</Grid>
 				</Grid>
-			</div>
+			</Container>
 		</React.Fragment>
 	);
 }
 
-HomeMain.propTypes = {
-	accountsExpanded: PropTypes.bool.isRequired,
-	changeAccountsExpanded: PropTypes.func.isRequired,
-	changeLatestTransactionsExpanded: PropTypes.func.isRequired,
-	changeSummaryExpanded: PropTypes.func.isRequired,
-	changeWeeklyGraphExpanded: PropTypes.func.isRequired,
-	classes: PropTypes.object.isRequired,
-	getWeeklyTransactionsAction: PropTypes.func.isRequired,
-	latestTransactionsExpanded: PropTypes.bool.isRequired,
-	summaryExpanded: PropTypes.bool.isRequired,
-	trascationsFetching: PropTypes.bool.isRequired,
-	updateInvestmentPriceAction: PropTypes.func.isRequired,
-	updateInvestmentPriceFetching: PropTypes.bool.isRequired,
-	weeklyGraphExpanded: PropTypes.bool.isRequired
-};
-
-const mapStateToProps = state => ({
-	accountsExpanded: state.ui.home.accountsExpanded,
-	latestTransactionsExpanded: state.ui.home.latestTransactionsExpanded,
-	summaryExpanded: state.ui.home.summaryExpanded,
-	trascationsFetching: state.trascationsFetching,
-	updateInvestmentPriceFetching: state.updateInvestmentPriceFetching,
-	weeklyGraphExpanded: state.ui.home.weeklyGraphExpanded
-});
-
-export default connect(
-	mapStateToProps,
-	{
-		changeAccountsExpanded,
-		changeLatestTransactionsExpanded,
-		changeSummaryExpanded,
-		changeWeeklyGraphExpanded,
-		updateInvestmentPriceAction,
-		getWeeklyTransactionsAction
-	}
-)(withStyles(styles)(HomeMain));
+export default HomeMain;

@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useSelector } from 'react-redux';
 
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 import moment from 'moment';
 
@@ -20,46 +18,38 @@ import useExpenseReport from './useExpenseReport';
 
 import { YEAR_LIST } from '../../constants';
 
-const styles = theme => ({
-	header: {
-		paddingTop: theme.spacing(1),
-		[theme.breakpoints.down('sm')]: {
-			paddingTop: 0
-		}
-	}
-});
-
-const MonthlyExpense = ({allAccountsTransactions, classes}) => {
+const MonthlyExpense = () => {
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(false);
 	const [livingExpenseCardOnly, setLivingExpenseCardOnly] = useState(false);
 	const [boAOnly, setBoAOnly] = useState(false);
 
-	const {incomeTransactions, expenseTransactions} = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
-	const {incomeReport, totalMonthIncomeSum, totalIncomeSum} = useIncomeReport(incomeTransactions, year);
-	const {expenseReport, totalMonthExpenseSum, totalExpenseSum} = useExpenseReport(expenseTransactions, year, livingExpenseOnly);
+	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
+	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(incomeTransactions, year);
+	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(expenseTransactions, year, livingExpenseOnly);
 	const reportData = useMonthlyExpense(incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum);
 
 	const onYearChange = event => {
 		setYear(event.target.value);
-	}
+	};
 
 	const onLivingExpenseOnlyChange = event => {
 		setLivingExpenseOnly(event.target.checked);
-	}
+	};
 
 	const onLivingExpenseCardOnlyChange = event => {
-		setLivingExpenseCardOnly(event.target.checked)
-	}
+		setLivingExpenseCardOnly(event.target.checked);
+	};
 
 	const onBoAOnlyChange = event => {
 		setBoAOnly(event.target.checked);
-	}
+	};
 
 	return (
 		<div>
-			<div className={classes.header}>
-				<FormControl fullWidth>
+			<div>
+				<FormControl fullWidth variant="standard">
 					<Select
 						value={year}
 						onChange={onYearChange}
@@ -108,18 +98,6 @@ const MonthlyExpense = ({allAccountsTransactions, classes}) => {
 			{reportData.length > 0 && <ReportGrid reportData={reportData} />}
 		</div>
 	);
-}
-
-MonthlyExpense.propTypes = {
-	allAccountsTransactions:  PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired
 };
 
-const mapStateToProps = state => ({
-	allAccountsTransactions: state.allAccountsTransactions
-});
-
-export default connect(
-	mapStateToProps,
-	null
-)(withStyles(styles)(MonthlyExpense));
+export default MonthlyExpense;

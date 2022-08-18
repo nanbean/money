@@ -1,118 +1,101 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import withStyles from '@material-ui/core/styles/withStyles';
-import Avatar from '@material-ui/core/Avatar';
-import Typography from '@material-ui/core/Typography';
-import FormControl from '@material-ui/core/FormControl';
-import Input from '@material-ui/core/Input';
-import InputLabel from '@material-ui/core/InputLabel';
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 
-const styles = theme => ({
-	root: {
-		maxWidth: 520,
-		margin: '0 auto',
-		marginTop: 40
-	},
-	paper: {
-		marginTop: theme.spacing(8),
-		display: 'flex',
-		flexDirection: 'column',
-		alignItems: 'center',
-		padding: `${theme.spacing(2)}px ${theme.spacing(3)}px ${theme.spacing(3)}px`
-	},
-	avatar: {
-		margin: theme.spacing(1),
-		backgroundColor: theme.palette.secondary.main
-	},
-	form: {
-		width: '100%', // Fix IE 11 issue.
-		marginTop: theme.spacing(1)
-	},
-	submit: {
-		marginTop: theme.spacing(3)
-	}
-});
+import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
+import FormControl from '@mui/material/FormControl';
+import Input from '@mui/material/Input';
+import InputLabel from '@mui/material/InputLabel';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
-export class SigninForm extends Component {
-	state = {
-		username: '',
-		password: ''
+import {
+	loginAction
+} from '../../actions/authActions';
+
+export function SigninForm () {
+	const [username, setUsername] = useState('');
+	const [password, setPassword] = useState('');
+	const dispatch = useDispatch();
+
+	const handleUsernameOrEmailChange = (event) => {
+		setUsername(event.target.value);
 	};
 
-	handleUsernameOrEmailChange = (event) => {
-		this.setState({ username: event.target.value });
-	}
+	const handlePasswordChange = (event) => {
+		setPassword(event.target.value);
+	};
 
-	handlePasswordChange = (event) => {
-		this.setState({ password: event.target.value });
-	}
-
-	handleSubmit = (event) => {
+	const handleSubmit = (event) => {
 		event.preventDefault();
 		// TODO add validation
-		this.props.loginAction({
-			username: this.state.username,
-			password: this.state.password
-		});
-	}
+		dispatch(loginAction({
+			username: username,
+			password: password
+		}));
+	};
 
-	render () {
-		const { classes } = this.props;
-
-		return (
-			<div className={classes.root}>
-				<Paper className={classes.paper}>
-					<Avatar className={classes.avatar}>
-						<LockOutlinedIcon />
-					</Avatar>
-					<Typography component="h1" variant="h5">
-						Sign In
-					</Typography>
-					<form className={classes.form} onSubmit={this.handleSubmit}>
-						<FormControl margin="normal" required fullWidth>
-							<InputLabel htmlFor="normal">Username</InputLabel>
-							<Input
-								id="username"
-								name="username"
-								autoComplete="signin email"
-								autoFocus
-								value={this.state.username}
-								onChange={this.handleUsernameOrEmailChange}
-							/>
-						</FormControl>
-						<FormControl margin="normal" required fullWidth>
-							<InputLabel htmlFor="password">Password</InputLabel>
-							<Input
-								name="password"
-								type="password"
-								id="password"
-								autoComplete="signin current-password"
-								value={this.state.password}
-								onChange={this.handlePasswordChange}
-							/>
-						</FormControl>
-						<Button
-							type="submit"
-							fullWidth
-							variant="contained"
-							color="primary"
-							className={classes.submit}
-						>
-							Sign in
-						</Button>
-					</form>
-				</Paper>
-			</div>
-		);
-	}
+	return (
+		<div style={{ maxWidth: 520, margin: '0 auto', marginTop: 40 }}>
+			<Paper
+				sx={(theme) => ({
+					marginTop: theme.spacing(8),
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					padding: `${theme.spacing(2)} ${theme.spacing(3)} ${theme.spacing(3)}`
+				})}
+			>
+				<Avatar
+					sx={(theme) => ({
+						margin: theme.spacing(1),
+						backgroundColor: theme.palette.secondary.main
+					})}
+				>
+					<LockOutlinedIcon />
+				</Avatar>
+				<Typography component="h1" variant="h5">
+					Sign In
+				</Typography>
+				<form onSubmit={handleSubmit}>
+					<FormControl margin="normal" required fullWidth>
+						<InputLabel htmlFor="normal">Username</InputLabel>
+						<Input
+							id="username"
+							name="username"
+							autoComplete="signin email"
+							autoFocus
+							value={username}
+							onChange={handleUsernameOrEmailChange}
+						/>
+					</FormControl>
+					<FormControl margin="normal" required fullWidth>
+						<InputLabel htmlFor="password">Password</InputLabel>
+						<Input
+							name="password"
+							type="password"
+							id="password"
+							autoComplete="signin current-password"
+							value={password}
+							onChange={handlePasswordChange}
+						/>
+					</FormControl>
+					<Button
+						type="submit"
+						fullWidth
+						variant="contained"
+						color="primary"
+						sx={(theme) => ({
+							marginTop: theme.spacing(3)
+						})}
+					>
+						Sign in
+					</Button>
+				</form>
+			</Paper>
+		</div>
+	);
 }
 
-SigninForm.propTypes = {
-	classes: PropTypes.object.isRequired,
-	loginAction: PropTypes.func.isRequired
-};
-
-export default withStyles(styles)(SigninForm);
+export default SigninForm;

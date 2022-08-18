@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
 import { AutoSizer, ColumnSizer, MultiGrid } from 'react-virtualized';
+
+import { styled } from '@mui/material/styles';
 
 import Amount from '../Amount';
 
@@ -10,43 +11,42 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 const ROW_HEIGHT = 60;
 const COLUMN_MIN_WIDTH = 100;
 
-const styles = () => ({
-	performanceGrid: {
-		display: 'flex',
-		textAlign: 'center'
-	},
-	cell: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderBottom: '1px solid rgba(34,36,38,.1)',
-		borderRight: '1px solid rgba(34,36,38,.1)'
-	},
-	topLeftGrid: {
-		fontWeight: 'bold',
-		backgroundColor: 'rgb(249, 250, 251)',
-		borderTop: '1px solid rgba(34,36,38,.1)',
-		borderBottom: '1px solid rgba(34,36,38,.1)'
-	},
-	topRightGrid: {
-		fontWeight: 'bold',
-		backgroundColor: 'rgb(249, 250, 251)',
-		overflow: 'hidden !important',
-		borderTop: '1px solid rgba(34,36,38,.1)',
-		borderBottom: '1px solid rgba(34,36,38,.1)'
-	},
-	bottomLeftGrid: {
-		backgroundColor: 'rgb(249, 250, 251)',
-		overflow: 'hidden !important'
-	}
-});
+const styleTopLeftGrid = {
+	fontWeight: 'bold',
+	backgroundColor: 'rgb(249, 250, 251)',
+	borderTop: '1px solid rgba(34,36,38,.1)',
+	borderBottom: '1px solid rgba(34,36,38,.1)'
+};
+
+const styleTopRightGrid = {
+	fontWeight: 'bold',
+	backgroundColor: 'rgb(249, 250, 251)',
+	borderTop: '1px solid rgba(34,36,38,.1)',
+	borderBottom: '1px solid rgba(34,36,38,.1)'
+};
+
+const styleBottomLeftGrid = {
+	backgroundColor: 'rgb(249, 250, 251)'
+};
+
+const Cell = styled('div')(() => ({
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'center',
+	borderBottom: '1px solid rgba(34,36,38,.1)',
+	borderRight: '1px solid rgba(34,36,38,.1)'
+}));
 
 export function PerformanceGrid ({
-	classes,
 	performanceData
 }) {
 	return (
-		<div className={classes.performanceGrid}>
+		<div
+			style={{
+				display: 'flex',
+				textAlign: 'center'
+			}}
+		>
 			{
 				<AutoSizer disableHeight>
 					{({ width }) => (
@@ -66,22 +66,24 @@ export function PerformanceGrid ({
 										const isNumber = !Number.isNaN(parseValue);
 
 										return (
-											<div className={classes.cell} key={key} style={style}>
+											<Cell key={key} style={style}>
 												{isNumber ? <Amount value={parseValue} /> : value}
-											</div>
+											</Cell>
 										);
 									}}
 									columnWidth={columnWidth}
 									columnCount={performanceData[0].length}
 									enableFixedColumnScroll
 									enableFixedRowScroll
+									hideTopRightGridScrollbar
+									hideBottomLeftGridScrollbar
 									width={adjustedWidth}
 									height={ROW_HEIGHT * performanceData.length + 10}
 									rowHeight={ROW_HEIGHT}
 									rowCount={performanceData.length}
-									classNameTopLeftGrid={classes.topLeftGrid}
-									classNameBottomLeftGrid={classes.bottomLeftGrid}
-									classNameTopRightGrid={classes.topRightGrid}
+									styleTopLeftGrid={styleTopLeftGrid}
+									styleTopRightGrid={styleTopRightGrid}
+									styleBottomLeftGrid={styleBottomLeftGrid}
 								/>
 							)}
 						</ColumnSizer>
@@ -93,8 +95,7 @@ export function PerformanceGrid ({
 }
 
 PerformanceGrid.propTypes = {
-	classes: PropTypes.object.isRequired,
 	performanceData: PropTypes.array.isRequired
 };
 
-export default withStyles(styles)(PerformanceGrid);
+export default PerformanceGrid;

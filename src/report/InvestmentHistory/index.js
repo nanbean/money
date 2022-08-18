@@ -1,41 +1,20 @@
 import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import LinearProgress from '@material-ui/core/LinearProgress';
+import LinearProgress from '@mui/material/LinearProgress';
 import stc from 'string-to-color';
 
 import InvestmentFilter from '../../components/InvestmentFilter';
 import TitleHeader from '../../components/TitleHeader';
-
-import {
-	setfilteredInvestments
-} from '../../actions/investmentActions';
+import Container from '../../components/Container';
 
 import {
 	getNetWorthFlowAction
 } from '../../actions/couchdbActions';
 
 import toolTipStyles from '../../assets/jss/components/toolTip.js';
-
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
-	},
-	progress: {
-		zIndex: theme.zIndex.drawer + 2,
-		position: 'sticky',
-		top: 64,
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		}
-	}
-});
 
 const CustomTooltip = ({ active, payload, label }) => {
 	if (active) {
@@ -60,23 +39,21 @@ CustomTooltip.propTypes = {
 	payload:  PropTypes.array.isRequired
 };
 
-function InvestmentHistory ({
-	allAccountsTransactions,
-	allInvestmentsPrice,
-	classes,
-	filteredInvestments,
-	getNetWorthFlowAction,
-	netWorthFlow,
-	setfilteredInvestments
-}) {
+function InvestmentHistory () {
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
+	const filteredInvestments = useSelector((state) => state.filteredInvestments);
+	const netWorthFlow = useSelector((state) => state.netWorthFlow);
+	const dispatch = useDispatch();
+
 	const allInvestments = useMemo(() => allInvestmentsPrice.filter(i => allAccountsTransactions.find(j => j.investment === i.name)), [allAccountsTransactions, allInvestmentsPrice]);
 	const investmentHistory = useMemo(() => netWorthFlow.map(i => {
 		const item = {
 			date: i.date
-		}
+		};
 		filteredInvestments.forEach(j => {
 			if (i.netInvestments.length > 0) {
-				item[j] = i.netInvestments.filter(k => k.name === j).reduce((sum, l) => sum + l.quantity, 0)
+				item[j] = i.netInvestments.filter(k => k.name === j).reduce((sum, l) => sum + l.quantity, 0);
 			}
 		});
 
@@ -84,18 +61,17 @@ function InvestmentHistory ({
 	}), [netWorthFlow, filteredInvestments]);
 
 	useEffect(() => {
-		getNetWorthFlowAction();
+		dispatch(getNetWorthFlowAction());
 	}, []);
 
 	if (netWorthFlow.length > 0) {
 		return (
 			<div>
 				<TitleHeader title="Net Worth" />
-				<div className={classes.container}>
+				<Container>
 					<InvestmentFilter
 						allInvestmentsPrice={allInvestments}
 						filteredInvestments={filteredInvestments}
-						setfilteredInvestments={setfilteredInvestments}
 					/>
 					{
 						netWorthFlow.length > 1 &&
@@ -116,45 +92,27 @@ function InvestmentHistory ({
 							</BarChart>
 						</ResponsiveContainer>
 					}
-				</div>
+				</Container>
 			</div>
 		);
 	} else {
 		return (
 			<div>
 				<TitleHeader title="Net Worth" />
-				<LinearProgress color="secondary" className={classes.progress} />
+				<LinearProgress
+					color="secondary"
+					sx={(theme) => ({
+						zIndex: theme.zIndex.drawer + 2,
+						position: 'sticky',
+						top: 64,
+						[theme.breakpoints.down('sm')]: {
+							top: 56
+						}
+					})}
+				/>
 			</div>
 		);
 	}
 }
 
-InvestmentHistory.propTypes = {
-	allAccountsTransactions: PropTypes.array.isRequired,
-	allInvestmentsPrice: PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired,
-	filteredInvestments: PropTypes.array.isRequired,
-	getNetWorthFlowAction: PropTypes.func.isRequired,
-	netWorthFlow:  PropTypes.array.isRequired
-};
-
-const mapStateToProps = state => ({
-	allAccountsTransactions: state.allAccountsTransactions,
-	allInvestmentsPrice: state.allInvestmentsPrice,
-	filteredInvestments: state.filteredInvestments,
-	netWorthFlow: state.netWorthFlow
-});
-
-const mapDispatchToProps = dispatch => ({
-	getNetWorthFlowAction () {
-		dispatch(getNetWorthFlowAction());
-	},
-	setfilteredInvestments (params) {
-		dispatch(setfilteredInvestments(params));
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(InvestmentHistory));
+export default InvestmentHistory;

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import moment from 'moment';
 
 import ResponsiveContainer from 'recharts/lib/component/ResponsiveContainer';
@@ -54,7 +53,7 @@ const getData = (week, filteredTransactions) => week.map((i, index) => {
 		if (day === filteredTransactions[k].date) {
 			const transaction = filteredTransactions[k];
 			if (transaction.amount < 0) {
-				totalExpense[transaction.category] += Math.abs(transaction.amount);
+				totalExpense[transaction.category] += Math.abs(parseInt(transaction.amount));
 			}
 			
 		}
@@ -65,9 +64,9 @@ const getData = (week, filteredTransactions) => week.map((i, index) => {
 	};
 });
 
-export function WeeklyGraph ({
-	weeklyTransactions
-}) {
+export function WeeklyGraph () {
+	const weeklyTransactions = useSelector((state) => state.weeklyTransactions);
+
 	const filteredTransactions = useMemo(() => weeklyTransactions.filter(i => i.type === 'Bank' || i.type === 'CCard' || i.type === 'Cash'), [weeklyTransactions]);
 	const data = useMemo(() => getData(week, filteredTransactions), [week, filteredTransactions]);
 
@@ -108,15 +107,4 @@ export function WeeklyGraph ({
 	);
 }
 
-WeeklyGraph.propTypes = {
-	weeklyTransactions: PropTypes.array.isRequired
-};
-
-const mapStateToProps = state => ({
-	weeklyTransactions: state.weeklyTransactions
-});
-
-export default connect(
-	mapStateToProps,
-	null
-)(WeeklyGraph);
+export default WeeklyGraph;

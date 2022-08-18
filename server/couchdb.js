@@ -376,8 +376,8 @@ const arrangeInvestmemt = async () => {
 exports.updateInvestmentPrice = async () => {
 	// await arrangeInvestmemt();
 	await updateAccountList();
-	await updateLifeTimePlanner();
-	await updateNetWorth();
+	// await updateLifeTimePlanner();
+	// await updateNetWorth();
 };
 
 const getAllAccounts = async () => {
@@ -421,9 +421,29 @@ exports.listNotifications = async (size) => {
 	return notifications.rows.slice(notifications.rows.length - size, notifications.rows.length).map(i => i.doc.text);
 };
 
+const getSettings = async () => {
+	const settingsDB = nano.use('settings_nanbean');
+	const settingsResponse = await settingsDB.list({ include_docs: true });
+	const settings = settingsResponse.rows.map(i => i.doc);
+
+	return settings;
+};
+
+const getExchangeRate = async () => {
+	const settings = await getSettings();
+	const exchangeRate = settings.find(i => i._id === 'exchangeRate');
+
+	if (exchangeRate && exchangeRate.dollorWon) {
+		return exchangeRate.dollorWon;
+	}
+
+	return 1000;
+};
+
 const sendBalanceUpdateNotification = async () => {
 	const allAccounts = await getAllAccounts();
-	const balance = allAccounts.filter(i => !i.name.match(/_Cash/i)).map((i) => i.balance).reduce((prev, curr) => prev + curr);
+	const exchangeRate = await getExchangeRate();
+	const balance = allAccounts.filter(i => !i.name.match(/_Cash/i)).map(i => i.currency === 'USD' ? i.balance * exchangeRate : i.balance).reduce((prev, curr) => prev + curr);
 	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	messaging.sendNotification('NetWorth Update', `Today's NetWorth is ${netWorth}`);
 };
@@ -622,15 +642,14 @@ new CronJob('00 00 03 * * 0', () => {
 	console.log('00 00 03 weekly weeklyBackupjob ended');
 }, true, 'Asia/Seoul');
 
-new CronJob('00 40 15 * * 1-5', async () => {
+new CronJob('00 45 15 * * 1-5', async () => {
 	/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
 		 * at 05:00:00 AM.
 		 */
-	console.log('couchdb 00 40 15 daily dailyArrangeInvestmemtjob started');
+	console.log('couchdb 00 45 15 daily dailyArrangeInvestmemtjob started');
 	if (!calendar.isHoliday()) {
-		await arrangeInvestmemt();
 		await updateAccountList();
 		await updateLifeTimePlanner();
 		await updateNetWorth();
@@ -640,7 +659,7 @@ new CronJob('00 40 15 * * 1-5', async () => {
 	}
 }, () => {
 	/* This function is executed when the job stops */
-	console.log('00 40 15 daily dailyArrangeInvestmemtjob ended');
+	console.log('00 45 15 daily dailyArrangeInvestmemtjob ended');
 }, true, 'Asia/Seoul');
 
 var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {

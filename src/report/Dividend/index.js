@@ -1,11 +1,9 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 import moment from 'moment';
 import _ from 'lodash';
@@ -17,121 +15,82 @@ import {
 	YEAR_LIST
 } from '../../constants';
 
-const styles = theme => ({
-	header: {
-		paddingTop: theme.spacing(1),
-		[theme.breakpoints.down('sm')]: {
-			paddingTop: 0
-		}
-	}
-});
+export function Dividend () {
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
+	const [filteredAccounts, setFilteredAccounts] = useState([]);
 
-class Dividend extends Component {
-	state = {
-		year: parseInt(moment().format('YYYY'), 10),
-		filteredAccounts: []
-	}
+	const onYearChange = event => {
+		setYear(event.target.value);
+	};
 
-	onYearChange = event => {
-		this.setState({
-			year: event.target.value
-		});
-	}
+	const onFilteredAccountsChange = (e) => {
+		setFilteredAccounts(e);
+	};
 
-	onFilteredAccountsChange = (e) => {
-		this.setState({
-			filteredAccounts: e
-		});
-	}
+	const startDate = moment().year(year).startOf('year').format('YYYY-MM-DD');
+	const endDate = moment().year(year).endOf('year').format('YYYY-MM-DD');
+	const dividendTransactions = allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
+		.filter(i => i.date >= startDate && i.date <= endDate);
+	const allAccounts = Object.keys(_.groupBy(dividendTransactions, 'account')).map(account => account);
 
-	render () {
-		const { allAccountsTransactions, classes } = this.props;
-		const { filteredAccounts, year } = this.state;
-		const startDate = moment().year(year).startOf('year').format('YYYY-MM-DD');
-		const endDate = moment().year(year).endOf('year').format('YYYY-MM-DD');
-		const dividendTransactions = allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
-			.filter(i => i.date >= startDate && i.date <= endDate);
-		const allAccounts = Object.keys(_.groupBy(dividendTransactions, 'account')).map(account => account);
+	const dividendData = [];
+	_.forEach(_.groupBy(dividendTransactions.filter(i => filteredAccounts.includes(i.account)), 'account'), (value, key) => {
+		dividendData.push([
+			key,
+			value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
+			value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
+			(value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) -
+			value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ))
+		]);
+	});
 
-		const dividendData = [];
-		_.forEach(_.groupBy(dividendTransactions.filter(i => filteredAccounts.includes(i.account)), 'account'), (value, key) => {
-			dividendData.push([
-				key,
-				value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
-				value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
-				(value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) -
-				value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ))
-			]);
-		});
+	const dividendGridata = [
+		[
+			'Account',
+			'Dividend',
+			'Tax',
+			'Gain'
+		],
+		...dividendData,
+		[
+			'Total',
+			dividendData.map(i => i[1]).reduce( (prev, curr) => prev + curr, 0 ),
+			dividendData.map(i => i[2]).reduce( (prev, curr) => prev + curr, 0 ),
+			dividendData.map(i => i[3]).reduce( (prev, curr) => prev + curr, 0 )
+		]
+	];
 
-		const dividendGridata = [
-			[
-				'Account',
-				'Dividend',
-				'Tax',
-				'Gain'
-			],
-			...dividendData,
-			[
-				'Total',
-				dividendData.map(i => i[1]).reduce( (prev, curr) => prev + curr, 0 ),
-				dividendData.map(i => i[2]).reduce( (prev, curr) => prev + curr, 0 ),
-				dividendData.map(i => i[3]).reduce( (prev, curr) => prev + curr, 0 )
-			]
-		];
-
-		return (
+	return (
+		<div>
 			<div>
-				<div className={classes.header}>
-					<FormControl fullWidth>
-						<Select
-							value={year}
-							onChange={this.onYearChange}
-							inputProps={{
-								name: 'year',
-								id: 'year-select'
-							}}
-						>
-							{
-								YEAR_LIST.map(i => (
-									<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
-								))
-							}
-						</Select>
-					</FormControl>
-					{/* <Dropdown
-						fluid
-						placeholder="Year"
+				<FormControl fullWidth variant="standard">
+					<Select
 						value={year}
-						search
-						selection
-						options={YEAR_LIST}
-						onChange={this.onYearChange}
-					/> */}
-					<AccountFilter
-						allAccounts={allAccounts}
-						filteredAccounts={filteredAccounts}
-						setfilteredAccounts={this.onFilteredAccountsChange}
-					/>
-				</div>
-				<DividendGrid
-					dividendGridata={dividendGridata}
+						onChange={onYearChange}
+						inputProps={{
+							name: 'year',
+							id: 'year-select'
+						}}
+					>
+						{
+							YEAR_LIST.map(i => (
+								<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+							))
+						}
+					</Select>
+				</FormControl>
+				<AccountFilter
+					allAccounts={allAccounts}
+					filteredAccounts={filteredAccounts}
+					setfilteredAccounts={onFilteredAccountsChange}
 				/>
 			</div>
-		);
-	}
+			<DividendGrid
+				dividendGridata={dividendGridata}
+			/>
+		</div>
+	);
 }
 
-Dividend.propTypes = {
-	allAccountsTransactions: PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired
-};
-
-const mapStateToProps = state => ({
-	allAccountsTransactions: state.allAccountsTransactions
-});
-
-export default connect(
-	mapStateToProps,
-	null
-)(withStyles(styles)(Dividend));
+export default Dividend;

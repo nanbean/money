@@ -1,209 +1,126 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import React, { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams, useLocation } from 'react-router-dom';
 
-import Paper from '@material-ui/core/Paper';
-import Button from '@material-ui/core/Button';
-import AddIcon from '@material-ui/icons/Add';
-import Typography from '@material-ui/core/Typography';
+import { styled } from '@mui/material/styles';
 
-import MortgageSchedule from '../components/MortgageSchedule';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+
+import AddIcon from '@mui/icons-material/Add';
+
 import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 
-import { getMortgageScheduleAction } from '../actions/mortgageActions';
 import { setAccountAction } from '../actions/accountActions';
-import {
-	addTransactionAction,
-	deleteTransactionAction,
-	editTransactionAction
-} from '../actions/couchdbActions';
-import {
-	openTransactionInModal,
-	resetTransactionForm
-} from '../actions/ui/form/bankTransaction';
+import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
+
 import { toCurrencyFormat } from '../utils/formatting';
 
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
+const Sticky = styled('div')(({ theme }) => ({
+	width: '100%',
+	position: 'sticky',
+	zIndex: theme.zIndex.drawer + 1,
+	[theme.breakpoints.down('sm')]: {
+		top: 56
 	},
-	paper: {
-		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing(2)
-		},
-		[theme.breakpoints.down('sm')]: {
-			marginTop: 0
-		},
-		alignItems: 'center'
+	[theme.breakpoints.up('sm')]: {
+		top: 64
 	},
-	sticky: {
-		width: '100%',
-		position: 'sticky',
-		zIndex: theme.zIndex.drawer + 1,
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		},
-		[theme.breakpoints.up('sm')]: {
-			top: 64
-		},
-		backgroundColor: 'white'
-	},
-	rightIcon: {
-		marginLeft: theme.spacing(1)
-	},
-	total: {
-		marginTop: theme.spacing(1),
-		marginRight: theme.spacing(1)
-	}
-});
+	backgroundColor: 'white'
+}));
 
-class Bank extends Component {
-	componentDidMount () {
-		const { match } = this.props;
-		const name = match && match.params && match.params.name;
+const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
+const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
 
-		this.props.setAccountAction(name);
-	}
+export function Bank () {
+	const account = useSelector((state) => state.account);
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const dropCategoryList = useSelector((state) => state.dropCategoryList);
+	const dropPayeeList = useSelector((state) => state.dropPayeeList);
+	const isModalOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen,);
+	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
 
-	render () {
-		const {
-			account,
-			allAccountsTransactions,
-			dropCategoryList,
-			classes,
-			match,
-			mortgageSchedule,
-			dropPayeeList
-		} = this.props;
-		const transactions = allAccountsTransactions.filter(i => i.accountId === `account${match.url.replace(/\//g, ':')}`);
-		const balance = transactions.length > 0 && transactions.map((i) => i.amount).reduce( (a, b) => a + b );
-		const accountId = `account${match.url.replace(/\//g, ':')}`;
+	let { name } = useParams();
+	let { pathname } = useLocation();
+	const accountId = useMemo(() => getAccountId(pathname), [pathname]);
+	const accountTransactions = useMemo(() => getAccountTransactions(allAccountsTransactions, accountId), [allAccountsTransactions, accountId]);
+	const balance = accountTransactions.length > 0 && accountTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
 
-		return (
-			<div>
-				<TitleHeader title={account} />
-				<div className={classes.container}>
-					<Paper className={classes.paper}>
-						<div className={classes.sticky}>
-							<Button
-								fullWidth
-								variant="outlined"
-								color="primary"
-								onClick={this.props.openTransactionInModal}
-							>
-								New
-								<AddIcon className={classes.rightIcon} />
-							</Button>
-						</div>
-						<BankTransactions
-							account={account}
-							transactions={transactions}
-							openTransactionInModal={this.props.openTransactionInModal}
-						/>
-						<Typography variant="h6" color="inherit" gutterBottom align="right" className={classes.total}>
-							잔액 : {toCurrencyFormat(balance)}
-						</Typography>
-						<BankTransactionModal
-							EditForm={BankTransactionForm}
-							isOpen={this.props.isModalOpen}
-							isEdit={this.props.isEdit}
-							accountId={accountId}
-							account={account}
-							transactions={transactions}
-							dropCategoryList={dropCategoryList}
-							dropPayeeList={dropPayeeList}
-							resetTransactionForm={this.props.resetTransactionForm}
-							addTransactionAction={this.props.addTransactionAction}
-							deleteTransactionAction={this.props.deleteTransactionAction}
-							editTransactionAction={this.props.editTransactionAction}
-						/>
-						{
-							account === '아낌이모기지론' &&
-							<MortgageSchedule
-								mortgageSchedule={mortgageSchedule}
-								getMortgageScheduleAction={this.props.getMortgageScheduleAction}
-								addTransactionAction={this.props.addTransactionAction}
+	const dispatch = useDispatch();
+
+	useEffect(() => {
+		dispatch(setAccountAction(name));
+	}, []);
+
+	const onNewClick = () => {
+		dispatch(openTransactionInModal());
+	};
+
+	return (
+		<React.Fragment>
+			<TitleHeader title={account} />
+			<Container>
+				<Paper
+					sx={(theme) => ({
+						[theme.breakpoints.up('lg')]: {
+							marginTop: theme.spacing(2)
+						},
+						[theme.breakpoints.down('sm')]: {
+							marginTop: 0
+						},
+						alignItems: 'center'
+					})}
+				>
+					<Sticky>
+						<Button
+							fullWidth
+							variant="outlined"
+							color="primary"
+							onClick={onNewClick}
+						>
+							New
+							<AddIcon
+								sx={(theme) => ({
+									marginLeft: theme.spacing(1)
+								})}
 							/>
-						}
-					</Paper>
-				</div>
-			</div>
-		);
-	}
+						</Button>
+					</Sticky>
+					<BankTransactions
+						account={account}
+						transactions={accountTransactions}
+					/>
+					<Typography
+						variant="h6"
+						color="inherit"
+						gutterBottom
+						align="right"
+						sx={(theme) => ({
+							marginTop: theme.spacing(1),
+							marginRight: theme.spacing(1)
+						})}
+					>
+						잔액 : {toCurrencyFormat(balance)}
+					</Typography>
+					<BankTransactionModal
+						EditForm={BankTransactionForm}
+						isOpen={isModalOpen}
+						isEdit={isEdit}
+						accountId={accountId}
+						account={account}
+						transactions={accountTransactions}
+						dropCategoryList={dropCategoryList}
+						dropPayeeList={dropPayeeList}
+					/>
+				</Paper>
+			</Container>
+		</React.Fragment>
+	);
 }
 
-Bank.propTypes = {
-	account: PropTypes.string.isRequired,
-	addFetching: PropTypes.bool.isRequired,
-	addTransactionAction: PropTypes.func.isRequired,
-	allAccountsTransactions: PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired,
-	deleteFetching: PropTypes.bool.isRequired,
-	deleteTransactionAction: PropTypes.func.isRequired,
-	dropCategoryList: PropTypes.array.isRequired,
-	dropPayeeList: PropTypes.array.isRequired,
-	editFetching: PropTypes.bool.isRequired,
-	editTransactionAction: PropTypes.func.isRequired,
-	getMortgageScheduleAction: PropTypes.func.isRequired,
-	isEdit: PropTypes.bool.isRequired,
-	isModalOpen: PropTypes.bool.isRequired,
-	mortgageSchedule: PropTypes.array.isRequired,
-	openTransactionInModal: PropTypes.func.isRequired,
-	resetTransactionForm: PropTypes.func.isRequired,
-	setAccountAction: PropTypes.func.isRequired,
-	match: PropTypes.shape({
-		params: PropTypes.shape({
-			name: PropTypes.string.isRequired
-		}).isRequired
-	})
-};
-
-const mapStateToProps = state => ({
-	addFetching: state.addTransaction.fetching,
-	account: state.account,
-	allAccountsTransactions: state.allAccountsTransactions,
-	deleteFetching: state.deleteTransaction.fetching,
-	dropCategoryList: state.dropCategoryList,
-	dropPayeeList: state.dropPayeeList,
-	editFetching: state.editTransaction.fetching,
-	mortgageSchedule: state.mortgageSchedule,
-	isModalOpen: state.ui.form.bankTransaction.isModalOpen,
-	isEdit: state.ui.form.bankTransaction.isEdit
-});
-
-const mapDispatchToProps = dispatch => ({
-	addTransactionAction (params) {
-		dispatch(addTransactionAction(params));
-	},
-	deleteTransactionAction (params) {
-		dispatch(deleteTransactionAction(params));
-	},
-	editTransactionAction (params) {
-		dispatch(editTransactionAction(params));
-	},
-	openTransactionInModal (params) {
-		dispatch(openTransactionInModal(params));
-	},
-	resetTransactionForm () {
-		dispatch(resetTransactionForm());
-	},
-	getMortgageScheduleAction () {
-		dispatch(getMortgageScheduleAction());
-	},
-	setAccountAction (params) {
-		dispatch(setAccountAction(params));
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(Bank));
+export default Bank;

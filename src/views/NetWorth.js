@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import LinearProgress from '@material-ui/core/LinearProgress';
+import LinearProgress from '@mui/material/LinearProgress';
 
 import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
 
 import {
 	getNetWorthFlowAction
@@ -13,24 +14,6 @@ import {
 import { toCurrencyFormat } from '../utils/formatting';
 
 import toolTipStyles from '../assets/jss/components/toolTip.js';
-
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
-	},
-	progress: {
-		zIndex: theme.zIndex.drawer + 2,
-		position: 'sticky',
-		top: 64,
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		}
-	}
-});
 
 const CustomTooltip = ({ active, payload, label }) => {
 	if (active) {
@@ -50,23 +33,23 @@ const CustomTooltip = ({ active, payload, label }) => {
 CustomTooltip.propTypes = {
 	active: PropTypes.bool.isRequired,
 	label: PropTypes.string.isRequired,
-	payload:  PropTypes.array.isRequired
+	payload: PropTypes.string.isRequired
 };
 
-function NetWorth ({
-	classes,
-	getNetWorthFlowAction,
-	netWorthFlow
-}) {
+function NetWorth () {
+	const netWorthFlow = useSelector((state) => state.netWorthFlow);
+
+	const dispatch = useDispatch();
+
 	useEffect(() => {
-		getNetWorthFlowAction();
+		dispatch(getNetWorthFlowAction());
 	}, []);
 
 	if (netWorthFlow.length > 0) {
 		return (
 			<div>
 				<TitleHeader title="Net Worth" />
-				<div className={classes.container}>
+				<Container>
 					{
 						netWorthFlow.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
@@ -83,36 +66,27 @@ function NetWorth ({
 							</ComposedChart>
 						</ResponsiveContainer>
 					}
-				</div>
+				</Container>
 			</div>
 		);
 	} else {
 		return (
 			<div>
 				<TitleHeader title="Net Worth" />
-				<LinearProgress color="secondary" className={classes.progress} />
+				<LinearProgress
+					color="secondary"
+					sx={(theme) => ({
+						zIndex: theme.zIndex.drawer + 2,
+						position: 'sticky',
+						top: 64,
+						[theme.breakpoints.down('sm')]: {
+							top: 56
+						}
+					})}
+				/>
 			</div>
 		);
 	}
 }
 
-NetWorth.propTypes = {
-	classes: PropTypes.object.isRequired,
-	getNetWorthFlowAction: PropTypes.func.isRequired,
-	netWorthFlow:  PropTypes.array.isRequired
-};
-
-const mapStateToProps = state => ({
-	netWorthFlow: state.netWorthFlow
-});
-
-const mapDispatchToProps = dispatch => ({
-	getNetWorthFlowAction () {
-		dispatch(getNetWorthFlowAction());
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(NetWorth));
+export default NetWorth;

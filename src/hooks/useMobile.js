@@ -1,4 +1,4 @@
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const useMobile = () => {
 	return useMediaQuery('(max-width: 768px)');

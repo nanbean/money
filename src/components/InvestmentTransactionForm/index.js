@@ -1,18 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useDispatch, useSelector } from 'react-redux';
 
-import FormControl from '@material-ui/core/FormControl';
-import Input from '@material-ui/core/Input';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
-import Button from '@material-ui/core/Button';
+import FormControl from '@mui/material/FormControl';
+import Input from '@mui/material/Input';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
 
 import AutoComplete from '../AutoComplete';
 
 import {
-	fillTransactionForm,
+	addTransactionAction,
+	deleteTransactionAction,
+	editTransactionAction
+} from '../../actions/couchdbActions';
+
+import {
 	resetTransactionForm,
 	changeDate,
 	changeInvestment,
@@ -34,45 +38,36 @@ const activityList = [
 	{ key: 'MiscExp', value: 'MiscExp', text: 'MiscExp' }
 ];
 
-const styles = theme => ({
-	paper: {
-		marginTop: theme.spacing(8),
-		display: 'flex',
-		flexDirection: 'column',
-		alignItems: 'center',
-		padding: `${theme.spacing(2)}px ${theme.spacing(3)}px ${theme.spacing(3)}px`
-	},
-	form: {
-		width: '100%' // Fix IE 11 issue.
-	},
-	submit: {
-		marginTop: theme.spacing(1)
-	},
-	help: {
-		color: 'red'
-	}
-});
+export function InvestmentTransactionForm ({
+	account,
+	accountId,
+	autocompleteInvestmentList,
+	transactions
+}) {
+	const form = useSelector((state) => state.ui.form.investmentTransaction);
+	const dispatch = useDispatch();
 
-class InvestmentTransactionForm extends React.Component {
-	handleSubmit = (event) => {
+	const quantityDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
+	const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
+	const commissionDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
+	const amountDisabled = !form.activity || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
+
+	const handleSubmit = (event) => {
 		event.preventDefault();
-		const { form } = this.props;
 
 		if (form.isEdit) {
-			this.onEditButton();
+			onEditButton();
 		} else {
-			this.onAddButton();
+			onAddButton();
 		}
-	}
+	};
 
-	onChange = handler => event => handler(event.target.value)
+	const onChange = handler => event => dispatch(handler(event.target.value));
 
-	onInvestmentChange = handler => (event, value) => handler(value.name)
+	const onInvestmentChange = handler => (event, value) => dispatch(handler(value.name));
 
-	onAddButton = () => {
+	const onAddButton = () => {
 		const data = {};
-		const { account, accountId, form } = this.props;
-
 		data.account = account;
 		data.accountId = accountId;
 		data.date = form.date;
@@ -85,12 +80,11 @@ class InvestmentTransactionForm extends React.Component {
 		}
 		data.amount = Number(form.amount);
 
-		this.props.addTransactionAction(data);
-		this.props.resetTransactionForm();
-	}
+		dispatch(addTransactionAction(data));
+		dispatch(resetTransactionForm());
+	};
 
-	onEditButton = () => {
-		const { account, form, transactions } = this.props;
+	const onEditButton = () => {
 		const transaction = transactions[form.index];
 
 		transaction.account = account;
@@ -118,12 +112,11 @@ class InvestmentTransactionForm extends React.Component {
 			transaction.changed.amount = Number(form.amount);
 		}
 
-		this.props.editTransactionAction(transaction);
-		this.props.resetTransactionForm();
-	}
+		dispatch(editTransactionAction(transaction));
+		dispatch(resetTransactionForm());
+	};
 
-	onDeleteButton = handler => () => {
-		const { account, form, transactions } = this.props;
+	const onDeleteButton = handler => () => {
 		const transaction = transactions[form.index];
 
 		transaction.account = account;
@@ -149,170 +142,127 @@ class InvestmentTransactionForm extends React.Component {
 			transaction.amount = form.amount;
 		}
 
-		handler(transaction);
-		this.props.resetTransactionForm();
-	}
+		dispatch(handler(transaction));
+		dispatch(resetTransactionForm());
+	};
 
-	render () {
-		const { classes, form, autocompleteInvestmentList } = this.props;
-		const quantityDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
-		const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
-		const commissionDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
-		const amountDisabled = !form.activity || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
 
-		return (
-			<div>
-				<form
-					className={classes.form}
-					onSubmit={this.handleSubmit}
-				>
-					<FormControl required fullWidth>
-						<Input
-							id="date"
-							type="date"
-							name="date"
-							placeholder="Date"
-							value={form.date}
-							onChange={this.onChange(this.props.changeDate)}
-						/>
-					</FormControl>
-					<AutoComplete
-						value={form.investment}
-						items={autocompleteInvestmentList}
-						placeholder="Investment"
-						onChange={this.onInvestmentChange(this.props.changeInvestment)}
+	return (
+		<div>
+			<form
+				onSubmit={handleSubmit}
+			>
+				<FormControl required fullWidth>
+					<Input
+						id="date"
+						type="date"
+						name="date"
+						placeholder="Date"
+						value={form.date}
+						onChange={onChange(changeDate)}
 					/>
-					<FormControl required fullWidth>
-						<Select
-							value={form.activity}
-							onChange={this.onChange(this.props.changeActivity)}
-							inputProps={{
-								name: 'activity',
-								id: 'activity-select'
-							}}
-						>
-							{
-								activityList.map(i => (
-									<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
-								))
-							}
-						</Select>
-					</FormControl>
-					<FormControl fullWidth>
-						<Input
-							id="quantity"
-							type="number"
-							name="quantity"
-							placeholder="Quantity"
-							value={form.quantity}
-							disabled={quantityDisabled}
-							onChange={this.onChange(this.props.changeQuantity)}
-						/>
-					</FormControl>
-					<FormControl fullWidth>
-						<Input
-							id="price"
-							type="number"
-							name="price"
-							placeholder="Price"
-							value={form.price}
-							disabled={priceDisabled}
-							onChange={this.onChange(this.props.changePrice)}
-						/>
-					</FormControl>
-					<FormControl fullWidth>
-						<Input
-							id="commission"
-							type="number"
-							name="commission"
-							placeholder="Commission"
-							value={form.commission}
-							disabled={commissionDisabled}
-							onChange={this.onChange(this.props.changeCommission)}
-						/>
-					</FormControl>
-					<FormControl required fullWidth>
-						<Input
-							id="amount"
-							type="number"
-							name="amount"
-							placeholder="Amount"
-							value={form.amount}
-							disabled={amountDisabled}
-							onChange={this.onChange(this.props.changeAmount)}
-						/>
-					</FormControl>
-					<Button
-						type="submit"
-						fullWidth
-						variant="contained"
-						color="primary"
-						className={classes.submit}
+				</FormControl>
+				<AutoComplete
+					value={form.investment}
+					items={autocompleteInvestmentList}
+					placeholder="Investment"
+					onChange={onInvestmentChange(changeInvestment)}
+				/>
+				<FormControl required fullWidth variant="standard">
+					<Select
+						value={form.activity}
+						onChange={onChange(changeActivity)}
+						inputProps={{
+							name: 'activity',
+							id: 'activity-select'
+						}}
 					>
-						{form.isEdit ? 'Edit' : 'Add'}
-					</Button>
-					{
-						form.isEdit &&
-							<Button
-								fullWidth
-								variant="contained"
-								color="secondary"
-								className={classes.submit}
-								onClick={this.onDeleteButton(this.props.deleteTransactionAction)}
-							>
-								Delete
-							</Button>
-					}
-				</form>
-			</div>
-		);
-	}
+						{
+							activityList.map(i => (
+								<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+							))
+						}
+					</Select>
+				</FormControl>
+				<FormControl fullWidth>
+					<Input
+						id="quantity"
+						type="number"
+						name="quantity"
+						placeholder="Quantity"
+						value={form.quantity}
+						disabled={quantityDisabled}
+						onChange={onChange(changeQuantity)}
+					/>
+				</FormControl>
+				<FormControl fullWidth>
+					<Input
+						id="price"
+						type="number"
+						name="price"
+						placeholder="Price"
+						value={form.price}
+						disabled={priceDisabled}
+						onChange={onChange(changePrice)}
+					/>
+				</FormControl>
+				<FormControl fullWidth>
+					<Input
+						id="commission"
+						type="number"
+						name="commission"
+						placeholder="Commission"
+						value={form.commission}
+						disabled={commissionDisabled}
+						onChange={onChange(changeCommission)}
+					/>
+				</FormControl>
+				<FormControl required fullWidth>
+					<Input
+						id="amount"
+						type="number"
+						name="amount"
+						placeholder="Amount"
+						value={form.amount}
+						disabled={amountDisabled}
+						onChange={onChange(changeAmount)}
+					/>
+				</FormControl>
+				<Button
+					type="submit"
+					fullWidth
+					variant="contained"
+					color="primary"
+					sx={(theme) => ({
+						marginTop: theme.spacing(1)
+					})}
+				>
+					{form.isEdit ? 'Edit' : 'Add'}
+				</Button>
+				{
+					form.isEdit &&
+						<Button
+							fullWidth
+							variant="contained"
+							color="secondary"
+							sx={(theme) => ({
+								marginTop: theme.spacing(1)
+							})}
+							onClick={onDeleteButton(deleteTransactionAction)}
+						>
+							Delete
+						</Button>
+				}
+			</form>
+		</div>
+	);
 }
 
 InvestmentTransactionForm.propTypes = {
 	account: PropTypes.string.isRequired,
 	accountId: PropTypes.string.isRequired,
-	classes: PropTypes.object.isRequired,
-	addTransactionAction: PropTypes.func,
 	autocompleteInvestmentList: PropTypes.array,
-	changeActivity: PropTypes.func,
-	changeAmount: PropTypes.func,
-	changeCommission: PropTypes.func,
-	changeDate: PropTypes.func,
-	changeInvestment: PropTypes.func,
-	changePrice: PropTypes.func,
-	changeQuantity: PropTypes.func,
-	deleteTransactionAction: PropTypes.func,
-	editTransactionAction: PropTypes.func,
-	fillTransactionForm: PropTypes.func,
-	form: PropTypes.shape({
-		date: PropTypes.string,
-		investment: PropTypes.string,
-		activity: PropTypes.string,
-		quantity: PropTypes.number,
-		price: PropTypes.number,
-		commission: PropTypes.number,
-		amount: PropTypes.oneOfType([
-			PropTypes.string,
-			PropTypes.number
-		])
-	}),
-	resetTransactionForm: PropTypes.func,
 	transactions: PropTypes.array
 };
 
-const mapStateToProps = state => ({
-	form: state.ui.form.investmentTransaction
-});
-
-export default connect(mapStateToProps, {
-	fillTransactionForm,
-	resetTransactionForm,
-	changeDate,
-	changeInvestment,
-	changeActivity,
-	changeQuantity,
-	changePrice,
-	changeCommission,
-	changeAmount
-})(withStyles(styles)(InvestmentTransactionForm));
+export default InvestmentTransactionForm;

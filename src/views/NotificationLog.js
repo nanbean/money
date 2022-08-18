@@ -1,72 +1,44 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
-import Paper from '@material-ui/core/Paper';
+import Paper from '@mui/material/Paper';
 
 import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
 
 import { getNotificationsAction } from '../actions/notificationActions';
 
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
-	},
-	paper: {
-		marginTop: theme.spacing(2),
-		padding: theme.spacing(1)
-	}
-});
+export function NotificationLog () {
+	const notifications = useSelector((state) => state.notifications);
 
-class NotificationLog extends Component {
-	componentDidMount () {
-		this.props.getNotificationsAction();
-	}
+	const dispatch = useDispatch();
 
-	render () {
-		const { classes, notifications } = this.props;
+	useEffect(() => {
+		dispatch(getNotificationsAction());
+	}, []);
 
-		return (
-			<div>
-				<TitleHeader title="Notification Log" />
-				<div className={classes.container}>
-					{
-						notifications.map(i => {
-							return (
-								<Paper key={i} className={classes.paper}>
-									{i}
-								</Paper >
-							);
-						})
-					}
-				</div>
-			</div>
-		);
-	}
+	return (
+		<div>
+			<TitleHeader title="Notification Log" />
+			<Container>
+				{
+					notifications.map(i => {
+						return (
+							<Paper
+								key={i}
+								sx={(theme) => ({
+									marginTop: theme.spacing(2),
+									padding: theme.spacing(1)
+								})}
+							>
+								{i}
+							</Paper >
+						);
+					})
+				}
+			</Container>
+		</div>
+	);
 }
 
-NotificationLog.propTypes = {
-	classes: PropTypes.object.isRequired,
-	getNotificationsAction: PropTypes.func.isRequired,
-	notifications: PropTypes.array.isRequired
-};
-
-const mapStateToProps = state => ({
-	notifications: state.notifications
-});
-
-const mapDispatchToProps = dispatch => ({
-	getNotificationsAction () {
-		dispatch(getNotificationsAction());
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(NotificationLog));
+export default NotificationLog;

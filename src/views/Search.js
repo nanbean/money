@@ -1,65 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
-import Paper from '@material-ui/core/Paper';
-import FormControl from '@material-ui/core/FormControl';
-import Input from '@material-ui/core/Input';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import SearchIcon from '@material-ui/icons/Search';
+import { styled } from '@mui/material/styles';
+
+import Paper from '@mui/material/Paper';
+import FormControl from '@mui/material/FormControl';
+import Input from '@mui/material/Input';
+import InputAdornment from '@mui/material/InputAdornment';
+
+import SearchIcon from '@mui/icons-material/Search';
 
 import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 
-import {
-	openTransactionInModal,
-	resetTransactionForm
-} from '../actions/ui/form/bankTransaction';
-
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
+const Sticky = styled('div')(({ theme }) => ({
+	width: '100%',
+	position: 'sticky',
+	paddingLeft: theme.spacing(1),
+	paddingRight: theme.spacing(1),
+	[theme.breakpoints.up('lg')]: {
+		top: 62
 	},
-	paper: {
-		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing(2)
-		},
-		[theme.breakpoints.down('sm')]: {
-			marginTop: 0
-		},
-		alignItems: 'center'
-	},
-	sticky: {
-		width: '100%',
-		position: 'sticky',
-		paddingLeft: theme.spacing(1),
-		paddingRight: theme.spacing(1),
-		[theme.breakpoints.up('lg')]: {
-			top: 62
-		},
-		[theme.breakpoints.down('sm')]: {
-			top: 56
-		}
+	[theme.breakpoints.down('sm')]: {
+		top: 56
 	}
-});
+}));
 
-export function Search ({
-	allAccountsTransactions,
-	classes,
-	isModalOpen,
-	openTransactionInModal,
-	resetTransactionForm,
-	match
-}) 
-{
+export function Search () {
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const [filteredTransactions, setFilteredTransactions] = useState([]);
-	const [keyword, setKeyword] = useState(match && match.params && match.params.keyword);
+	const [keyword, setKeyword] = useState(useParams().keyword);
 
 	useEffect(() => {
 		updateFilteredTransactions(allAccountsTransactions, keyword);
@@ -82,24 +55,34 @@ export function Search ({
 			setFilteredTransactions(filteredTransactions);
 			setKeyword(keyword);
 		}
-	}
+	};
 
 	const onSearchKeyPress = (e) => {
 		if (e.key === 'Enter' && e.target.value) {
 			updateFilteredTransactions(allAccountsTransactions, e.target.value);
 		}
-	}
+	};
 
 	const onKeywordChange = (e) => {
 		setKeyword(e.target.value);
-	}
+	};
 
 	return (
 		<div>
 			<TitleHeader title="Search" />
-			<div className={classes.container}>
-				<Paper className={classes.paper}>
-					<div className={classes.sticky}>
+			<Container>
+				<Paper
+					sx={(theme) => ({
+						[theme.breakpoints.up('lg')]: {
+							marginTop: theme.spacing(2)
+						},
+						[theme.breakpoints.down('sm')]: {
+							marginTop: 0
+						},
+						alignItems: 'center'
+					})}
+				>
+					<Sticky>
 						<FormControl margin="normal" required fullWidth>
 							<Input
 								id="search"
@@ -116,13 +99,12 @@ export function Search ({
 								}
 							/>
 						</FormControl>
-					</div>
+					</Sticky>
 					{
 						filteredTransactions.length > 0 &&
 						<BankTransactions
 							showAccount
 							transactions={filteredTransactions}
-							openTransactionInModal={openTransactionInModal}
 						/>
 					}
 					<BankTransactionModal
@@ -130,39 +112,9 @@ export function Search ({
 						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
 					/>
 				</Paper>
-			</div>
+			</Container>
 		</div>
 	);
 }
 
-Search.propTypes = {
-	allAccountsTransactions:  PropTypes.array.isRequired,
-	classes: PropTypes.object.isRequired,
-	isModalOpen: PropTypes.bool.isRequired,
-	openTransactionInModal: PropTypes.func.isRequired,
-	resetTransactionForm: PropTypes.func.isRequired,
-	match: PropTypes.shape({
-		params: PropTypes.shape({
-			name: PropTypes.string
-		}).isRequired
-	})
-};
-
-const mapStateToProps = state => ({
-	allAccountsTransactions: state.allAccountsTransactions,
-	isModalOpen: state.ui.form.bankTransaction.isModalOpen
-});
-
-const mapDispatchToProps = dispatch => ({
-	openTransactionInModal (params) {
-		dispatch(openTransactionInModal(params));
-	},
-	resetTransactionForm () {
-		dispatch(resetTransactionForm());
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(Search));
+export default Search;

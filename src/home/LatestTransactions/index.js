@@ -1,54 +1,31 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-
-import TableCell from '../../components/TableCell';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 import Amount from '../../components/Amount';
 import BankTransactionModal from '../../components/BankTransactionModal';
-import Payee from '../../common/Payee';
+import Payee from '../../components/Payee';
 
 import {
 	openTransactionInModal
 } from '../../actions/ui/form/bankTransaction';
 
-const typeEmoji = {
-	'Bank': '🏦',
-	'CCard': '💳',
-	'Cash': '💵',
-	'Invst': '📈',
-	'Oth L': '🏧',
-	'Oth A': '🏠'
-};
+import { TYPE_EMOJI } from '../../constants';
 
-const styles = () => ({
-	row: {
-		'&:hover': {
-			cursor: 'pointer'
-		}
-	},
-	link: {
-		textDecoration: 'none',
-		color: 'inherit'
-	}
-});
+export function LastTransactions () {
+	const latestTransactions = useSelector((state) => state.latestTransactions);
+	const dispatch = useDispatch();
 
-export function LastTransactions ({
-	classes,
-	latestTransactions,
-	openTransactionInModal
-}) {
 	const onRowSelect = (index) => () => {
 		const transaction = latestTransactions[index];
 
-		openTransactionInModal({
+		dispatch(openTransactionInModal({
 			account: transaction.account,
 			date: transaction.date,
 			payee: transaction.payee,
@@ -57,7 +34,7 @@ export function LastTransactions ({
 			memo: transaction.memo,
 			isEdit: true,
 			index: index
-		});
+		}));
 	};
 
 	return (
@@ -73,10 +50,10 @@ export function LastTransactions ({
 				</TableHead>
 				<TableBody>
 					{latestTransactions && latestTransactions.map((row, index) => (
-						<TableRow key={index} className={classes.row} onClick={onRowSelect(index)}>
+						<TableRow key={index} onClick={onRowSelect(index)}>
 							<TableCell component="th" scope="row" align="center">
 								<span>
-									{`${typeEmoji[row.type]} ${row.account}`}
+									{`${TYPE_EMOJI[row.type]} ${row.account}`}
 								</span>
 							</TableCell>
 							<TableCell align="center">
@@ -100,23 +77,4 @@ export function LastTransactions ({
 	);
 }
 
-LastTransactions.propTypes = {
-	classes: PropTypes.object.isRequired,
-	latestTransactions:  PropTypes.array.isRequired,
-	openTransactionInModal: PropTypes.func.isRequired
-};
-
-const mapStateToProps = (state) => ({
-	latestTransactions: state.latestTransactions
-});
-
-const mapDispatchToProps = dispatch => ({
-	openTransactionInModal (params) {
-		dispatch(openTransactionInModal(params));
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(LastTransactions));
+export default LastTransactions;

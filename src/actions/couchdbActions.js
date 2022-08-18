@@ -25,7 +25,8 @@ import {
 	SET_WEEKLY_TRANSACTIONS,
 	SET_TRANSACTIONS_FETCHING,
 	SET_LIFETIME_PLANNER_FLOW,
-	SET_NET_WORTH_FLOW
+	SET_NET_WORTH_FLOW,
+	SET_SETTINGS
 } from './actionTypes';
 
 PouchDB.plugin(pouchdbAuthentication);
@@ -37,6 +38,7 @@ let kospiDB = new PouchDB('kospi');
 let kosdaqDB = new PouchDB('kosdaq');
 let historiesDB = new PouchDB('histories');
 let reportsDB = new PouchDB('reports');
+let settingsDB = new PouchDB('settings');
 
 let accountsSync;
 let transactionsSync;
@@ -44,6 +46,7 @@ let kospiSync;
 let kosdaqSync;
 let historiesSync;
 let reportsSync;
+let settingsSync;
 
 // const updateAllTransactions = async (dispatch) => {
 // 	dispatch(getAllAccountsTransactions());
@@ -68,13 +71,13 @@ const getAllTransactions = async () => {
 		endkey: `${moment().add(1, 'years').format('YYYY-MM-DD')}\ufff0`
 	});
 	const allTransactions = transactionsResponse.rows.map(i => i.doc).sort((a, b) => {
-	if (a.date > b.date) {
-		return 1;
-	}
-	if (a.date < b.date) {
-		return -1;
-	}
-	return 0;
+		if (a.date > b.date) {
+			return 1;
+		}
+		if (a.date < b.date) {
+			return -1;
+		}
+		return 0;
 	});
 
 	return allTransactions;
@@ -367,6 +370,22 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
+		let settingsReportsDB = new PouchDB(`https://couchdb.nanbean.net/settings_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		settingsSync = settingsDB.sync(settingsReportsDB, { live: true, retry: true })
+			.on('change', function () {
+				dispatch(getSettingsAction());
+				// handle change
+			}).on('paused', function () {
+				// replication paused (e.g. replication up to date, user went offline)
+			}).on('active', function () {
+				// replicate resumed (e.g. new changes replicating, user went back online)
+			}).on('denied', function () {
+				// a document failed to replicate (e.g. due to permissions)
+			}).on('complete', function () {
+				// handle complete
+			}).on('error', function () {
+				// handle error
+			});
 	};
 };
 
@@ -378,6 +397,7 @@ export const finalizeCouchdbAction = () => {
 		kosdaqSync && kosdaqSync.cancel();
 		historiesSync && historiesSync.cancel();
 		reportsSync && reportsSync.cancel();
+		settingsSync && settingsSync.cancel();
 	};
 };
 
@@ -609,6 +629,18 @@ export const getNetWorthFlowAction = () => {
 		dispatch({
 			type: SET_NET_WORTH_FLOW,
 			payload: netWorth.data
+		});
+	};
+};
+
+export const getSettingsAction = () => {
+	return async dispatch => {
+		const settingsResponse = await settingsDB.allDocs({ include_docs: true }); // eslint-disable-line camelcase
+		const settings = settingsResponse.rows.map(i => i.doc);
+
+		dispatch({
+			type: SET_SETTINGS,
+			payload: settings
 		});
 	};
 };

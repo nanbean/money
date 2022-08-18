@@ -1,27 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import TextField from '@material-ui/core/TextField';
 
-const styles = theme => ({
-	input: {
-		paddingBottom: theme.spacing(1),
-		fontSize: '0.8rem'
-	}
-});
-
-const MyAutocomplete = withStyles({
-	root: {
-
-	},
-	listbox: {
-		margin: 0
-	}
-})(Autocomplete);
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 
 export function AutoComplete ({
-	classes,
 	items,
 	onChange,
 	onInputChange,
@@ -31,26 +13,17 @@ export function AutoComplete ({
 	const defaultValue = value && items.length > 0 && items.find(i => i.name === value);
 
 	return (
-		<MyAutocomplete
+		<Autocomplete
 			options={items}
 			getOptionLabel={(option) => option.name}
 			defaultValue={defaultValue}
 			onInputChange={onInputChange}
 			onChange={onChange}
-			renderInput={(params) => <TextField className={classes.input} {...params} placeholder={placeholder} />}
+			renderInput={(params) => <TextField {...params} variant="standard" placeholder={placeholder} />}
 			freeSolo
 			fullWidth
 		/>
 	);
 }
 
-AutoComplete.propTypes = {
-	classes: PropTypes.object.isRequired,
-	items: PropTypes.array.isRequired,
-	onChange: PropTypes.func.isRequired,
-	placeholder: PropTypes.string.isRequired,
-	onInputChange: PropTypes.func,
-	value: PropTypes.string
-};
-
-export default withStyles(styles)(AutoComplete);
+export default AutoComplete;

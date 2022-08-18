@@ -28,6 +28,7 @@ import allInvestments from './allInvestments';
 import weeklyTransactions from './weeklyTransactions';
 import latestTransactions from './latestTransactions';
 import trascationsFetching from './trascationsFetching';
+import settings from './settings';
 
 const money = combineReducers({
 	ui,
@@ -58,7 +59,8 @@ const money = combineReducers({
 	allInvestments,
 	weeklyTransactions,
 	latestTransactions,
-	trascationsFetching
+	trascationsFetching,
+	settings
 });
 
 export default money;

@@ -1,71 +1,56 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
-import Switch from '@material-ui/core/Switch';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormGroup from '@material-ui/core/FormGroup';
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
 
 import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
 
 import {
 	requestPermissionAction,
 	removePermissionAction
 } from '../actions/messagingActions';
 
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
-	},
-	paper: {
-		[theme.breakpoints.up('lg')]: {
-			marginTop: theme.spacing(2)
-		},
-		[theme.breakpoints.down('sm')]: {
-			marginTop: 0
-		},
-		display: 'flex',
-		flexDirection: 'column',
-		alignItems: 'center',
-		padding: `${theme.spacing(2)}px ${theme.spacing(3)}px ${theme.spacing(3)}px`
-	},
-	log: {
-		marginTop: theme.spacing(3)
-	}
-});
+export function Setting () {
+	const messagingToken = useSelector((state) => state.messagingToken);
+	const navigate = useNavigate();
+	const dispatch = useDispatch();
 
-export function Setting ({
-	classes,
-	history,
-	messagingToken,
-	removePermissionAction,
-	requestPermissionAction
-}) 
-{
 	const handleNotificationLog = () => {
-		history.push('/notificationlog');
-	}
+		navigate('/notificationlog');
+	};
 
 	const handlePushNotificationChange = (event) => {
 		if (event.target.checked) {
-			requestPermissionAction();
+			dispatch(requestPermissionAction());
 		} else {
-			removePermissionAction();
+			dispatch(removePermissionAction());
 		}
-	}
+	};
 
 	return (
 		<div>
 			<TitleHeader title="Setting" />
-			<div className={classes.container}>
-				<Paper className={classes.paper}>
+			<Container>
+				<Paper
+					sx={(theme) => ({
+						[theme.breakpoints.up('lg')]: {
+							marginTop: theme.spacing(2)
+						},
+						[theme.breakpoints.down('sm')]: {
+							marginTop: 0
+						},
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						padding: `${theme.spacing(2)} ${theme.spacing(3)} ${theme.spacing(3)}`
+					})}
+				>
 					<FormGroup>
 						<FormControlLabel
 							control={
@@ -78,41 +63,17 @@ export function Setting ({
 						fullWidth
 						variant="contained"
 						color="primary"
-						className={classes.log}
+						sx={(theme) => ({
+							marginTop: theme.spacing(3)
+						})}
 						onClick={handleNotificationLog}
 					>
 						Notification Log
 					</Button>
 				</Paper>
-			</div>
+			</Container>
 		</div>
 	);
 }
 
-Setting.propTypes = {
-	classes: PropTypes.object.isRequired,
-	history: PropTypes.shape({
-		push: PropTypes.func.isRequired
-	}).isRequired,
-	messagingToken: PropTypes.string.isRequired,
-	removePermissionAction: PropTypes.func.isRequired,
-	requestPermissionAction: PropTypes.func.isRequired
-};
-
-const mapStateToProps = state => ({
-	messagingToken: state.messagingToken
-});
-
-const mapDispatchToProps = dispatch => ({
-	removePermissionAction () {
-		dispatch(removePermissionAction());
-	},
-	requestPermissionAction () {
-		dispatch(requestPermissionAction());
-	}
-});
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(withStyles(styles)(Setting));
+export default Setting;

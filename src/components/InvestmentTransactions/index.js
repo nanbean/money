@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useDispatch } from 'react-redux';
+
 import { AutoSizer, Column, Table } from 'react-virtualized';
 
 import Amount from '../Amount';
@@ -8,19 +10,24 @@ import useMobile from '../../hooks/useMobile';
 
 import { toDateFormat } from '../../utils/formatting';
 
+import {
+	openTransactionInModal
+} from '../../actions/ui/form/bankTransaction';
+
 import 'react-virtualized/styles.css'; // only needs to be imported once
 import './index.css';
 
 export function InvestmentTransactions ({
-	openTransactionInModal,
 	transactions
 }) {
 	const isMobile = useMobile();
 
+	const dispatch = useDispatch();
+
 	const onRowSelect = ({ index }) => {
 		const transaction = transactions[index];
 
-		openTransactionInModal({
+		dispatch(openTransactionInModal({
 			date: transaction.date,
 			investment: transaction.investment,
 			activity: transaction.activity,
@@ -30,7 +37,7 @@ export function InvestmentTransactions ({
 			amount: transaction.amount,
 			isEdit: true,
 			index: index
-		});
+		}));
 	};
 
 	return (
@@ -103,7 +110,6 @@ export function InvestmentTransactions ({
 }
 
 InvestmentTransactions.propTypes = {
-	openTransactionInModal: PropTypes.func,
 	transactions: PropTypes.array
 };
 

@@ -1,8 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Route, BrowserRouter, Switch } from 'react-router-dom';
-import { withStyles } from '@material-ui/core/styles';
-import CssBaseline from '@material-ui/core/CssBaseline';
+import { Routes, Route, BrowserRouter } from 'react-router-dom';
+
+import { styled } from '@mui/material/styles';
+
+import CssBaseline from '@mui/material/CssBaseline';
 
 import SidebarMenu from './components/SidebarMenu';
 
@@ -17,60 +18,54 @@ import {
 	Setting,
 	NotificationLog
 } from './views';
-import ReportMain from './report/ReportMain'
+import ReportMain from './report/ReportMain';
 
 import HomeMain from './home/HomeMain';
 import Signin from './user/Signin';
 
-const styles = theme => ({
-	root: {
-		display: 'flex'
-	},
-	toolbar: theme.mixins.toolbar,
-	content: {
-		flexGrow: 1,
-		backgroundColor: theme.palette.background.default
-	}
-});
+const Content = styled('main')(({ theme }) => ({
+	flexGrow: 1,
+	backgroundColor: theme.palette.background.default
+}));
+
+const Toolbar = styled('div')(({ theme }) => ({
+	...theme.mixins.toolbar
+}));
 
 // eslint-disable-next-line react/display-name
-function Routes ({ classes }) {
+function RoutesMain () {
 	return (
 		<BrowserRouter>
-			<div className={classes.root}>
+			<div style={{ display: 'flex' }}>
 				<CssBaseline />
 				<SidebarMenu />
-				<main className={classes.content}>
-					<div className={classes.toolbar} />
-					<Switch>
-						<Route exact path="/" component={HomeMain} />
-						<Route path="/bank/:name" component={Bank} />
-						<Route path="/Bank/:name" component={Bank} />
-						<Route path="/CCard/:name" component={Bank} />
-						<Route path="/Cash/:name" component={Bank} />
-						<Route path="/Oth A/:name" component={Bank} />
-						<Route path="/Oth L/:name" component={Bank} />
-						<Route path="/investment/:name" component={Investment} />
-						<Route path="/Invst/:name" component={Investment} />
-						<Route exact path="/networth" component={NetWorth} />
-						<Route path="/lifetimeplanner" component={LifetimePlanner} />
-						<Route path="/performance/:investment" component={Performance} />
-						<Route exact path="/allperformance" component={AllPerformance} />
-						<Route exact path="/report" component={ReportMain} />
-						<Route exact path="/search" component={Search} />
-						<Route path="/search/:keyword" component={Search} />
-						<Route exact path="/setting" component={Setting} />
-						<Route exact path="/notificationlog" component={NotificationLog} />
-						<Route exact path="/signin" component={Signin} />
-					</Switch>
-				</main>
+				<Content>
+					<Toolbar />
+					<Routes>
+						<Route path="/" element={<HomeMain />} />
+						<Route path="/bank/:name" element={<Bank/>} />
+						<Route path="/Bank/:name" element={<Bank/>} />
+						<Route path="/CCard/:name" element={<Bank/>} />
+						<Route path="/Cash/:name" element={<Bank/>} />
+						<Route path="/Oth A/:name" element={<Bank/>} />
+						<Route path="/Oth L/:name" element={<Bank/>} />
+						<Route path="/investment/:name" element={<Investment/>} />
+						<Route path="/Invst/:name" element={<Investment/>} />
+						<Route exact path="/networth" element={<NetWorth/>} />
+						<Route path="/lifetimeplanner" element={<LifetimePlanner/>} />
+						<Route path="/performance/:investment" element={<Performance/>} />
+						<Route exact path="/allperformance" element={<AllPerformance/>} />
+						<Route exact path="/report" element={<ReportMain/>} />
+						<Route exact path="/search" element={<Search/>} />
+						<Route path="/search/:keyword" element={<Search/>} />
+						<Route exact path="/setting" element={<Setting/>} />
+						<Route exact path="/notificationlog" element={<NotificationLog/>} />
+						<Route exact path="/signin" element={<Signin/>} />
+					</Routes>
+				</Content>
 			</div>
 		</BrowserRouter>
 	);
 }
 
-Routes.propTypes = {
-	classes: PropTypes.object.isRequired
-};
-
-export default withStyles(styles)(Routes);
+export default RoutesMain;

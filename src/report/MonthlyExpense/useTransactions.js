@@ -21,19 +21,19 @@ const useTransactions = (allAccountsTransactions, livingExpenseCardOnly, boAOnly
 					const transaction = i.division[j];
 					if (transaction.amount > 0 && !transaction.category.startsWith('[')) {
 						incomeTransactions.push({
-								date: i.date,
-								category: transaction.category,
-								subcategory: transaction.subcategory,
-								payee: transaction.description,
-								amount: transaction.amount
+							date: i.date,
+							category: transaction.category,
+							subcategory: transaction.subcategory,
+							payee: transaction.description,
+							amount: transaction.amount
 						});
 					} else if (transaction.amount < 0 && !transaction.category.startsWith('[') && transaction.payee !== 'Principal') {
 						expenseTransactions.push({
-								date: i.date,
-								category: transaction.category,
-								subcategory: transaction.subcategory,
-								payee: transaction.description,
-								amount: transaction.amount
+							date: i.date,
+							category: transaction.category,
+							subcategory: transaction.subcategory,
+							payee: transaction.description,
+							amount: transaction.amount
 						});
 					}
 				}
@@ -46,7 +46,7 @@ const useTransactions = (allAccountsTransactions, livingExpenseCardOnly, boAOnly
 		expenseTransactions = expenseTransactions.filter(i => i.account === '생활비카드');
 	}
 	
-	return {incomeTransactions, expenseTransactions};
+	return { incomeTransactions, expenseTransactions };
 };
 
 export default useTransactions;

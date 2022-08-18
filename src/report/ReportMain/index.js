@@ -1,30 +1,17 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
 
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
-import AppBar from '@material-ui/core/AppBar';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import AppBar from '@mui/material/AppBar';
 
 import TitleHeader from '../../components/TitleHeader';
+import Container from '../../components/Container';
 
 import MonthlyExpense from '../MonthlyExpense';
 import Dividend from '../Dividend';
 import InvestmentHistory from '../InvestmentHistory';
 
-const styles = theme => ({
-	container: {
-		flexGrow: 1,
-		padding: theme.spacing(3),
-		[theme.breakpoints.down('sm')]: {
-			padding: 0
-		}
-	}
-});
-
-export function ReportMain ({
-	classes
-}) {
+export function ReportMain () {
 	const [value, setValue] = useState(0);
 
 	const handleChange = (event, val) => {
@@ -34,7 +21,7 @@ export function ReportMain ({
 	return (
 		<React.Fragment>
 			<TitleHeader title="Report" />
-			<div className={classes.container}>
+			<Container>
 				<AppBar position="static" color="default">
 					<Tabs value={value} onChange={handleChange}>
 						<Tab label="Monthly Expense" />
@@ -45,13 +32,9 @@ export function ReportMain ({
 				{value === 0 && <MonthlyExpense />}
 				{value === 1 && <Dividend />}
 				{value === 2 && <InvestmentHistory />}
-			</div>
+			</Container>
 		</React.Fragment>
 	);
 }
 
-ReportMain.propTypes = {
-	classes: PropTypes.object.isRequired
-};
-
-export default withStyles(styles)(ReportMain);
+export default ReportMain;

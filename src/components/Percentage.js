@@ -1,8 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+
 import { toPercentFormat } from '../utils/formatting';
 
-const Percentage = ({ value, showColor = true }) => (
+const Percentage = ({
+	value,
+	showColor = true
+}) => (
 	<span
 		className={`mono ${showColor && (value >= 0 ? 'positive' : 'negative')}`}
 	>
