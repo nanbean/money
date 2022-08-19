@@ -31,7 +31,7 @@ Payee.defaultProps = {
 
 Payee.propTypes = {
 	category: PropTypes.string.isRequired,
-	value: PropTypes.number.isRequired,
+	value: PropTypes.string.isRequired,
 	showColor: PropTypes.bool
 };
 

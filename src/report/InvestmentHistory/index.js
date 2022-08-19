@@ -7,8 +7,6 @@ import LinearProgress from '@mui/material/LinearProgress';
 import stc from 'string-to-color';
 
 import InvestmentFilter from '../../components/InvestmentFilter';
-import TitleHeader from '../../components/TitleHeader';
-import Container from '../../components/Container';
 
 import {
 	getNetWorthFlowAction
@@ -66,39 +64,35 @@ function InvestmentHistory () {
 
 	if (netWorthFlow.length > 0) {
 		return (
-			<div>
-				<TitleHeader title="Net Worth" />
-				<Container>
-					<InvestmentFilter
-						allInvestmentsPrice={allInvestments}
-						filteredInvestments={filteredInvestments}
-					/>
-					{
-						netWorthFlow.length > 1 &&
-						<ResponsiveContainer width="100%" height={400}>
-							<BarChart
-								data={investmentHistory}
-								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
-							>
-								<XAxis dataKey="date"/>
-								<YAxis hide/>
-								<CartesianGrid strokeDasharray="3 3"/>
-								<Tooltip content={<CustomTooltip />} />
-								{
-									filteredInvestments.map(i => (
-										<Bar key={i} dataKey={i} stackId="a" fill={stc(i)} />
-									))
-								}
-							</BarChart>
-						</ResponsiveContainer>
-					}
-				</Container>
-			</div>
+			<React.Fragment>
+				<InvestmentFilter
+					allInvestmentsPrice={allInvestments}
+					filteredInvestments={filteredInvestments}
+				/>
+				{
+					netWorthFlow.length > 1 &&
+					<ResponsiveContainer width="100%" height={400}>
+						<BarChart
+							data={investmentHistory}
+							margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
+						>
+							<XAxis dataKey="date"/>
+							<YAxis hide/>
+							<CartesianGrid strokeDasharray="3 3"/>
+							<Tooltip content={<CustomTooltip />} />
+							{
+								filteredInvestments.map(i => (
+									<Bar key={i} dataKey={i} stackId="a" fill={stc(i)} />
+								))
+							}
+						</BarChart>
+					</ResponsiveContainer>
+				}
+			</React.Fragment>
 		);
 	} else {
 		return (
-			<div>
-				<TitleHeader title="Net Worth" />
+			<React.Fragment>
 				<LinearProgress
 					color="secondary"
 					sx={(theme) => ({
@@ -110,7 +104,7 @@ function InvestmentHistory () {
 						}
 					})}
 				/>
-			</div>
+			</React.Fragment>
 		);
 	}
 }

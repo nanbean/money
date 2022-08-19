@@ -66,8 +66,9 @@ const getData = (week, filteredTransactions) => week.map((i, index) => {
 
 export function WeeklyGraph () {
 	const weeklyTransactions = useSelector((state) => state.weeklyTransactions);
+	const weeklyGraphAccount = useSelector((state) => state.settings.weeklyGraphAccount);
 
-	const filteredTransactions = useMemo(() => weeklyTransactions.filter(i => i.type === 'Bank' || i.type === 'CCard' || i.type === 'Cash'), [weeklyTransactions]);
+	const filteredTransactions = useMemo(() => weeklyGraphAccount.reduce((total, i) => [...total, ...weeklyTransactions.filter(j => j.account === i)], []), [weeklyTransactions, weeklyGraphAccount]);
 	const data = useMemo(() => getData(week, filteredTransactions), [week, filteredTransactions]);
 
 	return (

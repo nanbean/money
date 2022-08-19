@@ -56,14 +56,10 @@ export function InvestmentFilter ({
 
 	return (
 		<Paper sx={(theme) => ({
-			[theme.breakpoints.up('lg')]: {
-				marginTop: theme.spacing(2)
-			},
-			[theme.breakpoints.down('sm')]: {
-				marginTop: 0
-			},
-			alignItems: 'center',
-			padding: theme.spacing(2)
+			paddingTop: theme.spacing(1),
+			paddingLeft: theme.spacing(2),
+			paddingRight: theme.spacing(2),
+			paddingBottom: theme.spacing(1)
 		})}>
 			{
 				allInvestmentsPrice && allInvestmentsPrice.map(j => {
