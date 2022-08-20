@@ -34,7 +34,7 @@ const Sticky = styled('div')(({ theme }) => ({
 	backgroundColor: 'white'
 }));
 
-const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
+const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':')).replace(/%20/g, ' ')}`;
 const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
 
 export function Bank () {

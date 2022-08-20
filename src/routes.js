@@ -23,6 +23,11 @@ import ReportMain from './report/ReportMain';
 import HomeMain from './home/HomeMain';
 import Signin from './user/Signin';
 
+import {
+	BANK_TYPE,
+	INVEST_TYPE
+} from './constants';
+
 const Content = styled('main')(({ theme }) => ({
 	flexGrow: 1,
 	backgroundColor: theme.palette.background.default
@@ -43,24 +48,22 @@ function RoutesMain () {
 					<Toolbar />
 					<Routes>
 						<Route path="/" element={<HomeMain />} />
-						<Route path="/bank/:name" element={<Bank/>} />
-						<Route path="/Bank/:name" element={<Bank/>} />
-						<Route path="/CCard/:name" element={<Bank/>} />
-						<Route path="/Cash/:name" element={<Bank/>} />
-						<Route path="/Oth A/:name" element={<Bank/>} />
-						<Route path="/Oth L/:name" element={<Bank/>} />
-						<Route path="/investment/:name" element={<Investment/>} />
-						<Route path="/Invst/:name" element={<Investment/>} />
-						<Route exact path="/networth" element={<NetWorth/>} />
-						<Route path="/lifetimeplanner" element={<LifetimePlanner/>} />
-						<Route path="/performance/:investment" element={<Performance/>} />
-						<Route exact path="/allperformance" element={<AllPerformance/>} />
-						<Route exact path="/report" element={<ReportMain/>} />
-						<Route exact path="/search" element={<Search/>} />
-						<Route path="/search/:keyword" element={<Search/>} />
-						<Route exact path="/setting" element={<Setting/>} />
-						<Route exact path="/notificationlog" element={<NotificationLog/>} />
-						<Route exact path="/signin" element={<Signin/>} />
+						{
+							BANK_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Bank />} />))
+						}
+						{
+							INVEST_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Investment />} />))
+						}
+						<Route exact path="/networth" element={<NetWorth />} />
+						<Route path="/lifetimeplanner" element={<LifetimePlanner />} />
+						<Route path="/performance/:investment" element={<Performance />} />
+						<Route exact path="/allperformance" element={<AllPerformance />} />
+						<Route exact path="/report" element={<ReportMain />} />
+						<Route exact path="/search" element={<Search />} />
+						<Route path="/search/:keyword" element={<Search />} />
+						<Route exact path="/setting" element={<Setting />} />
+						<Route exact path="/notificationlog" element={<NotificationLog />} />
+						<Route exact path="/signin" element={<Signin />} />
 					</Routes>
 				</Content>
 			</div>

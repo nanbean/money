@@ -33,3 +33,15 @@ export const TYPE_EMOJI = {
 	'Oth L': '🏧',
 	'Oth A': '🏠'
 };
+
+export const BANK_TYPE = [
+	'Bank',
+	'CCard',
+	'Cash',
+	'Oth%20A',
+	'Oth%20L'
+];
+
+export const INVEST_TYPE = [
+	'Invst'
+];
