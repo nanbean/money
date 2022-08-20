@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import LinearProgress from '@mui/material/LinearProgress';
 import stc from 'string-to-color';
 
@@ -78,7 +78,6 @@ function InvestmentHistory () {
 						>
 							<XAxis dataKey="date"/>
 							<YAxis hide/>
-							<CartesianGrid strokeDasharray="3 3"/>
 							<Tooltip content={<CustomTooltip />} />
 							{
 								filteredInvestments.map(i => (

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import TitleHeader from '../components/TitleHeader';
@@ -37,7 +37,6 @@ function LifetimePlanner () {
 							>
 								<XAxis dataKey="year" />
 								<YAxis hide />
-								<CartesianGrid strokeDasharray="3 3" />
 								<Tooltip formatter={formatter} />
 								<Bar dataKey="amountInflation" name="Amount(Inflation)" fill="#8884d8" />
 								<Bar dataKey="amount" name="Amount" fill="#82ca9d" />

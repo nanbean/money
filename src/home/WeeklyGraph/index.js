@@ -7,8 +7,7 @@ import {
 	BarChart,
 	Bar,
 	XAxis,
-	YAxis,
-	CartesianGrid
+	YAxis
 } from 'recharts';
 
 import {
@@ -81,7 +80,6 @@ export function WeeklyGraph () {
 					top: 0, right: 5, left: 10, bottom: 0
 				}}
 			>
-				<CartesianGrid strokeDasharray="3 3" />
 				<XAxis dataKey="dayofWeek" />
 				<YAxis domain={[0, 'dataMax']} />
 				<Bar dataKey="식비" stackId="a" fill={getCategoryColor('식비')} />

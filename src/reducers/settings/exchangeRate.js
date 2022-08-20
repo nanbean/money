@@ -9,7 +9,7 @@ export default function exchangeRate (state = initialState, action) {
 		if (exchangeRate && exchangeRate.dollorWon) {
 			return exchangeRate.dollorWon;
 		}
-		break;
+		return state;
 	}
 	default:
 		return state;

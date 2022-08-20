@@ -8,9 +8,8 @@ export default function weeklyGraphAccount (state = initialState, action) {
 		const weeklyGraphAccount = action.payload.find(i => i._id === 'weeklyGraphAccount');
 		if (weeklyGraphAccount && weeklyGraphAccount.data) {
 			return weeklyGraphAccount.data;
-		} else {
-			return state;
 		}
+		return state;
 	}
 	default:
 		return state;

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import TitleHeader from '../components/TitleHeader';
@@ -59,7 +59,6 @@ function NetWorth () {
 							>
 								<XAxis dataKey="date"/>
 								<YAxis hide/>
-								<CartesianGrid strokeDasharray="3 3"/>
 								<Tooltip content={<CustomTooltip />} />
 								<Bar dataKey="assetNetWorth" stackId="a" fill="#3d397d" />
 								<Bar dataKey="movableAsset" stackId="a" fill="#8884d8" />
