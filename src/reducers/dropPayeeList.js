@@ -10,6 +10,14 @@ export default function dropPayeeList (state = initialState, action) {
 		} else {
 			return state;
 		}
+	case actions.ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS:
+		if (action.payload) {
+			const index = state.findIndex(i => i.name === action.payload.payee);
+			if (index < 0) {
+				return [...state, { key: action.payload.payee, name: action.payload.payee }];
+			}
+		}
+		return state;
 	default:
 		return state;
 	}

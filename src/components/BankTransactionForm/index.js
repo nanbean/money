@@ -77,6 +77,7 @@ export function BankTransactionForm ({
 
 		data.account = form.account || account;
 		data.accountId = accountId;
+		data.type = accountId.split(':')[1];
 		data.date = form.date;
 		data.payee = form.payee;
 		data.category = form.category;
