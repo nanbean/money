@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 
@@ -21,28 +21,27 @@ import theme from './theme';
 
 import './App.css';
 
-function App ({
-	getAccountListAction,
-	getAllAccountsTransactionsAction,
-	getAllInvestmentsListAction,
-	getAuthAction,
-	getCategoryListAction,
-	getPayeeListAction,
-	getSettingsAction,
-	rehydrateAction
-}) {
+function App () {
+	const accountList = useSelector((state) => state.accountList);
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+
+	const dispatch = useDispatch();
 
 	useEffect(() => {
-		rehydrateAction();
-		getAuthAction();
-		getAccountListAction();
-
-		getAllAccountsTransactionsAction();
-		getAllInvestmentsListAction();
-		getCategoryListAction();
-		getPayeeListAction();
-		getSettingsAction();
+		dispatch(rehydrateAction());
+		dispatch(getAuthAction());
+		dispatch(getAccountListAction());
+		dispatch(getSettingsAction());
 	}, []);
+
+	useEffect(() => {
+		if (accountList.length > 0 && allAccountsTransactions.length < 1) {
+			dispatch(getAllAccountsTransactionsAction());
+			dispatch(getAllInvestmentsListAction());
+			dispatch(getCategoryListAction());
+			dispatch(getPayeeListAction());
+		}
+	}, [accountList]);
 
 	return (
 		<ThemeProvider theme={theme}>
@@ -52,45 +51,4 @@ function App ({
 	);
 }
 
-App.propTypes = {
-	getAccountListAction: PropTypes.func.isRequired,
-	getAllAccountsTransactionsAction: PropTypes.func.isRequired,
-	getAllInvestmentsListAction: PropTypes.func.isRequired,
-	getAuthAction: PropTypes.func.isRequired,
-	getCategoryListAction: PropTypes.func.isRequired,
-	getPayeeListAction: PropTypes.func.isRequired,
-	getSettingsAction: PropTypes.func.isRequired,
-	rehydrateAction: PropTypes.func.isRequired
-};
-
-const mapDispatchToProps = dispatch => ({
-	getAccountListAction () {
-		dispatch(getAccountListAction());
-	},
-	getAllAccountsTransactionsAction () {
-		dispatch(getAllAccountsTransactionsAction());
-	},
-	getAllInvestmentsListAction () {
-		dispatch(getAllInvestmentsListAction());
-	},
-	getAuthAction () {
-		dispatch(getAuthAction());
-	},
-	getCategoryListAction () {
-		dispatch(getCategoryListAction());
-	},
-	getPayeeListAction () {
-		dispatch(getPayeeListAction());
-	},
-	getSettingsAction () {
-		dispatch(getSettingsAction());
-	},
-	rehydrateAction () {
-		dispatch(rehydrateAction());
-	}
-});
-
-export default connect(
-	null,
-	mapDispatchToProps
-)(App);
+export default App;
