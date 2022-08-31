@@ -4,8 +4,13 @@ import { useDispatch } from 'react-redux';
 
 import { AutoSizer, Column, Table } from 'react-virtualized';
 
+import Stack from '@mui/material/Stack';
+
 import Amount from '../Amount';
 import Payee from '../Payee';
+import CategoryIcon from '../CategoryIcon';
+
+import useWidth from '../../hooks/useWidth';
 
 import { toDateFormat } from '../../utils/formatting';
 
@@ -21,6 +26,9 @@ export function BankTransactions ({
 	showAccount,
 	transactions
 }) {
+	const width = useWidth();
+	const isWidthDownMd = width === 'xs' || width === 'sm';
+
 	const dispatch = useDispatch();
 
 	const onRowSelect = ({ index }) => {
@@ -50,7 +58,7 @@ export function BankTransactions ({
 							width={width}
 							height={height}
 							headerHeight={40}
-							rowHeight={30}
+							rowHeight={!isWidthDownMd ? 30 : 60}
 							scrollToIndex={transactions.length-1}
 							rowCount={transactions.length}
 							rowGetter={({ index }) => transactions[index]}
@@ -65,18 +73,44 @@ export function BankTransactions ({
 									cellRenderer={({ cellData }) => cellData}
 								/>
 							}
-							<Column
-								label="Date"
-								dataKey="date"
-								width={width/4}
-								cellRenderer={({ cellData }) => toDateFormat(cellData)}
-							/>
+							{
+								!isWidthDownMd &&
+								<Column
+									label="Date"
+									dataKey="date"
+									width={width/4}
+									cellRenderer={({ cellData }) => toDateFormat(cellData)}
+								/>
+							}
+							{
+								<Column
+									label="Category"
+									dataKey="category"
+									width={width/4}
+									cellRenderer={({ cellData }) => <CategoryIcon category={cellData} fontsize={!isWidthDownMd ? 20 : 40}/>}
+								/>
+							}
 							<Column
 								label="Payee"
 								dataKey="payee"
 								width={width/2}
-								cellDataGetter={({ rowData }) => ({ category: rowData.category, payee: rowData.payee })}
-								cellRenderer={({ cellData }) => <Payee value={cellData.payee} category={cellData.category} />}
+								cellDataGetter={({ rowData }) => ({ date: rowData.date, category: rowData.category, payee: rowData.payee, amount: rowData.amount })}
+								cellRenderer={({ cellData }) => {
+									if (isWidthDownMd) {
+										return (
+											<Stack>
+												<Payee value={cellData.payee} category={cellData.category} />
+												<div>
+													{toDateFormat(cellData.date)}
+												</div>
+											</Stack>
+										);
+									} else {
+										return (
+											<Payee value={cellData.payee} category={cellData.category} />
+										);
+									}
+								}}
 							/>
 							<Column
 								width={width/4}
