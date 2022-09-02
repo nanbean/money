@@ -58,7 +58,7 @@ export function BankTransactions ({
 							width={width}
 							height={height}
 							headerHeight={40}
-							rowHeight={!isWidthDownMd ? 30 : 60}
+							rowHeight={!isWidthDownMd ? 30 : 50}
 							scrollToIndex={transactions.length-1}
 							rowCount={transactions.length}
 							rowGetter={({ index }) => transactions[index]}

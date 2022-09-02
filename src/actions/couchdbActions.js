@@ -644,3 +644,17 @@ export const getSettingsAction = () => {
 		});
 	};
 };
+export const updateExchageRateAction = (value) => {
+	return async dispatch => {
+		const exchangeRate = await settingsDB.get('exchangeRate');
+		exchangeRate.dollorWon = value;
+		await settingsDB.put(exchangeRate);
+
+		dispatch({
+			type: SET_SETTINGS,
+			payload: [
+				exchangeRate
+			]
+		});
+	};
+};
