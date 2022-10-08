@@ -16,27 +16,36 @@ exports.getLifetimeFlowList = async (accounts) => {
 
 	const firstSheet = doc.sheetsByIndex[0];
 	// reduced range because of memory
-	await firstSheet.loadCells(['A48:AZ56', 'A20:AZ24', 'A60:AZ64', 'A67:AZ67','A71:A83']);
+	await firstSheet.loadCells(['A48:AZ58', 'A20:AZ24', 'A60:AZ64', 'A67:AZ67','A71:A83']);
 	console.log('cells loaded');
 
 	let netWorth = [];
+	const data = [];
 	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 	const colIndex = [
 		...alphabet.slice(1, alphabet.length),
 		...alphabet.map((i, index) => 'A' + alphabet[index])
 	];
-	const yearTotalLength = moment('2072-01-01').year() - moment().year() + 1; // 2072 - current year
+	const currentYear = moment().year();
+	const endYear = 2072;
+	const yearList = [];
+	const yearTotalLength = endYear - currentYear + 1; // 2072 - current year
 	while (colIndex.length > yearTotalLength) {
 		colIndex.shift();
 	}
+	for (let year = currentYear; year <= endYear; year++ ) {
+		yearList.push(year);
+	}
+	const flowList = [];
+	const flowInflationList = [];
 
-	for (let rowNumber = 48; rowNumber < 56; rowNumber++) {
+	for (let rowNumber = 48; rowNumber <= 58; rowNumber++) {
 		if (firstSheet.getCellByA1(`A${rowNumber}`).value === '키움증권') {
 			const accountItem = accounts.find(i => i.name === '키움증권' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
-				const year = moment().year() + j - 1;
-				const isSecondYear = year - 1 === moment().year();
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
 				const expectCell = '$A74';
@@ -58,8 +67,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 			const accountItem = accounts.find(i => i.name === '교보변액연금보험' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
-				const year = moment().year() + j - 1;
-				const isSecondYear = year - 1 === moment().year();
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
 				const expectCell = '$A75';
@@ -79,8 +88,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 			const accountItem = accounts.find(i => i.name === '동양종금장마' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
-				const year = moment().year() + j - 1;
-				const isSecondYear = year - 1 === moment().year();
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
 				const expectCell = '$A73';
@@ -100,8 +109,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 			const accountItem = accounts.find(i => i.name === '몬쁭스SK증권' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
-				const year = moment().year() + j - 1;
-				const isSecondYear = year - 1 === moment().year();
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
 				const expectCell = '$A74';
@@ -119,8 +128,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 			const accountItem = accounts.find(i => i.name === 'IRP' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
-				const year = moment().year() + j - 1;
-				const isSecondYear = year - 1 === moment().year();
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
 				const expectCell = '$A74';
@@ -141,8 +150,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 			const accountItem = accounts.find(i => i.name === '연금저축' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
-				const year = moment().year() + j - 1;
-				const isSecondYear = year - 1 === moment().year();
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
 				const expectCell = '$A74';
@@ -163,8 +172,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 			const accountItem = accounts.find(i => i.name === 'IRP오은미' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
-				const year = moment().year() + j - 1;
-				const isSecondYear = year - 1 === moment().year();
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
 				const expectCell = '$A74';
@@ -182,9 +191,25 @@ exports.getLifetimeFlowList = async (accounts) => {
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '자산') {
-
+			for (let j = 0; j < colIndex.length; j++) {
+				flowList.push(firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).value);
+			}
+		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '자산인플레이션') {
+			for (let j = 0; j < colIndex.length; j++) {
+				flowInflationList.push(firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).value);
+			}
 		}
 	}
 	await firstSheet.saveUpdatedCells();
+
+	for (let i = 0; i < yearList.length; i++) {
+		data.push({
+			year: yearList[i],
+			amount: flowInflationList[i],
+			amountInflation: flowList[i]
+		});
+	}
 	console.log('cells updated');
+
+	return data;
 };

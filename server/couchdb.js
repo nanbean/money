@@ -9,7 +9,6 @@ const exec = require('child_process').exec;
 const messaging = require('./messaging');
 const calendar = require('./calendar');
 
-const lifetimePlanner = require('./api/lifetimePlanner');
 const spreadSheet = require('./api/spreadSheet');
 
 const couchdbUtil = require('./couchdbUtil');
@@ -461,8 +460,7 @@ const updateLifeTimePlanner = async () => {
 	}
 
 	const accounts = await getAllAccounts();
-	const data = await lifetimePlanner.getLifetimeFlowList(accounts);
-	await spreadSheet.getLifetimeFlowList(accounts);
+	const data = await spreadSheet.getLifetimeFlowList(accounts);
 	const transaction = {
 		_id: 'lifetimeplanner',
 		date: new Date(),
