@@ -16,6 +16,7 @@
     "firebase": "^8.10.0",
     "firebase-admin": "^9.5.0",
     "google-finance": "^0.1.11",
+    "google-spreadsheet": "^3.3.0",
     "googleapis": "^60.0.1",
     "iconv": "^2.3.0",
     "jschardet": "^1.6.0",
