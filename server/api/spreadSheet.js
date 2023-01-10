@@ -31,15 +31,13 @@ exports.getLifetimeFlowList = async (accounts) => {
 	const yearList = [];
 	const yearTotalLength = endYear - currentYear + 1; // 2072 - current year
 	while (colIndex.length > yearTotalLength) {
-		colIndex.shift();
+		colIndex.pop();
 	}
 	for (let year = currentYear; year <= endYear; year++ ) {
 		yearList.push(year);
 	}
-	const flowList = [];
-	const flowInflationList = [];
 
-	for (let rowNumber = 48; rowNumber <= 58; rowNumber++) {
+	for (let rowNumber = 48; rowNumber <= 56; rowNumber++) {
 		if (firstSheet.getCellByA1(`A${rowNumber}`).value === '키움증권') {
 			const accountItem = accounts.find(i => i.name === '키움증권' && i.type == 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
@@ -190,7 +188,17 @@ exports.getLifetimeFlowList = async (accounts) => {
 				}
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
-		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '자산') {
+		}
+	}
+	await firstSheet.saveUpdatedCells();
+
+	const flowList = [];
+	const flowInflationList = [];
+
+	await firstSheet.loadCells(['A57:AZ58']);
+
+	for (let rowNumber = 57; rowNumber <= 58; rowNumber++) {
+		if (firstSheet.getCellByA1(`A${rowNumber}`).value === '자산') {
 			for (let j = 0; j < colIndex.length; j++) {
 				flowList.push(firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).value);
 			}
@@ -200,7 +208,6 @@ exports.getLifetimeFlowList = async (accounts) => {
 			}
 		}
 	}
-	await firstSheet.saveUpdatedCells();
 
 	for (let i = 0; i < yearList.length; i++) {
 		data.push({
