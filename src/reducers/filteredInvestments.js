@@ -1,11 +1,11 @@
 import * as actions from '../actions/actionTypes';
 
 const initialState = [
-	'한국조선해양',
+	'HD한국조선해양',
 	'HD현대',
-	'현대일렉트릭',
-	'현대건설기계',
-	'현대중공업'
+	'HD현대일렉트릭',
+	'HD현대건설기계',
+	'HD현대중공업'
 ];
 
 export default function filteredInvestments (state = initialState, action) {
