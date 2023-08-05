@@ -482,10 +482,11 @@ exports.getLifetimeFlowList = async () => {
 	return lifeTimePlanner.data;
 };
 
-const getNetWorth = (allAccounts, allTransactions, allInvestments, histories, date, assetOnly) => {
+const getNetWorth = async (allAccounts, allTransactions, allInvestments, histories, date, assetOnly) => {
 	const dateAccounts = {};
 	let netWorth = 0;
-	let netInvestments = []
+	let netInvestments = [];
+	const exchangeRate = await getExchangeRate();
 
 	for (const account of allAccounts) {
 		const transactions = allTransactions.filter(i => i.date <= date).filter(i => i.accountId === `account:${account.type}:${account.name}`);
@@ -500,7 +501,11 @@ const getNetWorth = (allAccounts, allTransactions, allInvestments, histories, da
 					netInvestments = [...netInvestments, ...investments];
 					netWorth += getInvestmentBalance(investments, date, histories);
 				} else {
-					netWorth += getBalance(account.name, allTransactions, transactions, date);
+					if(account.currency === 'USD') {
+						netWorth += getBalance(account.name, allTransactions, transactions, date) * exchangeRate;
+					} else {
+						netWorth += getBalance(account.name, allTransactions, transactions, date);
+					}
 				}
 			}
 		}
@@ -555,10 +560,11 @@ const updateNetWorth = async () => {
 	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true });
 
 	for (const item of data) {
-		const netWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
+		const netWorth = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
 		item.netWorth = netWorth.netWorth;
 		item.netInvestments = netWorth.netInvestments;
-		item.assetNetWorth = getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date, true).netWorth;
+		const assetNetWorth = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date, true);
+		item.assetNetWorth = assetNetWorth.netWorth;
 		item.movableAsset = Math.max(item.netWorth - item.assetNetWorth, 0);
 	}
 	
