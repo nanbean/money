@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { styled } from '@mui/material/styles';
 
+import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
 import FormControl from '@mui/material/FormControl';
 import Input from '@mui/material/Input';
 import InputAdornment from '@mui/material/InputAdornment';
+
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -15,6 +20,8 @@ import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
+
+import { toCurrencyFormat } from '../utils/formatting';
 
 const Sticky = styled('div')(({ theme }) => ({
 	width: '100%',
@@ -31,15 +38,22 @@ const Sticky = styled('div')(({ theme }) => ({
 
 export function Search () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const dropCategoryList = useSelector((state) => state.dropCategoryList);
 	const [filteredTransactions, setFilteredTransactions] = useState([]);
 	const [keyword, setKeyword] = useState(useParams().keyword);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const category = searchParams.get('category');
+	const subcategory = searchParams.get('subcategory');
+	const startDate = searchParams.get('startDate');
+	const endDate = searchParams.get('endDate');
+	const balance = filteredTransactions.length > 0 && filteredTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
 
 	useEffect(() => {
-		updateFilteredTransactions(allAccountsTransactions, keyword);
-	}, [keyword, allAccountsTransactions]);
+		updateFilteredTransactions(allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
+	}, [keyword, category, subcategory, startDate, endDate, allAccountsTransactions]);
 
-	const updateFilteredTransactions = (allAccountsTransactions, keyword) => {
-		if (keyword) {
+	const updateFilteredTransactions = (allAccountsTransactions, keyword, category, subcategory, startDate, endDate) => {
+		if (keyword || category || subcategory || startDate || endDate) {
 			let filteredTransactions = [];
 
 			allAccountsTransactions.forEach(i => {
@@ -48,10 +62,24 @@ export function Search () {
 				}
 			});
 
-			filteredTransactions = filteredTransactions.filter(i => i.category.match(new RegExp(keyword, 'i')) || i.payee.match(new RegExp(keyword, 'i')) ||
-						(i.subcategory && i.subcategory.match(new RegExp(keyword, 'i'))) || (i.memo && i.memo.match(new RegExp(keyword, 'i')))
-			);
-	
+			if (category) {
+				filteredTransactions = filteredTransactions.filter(i => i.category.match(new RegExp(category, 'i')));
+			}
+
+			if (subcategory) {
+				filteredTransactions = filteredTransactions.filter(i => i.subcategory && i.subcategory.match(new RegExp(subcategory, 'i')));
+			}
+
+			if (startDate) {
+				filteredTransactions = filteredTransactions.filter(i => i.date >= startDate);
+			}
+
+			if (endDate) {
+				filteredTransactions = filteredTransactions.filter(i => i.date <= endDate);
+			}
+
+			filteredTransactions = filteredTransactions.filter(i => (i.payee && i.payee.match(new RegExp(keyword, 'i'))) || (i.memo && i.memo.match(new RegExp(keyword, 'i'))));
+
 			setFilteredTransactions(filteredTransactions);
 			setKeyword(keyword);
 		}
@@ -59,12 +87,64 @@ export function Search () {
 
 	const onSearchKeyPress = (e) => {
 		if (e.key === 'Enter' && e.target.value) {
-			updateFilteredTransactions(allAccountsTransactions, e.target.value);
+			setKeyword(e.target.value);
 		}
 	};
 
 	const onKeywordChange = (e) => {
 		setKeyword(e.target.value);
+	};
+
+	const onCategoryChange = (e) => {
+		const params = {};
+		const categoryArray = e.target.value.split(':');
+		if (categoryArray[0]) {
+			params.category = categoryArray[0];
+		}
+		if (categoryArray[1]) {
+			params.subcategory = categoryArray[1];
+		}
+		if (startDate) {
+			params.startDate = startDate;
+		}
+		if (endDate) {
+			params.endDate = endDate;
+		}
+		setSearchParams(params);
+	};
+
+	const onStartDateChange = (e) => {
+		const params = {};
+		if (category) {
+			params.category = category;
+		}
+		if (subcategory) {
+			params.subcategory = subcategory;
+		}
+		if (e.target.value) {
+			params.startDate = e.target.value;
+		}
+		if (endDate) {
+			params.endDate = endDate;
+		}
+		setSearchParams(params);
+	};
+
+	const onEndDateChange = (e) => {
+		const params = {};
+		if (category) {
+			params.category = category;
+		}
+		if (subcategory) {
+			params.subcategory = subcategory;
+		}
+		if (startDate) {
+			params.startDate = startDate;
+		}
+		if (e.target.value) {
+			params.endDate = e.target.value;
+		}
+		setSearchParams(params);
 	};
 
 	return (
@@ -83,22 +163,87 @@ export function Search () {
 					})}
 				>
 					<Sticky>
-						<FormControl margin="normal" required fullWidth>
-							<Input
-								id="search"
-								name="search"
-								autoComplete="search"
-								autoFocus
-								value={keyword}
-								onChange={onKeywordChange}
-								onKeyPress={onSearchKeyPress}
-								startAdornment={
-									<InputAdornment position="start">
-										<SearchIcon />
-									</InputAdornment>
-								}
-							/>
-						</FormControl>
+						<Grid
+							container
+							spacing={1}
+							sx={(theme) => ({
+								marginTop: theme.spacing(1),
+								marginBottom: theme.spacing(1)
+							})}
+						>
+							<Grid item xs={6}>
+								<FormControl required fullWidth>
+									<Input
+										id="search"
+										name="search"
+										autoComplete="search"
+										autoFocus
+										value={keyword}
+										onChange={onKeywordChange}
+										onKeyPress={onSearchKeyPress}
+										startAdornment={
+											<InputAdornment position="start">
+												<SearchIcon />
+											</InputAdornment>
+										}
+									/>
+								</FormControl>
+							</Grid>
+							<Grid item xs={6}>
+								<FormControl variant="standard"	fullWidth>
+									<Select
+										value={category && `${category}` + (subcategory ? `:${subcategory}`:'')}
+										onChange={onCategoryChange}
+									>
+										{
+											dropCategoryList.map(i => (
+												<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+											))
+										}
+									</Select>
+								</FormControl>
+							</Grid>
+							<Grid item xs={6}>
+								<FormControl fullWidth>
+									<Input
+										id="startDate"
+										type="date"
+										name="startDate"
+										autoComplete="off"
+										autoFocus
+										placeholder="Start Date"
+										value={startDate}
+										fullWidth
+										onChange={onStartDateChange}
+										startAdornment={
+											<InputAdornment position="start">
+												From
+											</InputAdornment>
+										}
+									/>
+								</FormControl>
+							</Grid>
+							<Grid item xs={6}>
+								<FormControl fullWidth>
+									<Input
+										id="endDate"
+										type="date"
+										name="endDate"
+										autoComplete="off"
+										autoFocus
+										placeholder="End Date"
+										value={endDate}
+										fullWidth
+										onChange={onEndDateChange}
+										startAdornment={
+											<InputAdornment position="start">
+												To
+											</InputAdornment>
+										}
+									/>
+								</FormControl>
+							</Grid>
+						</Grid>
 					</Sticky>
 					{
 						filteredTransactions.length > 0 &&
@@ -107,6 +252,18 @@ export function Search () {
 							transactions={filteredTransactions}
 						/>
 					}
+					<Typography
+						variant="h6"
+						color="inherit"
+						gutterBottom
+						align="right"
+						sx={(theme) => ({
+							marginTop: theme.spacing(1),
+							marginRight: theme.spacing(1)
+						})}
+					>
+						Sum : {toCurrencyFormat(balance)}
+					</Typography>
 					<BankTransactionModal
 						isEdit={true}
 						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete

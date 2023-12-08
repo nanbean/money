@@ -161,9 +161,9 @@ exports.addTransaction = async function (body) {
 		} else if (body.packageName.match(/com\.americanexpress\.android\.acctsvcs\.us/i)) {
 			account = 'BoA';
 			transaction = {
-				date: moment().format('YYYY-MM-DD'),
+				date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 				amount: body.text.replace(',', '').match(/-?\$[0-9]+[\.]*[0-9]*/)[0].replace('$', '') * (-1),
-				payee: body.text.match(/ at ([^;]+)/)[1],
+				payee: body.text.match(/ at ([^;]+)/)[1].replace(/.$/,''),
 				category: '분류없음'
 			};
 		} else if (body.text.match(/삼성체크/g)) {
@@ -253,7 +253,7 @@ exports.addTransaction = async function (body) {
 			account = 'BoA';
 			date = body.text.match(/(?<= on\s+).*?(?=\s+at)/gs);
 			transaction = {
-				date: date ? moment(date, 'MMM DD, YYYY').format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+				date: date ? moment(date, 'MMM DD, YYYY').format('YYYY-MM-DD') : moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 				amount: body.text.replace(',', '').match(/-?\$[0-9]+[\.]*[0-9]*/)[0].replace('$', '') * (-1),
 				payee: body.text.match(/(?<=with\s+).*?(?=\s+on)/gs)[0],
 				category: '분류없음'
