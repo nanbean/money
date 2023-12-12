@@ -1,9 +1,11 @@
 import PouchDB from 'pouchdb';
 import pouchdbAuthentication from 'pouchdb-authentication';
 
+import { COUCHDB_URL } from '../constants';
+
 PouchDB.plugin(pouchdbAuthentication);
 
-let couchdb = new PouchDB('https://couchdb.nanbean.net/settings_nanbean', { skip_setup: true }); // eslint-disable-line camelcase
+let couchdb = new PouchDB(`${COUCHDB_URL}/settings_nanbean`, { skip_setup: true }); // eslint-disable-line camelcase
 
 export const login = async (username, password) => {
 	const response = await couchdb.login(username, password);

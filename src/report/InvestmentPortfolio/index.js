@@ -1,23 +1,8 @@
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import stc from 'string-to-color';
+import ReactEcharts from 'echarts-for-react'; 
 
-const RADIAN = Math.PI / 180;
- 
-// eslint-disable-next-line react/prop-types
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
-	const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-	const x = cx + radius * Math.cos(-midAngle * RADIAN);
-	const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-	return (
-		<text x={x} y={y} fill="black" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-			{`${(percent * 100).toFixed(0)}% ${name}`}
-		</text>
-	);
-};
 
 function InvestmentPortfolio () {
 	const accountList = useSelector((state) => state.accountList);
@@ -46,29 +31,29 @@ function InvestmentPortfolio () {
 		return item.quantity > 0;
 	}), [accountList]);
 
+	const option = {
+		tooltip: {
+			trigger: 'item'
+		},
+		series: [
+			{
+				name: 'Portfolio',
+				type: 'pie',
+				radius: '60%',
+				data: allInvestments.map(i => ({ name: i.name, value: i.amount })),
+				emphasis: {
+					itemStyle: {
+						shadowBlur: 10,
+						shadowOffsetX: 0,
+						shadowColor: 'rgba(0, 0, 0, 0.5)'
+					}
+				}
+			}
+		]
+	};
+
 	if (allInvestments.length > 0) {
-		return (
-			<React.Fragment>
-				<ResponsiveContainer width="100%" height={600}>
-					<PieChart>
-						<Pie
-							data={allInvestments}
-							cx="50%"
-							cy="50%"
-							labelLine={false}
-							label={renderCustomizedLabel}
-							outerRadius={180}
-							fill="#8884d8"
-							dataKey="amount"
-						>
-							{allInvestments.map((entry, index) => (
-								<Cell key={`cell-${index}`} fill={stc(entry.name)} />
-							))}
-						</Pie>
-					</PieChart>
-				</ResponsiveContainer>
-			</React.Fragment>
-		);
+		return <ReactEcharts option={option} />;
 	}
 }
 

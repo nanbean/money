@@ -31,10 +31,10 @@ export function ReportMain () {
 					})}
 				>
 					<Tabs value={value} onChange={handleChange}>
-						<Tab label="Monthly Expense" />
+						<Tab label="Expense" />
 						<Tab label="Dividend" />
-						<Tab label="Investment History" />
-						<Tab label="Investment Portfolio" />
+						<Tab label="History" />
+						<Tab label="Portfolio" />
 					</Tabs>
 				</AppBar>
 				{value === 0 && <MonthlyExpense />}

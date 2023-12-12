@@ -1,6 +1,8 @@
 import moment from 'moment';
 import _ from 'lodash';
 
+export const COUCHDB_URL = 'https://couchdb.nanbean.net';
+
 export const FOOD_COLOR = '#e4815f';
 export const TRANSPORT_COLOR = '#5e9cd4';
 export const CULTURAL_LIFE_COLOR = '#d071c8';

@@ -7,6 +7,8 @@ import debounce from 'lodash.debounce';
 import uuidv1 from 'uuid/v1';
 import moment from 'moment';
 
+import { COUCHDB_URL } from '../constants';
+
 import {
 	SET_ADD_TRANSACTION_FETCHING,
 	SET_ACCOUNT_LIST,
@@ -254,7 +256,7 @@ const updateAccount = async (accountId) => {
 
 export const initCouchdbAction = username => {
 	return async dispatch => {
-		let remoteAccountsDB = new PouchDB(`https://couchdb.nanbean.net/accounts_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		let remoteAccountsDB = new PouchDB(`${COUCHDB_URL}/accounts_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
 		accountsSync = accountsDB.sync(remoteAccountsDB, { live: true, retry: true })
 			.on('change', function () {
 				updateAllAccountsDebounce(dispatch);
@@ -270,7 +272,7 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteTransactionsDB = new PouchDB(`https://couchdb.nanbean.net/transactions_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		let remoteTransactionsDB = new PouchDB(`${COUCHDB_URL}/transactions_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
 		transactionsSync = transactionsDB.sync(remoteTransactionsDB, { live: true, retry: true })
 			.on('change', function ({ change, deleted }) {
 				// updateAllTransactionsDebounce(dispatch);
@@ -306,7 +308,7 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteKospiDB = new PouchDB('https://couchdb.nanbean.net/kospi', { skip_setup: true }); // eslint-disable-line camelcase
+		let remoteKospiDB = new PouchDB(`${COUCHDB_URL}/kospi`, { skip_setup: true }); // eslint-disable-line camelcase
 		kospiSync = kospiDB.sync(remoteKospiDB, {})
 			.on('change', function () {
 				updateAllInvestmentsDebounce(dispatch);
@@ -323,7 +325,7 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteKosdaqDB = new PouchDB('https://couchdb.nanbean.net/kosdaq', { skip_setup: true }); // eslint-disable-line camelcase
+		let remoteKosdaqDB = new PouchDB(`${COUCHDB_URL}/kosdaq`, { skip_setup: true }); // eslint-disable-line camelcase
 		kosdaqSync = kosdaqDB.sync(remoteKosdaqDB, {})
 			.on('change', function () {
 				updateAllInvestmentsDebounce(dispatch);
@@ -340,7 +342,7 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteHistoriesDB = new PouchDB(`https://couchdb.nanbean.net/histories_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		let remoteHistoriesDB = new PouchDB(`${COUCHDB_URL}/histories_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
 		historiesSync = historiesDB.sync(remoteHistoriesDB, {})
 			.on('change', function () {
 				// handle change
@@ -355,7 +357,7 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteReportsDB = new PouchDB(`https://couchdb.nanbean.net/reports_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		let remoteReportsDB = new PouchDB(`${COUCHDB_URL}/reports_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
 		reportsSync = reportsDB.sync(remoteReportsDB, {})
 			.on('change', function () {
 				// handle change
@@ -370,7 +372,7 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let settingsReportsDB = new PouchDB(`https://couchdb.nanbean.net/settings_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		let settingsReportsDB = new PouchDB(`${COUCHDB_URL}/settings_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
 		settingsSync = settingsDB.sync(settingsReportsDB, { live: true, retry: true })
 			.on('change', function () {
 				dispatch(getSettingsAction());
