@@ -33,7 +33,8 @@ function InvestmentPortfolio () {
 
 	const option = {
 		tooltip: {
-			trigger: 'item'
+			trigger: 'item',
+			formatter: d => `${d.value.toLocaleString()}, ${d.percent}%`
 		},
 		series: [
 			{
@@ -41,6 +42,9 @@ function InvestmentPortfolio () {
 				type: 'pie',
 				radius: '60%',
 				data: allInvestments.map(i => ({ name: i.name, value: i.amount })),
+				label: {
+					formatter: d => `${d.name}\n${d.percent}%`
+				},
 				emphasis: {
 					itemStyle: {
 						shadowBlur: 10,
