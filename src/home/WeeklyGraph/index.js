@@ -80,8 +80,8 @@ export function WeeklyGraph () {
 					top: 0, right: 5, left: 10, bottom: 0
 				}}
 			>
-				<XAxis dataKey="dayofWeek" />
-				<YAxis domain={[0, 'dataMax']} />
+				<XAxis dataKey="dayofWeek" tickLine={false} />
+				<YAxis domain={[0, 'dataMax']} axisLine={false} tickLine={false} />
 				<Bar dataKey="식비" stackId="a" fill={getCategoryColor('식비')} />
 				<Bar dataKey="교통비" stackId="a" fill={getCategoryColor('교통비')} />
 				<Bar dataKey="문화생활" stackId="a" fill={getCategoryColor('문화생활')} />
