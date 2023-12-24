@@ -18,14 +18,9 @@ import {
 export function Dividend () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
-	const [filteredAccounts, setFilteredAccounts] = useState([]);
 
 	const onYearChange = event => {
 		setYear(event.target.value);
-	};
-
-	const onFilteredAccountsChange = (e) => {
-		setFilteredAccounts(e);
 	};
 
 	const startDate = moment().year(year).startOf('year').format('YYYY-MM-DD');
@@ -33,6 +28,11 @@ export function Dividend () {
 	const dividendTransactions = allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
 		.filter(i => i.date >= startDate && i.date <= endDate);
 	const allAccounts = Object.keys(_.groupBy(dividendTransactions, 'account')).map(account => account);
+	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
+
+	const onFilteredAccountsChange = (e) => {
+		setFilteredAccounts(e);
+	};
 
 	const dividendData = [];
 	_.forEach(_.groupBy(dividendTransactions.filter(i => filteredAccounts.includes(i.account)), 'account'), (value, key) => {
