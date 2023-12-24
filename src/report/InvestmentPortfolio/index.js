@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import ReactEcharts from 'echarts-for-react'; 
 
+import AccountFilter from '../../components/AccountFilter';
 
 function InvestmentPortfolio () {
 	const accountList = useSelector((state) => state.accountList);
-	const allInvestments = useMemo(() => accountList.reduce((acc, item) => {
+	const allAccounts = accountList.filter(i => i.type === 'Invst' && !i.closed).map(j => j.name);
+	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
+	const allInvestments = useMemo(() => accountList.filter(i => filteredAccounts.find(j => j === i.name)).reduce((acc, item) => {
 		var investments = item.investments;
 		investments.forEach(investment => {
 			var existingInvestment = acc.find(el => {
@@ -29,7 +32,11 @@ function InvestmentPortfolio () {
 		return acc;
 	}, []).filter(function (item) {
 		return item.quantity > 0;
-	}), [accountList]);
+	}), [accountList, filteredAccounts]);
+
+	const onFilteredAccountsChange = (e) => {
+		setFilteredAccounts(e);
+	};
 
 	const option = {
 		tooltip: {
@@ -56,9 +63,20 @@ function InvestmentPortfolio () {
 		]
 	};
 
-	if (allInvestments.length > 0) {
-		return <ReactEcharts option={option} />;
-	}
+	return (
+		<React.Fragment>
+			<div>
+				<AccountFilter
+					allAccounts={allAccounts}
+					filteredAccounts={filteredAccounts}
+					setfilteredAccounts={onFilteredAccountsChange}
+				/>
+			</div>
+			{
+				allInvestments.length > 0 && <ReactEcharts option={option} />
+			}
+	</React.Fragment>
+	);
 }
 
 export default InvestmentPortfolio;

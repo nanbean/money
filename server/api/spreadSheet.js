@@ -130,7 +130,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
-				const expectCell = '$A74';
+				const expectCell = '$A76';
 				const expect = firstSheet.getCellByA1(expectCell.replace('$', '')).value;
 				const savingCell = `${colIndex[j - 1]}60`;
 				const saving = firstSheet.getCellByA1(savingCell.replace('$', '')).value || 0;
@@ -152,7 +152,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
-				const expectCell = '$A74';
+				const expectCell = '$A77';
 				const expect = firstSheet.getCellByA1(expectCell.replace('$', '')).value;
 				const savingCell = `${colIndex[j - 1]}61`;
 				const saving = firstSheet.getCellByA1(savingCell.replace('$', '')).value || 0;
@@ -174,7 +174,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 				const isSecondYear = year - 1 === currentYear;
 				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
 				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
-				const expectCell = '$A74';
+				const expectCell = '$A78';
 				const expect = firstSheet.getCellByA1(expectCell.replace('$', '')).value;
 				const savingCell = `${colIndex[j - 1]}64`;
 				const saving = firstSheet.getCellByA1(savingCell.replace('$', '')).value || 0;
