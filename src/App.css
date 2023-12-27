@@ -8,12 +8,6 @@ body {
 		'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-@media (min-width: 768px) {
-	body {
-		background-color: #f5f5f5;
-	}
-}
-
 h1,
 h2,
 h3,
@@ -80,16 +74,12 @@ header .ui.header h2 {
 
 .container-full-page {
 	display: block;
-	background-color: white;
 	font-size: 1.14285714rem;
 	line-height: 1.5;
 }
 
 @media (min-width: 768px) and (max-width: 1193px) {
 	html,
-	body {
-		background-color: white;
-	}
 
 	nav {
 		box-shadow: none;
@@ -158,18 +148,6 @@ header .ui.header h2 {
 .mono {
 	font-family: 'Roboto Mono', monospace;
 	color: #686869;
-}
-
-.positive {
-	color: rgb(255, 35, 1);
-}
-
-.neutral {
-	color: #3C4043;
-}
-
-.negative {
-	color: rgb(1, 126, 255);
 }
 
 .ui.modal.transaction > .content {

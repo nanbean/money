@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import PerformanceGrid from '../components/PerformanceGrid';
+import NormalGrid from '../components/NormalGrid';
 
 import { getAccountPerformance } from '../utils/performance';
 
@@ -54,8 +54,8 @@ export function AccountInvestments () {
 
 	return (
 		<div className="investments">
-			<PerformanceGrid
-				performanceData={performanceData}
+			<NormalGrid
+				gridData={performanceData}
 			/>
 		</div>
 	);

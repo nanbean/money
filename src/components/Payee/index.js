@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import {
-	getCategoryColor
-} from '../../utils/categoryColor';
+import Typography from '@mui/material/Typography';
+
+import useCategoryColor from '../../hooks/useCategoryColor';
 
 function Payee ({
 	showColor,
@@ -12,9 +12,13 @@ function Payee ({
 }) {
 	if (showColor && category) {
 		return (
-			<span style={{ color: getCategoryColor(category) }}>
+			<Typography
+				variant="body2"
+				gutterBottom
+				sx={{ color: useCategoryColor(category) }}
+			>
 				{value}
-			</span>
+			</Typography >
 		);
 	}
 

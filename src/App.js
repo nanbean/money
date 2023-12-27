@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch, useSelector } from 'react-redux';
 
 import CssBaseline from '@mui/material/CssBaseline';
@@ -24,6 +25,7 @@ import './App.css';
 function App () {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
 	const dispatch = useDispatch();
 
@@ -44,7 +46,7 @@ function App () {
 	}, [accountList]);
 
 	return (
-		<ThemeProvider theme={theme}>
+		<ThemeProvider theme={theme({ prefersDarkMode })}>
 			<CssBaseline />
 			<Routes />
 		</ThemeProvider >

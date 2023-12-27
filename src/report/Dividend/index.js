@@ -8,7 +8,7 @@ import MenuItem from '@mui/material/MenuItem';
 import moment from 'moment';
 import _ from 'lodash';
 
-import DividendGrid from '../../components/DividendGrid';
+import NormalGrid from '../../components/NormalGrid';
 import AccountFilter from '../../components/AccountFilter';
 
 import {
@@ -86,8 +86,8 @@ export function Dividend () {
 					setfilteredAccounts={onFilteredAccountsChange}
 				/>
 			</div>
-			<DividendGrid
-				dividendGridata={dividendGridata}
+			<NormalGrid
+				gridData={dividendGridata}
 			/>
 		</div>
 	);

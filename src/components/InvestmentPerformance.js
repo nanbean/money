@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import Typography from '@mui/material/Typography';
 
-import PerformanceGrid from '../components/PerformanceGrid';
+import NormalGrid from '../components/NormalGrid';
 
 export function InvestmentPerformance ({
 	investment,
@@ -53,8 +53,8 @@ export function InvestmentPerformance ({
 				})}>
 				{investment}
 			</Typography>
-			<PerformanceGrid
-				performanceData={performanceData}
+			<NormalGrid
+				gridData={performanceData}
 			/>
 		</div>
 	);

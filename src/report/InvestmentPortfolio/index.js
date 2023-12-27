@@ -75,7 +75,7 @@ function InvestmentPortfolio () {
 			{
 				allInvestments.length > 0 && <ReactEcharts option={option} />
 			}
-	</React.Fragment>
+		</React.Fragment>
 	);
 }
 

@@ -10,9 +10,7 @@ import {
 	YAxis
 } from 'recharts';
 
-import {
-	getCategoryColor
-} from '../../utils/categoryColor';
+import useCategoryColor from '../../hooks/useCategoryColor';
 
 const week = [
 	'Day1',
@@ -82,25 +80,25 @@ export function WeeklyGraph () {
 			>
 				<XAxis dataKey="dayofWeek" tickLine={false} />
 				<YAxis domain={[0, 'dataMax']} axisLine={false} tickLine={false} />
-				<Bar dataKey="식비" stackId="a" fill={getCategoryColor('식비')} />
-				<Bar dataKey="교통비" stackId="a" fill={getCategoryColor('교통비')} />
-				<Bar dataKey="문화생활" stackId="a" fill={getCategoryColor('문화생활')} />
-				<Bar dataKey="경조사-선물" stackId="a" fill={getCategoryColor('경조사-선물')} />
-				<Bar dataKey="교육" stackId="a" fill={getCategoryColor('교육')} />
-				<Bar dataKey="육아" stackId="a" fill={getCategoryColor('육아')} />
-				<Bar dataKey="생활용품비" stackId="a" fill={getCategoryColor('생활용품비')} />
-				<Bar dataKey="의류" stackId="a" fill={getCategoryColor('의류')} />
-				<Bar dataKey="대출이자" stackId="a" fill={getCategoryColor('대출이자')} />
-				<Bar dataKey="공과금" stackId="a" fill={getCategoryColor('공과금')} />
-				<Bar dataKey="미용" stackId="a" fill={getCategoryColor('미용')} />
-				<Bar dataKey="보험" stackId="a" fill={getCategoryColor('보험')} />
-				<Bar dataKey="수수료" stackId="a" fill={getCategoryColor('수수료')} />
-				<Bar dataKey="통신비" stackId="a" fill={getCategoryColor('통신비')} />
-				<Bar dataKey="회비" stackId="a" fill={getCategoryColor('회비')} />
-				<Bar dataKey="의료비" stackId="a" fill={getCategoryColor('의료비')} />
-				<Bar dataKey="취미-레저" stackId="a" fill={getCategoryColor('취미-레저')} />
-				<Bar dataKey="기타 지출" stackId="a" fill={getCategoryColor('기타 지출')} />
-				<Bar dataKey="실제지출아님" stackId="a" fill={getCategoryColor('실제지출아님')} />
+				<Bar dataKey="식비" stackId="a" fill={useCategoryColor('식비')} />
+				<Bar dataKey="교통비" stackId="a" fill={useCategoryColor('교통비')} />
+				<Bar dataKey="문화생활" stackId="a" fill={useCategoryColor('문화생활')} />
+				<Bar dataKey="경조사-선물" stackId="a" fill={useCategoryColor('경조사-선물')} />
+				<Bar dataKey="교육" stackId="a" fill={useCategoryColor('교육')} />
+				<Bar dataKey="육아" stackId="a" fill={useCategoryColor('육아')} />
+				<Bar dataKey="생활용품비" stackId="a" fill={useCategoryColor('생활용품비')} />
+				<Bar dataKey="의류" stackId="a" fill={useCategoryColor('의류')} />
+				<Bar dataKey="대출이자" stackId="a" fill={useCategoryColor('대출이자')} />
+				<Bar dataKey="공과금" stackId="a" fill={useCategoryColor('공과금')} />
+				<Bar dataKey="미용" stackId="a" fill={useCategoryColor('미용')} />
+				<Bar dataKey="보험" stackId="a" fill={useCategoryColor('보험')} />
+				<Bar dataKey="수수료" stackId="a" fill={useCategoryColor('수수료')} />
+				<Bar dataKey="통신비" stackId="a" fill={useCategoryColor('통신비')} />
+				<Bar dataKey="회비" stackId="a" fill={useCategoryColor('회비')} />
+				<Bar dataKey="의료비" stackId="a" fill={useCategoryColor('의료비')} />
+				<Bar dataKey="취미-레저" stackId="a" fill={useCategoryColor('취미-레저')} />
+				<Bar dataKey="기타 지출" stackId="a" fill={useCategoryColor('기타 지출')} />
+				<Bar dataKey="실제지출아님" stackId="a" fill={useCategoryColor('실제지출아님')} />
 			</BarChart>
 		</ResponsiveContainer>
 	);
