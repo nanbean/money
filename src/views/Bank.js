@@ -30,8 +30,7 @@ const Sticky = styled('div')(({ theme }) => ({
 	},
 	[theme.breakpoints.up('sm')]: {
 		top: 64
-	},
-	backgroundColor: 'white'
+	}
 }));
 
 const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':')).replace(/%20/g, ' ')}`;

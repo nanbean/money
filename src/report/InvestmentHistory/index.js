@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
+import Stack from '@mui/material/Stack';
 
 import stc from 'string-to-color';
 
@@ -15,29 +17,35 @@ import {
 	getNetWorthFlowAction
 } from '../../actions/couchdbActions';
 
-import toolTipStyles from '../../assets/jss/components/toolTip.js';
-
 const CustomTooltip = ({ active, payload, label }) => {
 	if (active) {
 		return (
-			<div style={{ ...toolTipStyles.root }} >
-				<div style={{ ...toolTipStyles.label }} >{`${label.substring(0, 7)}`}</div>
+			<Stack
+				sx={(theme) => ({
+					padding: '5px',
+					border: '1px solid rgba(34,36,38,.1)',
+					borderRadius: '.28571429rem',
+					backgroundColor: theme.palette.secondary.main
+				})}
+			>
+				<Typography variant="subtitle1" gutterBottom>
+					{`${label.substring(0, 7)}`}
+				</Typography>
 				{
 					payload.map(i => (
-						<div key={i.dataKey} style={{ ...toolTipStyles.item }} >{`${i.dataKey} : ${i.value}`}</div>
+						<Typography variant="body1" gutterBottom key={i.dataKey}>{`${i.dataKey} : ${i.value}`}</Typography>
 					))
 				}
-			</div>
+			</Stack>
 		);
 	}
-
 	return null;
 };
 
 CustomTooltip.propTypes = {
-	active: PropTypes.bool.isRequired,
-	label: PropTypes.string.isRequired,
-	payload:  PropTypes.array.isRequired
+	active: PropTypes.bool,
+	label: PropTypes.string,
+	payload:  PropTypes.array
 };
 
 function InvestmentHistory () {

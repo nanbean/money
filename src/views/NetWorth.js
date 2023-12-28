@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
+import Stack from '@mui/material/Stack';
 
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
@@ -13,27 +15,39 @@ import {
 } from '../actions/couchdbActions';
 import { toCurrencyFormat } from '../utils/formatting';
 
-import toolTipStyles from '../assets/jss/components/toolTip.js';
-
 const CustomTooltip = ({ active, payload, label }) => {
 	if (active) {
 		return (
-			<div style={{ ...toolTipStyles.root }} >
-				<div style={{ ...toolTipStyles.label }} >{`${label.substring(0, 7)}`}</div>
-				<div style={{ ...toolTipStyles.item }} >{`Net Worth : ${toCurrencyFormat(payload[0].value + payload[1].value)}`}</div>
-				<div style={{ ...toolTipStyles.item }} >{`Movable Asset : ${toCurrencyFormat(payload[1].value)}`}</div>
-				<div style={{ ...toolTipStyles.item }} >{`Real Estate : ${toCurrencyFormat(payload[0].value)}`}</div>
-			</div>
+			<Stack
+				sx={(theme) => ({
+					padding: '5px',
+					border: '1px solid rgba(34,36,38,.1)',
+					borderRadius: '.28571429rem',
+					backgroundColor: theme.palette.secondary.main
+				})}
+			>
+				<Typography variant="subtitle1" gutterBottom>
+					{`${label.substring(0, 7)}`}
+				</Typography>
+				<Typography variant="body1" gutterBottom>
+					{`Net Worth : ${toCurrencyFormat(payload[0].value + payload[1].value)}`}
+				</Typography>
+				<Typography variant="body1" gutterBottom>
+					{`Movable Asset : ${toCurrencyFormat(payload[1].value)}`}
+				</Typography>
+				<Typography variant="body1" gutterBottom>
+					{`Real Estate : ${toCurrencyFormat(payload[0].value)}`}
+				</Typography>
+			</Stack>
 		);
 	}
-
 	return null;
 };
 
 CustomTooltip.propTypes = {
-	active: PropTypes.bool.isRequired,
-	label: PropTypes.string.isRequired,
-	payload: PropTypes.string.isRequired
+	active: PropTypes.bool,
+	label: PropTypes.string,
+	payload: PropTypes.array
 };
 
 function NetWorth () {

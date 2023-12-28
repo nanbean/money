@@ -8,10 +8,10 @@ function theme ({ prefersDarkMode }) {
 			? {
 				// palette values for dark mode
 				primary: {
-					main: '#000000de'
+					main: '#D0BCFF'
 				},
 				secondary: {
-					main: '#00000099'
+					main: '#CCC2DC'
 				},
 				error: {
 					main: red.A400

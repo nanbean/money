@@ -46,8 +46,7 @@ const Sticky = styled('div')(({ theme }) => ({
 	},
 	[theme.breakpoints.up('md')]: {
 		marginBottom: 10
-	},
-	backgroundColor: 'white'
+	}
 }));
 
 export function HomeMain () {

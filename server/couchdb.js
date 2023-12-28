@@ -565,7 +565,7 @@ const updateNetWorth = async () => {
 		item.netInvestments = netWorth.netInvestments;
 		const assetNetWorth = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date, true);
 		item.assetNetWorth = assetNetWorth.netWorth;
-		item.movableAsset = Math.max(item.netWorth - item.assetNetWorth, 0);
+		item.movableAsset = item.netWorth - item.assetNetWorth;
 	}
 	
 	const netWorth = {
