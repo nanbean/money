@@ -32,6 +32,14 @@ function InvestmentPortfolio () {
 		return acc;
 	}, []).filter(function (item) {
 		return item.quantity > 0;
+	}).sort((a, b) => {
+		if (a.amount < b.amount) {
+			return 1;
+		}
+		if (b.amount < a.amount) {
+			return -1;
+		}
+		return 0;
 	}), [accountList, filteredAccounts]);
 
 	const onFilteredAccountsChange = (e) => {

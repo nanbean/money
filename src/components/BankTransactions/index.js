@@ -95,28 +95,26 @@ export function BankTransactions ({
 								dataKey="payee"
 								width={width/2}
 								cellDataGetter={({ rowData }) => ({ date: rowData.date, category: rowData.category, payee: rowData.payee, amount: rowData.amount })}
+								cellRenderer={({ cellData }) => <Payee value={cellData.payee} category={cellData.category} />}
+							/>
+							<Column
+								width={width/4}
+								label="Amount"
+								dataKey="amount"
 								cellRenderer={({ cellData }) => {
 									if (isWidthDownMd) {
 										return (
 											<Stack>
-												<Payee value={cellData.payee} category={cellData.category} />
+												<Amount value={cellData} />
 												<div>
 													{toDateFormat(cellData.date)}
 												</div>
 											</Stack>
 										);
 									} else {
-										return (
-											<Payee value={cellData.payee} category={cellData.category} />
-										);
+										return (<Amount value={cellData} />);
 									}
 								}}
-							/>
-							<Column
-								width={width/4}
-								label="Amount"
-								dataKey="amount"
-								cellRenderer={({ cellData }) => <Amount value={cellData} />}
 							/>
 						</Table>
 					)}

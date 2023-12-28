@@ -16,11 +16,15 @@ import {
 	openTransactionInModal
 } from '../../actions/ui/form/bankTransaction';
 
+import useWidth from '../../hooks/useWidth';
+
 import { TYPE_EMOJI } from '../../constants';
 
 export function LastTransactions () {
 	const latestTransactions = useSelector((state) => state.latestTransactions);
 	const dispatch = useDispatch();
+	const width = useWidth();
+	const isWidthDownMd = width === 'xs' || width === 'sm';
 
 	const onRowSelect = (index) => () => {
 		const transaction = latestTransactions[index];
@@ -43,7 +47,9 @@ export function LastTransactions () {
 				<TableHead>
 					<TableRow>
 						<TableCell align="center">Account</TableCell>
-						<TableCell align="center">Date</TableCell>
+						{
+							!isWidthDownMd && <TableCell align="center">Date</TableCell>
+						}
 						<TableCell align="center">Payee</TableCell>
 						<TableCell align="center">Amount</TableCell>
 					</TableRow>
@@ -56,15 +62,24 @@ export function LastTransactions () {
 									{`${TYPE_EMOJI[row.type]} ${row.account}`}
 								</span>
 							</TableCell>
-							<TableCell align="center">
-								<span>
-									{moment(row.date).format('MM-DD')}
-								</span>
-							</TableCell>
+							{
+								!isWidthDownMd &&  <TableCell align="center">
+									<span>
+										{moment(row.date).format('MM-DD')}
+									</span>
+								</TableCell>
+							}
 							<TableCell align="center">
 								<Payee category={row.category} value={row.payee} />
 							</TableCell>
-							<TableCell align="center"><Amount value={row.amount} /></TableCell>
+							<TableCell align="center">
+								<Amount value={row.amount} />
+								{
+									isWidthDownMd && <span>
+										{moment(row.date).format('MM-DD')}
+									</span>
+								}
+							</TableCell>
 						</TableRow>
 					))}
 				</TableBody>
