@@ -10,7 +10,7 @@ export const EDUCATION_COLOR = '#a18dcd';
 export const SHOPPING_COLOR = '#e5a54f';
 export const MEDICAL_COLOR = '#e55266';
 export const HOBBY_COLOR = '#65b362';
-export const ETC_COLOR = '#c0c0c0';
+export const ETC_COLOR = '#e0e0e0';
 export const NO_COLOR = '#000000';
 
 export const ARCHITECTURE_CATEGORY = '건축';

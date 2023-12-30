@@ -20,8 +20,10 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import SearchIcon from '@mui/icons-material/Search';
 import SettingsIcon from '@mui/icons-material/Settings';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { toggleSidebar } from '../../actions/uiActions';
+import { updateInvestmentPriceAction } from '../../actions/priceActions';
 
 import useMobile from '../../hooks/useMobile';
 
@@ -94,6 +96,8 @@ function SidebarMenu ()
 			dispatch(toggleSidebar());
 		}
 	};
+
+	const onRefreshClickHandler = () => dispatch(updateInvestmentPriceAction());
 
 	return (
 		<Drawer
@@ -173,6 +177,13 @@ function SidebarMenu ()
 			</List>
 			<Divider />
 			<List>
+				<ListItem
+					button
+					onClick={onRefreshClickHandler}
+				>
+					<ListItemIcon><RefreshIcon /></ListItemIcon>
+					<ListItemText primary='Refresh' />
+				</ListItem>
 				{anotherRoutes.map(item => (
 					<Link key={item.label} to={item.path} style={linkStyle}>
 						<ListItem

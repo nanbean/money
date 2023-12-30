@@ -6,8 +6,6 @@ import { styled } from '@mui/material/styles';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import Typography from '@mui/material/Typography';
 
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
@@ -25,7 +23,6 @@ import Container from '../../components/Container';
 import {
 	getWeeklyTransactionsAction
 } from '../../actions/couchdbActions';
-import { updateInvestmentPriceAction } from '../../actions/priceActions';
 
 import {
 	changeAccountsExpanded,
@@ -70,27 +67,16 @@ export function HomeMain () {
 	
 	const onWeeklyGraphExpansionPanelChangeHalder = (event, expanded) => dispatch(changeWeeklyGraphExpanded(expanded));
 
-	const onRefreshClick = () => dispatch(updateInvestmentPriceAction());
-
 	return (
 		<React.Fragment>
 			<TitleHeader title="Home" />
 			{
 				(updateInvestmentPriceFetching || trascationsFetching) &&
-				<LinearProgress color="secondary"/>
+				<Sticky>
+					<LinearProgress color="secondary"/>
+				</Sticky>
 			}
 			<Container>
-				<Sticky>
-					<Button
-						fullWidth
-						variant="outlined"
-						color="primary"
-						onClick={onRefreshClick}
-					>
-						Refresh
-						<RefreshIcon />
-					</Button>
-				</Sticky>
 				<Grid container>
 					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
 						<Accordion

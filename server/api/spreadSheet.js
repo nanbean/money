@@ -7,6 +7,16 @@ const key = require('../nanbean-435f267e8481.json');
 const doc = new GoogleSpreadsheet('1pJn7fykSr3hvJN6qOcS9hIcBDtW7AVbcVwm61dcpeBg');
 
 exports.getLifetimeFlowList = async (accounts) => {
+	let netWorth = [];
+	const data = [];
+	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+	const colIndex = [
+		...alphabet.slice(1, alphabet.length),
+		...alphabet.map((i, index) => 'A' + alphabet[index])
+	];
+	const endYear = 2072;
+	const yearList = [];
+
 	await doc.useServiceAccountAuth({
 		client_email: key.client_email,
 		private_key: key.private_key,
@@ -15,27 +25,20 @@ exports.getLifetimeFlowList = async (accounts) => {
 	await doc.loadInfo(); // loads document properties and worksheets
 
 	const firstSheet = doc.sheetsByIndex[0];
-	// reduced range because of memory
-	await firstSheet.loadCells(['A48:AZ58', 'A20:AZ24', 'A60:AZ64', 'A67:AZ67','A71:A83']);
-	console.log('cells loaded');
+	await firstSheet.loadCells(['B1']);
 
-	let netWorth = [];
-	const data = [];
-	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-	const colIndex = [
-		...alphabet.slice(1, alphabet.length),
-		...alphabet.map((i, index) => 'A' + alphabet[index])
-	];
-	const currentYear = moment().year();
-	const endYear = 2072;
-	const yearList = [];
-	const yearTotalLength = endYear - currentYear + 1; // 2072 - current year
+	const currentYear = firstSheet.getCellByA1('B1').value;
+	const yearTotalLength = endYear - currentYear + 1; // 2072 - first year
 	while (colIndex.length > yearTotalLength) {
 		colIndex.pop();
 	}
 	for (let year = currentYear; year <= endYear; year++ ) {
 		yearList.push(year);
 	}
+
+	// reduced range because of memory
+	await firstSheet.loadCells(['A48:AZ58', 'A20:AZ24', 'A60:AZ64', 'A67:AZ67','A71:A86']);
+	console.log('cells loaded');
 
 	for (let rowNumber = 48; rowNumber <= 56; rowNumber++) {
 		if (firstSheet.getCellByA1(`A${rowNumber}`).value === '키움증권') {
@@ -216,6 +219,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 			amountInflation: flowList[i]
 		});
 	}
+
 	console.log('cells updated');
 
 	return data;
