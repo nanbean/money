@@ -63,11 +63,13 @@ export function Search () {
 			});
 
 			if (category) {
-				filteredTransactions = filteredTransactions.filter(i => i.category.match(new RegExp(category, 'i')));
+				const escapedCategoryString = category.replace(/[[\]()]/g, '\\$&');
+				filteredTransactions = filteredTransactions.filter(i => i.category.match(new RegExp(escapedCategoryString, 'i')));
 			}
 
 			if (subcategory) {
-				filteredTransactions = filteredTransactions.filter(i => i.subcategory && i.subcategory.match(new RegExp(subcategory, 'i')));
+				const escapedSubCategoryString = subcategory.replace(/[[\]()]/g, '\\$&');
+				filteredTransactions = filteredTransactions.filter(i => i.subcategory && i.subcategory.match(new RegExp(escapedSubCategoryString, 'i')));
 			}
 
 			if (startDate) {
