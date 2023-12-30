@@ -27,8 +27,12 @@ const setLastTransaction = (body) => {
 }
 
 const findCategoryByPayee = (transactions, transaction) => {
-	const matchTransaction = transactions.find(i => i.payee === transaction.payee);
+	const matchTransaction = transactions.find(i => i.payee === transaction.payee || i.originalPayee === transaction.payee);
 	if (matchTransaction) {
+		if (matchTransaction.payee !== transaction.payee) {
+			transaction.originalPayee = transaction.payee;
+			transaction.payee = matchTransaction.payee;
+		}
 		if (matchTransaction.category) {
 			transaction.category = matchTransaction.category;
 		}

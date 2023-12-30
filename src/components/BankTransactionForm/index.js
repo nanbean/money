@@ -109,6 +109,9 @@ export function BankTransactionForm ({
 			transaction.changed.date = form.date;
 		}
 		if (transaction.payee !== form.payee) {
+			if (!transaction.originalPayee) {
+				transaction.originalPayee = transaction.payee;
+			}
 			transaction.changed.payee = form.payee;
 		}
 		if (transaction.amount !== form.amount) {
@@ -118,9 +121,15 @@ export function BankTransactionForm ({
 			transaction.changed.memo = form.memo;
 		}
 		if (categoryArray[0] && transaction.category !== categoryArray[0]) {
+			if (!transaction.originalCategory) {
+				transaction.changed.originalCategory = transaction.category;
+			}
 			transaction.changed.category = categoryArray[0];
 		}
 		if (categoryArray[1] && transaction.subcategory !== categoryArray[1]) {
+			if (!transaction.originalSubcategory) {
+				transaction.changed.originalSubcategory = transaction.subcategory !== undefined ? transaction.subcategory:'';
+			}
 			transaction.changed.subcategory = categoryArray[1];
 		}
 		if (!categoryArray[1]) {
