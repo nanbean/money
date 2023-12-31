@@ -20,6 +20,7 @@ import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
+import AccountFilter from '../components/AccountFilter';
 
 import { toCurrencyFormat } from '../utils/formatting';
 
@@ -37,6 +38,9 @@ const Sticky = styled('div')(({ theme }) => ({
 }));
 
 export function Search () {
+	const accountList = useSelector((state) => state.accountList);
+	const allAccounts = accountList.filter(i => (i.type === 'CCard'|| i.type === 'Bank' || i.type === 'Cash') && !i.closed).map(j => j.name);
+	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const dropCategoryList = useSelector((state) => state.dropCategoryList);
 	const [filteredTransactions, setFilteredTransactions] = useState([]);
@@ -49,18 +53,18 @@ export function Search () {
 	const balance = filteredTransactions.length > 0 && filteredTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
 
 	useEffect(() => {
-		updateFilteredTransactions(allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
-	}, [keyword, category, subcategory, startDate, endDate, allAccountsTransactions]);
+		updateFilteredTransactions(filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
+	}, [keyword, category, subcategory, startDate, endDate, filteredAccounts, allAccountsTransactions]);
 
-	const updateFilteredTransactions = (allAccountsTransactions, keyword, category, subcategory, startDate, endDate) => {
+	const onFilteredAccountsChange = (e) => {
+		setFilteredAccounts(e);
+	};
+
+	const updateFilteredTransactions = (filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate) => {
 		if (keyword || category || subcategory || startDate || endDate) {
 			let filteredTransactions = [];
 
-			allAccountsTransactions.forEach(i => {
-				if (i.type === 'CCard' || i.type === 'Bank' || i.type === 'Cash') {
-					filteredTransactions.push(i);
-				}
-			});
+			filteredTransactions = allAccountsTransactions.filter(i => filteredAccounts.find(j => j === i.accountId.split(':')[2]));
 
 			if (category) {
 				const escapedCategoryString = category.replace(/[[\]()]/g, '\\$&');
@@ -173,6 +177,13 @@ export function Search () {
 								marginBottom: theme.spacing(1)
 							})}
 						>
+							<Grid item xs={12}>
+								<AccountFilter
+									allAccounts={allAccounts}
+									filteredAccounts={filteredAccounts}
+									setfilteredAccounts={onFilteredAccountsChange}
+								/>
+							</Grid>
 							<Grid item xs={6}>
 								<FormControl required fullWidth>
 									<Input
