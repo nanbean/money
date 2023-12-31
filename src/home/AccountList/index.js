@@ -7,10 +7,12 @@ import TableBody from '@mui/material/TableBody';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
 import Amount from '../../components/Amount';
 
-import { TYPE_EMOJI } from '../../constants';
+import { TYPE_ICON } from '../../constants';
 
 const linkStyle = {
 	textDecoration: 'none',
@@ -28,7 +30,6 @@ export default function AccountList () {
 		<Table>
 			<TableHead>
 				<TableRow>
-					<TableCell align="center">Type</TableCell>
 					<TableCell align="center">Account</TableCell>
 					<TableCell align="center">Amount</TableCell>
 				</TableRow>
@@ -37,14 +38,14 @@ export default function AccountList () {
 				{filteredAccountList && filteredAccountList.map(row => (
 					<TableRow key={row.name}>
 						<TableCell component="th" scope="row" align="center">
-							<span>
-								{`${TYPE_EMOJI[row.type]} ${row.type}`}
-							</span>
-						</TableCell>
-						<TableCell align="center">
-							<span>
-								<Link to={`/${row.type}/${row.name}`} style={linkStyle}>{row.name}</Link>
-							</span>
+							<Link to={`/${row.type}/${row.name}`} style={linkStyle}>
+								<Stack direction="row" justifyContent="center" alignItems="center" spacing={1}>
+									{TYPE_ICON[row.type]}
+									<Typography variant="body2">
+										{row.name}
+									</Typography >
+								</Stack>
+							</Link>
 						</TableCell>
 						<TableCell align="center"><Amount value={row.balance} /></TableCell>
 					</TableRow>

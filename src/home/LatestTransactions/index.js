@@ -7,6 +7,8 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
 import Amount from '../../components/Amount';
 import BankTransactionModal from '../../components/BankTransactionModal';
@@ -18,7 +20,7 @@ import {
 
 import useWidth from '../../hooks/useWidth';
 
-import { TYPE_EMOJI } from '../../constants';
+import { TYPE_ICON } from '../../constants';
 
 export function LastTransactions () {
 	const latestTransactions = useSelector((state) => state.latestTransactions);
@@ -58,9 +60,12 @@ export function LastTransactions () {
 					{latestTransactions && latestTransactions.map((row, index) => (
 						<TableRow key={index} onClick={onRowSelect(index)}>
 							<TableCell component="th" scope="row" align="center">
-								<span>
-									{`${TYPE_EMOJI[row.type]} ${row.account}`}
-								</span>
+								<Stack direction="row" justifyContent="center" alignItems="center" spacing={1}>
+									{TYPE_ICON[row.type]}
+									<Typography variant="body2">
+										{row.account}
+									</Typography >
+								</Stack>
 							</TableCell>
 							{
 								!isWidthDownMd &&  <TableCell align="center">

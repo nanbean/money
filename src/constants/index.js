@@ -1,5 +1,13 @@
+import React from 'react';
 import moment from 'moment';
 import _ from 'lodash';
+
+import BankIcon from '@mui/icons-material/AccountBalance';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import CashIcon from '@mui/icons-material/Wallet';
+import InvestmentIcon from '@mui/icons-material/TrendingUp';
+import LoanIcon from '@mui/icons-material/LocalAtm';
+import HouseIcon from '@mui/icons-material/House';
 
 export const COUCHDB_URL = 'https://couchdb.nanbean.net';
 
@@ -48,13 +56,15 @@ export const END_YEAR = parseInt(moment().format('YYYY'), 10);
 export const YEAR_LIST = Array.from({ length: END_YEAR - START_YEAR + 1 }, (v, k) => k + START_YEAR).map(i => ({ key: i, value: i, text: i }));
 export const MONTH_LIST = Array.from({ length: 12 }, (v, k) => _.padStart(k + 1, 2, '0'));
 
-export const TYPE_EMOJI = {
-	'Bank': '🏦',
-	'CCard': '💳',
-	'Cash': '💵',
-	'Invst': '📈',
-	'Oth L': '🏧',
-	'Oth A': '🏠'
+
+
+export const TYPE_ICON = {
+	'Bank': <BankIcon />,
+	'CCard': <CreditCardIcon />,
+	'Cash': <CashIcon />,
+	'Invst': <InvestmentIcon />,
+	'Oth L': <LoanIcon />,
+	'Oth A': <HouseIcon />
 };
 
 export const BANK_TYPE = [
