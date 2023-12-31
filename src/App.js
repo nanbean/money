@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch, useSelector } from 'react-redux';
 
 import CssBaseline from '@mui/material/CssBaseline';
@@ -18,6 +17,8 @@ import {
 	getSettingsAction
 } from './actions/couchdbActions';
 
+import useDarkMode from './hooks/useDarkMode';
+
 import theme from './theme';
 
 import './App.css';
@@ -25,7 +26,7 @@ import './App.css';
 function App () {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+	const prefersDarkMode = useDarkMode();
 
 	const dispatch = useDispatch();
 

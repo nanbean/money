@@ -5,6 +5,7 @@ import { AutoSizer, MultiGrid } from 'react-virtualized';
 import { styled } from '@mui/material/styles';
 
 import TableContainer from '@mui/material/TableContainer';
+import Typography from '@mui/material/Typography';
 
 import useWidth from '../../hooks/useWidth';
 
@@ -12,7 +13,7 @@ import Amount from '../Amount';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
 
-const ROW_HEIGHT = 60;
+const ROW_HEIGHT = 45;
 const COLUMN_WIDTH = 84;
 
 const ReportCell = styled('div')(() => ({
@@ -35,6 +36,20 @@ const SumCell = styled('div')(() => ({
 	backgroundColor: 'rgba(180, 180, 180, .5)',
 	borderBottom: '1px solid rgba(81, 81, 81, 1)'
 }));
+
+const Category = ({
+	category
+}) => (
+	<Typography
+		variant="body2"
+	>
+		{category}
+	</Typography >
+);
+
+Category.propTypes = {
+	category: PropTypes.string
+};
 
 export function ReportGrid ({
 	reportData
@@ -65,13 +80,13 @@ export function ReportGrid ({
 									if (reportData[rowIndex][0] === 'Income Total' || reportData[rowIndex][0] === 'Expense Total') {
 										return (
 											<SumCell key={key} style={style}>
-												{isNumber ? <Amount value={parseValue} /> : value}
+												{isNumber ? <Amount value={parseValue} /> : <Category category={value} />}
 											</SumCell>
 										);
 									}
 									return (
 										<ReportCell key={key} style={style}>
-											{isNumber ? <Amount value={parseValue} /> : value}
+											{isNumber ? <Amount value={parseValue} /> : <Category category={value} />}
 										</ReportCell>
 									);
 								}}

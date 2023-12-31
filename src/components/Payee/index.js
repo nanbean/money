@@ -14,7 +14,6 @@ function Payee ({
 		return (
 			<Typography
 				variant="body2"
-				gutterBottom
 				sx={{ color: useCategoryColor(category) }}
 			>
 				{value}

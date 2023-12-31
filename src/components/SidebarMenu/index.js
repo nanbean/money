@@ -182,7 +182,7 @@ function SidebarMenu ()
 					onClick={onRefreshClickHandler}
 				>
 					<ListItemIcon><RefreshIcon /></ListItemIcon>
-					<ListItemText primary='Refresh' />
+					<ListItemText primary="Refresh" />
 				</ListItem>
 				{anotherRoutes.map(item => (
 					<Link key={item.label} to={item.path} style={linkStyle}>
