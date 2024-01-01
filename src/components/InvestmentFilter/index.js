@@ -11,7 +11,7 @@ import {
 } from '../../actions/investmentActions';
 
 export function InvestmentFilter ({
-	allInvestmentsPrice,
+	allInvestments,
 	filteredInvestments
 }) {
 	const dispatch = useDispatch();
@@ -42,7 +42,6 @@ export function InvestmentFilter ({
 
 	const onAllInvestementClick = event => {
 		const checked = event.target.checked;
-		const allInvestments = allInvestmentsPrice.map(j => j.name);
 
 		if ( checked === true) {
 			dispatch(setfilteredInvestments([
@@ -62,9 +61,9 @@ export function InvestmentFilter ({
 			paddingBottom: theme.spacing(1)
 		})}>
 			{
-				allInvestmentsPrice && allInvestmentsPrice.map(j => {
+				allInvestments && allInvestments.map(j => {
 					return (
-						<div key={j.name} style={{ display: 'inline-block' }}>
+						<div key={j} style={{ display: 'inline-block' }}>
 							<FormControlLabel
 								control={
 									<Checkbox
@@ -72,11 +71,11 @@ export function InvestmentFilter ({
 											padding: theme.spacing(0.5)
 										})}
 										size="small"
-										checked={filteredInvestments.find(q => q === j.name) ? true : false}
-										onChange={onFilteredInvestmentsChange(j.name)}
+										checked={filteredInvestments.find(q => q === j) ? true : false}
+										onChange={onFilteredInvestmentsChange(j)}
 									/>
 								}
-								label={j.name}
+								label={j}
 							/>
 						</div>
 					);
@@ -90,7 +89,7 @@ export function InvestmentFilter ({
 							padding: theme.spacing(0.5)
 						})}
 						size="small"
-						checked={filteredInvestments.length === allInvestmentsPrice.length}
+						checked={filteredInvestments.length === allInvestments.length}
 						onClick={onAllInvestementClick}
 					/>
 				}
@@ -101,7 +100,7 @@ export function InvestmentFilter ({
 }
 
 InvestmentFilter.propTypes = {
-	allInvestmentsPrice: PropTypes.array.isRequired,
+	allInvestments: PropTypes.array.isRequired,
 	filteredInvestments: PropTypes.array.isRequired
 };
 

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
@@ -58,16 +58,16 @@ function LifetimePlanner () {
 					{
 						lifetimePlannerFlow.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
-							<BarChart
+							<ComposedChart
 								data={lifetimePlannerFlow}
 								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 							>
 								<XAxis dataKey="year" />
 								<YAxis hide />
 								<Tooltip content={<CustomTooltip />} />
-								<Bar dataKey="amountInflation" name="Amount(Inflation)" fill="#8884d8" />
 								<Bar dataKey="amount" name="Amount" fill="#82ca9d" />
-							</BarChart>
+								<Line dataKey="amountInflation" stroke="#8884d8" strokeDasharray="5 5"/>
+							</ComposedChart>
 						</ResponsiveContainer>
 					}
 				</Container>

@@ -47,7 +47,7 @@ export function AllPerformance () {
 				<TitleHeader title="Performance" />
 				<Container>
 					<InvestmentFilter
-						allInvestmentsPrice={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name))}
+						allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
 						filteredInvestments={filteredInvestments}
 					/>
 					<Typography

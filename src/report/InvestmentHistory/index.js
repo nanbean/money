@@ -58,10 +58,6 @@ function InvestmentHistory () {
 	const [range, setRange] = useState('monthly');
 	const dispatch = useDispatch();
 
-	const currentDate = new Date();
-	const currentYear = currentDate.getFullYear();
-	const currentMonth = currentDate.getMonth() + 1;
-
 	const handleTypeChange = (event, newType) => {
 		setType(newType);
 	};
@@ -92,6 +88,9 @@ function InvestmentHistory () {
 		return item;
 	}).filter(item => {
 		if (range === 'yearly') {
+			const currentDate = new Date();
+			const currentYear = currentDate.getFullYear();
+			const currentMonth = currentDate.getMonth() + 1;
 			const date = new Date(item.date);
 			const month = date.getMonth() + 1;
 			const year = date.getFullYear();
@@ -104,7 +103,9 @@ function InvestmentHistory () {
 		}
 
 		return true;
-	}), [netWorthFlow, historyList, filteredInvestments, type, range]);
+	}).map(item => ({
+		...item, date: range === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7)
+	})), [netWorthFlow, historyList, filteredInvestments, type, range]);
 
 	useEffect(() => {
 		dispatch(getHistoryListAction());
@@ -115,7 +116,7 @@ function InvestmentHistory () {
 		return (
 			<React.Fragment>
 				<InvestmentFilter
-					allInvestmentsPrice={allInvestments}
+					allInvestments={allInvestments.map(i => i.name).sort()}
 					filteredInvestments={filteredInvestments}
 				/>
 				<TypeRangeToggles type={type} range={range} onTypeChange={handleTypeChange} onRangeChange={handleRangeChange} />
@@ -126,8 +127,8 @@ function InvestmentHistory () {
 							data={investmentHistory}
 							margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 						>
-							<XAxis dataKey="date"/>
-							<YAxis hide/>
+							<XAxis dataKey="date" />
+							<YAxis hide />
 							<Tooltip content={<CustomTooltip />} />
 							{
 								filteredInvestments.map(i => (

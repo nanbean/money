@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -9,6 +9,7 @@ import Stack from '@mui/material/Stack';
 
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
+import RangeToggle from '../components/RangeToggle';
 
 import {
 	getNetWorthFlowAction
@@ -52,23 +53,47 @@ CustomTooltip.propTypes = {
 
 function NetWorth () {
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
+	const [range, setRange] = useState('monthly');
+	const rangedNetWorthFlow = useMemo(() => netWorthFlow.filter(item => {
+		const currentDate = new Date();
+		const currentYear = currentDate.getFullYear();
+		const currentMonth = currentDate.getMonth() + 1;
 
+		if (range === 'yearly') {
+			const date = new Date(item.date);
+			const month = date.getMonth() + 1;
+			const year = date.getFullYear();
+
+			if (year !== currentYear) {
+				return month === 12;
+			} else {
+				return year === currentYear && month === currentMonth;
+			}
+		}
+
+		return true;
+	}).map(item => ({ ...item, date: range === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7) })), [netWorthFlow, range]);
 	const dispatch = useDispatch();
+
+	const handleRangeChange = (event, newRange) => {
+		setRange(newRange);
+	};
 
 	useEffect(() => {
 		dispatch(getNetWorthFlowAction());
 	}, []);
 
-	if (netWorthFlow.length > 0) {
+	if (rangedNetWorthFlow.length > 0) {
 		return (
 			<div>
 				<TitleHeader title="Net Worth" />
+				<RangeToggle range={range} onRangeChange={handleRangeChange} />
 				<Container>
 					{
-						netWorthFlow.length > 1 &&
+						rangedNetWorthFlow.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
 							<ComposedChart
-								data={netWorthFlow}
+								data={rangedNetWorthFlow}
 								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 							>
 								<XAxis dataKey="date"/>
