@@ -101,18 +101,19 @@ export function BankTransactions ({
 								width={width/4}
 								label="Amount"
 								dataKey="amount"
+								cellDataGetter={({ rowData }) => ({ date: rowData.date, amount: rowData.amount })}
 								cellRenderer={({ cellData }) => {
 									if (isWidthDownMd) {
 										return (
 											<Stack>
-												<Amount value={cellData} />
+												<Amount value={cellData.amount} />
 												<div>
 													{toDateFormat(cellData.date)}
 												</div>
 											</Stack>
 										);
 									} else {
-										return (<Amount value={cellData} />);
+										return (<Amount value={cellData.amount} />);
 									}
 								}}
 							/>
