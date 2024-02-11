@@ -50,7 +50,7 @@ exports.removeToken = async (removeToken) => {
 		});
 		return true;
 	} else {
-		return false;
+		return true;
 	}
 }
 

@@ -1,4 +1,4 @@
-const moment = require('moment');
+const moment = require('moment-timezone');
 const uuidv1 = require('uuid/v1');
 
 const messaging = require('./messaging');

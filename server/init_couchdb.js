@@ -1,5 +1,5 @@
 const config = require('./config');
-const nano = require('nano')(`http://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}`);
+const nano = require('nano')(`https://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}`);
 const fs = require('fs');
 const path = require('path');
 const Spooky = require('spooky');
