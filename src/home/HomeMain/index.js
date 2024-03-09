@@ -1,10 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { styled } from '@mui/material/styles';
-
-import LinearProgress from '@mui/material/LinearProgress';
-
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
@@ -31,27 +27,10 @@ import {
 	changeWeeklyGraphExpanded
 } from '../../actions/ui/homeActions';
 
-const Sticky = styled('div')(({ theme }) => ({
-	width: '100%',
-	position: 'sticky',
-	zIndex: theme.zIndex.drawer + 1,
-	[theme.breakpoints.down('sm')]: {
-		top: 56
-	},
-	[theme.breakpoints.up('sm')]: {
-		top: 64
-	},
-	[theme.breakpoints.up('md')]: {
-		marginBottom: 10
-	}
-}));
-
 export function HomeMain () {
 	const accountsExpanded = useSelector((state) => state.ui.home.accountsExpanded);
 	const latestTransactionsExpanded = useSelector((state) => state.ui.home.latestTransactionsExpanded);
 	const summaryExpanded = useSelector((state) => state.ui.home.summaryExpanded);
-	const trascationsFetching = useSelector((state) => state.trascationsFetching);
-	const updateInvestmentPriceFetching = useSelector((state) => state.updateInvestmentPriceFetching);
 	const weeklyGraphExpanded = useSelector((state) => state.ui.home.weeklyGraphExpanded);
 	const dispatch = useDispatch();
 
@@ -70,12 +49,6 @@ export function HomeMain () {
 	return (
 		<React.Fragment>
 			<TitleHeader title="Home" />
-			{
-				(updateInvestmentPriceFetching || trascationsFetching) &&
-				<Sticky>
-					<LinearProgress color="secondary"/>
-				</Sticky>
-			}
 			<Container>
 				<Grid container>
 					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >

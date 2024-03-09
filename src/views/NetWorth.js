@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
-import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
@@ -30,13 +29,28 @@ const CustomTooltip = ({ active, payload, label }) => {
 				<Typography variant="subtitle1" gutterBottom>
 					{`${label.substring(0, 7)}`}
 				</Typography>
-				<Typography variant="body1" gutterBottom>
+				<Typography
+					variant="body1"
+					gutterBottom
+				>
 					{`Net Worth : ${toCurrencyFormat(payload[0].value + payload[1].value)}`}
 				</Typography>
-				<Typography variant="body1" gutterBottom>
+				<Typography
+					variant="body1"
+					gutterBottom
+					sx={() => ({
+						color: '#e48274'
+					})}
+				>
 					{`Movable Asset : ${toCurrencyFormat(payload[1].value)}`}
 				</Typography>
-				<Typography variant="body1" gutterBottom>
+				<Typography
+					variant="body1"
+					gutterBottom
+					sx={() => ({
+						color: '#b04333'
+					})}
+				>
 					{`Real Estate : ${toCurrencyFormat(payload[0].value)}`}
 				</Typography>
 			</Stack>
@@ -99,8 +113,8 @@ function NetWorth () {
 								<XAxis dataKey="date"/>
 								<YAxis hide/>
 								<Tooltip content={<CustomTooltip />} />
-								<Bar dataKey="assetNetWorth" stackId="a" fill="#3d397d" />
-								<Bar dataKey="movableAsset" stackId="a" fill="#8884d8" />
+								<Bar dataKey="assetNetWorth" stackId="a" fill="#b04333" />
+								<Bar dataKey="movableAsset" stackId="a" fill="#e48274" />
 							</ComposedChart>
 						</ResponsiveContainer>
 					}
@@ -109,20 +123,7 @@ function NetWorth () {
 		);
 	} else {
 		return (
-			<div>
-				<TitleHeader title="Net Worth" />
-				<LinearProgress
-					color="secondary"
-					sx={(theme) => ({
-						zIndex: theme.zIndex.drawer + 2,
-						position: 'sticky',
-						top: 64,
-						[theme.breakpoints.down('sm')]: {
-							top: 56
-						}
-					})}
-				/>
-			</div>
+			<TitleHeader title="Net Worth" loading />
 		);
 	}
 }

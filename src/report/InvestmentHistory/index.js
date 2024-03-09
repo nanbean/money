@@ -33,7 +33,16 @@ const CustomTooltip = ({ active, payload, label }) => {
 				</Typography>
 				{
 					payload.map(i => (
-						<Typography variant="body1" gutterBottom key={i.dataKey}>{`${i.dataKey} : ${i.value}`}</Typography>
+						<Typography
+							variant="body1"
+							gutterBottom
+							key={i.dataKey}
+							sx={() => ({
+								color: stc(i.dataKey)
+							})}
+						>
+							{`${i.dataKey} : ${i.value}`}
+						</Typography>
 					))
 				}
 			</Stack>

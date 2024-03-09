@@ -482,30 +482,28 @@ exports.getLifetimeFlowList = async () => {
 	return lifeTimePlanner.data;
 };
 
-const getNetWorth = async (allAccounts, allTransactions, allInvestments, histories, date, assetOnly) => {
+const getNetWorth = async (allAccounts, allTransactions, allInvestments, histories, date) => {
 	const dateAccounts = {};
 	let netWorth = 0;
 	let netInvestments = [];
+	let assetNetWorth = 0;
 	const exchangeRate = await getExchangeRate();
 
 	for (const account of allAccounts) {
 		const transactions = allTransactions.filter(i => i.date <= date).filter(i => i.accountId === `account:${account.type}:${account.name}`);
 		if (transactions.length > 0) {
-			if (assetOnly) {
-				if (account.type === 'Oth A') {
-					netWorth += getBalance(account.name, allTransactions, transactions, date);
-				}
+			if (account.type === 'Invst') {
+				const investments = getInvestmentList(allInvestments, allTransactions, transactions);
+				netInvestments = [...netInvestments, ...investments];
+				netWorth += getInvestmentBalance(investments, date, histories);
 			} else {
-				if (account.type === 'Invst') {
-					const investments = getInvestmentList(allInvestments, allTransactions, transactions);
-					netInvestments = [...netInvestments, ...investments];
-					netWorth += getInvestmentBalance(investments, date, histories);
+				if (account.type === 'Oth A') {
+					const balance = getBalance(account.name, allTransactions, transactions, date);
+					assetNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+					netWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 				} else {
-					if(account.currency === 'USD') {
-						netWorth += getBalance(account.name, allTransactions, transactions, date) * exchangeRate;
-					} else {
-						netWorth += getBalance(account.name, allTransactions, transactions, date);
-					}
+					const balance = getBalance(account.name, allTransactions, transactions, date);
+					netWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 				}
 			}
 		}
@@ -513,7 +511,9 @@ const getNetWorth = async (allAccounts, allTransactions, allInvestments, histori
 	
 	return {
 		netWorth,
-		netInvestments
+		netInvestments,
+		assetNetWorth,
+		movableAsset: netWorth - assetNetWorth
 	};
 };
 
@@ -560,12 +560,11 @@ const updateNetWorth = async () => {
 	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true });
 
 	for (const item of data) {
-		const netWorth = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
-		item.netWorth = netWorth.netWorth;
-		item.netInvestments = netWorth.netInvestments;
-		const assetNetWorth = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date, true);
-		item.assetNetWorth = assetNetWorth.netWorth;
-		item.movableAsset = item.netWorth - item.assetNetWorth;
+		const {netWorth, netInvestments, assetNetWorth, movableAsset} = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
+		item.netWorth = netWorth;
+		item.netInvestments = netInvestments;
+		item.assetNetWorth = assetNetWorth;
+		item.movableAsset = movableAsset;
 	}
 	
 	const netWorth = {
@@ -657,9 +656,9 @@ new CronJob('00 45 15 * * 1-5', async () => {
 	console.log('couchdb 00 45 15 daily dailyArrangeInvestmemtjob started');
 	if (!calendar.isHoliday()) {
 		await updateAccountList();
+		await sendBalanceUpdateNotification();
 		await updateLifeTimePlanner();
 		await updateNetWorth();
-		await sendBalanceUpdateNotification();
 	} else {
 		console.log('holiday, dailyArrangeInvestmemtjob skip');
 	}

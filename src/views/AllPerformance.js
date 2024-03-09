@@ -2,7 +2,6 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import Typography from '@mui/material/Typography';
-import LinearProgress from '@mui/material/LinearProgress';
 
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import InvestmentFilter from '../components/InvestmentFilter';
@@ -77,20 +76,7 @@ export function AllPerformance () {
 		);
 	} else {
 		return (
-			<div>
-				<TitleHeader title="Performance" />
-				<LinearProgress
-					color="secondary"
-					sx={(theme) => ({
-						zIndex: theme.zIndex.drawer + 2,
-						position: 'sticky',
-						top: 64,
-						[theme.breakpoints.down('sm')]: {
-							top: 56
-						}
-					})}
-				/>
-			</div>
+			<TitleHeader title="Performance" loading />
 		);
 	}
 }

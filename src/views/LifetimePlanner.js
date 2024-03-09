@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
-import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
@@ -24,10 +23,22 @@ const CustomTooltip = ({ active, payload }) => {
 					backgroundColor: theme.palette.secondary.main
 				})}
 			>
-				<Typography variant="body1" gutterBottom>
+				<Typography
+					variant="body1"
+					gutterBottom
+					sx={() => ({
+						color: '#e48274'
+					})}
+				>
 					{`Amount(Inflation) : ${toCurrencyFormat(payload[0].value)}`}
 				</Typography>
-				<Typography variant="body1" gutterBottom>
+				<Typography
+					variant="body1"
+					gutterBottom
+					sx={() => ({
+						color: '#b04333'
+					})}
+				>
 					{`Amount : ${toCurrencyFormat(payload[1].value)}`}
 				</Typography>
 			</Stack>
@@ -65,8 +76,8 @@ function LifetimePlanner () {
 								<XAxis dataKey="year" />
 								<YAxis hide />
 								<Tooltip content={<CustomTooltip />} />
-								<Bar dataKey="amount" name="Amount" fill="#82ca9d" />
-								<Line dataKey="amountInflation" stroke="#8884d8" strokeDasharray="5 5"/>
+								<Bar dataKey="amount" name="Amount" fill="#e48274" />
+								<Line dataKey="amountInflation" stroke="#b04333" strokeDasharray="5 5"/>
 							</ComposedChart>
 						</ResponsiveContainer>
 					}
@@ -75,21 +86,7 @@ function LifetimePlanner () {
 		);
 	} else {
 		return (
-			<div>
-				<TitleHeader title="Lifetime Planner" />
-				<LinearProgress
-					color="secondary"
-					sx={(theme) => ({
-						zIndex: theme.zIndex.drawer + 2,
-						position: 'sticky',
-						top: 64,
-						[theme.breakpoints.down('sm')]: {
-							top: 56
-						}
-					})}
-				/>
-
-			</div>
+			<TitleHeader title="Lifetime Planner" loading />
 		);
 	}
 }
