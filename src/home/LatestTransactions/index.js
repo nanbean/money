@@ -26,7 +26,7 @@ export function LastTransactions () {
 	const latestTransactions = useSelector((state) => state.latestTransactions);
 	const dispatch = useDispatch();
 	const width = useWidth();
-	const isWidthDownMd = width === 'xs' || width === 'sm';
+	const isWidthDownMd = width === 'xs' || width === 'sm' || width === 'md';
 
 	const onRowSelect = (index) => () => {
 		const transaction = latestTransactions[index];

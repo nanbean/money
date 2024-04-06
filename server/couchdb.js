@@ -5,6 +5,7 @@ const CronJob = require('cron').CronJob;
 const moment = require('moment');
 const _ = require('lodash');
 const exec = require('child_process').exec;
+const ping = require('ping');
 
 const messaging = require('./messaging');
 const calendar = require('./calendar');
@@ -484,7 +485,9 @@ exports.getLifetimeFlowList = async () => {
 
 const getNetWorth = async (allAccounts, allTransactions, allInvestments, histories, date) => {
 	const dateAccounts = {};
-	let netWorth = 0;
+	let cashNetWorth = 0;
+	let investmentsNetWorth = 0;
+	let loanNetWorth = 0;
 	let netInvestments = [];
 	let assetNetWorth = 0;
 	const exchangeRate = await getExchangeRate();
@@ -494,26 +497,33 @@ const getNetWorth = async (allAccounts, allTransactions, allInvestments, histori
 		if (transactions.length > 0) {
 			if (account.type === 'Invst') {
 				const investments = getInvestmentList(allInvestments, allTransactions, transactions);
+				const balance = getInvestmentBalance(investments, date, histories);
 				netInvestments = [...netInvestments, ...investments];
-				netWorth += getInvestmentBalance(investments, date, histories);
+				investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+			} else if (account.type === 'Oth A') {
+				const balance = getBalance(account.name, allTransactions, transactions, date);
+				assetNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+			} else if (account.type === 'Oth L') {
+				const balance = getBalance(account.name, allTransactions, transactions, date);
+				loanNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+			} else if (account.name.match(/_Cash/)) {
+				const balance = getBalance(account.name, allTransactions, transactions, date);
+				investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			} else {
-				if (account.type === 'Oth A') {
-					const balance = getBalance(account.name, allTransactions, transactions, date);
-					assetNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-					netWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-				} else {
-					const balance = getBalance(account.name, allTransactions, transactions, date);
-					netWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-				}
+				const balance = getBalance(account.name, allTransactions, transactions, date);
+				cashNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			}
 		}
 	}
 	
 	return {
-		netWorth,
-		netInvestments,
+		netWorth: cashNetWorth + investmentsNetWorth + loanNetWorth + assetNetWorth,
+		cashNetWorth,
+		investmentsNetWorth,
+		loanNetWorth,
 		assetNetWorth,
-		movableAsset: netWorth - assetNetWorth
+		netInvestments,
+		movableAsset: cashNetWorth + investmentsNetWorth + loanNetWorth
 	};
 };
 
@@ -540,7 +550,7 @@ const updateNetWorth = async () => {
 		}
 	}
 
-	const data = dates.map(i => ({date: i}))
+	const data = dates.map(i => ({date: i}));
 
 	const accountsDB = nano.use('accounts_nanbean');
 	const accountsResponse = await accountsDB.list({ include_docs: true });
@@ -560,8 +570,12 @@ const updateNetWorth = async () => {
 	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true });
 
 	for (const item of data) {
-		const {netWorth, netInvestments, assetNetWorth, movableAsset} = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
+		const {netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, netInvestments, movableAsset} = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
 		item.netWorth = netWorth;
+		item.cashNetWorth = cashNetWorth;
+		item.investmentsNetWorth = investmentsNetWorth;
+		item.loanNetWorth = loanNetWorth;
+		item.assetNetWorth = assetNetWorth;
 		item.netInvestments = netInvestments;
 		item.assetNetWorth = assetNetWorth;
 		item.movableAsset = movableAsset;
@@ -686,3 +700,21 @@ var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
 true, /* Start the job right now */
 'Asia/Seoul' /* Time zone of this job. */
 );
+
+new CronJob('00 00 * * * *', async () => {
+	/*
+		 * server alive check
+		 * Runs week day (Monday through Friday)
+		 * at 05:00:00 AM.
+		 */
+	ping.sys.probe('rdp.nanbean.net', function(isAlive) {
+		if (!isAlive) {
+			console.log(`rdp.nanbean.net server is dead`);
+			messaging.sendNotification('Check server', 'ping error');
+		}
+	});
+
+}, () => {
+	/* This function is executed when the job stops */
+	console.log(' 00 00 hourly servercheck ended');
+}, true, 'Asia/Seoul');

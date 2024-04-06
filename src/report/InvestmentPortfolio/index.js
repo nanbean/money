@@ -3,7 +3,11 @@ import { useSelector } from 'react-redux';
 
 import ReactEcharts from 'echarts-for-react'; 
 
+import stc from 'string-to-color';
+
 import AccountFilter from '../../components/AccountFilter';
+
+import { toCurrencyFormat } from '../../utils/formatting';
 
 function InvestmentPortfolio () {
 	const accountList = useSelector((state) => state.accountList);
@@ -19,12 +23,28 @@ function InvestmentPortfolio () {
 			if (existingInvestment) {
 				existingInvestment.quantity += investment.quantity;
 				existingInvestment.amount += investment.quantity * investment.price;
+				existingInvestment.children.push({
+					account: item.name,
+					name: investment.name,
+					quantity: investment.quantity,
+					price: investment.price,
+					amount: investment.quantity * investment.price
+				});
 			} else {
 				acc.push({
 					name: investment.name,
 					quantity: investment.quantity,
 					price: investment.price,
-					amount: investment.quantity * investment.price
+					amount: investment.quantity * investment.price,
+					children: [
+						{
+							account: item.name,
+							name: investment.name,
+							quantity: investment.quantity,
+							price: investment.price,
+							amount: investment.quantity * investment.price
+						}
+					]
 				});
 			}
 		});
@@ -41,6 +61,12 @@ function InvestmentPortfolio () {
 		}
 		return 0;
 	}), [accountList, filteredAccounts]);
+	const color =  useMemo(() => {
+		return allInvestments.map(i => stc(i.name));
+	}, [allInvestments]);
+	const totalAmount = useMemo(() => {
+		return allInvestments.reduce((acc, item) => acc + item.amount, 0);
+	}, [allInvestments]);
 
 	const onFilteredAccountsChange = (e) => {
 		setFilteredAccounts(e);
@@ -49,24 +75,46 @@ function InvestmentPortfolio () {
 	const option = {
 		tooltip: {
 			trigger: 'item',
-			formatter: d => `${d.value.toLocaleString()}, ${d.percent}%`
+			formatter: d => `${d.name}\n${toCurrencyFormat(d.value)}\n${(d.value / totalAmount* 100).toFixed(3)}%`
 		},
 		series: [
 			{
 				name: 'Portfolio',
-				type: 'pie',
-				radius: '60%',
-				data: allInvestments.map(i => ({ name: i.name, value: i.amount })),
-				label: {
-					formatter: d => `${d.name}\n${d.percent}%`
+				type: 'treemap',
+				height: '95%',
+				breadcrumb: {
+					show: false
 				},
-				emphasis: {
-					itemStyle: {
-						shadowBlur: 10,
-						shadowOffsetX: 0,
-						shadowColor: 'rgba(0, 0, 0, 0.5)'
+				label: {
+					show: true,
+					formatter: d => `${d.name}\n${(d.value / totalAmount* 100).toFixed(3)}%`
+				},
+				data: allInvestments.map(i => ({
+					name: i.name,
+					value: i.amount,
+					children: i.children.map(j => ({ name: j.account, value: j.amount }))
+				})),
+				levels: [
+					{
+						itemStyle: {
+							color: '#000'
+						},
+						upperLabel: {
+							show: false
+						},
+						color,
+						colorMappingBy: 'id'
+					},
+					{
+						itemStyle: {
+							borderColor: '#555'
+						},
+						upperLabel: {
+							show: true,
+							height: 30
+						}
 					}
-				}
+				]
 			}
 		]
 	};
@@ -81,7 +129,7 @@ function InvestmentPortfolio () {
 				/>
 			</div>
 			{
-				allInvestments.length > 0 && <ReactEcharts option={option} />
+				allInvestments.length > 0 && <ReactEcharts option={option} style={{ height: '600px' }} />
 			}
 		</React.Fragment>
 	);

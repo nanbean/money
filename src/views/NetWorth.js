@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
@@ -32,8 +32,11 @@ const CustomTooltip = ({ active, payload, label }) => {
 				<Typography
 					variant="body1"
 					gutterBottom
+					sx={() => ({
+						color: '#82281b'
+					})}
 				>
-					{`Net Worth : ${toCurrencyFormat(payload[0].value + payload[1].value)}`}
+					{`Net Worth : ${toCurrencyFormat(payload[3].value)}`}
 				</Typography>
 				<Typography
 					variant="body1"
@@ -42,7 +45,16 @@ const CustomTooltip = ({ active, payload, label }) => {
 						color: '#e48274'
 					})}
 				>
-					{`Movable Asset : ${toCurrencyFormat(payload[1].value)}`}
+					{`Cash Asset : ${toCurrencyFormat(payload[2].value)}`}
+				</Typography>
+				<Typography
+					variant="body1"
+					gutterBottom
+					sx={() => ({
+						color: '#b5665b'
+					})}
+				>
+					{`Investement Asset : ${toCurrencyFormat(payload[1].value)}`}
 				</Typography>
 				<Typography
 					variant="body1"
@@ -114,7 +126,9 @@ function NetWorth () {
 								<YAxis hide/>
 								<Tooltip content={<CustomTooltip />} />
 								<Bar dataKey="assetNetWorth" stackId="a" fill="#b04333" />
-								<Bar dataKey="movableAsset" stackId="a" fill="#e48274" />
+								<Bar dataKey="investmentsNetWorth" stackId="a" fill="#b5665b" />
+								<Bar dataKey="cashNetWorth" stackId="a" fill="#e48274" />
+								<Line dataKey="netWorth" stroke="#82281b" strokeDasharray="5 5"/>
 							</ComposedChart>
 						</ResponsiveContainer>
 					}

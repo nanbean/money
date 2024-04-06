@@ -37,18 +37,18 @@ const SumCell = styled('div')(() => ({
 	borderBottom: '1px solid rgba(81, 81, 81, 1)'
 }));
 
-const Category = ({
-	category
+const Text = ({
+	title
 }) => (
 	<Typography
 		variant="body2"
 	>
-		{category}
+		{title}
 	</Typography >
 );
 
-Category.propTypes = {
-	category: PropTypes.string
+Text.propTypes = {
+	title: PropTypes.string
 };
 
 export function ReportGrid ({
@@ -80,13 +80,25 @@ export function ReportGrid ({
 									if (reportData[rowIndex][0] === 'Income Total' || reportData[rowIndex][0] === 'Expense Total') {
 										return (
 											<SumCell key={key} style={style}>
-												{isNumber ? <Amount value={parseValue} /> : <Category category={value} />}
+												{isNumber ? <Amount value={parseValue} /> : <Text title={value} />}
 											</SumCell>
+										);
+									} if (reportData[rowIndex][0] === 'Year' || reportData[rowIndex][0] === 'Category') {
+										return (
+											<ReportCell key={key} style={style}>
+												<Text title={value} />
+											</ReportCell>
+										);
+									} else if (typeof value === 'string' && value.includes('%')) {
+										return (
+											<ReportCell key={key} style={style}>
+												<Text title={value} />
+											</ReportCell>
 										);
 									}
 									return (
 										<ReportCell key={key} style={style}>
-											{isNumber ? <Amount value={parseValue} /> : <Category category={value} />}
+											{isNumber ? <Amount value={typeof value == 'string' ? value:parseValue} /> : <Text title={value} />}
 										</ReportCell>
 									);
 								}}
