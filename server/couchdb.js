@@ -3,6 +3,7 @@ const nano = require('nano')(`https://${config.couchDBAdminId}:${config.couchDBA
 const Spooky = require('spooky');
 const CronJob = require('cron').CronJob;
 const moment = require('moment');
+const dayjs = require('dayjs');
 const _ = require('lodash');
 const exec = require('child_process').exec;
 const ping = require('ping');
@@ -13,6 +14,12 @@ const calendar = require('./calendar');
 const spreadSheet = require('./api/spreadSheet');
 
 const couchdbUtil = require('./couchdbUtil');
+
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
@@ -602,7 +609,7 @@ new CronJob('00 33 05 1 * *', async () => {
 		 * Runs every 1st day of month, and write last day of previous month price
 		 * at 03:00:00 AM.
 		 */
-	console.log('couchdb 00 34 05 monthly monthlyUpdateHistoricaljob started');
+	console.log('couchdb 00 33 05 monthly monthlyUpdateHistoricaljob started');
 	const transactionsDB = nano.use('transactions_nanbean');
 	const transactionsResponse = await transactionsDB.list({ include_docs: true });
 	const allTransactions = transactionsResponse.rows.map(i => i.doc);
@@ -618,11 +625,16 @@ new CronJob('00 33 05 1 * *', async () => {
 		...i,
 		data: [
 			{
-				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+				date: `${dayjs().tz('Asia/Seoul').subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
 				close: couchdbUtil.getClosePriceWithHistory(investments, i)
 			},
 			...i.data
-		]
+		].reduce((accumulator, currentValue) => {
+			if (!accumulator.find(i => i.date == currentValue.date && i.close == currentValue.close)) {
+				accumulator.push(currentValue);
+			}
+			return accumulator;
+		}, [])
 	}));
 	await historiesDB.bulk({
 		docs: newHistories
@@ -631,7 +643,7 @@ new CronJob('00 33 05 1 * *', async () => {
 		...i,
 		data: [
 			{
-				date: `${moment().subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+				date: `${dayjs().tz('Asia/Seoul').subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
 				close: couchdbUtil.getClosePriceWithHistory(investments, i)
 			}
 		]

@@ -5,6 +5,12 @@ const config = require('./config');
 const key = require('./nanbean-435f267e8481.json');
 const SCOPES = 'https://www.googleapis.com/auth/calendar';
 
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 var auth = new google.auth.JWT(
 	key.client_email,
 	null,
@@ -26,7 +32,7 @@ const getHolidays = async () => {
 	const res = await calendar.events.list({
 		calendarId: 'ko.south_korea#holiday@group.v.calendar.google.com',
 		timeMin: (new Date()).toISOString(),
-		maxResults: 10,
+		maxResults: 30,
 		singleEvents: true,
 		orderBy: 'startTime'
 	});
@@ -44,8 +50,9 @@ const getHolidays = async () => {
 getHolidays().catch(console.error);
 
 exports.isHoliday = () => {
-	const date = dayjs().format('YYYY-MM-DD');
+	const date = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
 	if (holidays.find(i => i.start === date)) {
+		console.log('Today is ' + date + ' and it is holiday');
 		return true;
 	}
 

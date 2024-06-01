@@ -63,16 +63,19 @@ exports.getLifetimeFlowList = async (accounts) => {
 	const irpOEMReturnCell = `$A${bColumn.findIndex(i => i === 'IRP오은미수익률') + 1}`;
 	const irpOEMSavingIndex = aColumn.findIndex(i => i === 'IRP오은미저축') + 1;
 	const irpOEMExpenseIndex = aColumn.findIndex(i => i === 'IRP 오은미 연금') + 1;
+	const oemPensionSavingReturnCell = `$A${bColumn.findIndex(i => i === '오은미연금저축수익률') + 1}`;
+	const oemPensionSavingIndex = aColumn.findIndex(i => i === '오은미연금저축저축') + 1;
+	const oemPensionSavingExpenseIndex = aColumn.findIndex(i => i === '오은미 연금저축 연금') + 1;
 	const houseSavingReturnCell = `$A${bColumn.findIndex(i => i === '장마수익률') + 1}`;
 	const houseSavingIndex = aColumn.findIndex(i => i === '장마저축') + 1;
 
 	// reduced range because of memory
 	await firstSheet.loadCells([
-		`B${expenseStartIndex}:AZ${expenseEndIndex}`,
-		`B${netAssetIndex}:AZ${netAssetInflationIndex}`,
-		`B${withdrawStartIndex}:AZ${withdrawEndIndex}`,
-		`B${savingStartIndex}:AZ${savingEndIndex}`,
-		`B${reminderIndex}:AZ${reminderIndex}`
+		`B${expenseStartIndex}:${colIndex[colIndex.length - 1]}${expenseEndIndex}`,
+		`B${netAssetIndex}:${colIndex[colIndex.length - 1]}${netAssetInflationIndex}`,
+		`B${withdrawStartIndex}:${colIndex[colIndex.length - 1]}${withdrawEndIndex}`,
+		`B${savingStartIndex}:${colIndex[colIndex.length - 1]}${savingEndIndex}`,
+		`B${reminderIndex}:${colIndex[colIndex.length - 1]}${reminderIndex}`
 	]);
 	console.log('cells loaded');
 
@@ -208,9 +211,33 @@ exports.getLifetimeFlowList = async (accounts) => {
 				}
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
+		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '오은미연금저축') {
+			const accountItem = accounts.find(i => i.name === '오은미연금저축' && i.type == 'Invst');
+			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
+			for (let j = 1; j < colIndex.length; j++) {
+				const year = currentYear + j - 1;
+				const isSecondYear = year - 1 === currentYear;
+				const monthGap = 12 - moment().month() - 1; // month() return 0 - 11
+				const prevYear = firstSheet.getCellByA1(`${colIndex[j - 1]}${rowNumber}`)._draftData.value;
+				const expectCell = oemPensionSavingReturnCell;
+				const expect = firstSheet.getCellByA1(expectCell.replace('$', '')).value;
+				const savingCell = `${colIndex[j - 1]}${oemPensionSavingIndex}`;
+				const saving = firstSheet.getCellByA1(savingCell.replace('$', '')).value || 0;
+				const expenseCell = `${colIndex[j]}${oemPensionSavingExpenseIndex}`;
+				const expense = firstSheet.getCellByA1(expenseCell.replace('$', '')).value || 0;;
+				const result = prevYear + prevYear * expect * (isSecondYear ? monthGap / 12 : 1) + saving * (isSecondYear ? monthGap / 12 : 1) - expense;
+				if (result === 0) {
+					firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).value = 0;
+				} else {
+					firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).formula = `=${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))+${savingCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1)-${expenseCell}`;
+				}
+				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
+			}
 		}
 	}
 	await firstSheet.saveUpdatedCells();
+
+	await firstSheet.loadCells([`B${netAssetIndex}:${colIndex[colIndex.length - 1]}${netAssetInflationIndex}`]);
 
 	const flowList = [];
 	const flowInflationList = [];
@@ -229,6 +256,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 			amountInflation: flowList[i]
 		});
 	}
+
+	console.log('Last: ', flowList[colIndex.length - 1]);
 
 	console.log('cells updated');
 
