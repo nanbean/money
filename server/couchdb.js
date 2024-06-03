@@ -2,7 +2,7 @@ const config = require('./config');
 const nano = require('nano')(`https://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}`);
 const Spooky = require('spooky');
 const CronJob = require('cron').CronJob;
-const dayjs = require('dayjs');
+const moment = require('moment-timezone');
 const _ = require('lodash');
 const exec = require('child_process').exec;
 const ping = require('ping');
@@ -13,12 +13,6 @@ const calendar = require('./calendar');
 const spreadSheet = require('./api/spreadSheet');
 
 const couchdbUtil = require('./couchdbUtil');
-
-const utc = require('dayjs/plugin/utc');
-const timezone = require('dayjs/plugin/timezone');
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
@@ -110,7 +104,7 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 };
 
 const getInvestmentBalance = (investments, date, histories) => {
-	const currentYearMonth = dayjs().format('YYYY-MM');
+	const currentYearMonth = moment().format('YYYY-MM');
 	let balance = 0;
 	if (investments.length > 0) {
 		balance = investments.map(i => {
@@ -624,7 +618,7 @@ new CronJob('00 33 05 1 * *', async () => {
 		...i,
 		data: [
 			{
-				date: `${dayjs().tz('Asia/Seoul').subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+				date: `${moment().tz('Asia/Seoul').subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
 				close: couchdbUtil.getClosePriceWithHistory(investments, i)
 			},
 			...i.data
@@ -642,7 +636,7 @@ new CronJob('00 33 05 1 * *', async () => {
 		...i,
 		data: [
 			{
-				date: `${dayjs().tz('Asia/Seoul').subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
+				date: `${moment().tz('Asia/Seoul').subtract(1, 'days').format('YYYY-MM-DD')}T18:00:00.000Z`,
 				close: couchdbUtil.getClosePriceWithHistory(investments, i)
 			}
 		]
@@ -663,7 +657,7 @@ new CronJob('00 00 03 * * 0', () => {
 		 */
 	console.log('couchdb 00 00 03 weekly weeklyBackupjob started');
 
-	const backupDir = `/home/nanbean/backup/money/backup_${dayjs().format('YYYYMMDD')}_couch`;
+	const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}_couch`;
 
 	exec(`mkdir ${backupDir}`, { cwd: __dirname });
 	exec(`echo ${config.sudoPassword} | cp '/opt/couchdb/data/*.couch ${backupDir}/`, { cwd: __dirname });
@@ -700,7 +694,7 @@ var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
 		 */
 	console.log('00 00 03 weekly weeklyBackupjob started');
 
-	const backupDir = `/home/nanbean/backup/money/backup_${dayjs().format('YYYYMMDD')}`;
+	const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}`;
 
 	exec(`mkdir ${backupDir}`, { cwd: __dirname });
 	exec(`echo ${config.sudoPassword} | sudo -S cp -r /var/lib/couchdb ${backupDir}/`, { cwd: __dirname });
