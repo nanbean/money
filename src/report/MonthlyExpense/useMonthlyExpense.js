@@ -18,8 +18,10 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 			{
 				value: 'Category'
 			},
-			...MONTH_LIST.map(i => ({
-				value: i
+			...MONTH_LIST.map((i, index) => ({
+				value: i,
+				startDate: getStartDate(year, index + 1),
+				endDate: getEndDate(year, index + 1)
 			})),
 			{
 				value: 'Total'
@@ -42,7 +44,10 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 						endDate: getEndDate(year, index + 1)
 					})),
 					{
-						value: i.sum
+						category: i.category,
+						value: i.sum,
+						startDate: getStartDate(year, 1),
+						endDate: getEndDate(year, 12)
 					}
 				];
 			}),
@@ -74,7 +79,10 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 						endDate: getEndDate(year, index + 1)
 					})),
 					{
-						value: i.sum
+						category: i.category,
+						value: i.sum,
+						startDate: getStartDate(year, 1),
+						endDate: getEndDate(year, 12)
 					}
 				];
 			}),

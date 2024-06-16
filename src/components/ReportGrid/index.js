@@ -88,6 +88,8 @@ export function ReportGrid ({
 											} else {
 												navigate(`/search?startDate=${item.startDate}&endDate=${item.endDate}&category=${encodeURIComponent(item.category)}`);
 											}
+										} else if (item.startDate && item.endDate) {
+											navigate(`/search?startDate=${item.startDate}&endDate=${item.endDate}`);
 										}
 									};
 							
