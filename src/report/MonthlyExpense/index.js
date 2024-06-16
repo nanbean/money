@@ -19,15 +19,18 @@ import useExpenseReport from './useExpenseReport';
 import { YEAR_LIST } from '../../constants';
 
 const MonthlyExpense = () => {
+	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const exchangeRate = useSelector((state) => state.settings.exchangeRate);
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(false);
 	const [livingExpenseCardOnly, setLivingExpenseCardOnly] = useState(false);
 	const [boAOnly, setBoAOnly] = useState(false);
+	const [usd, setUsd] = useState(true);
 
 	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
-	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(incomeTransactions, year);
-	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(expenseTransactions, year, livingExpenseOnly);
+	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate);
+	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate);
 	const reportData = useMonthlyExpense(incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum);
 
 	const onYearChange = event => {
@@ -44,6 +47,10 @@ const MonthlyExpense = () => {
 
 	const onBoAOnlyChange = event => {
 		setBoAOnly(event.target.checked);
+	};
+
+	const onUsdChange = event => {
+		setUsd(event.target.checked);
 	};
 
 	return (
@@ -92,6 +99,15 @@ const MonthlyExpense = () => {
 							/>
 						}
 						label="BoA Only"
+					/>
+					<FormControlLabel
+						control={
+							<Switch
+								checked={usd}
+								onChange={onUsdChange}
+							/>
+						}
+						label="USD"
 					/>
 				</div>
 			</div>

@@ -3,18 +3,27 @@ import _ from 'lodash';
 
 import { MONTH_LIST } from '../../constants';
 
-const useExpenseReport = (expenseTransactions, year, livingExpenseOnly) => {
+const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate) => {
 	const startDate = moment(`${year}-01-01`).format('YYYY-MM-DD');
 	const endDate = moment(`${year}-12-31`).format('YYYY-MM-DD');
 	let expenseReport = [];
 	let totalMonthExpenseSum = [];
 	let totalExpenseSum = 0;
 
+	const isUsdAccount = (account) => {
+		const accountItem = accountList.find(i => i.name === account);
+		if (accountItem.currency === 'USD') {
+			return true;
+		}
+
+		return false;
+	};
+
 	const getMonthFiltered = (data, key, month) => {
 		const filtered = data[key].filter(i => i.date.substr(5, 2) === month);
 
 		if (filtered.length > 0) {
-			return filtered.map(i => i.amount).reduce((a, b) => a + b);
+			return filtered.map(i => usd ? (isUsdAccount(i.account) ? i.amount:(i.amount / exchangeRate)):(isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount)).reduce((a, b) => a + b);
 		}
 
 		return 0;
