@@ -39,7 +39,7 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 			return {
 				category: key,
 				month: MONTH_LIST.map(i => getMonthFiltered(groupedExpenseData, key, i)),
-				sum: groupedExpenseData[key].map(i => i.amount).reduce((a, b) => a + b)
+				sum: groupedExpenseData[key].map(i => usd ? (isUsdAccount(i.account) ? i.amount:(i.amount / exchangeRate)):(isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount)).reduce((a, b) => a + b)
 			};
 		}).sort((a, b) => {
 			const categoryA = a.category.toLowerCase();

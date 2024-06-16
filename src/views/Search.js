@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { styled } from '@mui/material/styles';
@@ -44,12 +44,13 @@ export function Search () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const dropCategoryList = useSelector((state) => state.dropCategoryList);
 	const [filteredTransactions, setFilteredTransactions] = useState([]);
-	const [keyword, setKeyword] = useState(useParams().keyword);
 	const [searchParams, setSearchParams] = useSearchParams();
-	const category = searchParams.get('category');
-	const subcategory = searchParams.get('subcategory');
-	const startDate = searchParams.get('startDate');
-	const endDate = searchParams.get('endDate');
+	const keyword = searchParams.get('keyword') || '';
+	const [inputValue, setInputValue] = useState(keyword);
+	const category = searchParams.get('category') || '';
+	const subcategory = searchParams.get('subcategory') || '';
+	const startDate = searchParams.get('startDate') || '';
+	const endDate = searchParams.get('endDate') || '';
 	const balance = filteredTransactions.length > 0 && filteredTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
 
 	useEffect(() => {
@@ -87,23 +88,41 @@ export function Search () {
 			filteredTransactions = filteredTransactions.filter(i => (i.payee && i.payee.match(new RegExp(keyword, 'i'))) || (i.memo && i.memo.match(new RegExp(keyword, 'i'))));
 
 			setFilteredTransactions(filteredTransactions);
-			setKeyword(keyword);
 		}
 	};
 
 	const onSearchKeyPress = (e) => {
 		if (e.key === 'Enter' && e.target.value) {
-			setKeyword(e.target.value);
+			const params = {};
+			if (keyword) {
+				params.keyword = inputValue;
+			}
+			if (category) {
+				params.category = category;
+			}
+			if (subcategory) {
+				params.subcategory = subcategory;
+			}
+			if (startDate) {
+				params.startDate = startDate;
+			}
+			if (endDate) {
+				params.endDate = endDate;
+			}
+			setSearchParams(params);
 		}
 	};
 
-	const onKeywordChange = (e) => {
-		setKeyword(e.target.value);
+	const onInputValueChange = (e) => {
+		setInputValue(e.target.value);
 	};
 
 	const onCategoryChange = (e) => {
 		const params = {};
 		const categoryArray = e.target.value.split(':');
+		if (keyword) {
+			params.keyword = keyword;
+		}
 		if (categoryArray[0]) {
 			params.category = categoryArray[0];
 		}
@@ -121,6 +140,9 @@ export function Search () {
 
 	const onStartDateChange = (e) => {
 		const params = {};
+		if (keyword) {
+			params.keyword = keyword;
+		}
 		if (category) {
 			params.category = category;
 		}
@@ -138,6 +160,9 @@ export function Search () {
 
 	const onEndDateChange = (e) => {
 		const params = {};
+		if (keyword) {
+			params.keyword = keyword;
+		}
 		if (category) {
 			params.category = category;
 		}
@@ -191,8 +216,8 @@ export function Search () {
 										name="search"
 										autoComplete="search"
 										autoFocus
-										value={keyword}
-										onChange={onKeywordChange}
+										value={inputValue}
+										onChange={onInputValueChange}
 										onKeyPress={onSearchKeyPress}
 										startAdornment={
 											<InputAdornment position="start">

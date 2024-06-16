@@ -1,13 +1,29 @@
+import moment from 'moment';
+
 import { MONTH_LIST } from '../../constants';
 
-const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum) => {
+const getStartDate = (year, month) => {
+	return moment(`${year}-${month}-01`).format('YYYY-MM-DD');
+};
+
+const getEndDate = (year, month) => {
+	return moment(`${year}-${month}-01`).endOf('month').format('YYYY-MM-DD');
+};
+
+const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year) => {
 	let reportData = [];
 
 	reportData = [
 		[
-			'Category',
-			...MONTH_LIST,
-			'Total'
+			{
+				value: 'Category'
+			},
+			...MONTH_LIST.map(i => ({
+				value: i
+			})),
+			{
+				value: 'Total'
+			}
 		]
 	];
 
@@ -16,15 +32,30 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 			...reportData,
 			...incomeReport.map(i => {
 				return [
-					i.category,
-					...i.month,
-					i.sum
+					{
+						value: i.category
+					},
+					...i.month.map((j, index) => ({
+						category: i.category,
+						value: j,
+						startDate: getStartDate(year, index + 1),
+						endDate: getEndDate(year, index + 1)
+					})),
+					{
+						value: i.sum
+					}
 				];
 			}),
 			[
-				'Income Total',
-				...totalMonthIncomeSum,
-				totalIncomeSum
+				{
+					value: 'Income Total'
+				},
+				...totalMonthIncomeSum.map(i => ({
+					value: i
+				})),
+				{
+					value: totalIncomeSum
+				}
 			]
 		];
 	}
@@ -33,15 +64,30 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 			...reportData,
 			...expenseReport.map(i => {
 				return [
-					i.category,
-					...i.month,
-					i.sum
+					{
+						value: i.category
+					},
+					...i.month.map((j, index) => ({
+						category: i.category,
+						value: j,
+						startDate: getStartDate(year, index + 1),
+						endDate: getEndDate(year, index + 1)
+					})),
+					{
+						value: i.sum
+					}
 				];
 			}),
 			[
-				'Expense Total',
-				...totalMonthExpenseSum,
-				totalExpenseSum
+				{
+					value: 'Expense Total'
+				},
+				...totalMonthExpenseSum.map(i => ({
+					value: i
+				})),
+				{
+					value: totalExpenseSum
+				}
 			]
 		];
 	}

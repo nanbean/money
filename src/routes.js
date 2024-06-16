@@ -60,7 +60,6 @@ function RoutesMain () {
 						<Route exact path="/allperformance" element={<AllPerformance />} />
 						<Route exact path="/report" element={<ReportMain />} />
 						<Route exact path="/search" element={<Search />} />
-						<Route path="/search/:keyword" element={<Search />} />
 						<Route exact path="/setting" element={<Setting />} />
 						<Route exact path="/notificationlog" element={<NotificationLog />} />
 						<Route exact path="/signin" element={<Signin />} />

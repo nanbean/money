@@ -39,7 +39,7 @@ const useIncomeReport = (accountList, incomeTransactions, year, usd, exchangeRat
 			return {
 				category: key,
 				month: MONTH_LIST.map(i => getMonthFiltered(groupedIncomeData, key, i)),
-				sum: groupedIncomeData[key].map(i => i.amount).reduce((a, b) => a + b)
+				sum: groupedIncomeData[key].map(i => usd ? (isUsdAccount(i.account) ? i.amount:(i.amount / exchangeRate)):(isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount)).reduce((a, b) => a + b)
 			};
 		}).sort((a, b) => {
 			const categoryA = a.category.toLowerCase();

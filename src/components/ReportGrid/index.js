@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { AutoSizer, MultiGrid } from 'react-virtualized';
+import { useNavigate } from 'react-router-dom';
 
 import { styled } from '@mui/material/styles';
 
@@ -54,6 +55,7 @@ Text.propTypes = {
 export function ReportGrid ({
 	reportData
 }) {
+	const navigate = useNavigate();
 	const width = useWidth();
 	const isWidthUpLg = width !== 'xs' && width !== 'sm' && width !== 'md';
 
@@ -73,9 +75,21 @@ export function ReportGrid ({
 								fixedRowCount={1}
 								fixedColumnCount={1}
 								cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-									const value = reportData[rowIndex][columnIndex];
+									const item = reportData[rowIndex][columnIndex];
+									const value = item.value;
 									const parseValue = parseInt(value, 10);
 									const isNumber = !Number.isNaN(parseValue);
+
+									const handleClick = () => {
+										if (item.startDate && item.endDate && item.category) {
+											if (item.category.includes(':')) {
+												const categoryArray = item.category.split(':');
+												navigate(`/search?startDate=${item.startDate}&endDate=${item.endDate}&category=${encodeURIComponent(categoryArray[0])}&subcategory=${encodeURIComponent(categoryArray[1])}`);
+											} else {
+												navigate(`/search?startDate=${item.startDate}&endDate=${item.endDate}&category=${encodeURIComponent(item.category)}`);
+											}
+										}
+									};
 							
 									if (reportData[rowIndex][0] === 'Income Total' || reportData[rowIndex][0] === 'Expense Total') {
 										return (
@@ -97,7 +111,7 @@ export function ReportGrid ({
 										);
 									}
 									return (
-										<ReportCell key={key} style={style}>
+										<ReportCell key={key} style={style} onClick={handleClick}>
 											{isNumber ? <Amount value={typeof value == 'string' ? value:parseValue} /> : <Text title={value} />}
 										</ReportCell>
 									);
