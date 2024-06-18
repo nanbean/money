@@ -21,6 +21,7 @@ const useTransactions = (allAccountsTransactions, livingExpenseCardOnly, boAOnly
 					const transaction = i.division[j];
 					if (transaction.amount > 0 && !transaction.category.startsWith('[')) {
 						incomeTransactions.push({
+							account: i.account,
 							date: i.date,
 							category: transaction.category,
 							subcategory: transaction.subcategory,
@@ -29,6 +30,7 @@ const useTransactions = (allAccountsTransactions, livingExpenseCardOnly, boAOnly
 						});
 					} else if (transaction.amount < 0 && !transaction.category.startsWith('[') && transaction.payee !== 'Principal') {
 						expenseTransactions.push({
+							account: i.account,
 							date: i.date,
 							category: transaction.category,
 							subcategory: transaction.subcategory,
