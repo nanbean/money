@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
 
-import ResponsiveContainer from 'recharts/lib/component/ResponsiveContainer';
 import {
+	ResponsiveContainer,
 	BarChart,
 	Bar,
 	XAxis,

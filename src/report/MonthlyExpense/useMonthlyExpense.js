@@ -3,11 +3,11 @@ import moment from 'moment';
 import { MONTH_LIST } from '../../constants';
 
 const getStartDate = (year, month) => {
-	return moment(`${year}-${month}-01`).format('YYYY-MM-DD');
+	return moment(`${year}-${month.toString().padStart(2, '0')}-01`).format('YYYY-MM-DD');
 };
 
 const getEndDate = (year, month) => {
-	return moment(`${year}-${month}-01`).endOf('month').format('YYYY-MM-DD');
+	return moment(`${year}-${month.toString().padStart(2, '0')}-01`).endOf('month').format('YYYY-MM-DD');
 };
 
 const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year) => {
@@ -16,14 +16,17 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 	reportData = [
 		[
 			{
+				type: 'label',
 				value: 'Category'
 			},
 			...MONTH_LIST.map((i, index) => ({
+				type: 'label',
 				value: i,
 				startDate: getStartDate(year, index + 1),
 				endDate: getEndDate(year, index + 1)
 			})),
 			{
+				type: 'label',
 				value: 'Total'
 			}
 		]
@@ -53,12 +56,16 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 			}),
 			[
 				{
+					cellColor: true,
+					type: 'label',
 					value: 'Income Total'
 				},
 				...totalMonthIncomeSum.map(i => ({
+					cellColor: true,
 					value: i
 				})),
 				{
+					cellColor: true,
 					value: totalIncomeSum
 				}
 			]
@@ -88,12 +95,16 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 			}),
 			[
 				{
+					cellColor: true,
+					type: 'label',
 					value: 'Expense Total'
 				},
 				...totalMonthExpenseSum.map(i => ({
+					cellColor: true,
 					value: i
 				})),
 				{
+					cellColor: true,
 					value: totalExpenseSum
 				}
 			]

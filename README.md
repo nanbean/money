@@ -4,19 +4,19 @@ Money
 How to install
 -------
 ```bash
-yarn install
-yarn build
+npm install
+npm run build
 ```
 
 How to develop
 -------
 run server
 ```bash
-yarn start:server
+npm run start:server
 ```
 run app in different terminal
 ```bash
-yarn start
+npm run start
 ```
 
 Invalid Host Problem
@@ -24,5 +24,5 @@ Invalid Host Problem
 you should change .env.development in root directory
 example
 ```bash
-DANGEROUSLY_DISABLE_HOST_CHECK=true
+HOST=8.8.8.8
 ```

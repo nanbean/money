@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import useCategoryColor from '../../hooks/useCategoryColor';
 
 function Payee ({
-	showColor,
+	showColor = true,
 	value,
 	category
 }) {
@@ -27,10 +27,6 @@ function Payee ({
 		</span>
 	);
 }
-
-Payee.defaultProps = {
-	showColor: true
-};
 
 Payee.propTypes = {
 	category: PropTypes.string.isRequired,

@@ -111,7 +111,7 @@ const MonthlyExpense = () => {
 					/>
 				</div>
 			</div>
-			{reportData.length > 0 && <ReportGrid reportData={reportData} />}
+			{reportData.length > 0 && <ReportGrid reportData={reportData} supportSearch/>}
 		</div>
 	);
 };

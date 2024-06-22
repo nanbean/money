@@ -7,19 +7,23 @@ import useDarkMode from '../hooks/useDarkMode';
 
 import { toCurrencyFormat } from '../utils/formatting';
 
-const Amount = ({
+function Amount ({
 	value,
 	showColor = true
-}) => (
-	<Typography
-		variant="body2"
-		sx={showColor && value > 0 ?{
-			color: useDarkMode() ? 'rgb(125, 216, 161)':'rgb(40, 131, 76)'
-		}:{}}
-	>
-		{toCurrencyFormat(value)}
-	</Typography >
-);
+}) {
+	const isDarkMode = useDarkMode();
+
+	return (
+		<Typography
+			variant="body2"
+			sx={showColor && value > 0 ?{
+				color: isDarkMode ? 'rgb(125, 216, 161)':'rgb(40, 131, 76)'
+			}:{}}
+		>
+			{toCurrencyFormat(value)}
+		</Typography >
+	);
+}
 
 Amount.propTypes = {
 	showColor: PropTypes.bool,

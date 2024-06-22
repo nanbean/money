@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 import { AutoSizer, MultiGrid } from 'react-virtualized';
 import { useNavigate } from 'react-router-dom';
 
-import { styled } from '@mui/material/styles';
-
+import Box from '@mui/material/Box';
 import TableContainer from '@mui/material/TableContainer';
 import Typography from '@mui/material/Typography';
 
@@ -17,26 +16,32 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 const ROW_HEIGHT = 45;
 const COLUMN_WIDTH = 84;
 
-const ReportCell = styled('div')(() => ({
-	flex: 1,
-	display: 'flex',
-	alignItems: 'center',
-	boxSizing: 'border-box',
-	justifyContent: 'center',
-	height: ROW_HEIGHT,
-	borderBottom: '1px solid rgba(81, 81, 81, 1)'
-}));
+const ReportCell = ({
+	cellColor = false,
+	children,
+	onClick,
+	style
+}) => (
+	<Box onClick={onClick} style={style} sx={{
+		flex: 1,
+		display: 'flex',
+		alignItems: 'center',
+		boxSizing: 'border-box',
+		justifyContent: 'center',
+		height: ROW_HEIGHT,
+		backgroundColor: cellColor ? 'rgba(180, 180, 180, .5)':null,
+		borderBottom: '1px solid rgba(81, 81, 81, 1)'
+	}}>
+		{children}
+	</Box>
+);
 
-const SumCell = styled('div')(() => ({
-	flex: 1,
-	display: 'flex',
-	alignItems: 'center',
-	boxSizing: 'border-box',
-	justifyContent: 'center',
-	height: ROW_HEIGHT,
-	backgroundColor: 'rgba(180, 180, 180, .5)',
-	borderBottom: '1px solid rgba(81, 81, 81, 1)'
-}));
+ReportCell.propTypes = {
+	cellColor: PropTypes.bool,
+	children: PropTypes.object,
+	onClick: PropTypes.func,
+	style: PropTypes.object
+};
 
 const Text = ({
 	title
@@ -53,7 +58,8 @@ Text.propTypes = {
 };
 
 export function ReportGrid ({
-	reportData
+	reportData,
+	supportSearch = false
 }) {
 	const navigate = useNavigate();
 	const width = useWidth();
@@ -76,6 +82,8 @@ export function ReportGrid ({
 								fixedColumnCount={1}
 								cellRenderer={({ columnIndex, key, rowIndex, style }) => {
 									const item = reportData[rowIndex][columnIndex];
+									const cellColor = item.cellColor;
+									const type = item.type;
 									const value = item.value;
 									const parseValue = parseInt(value, 10);
 									const isNumber = !Number.isNaN(parseValue);
@@ -93,30 +101,25 @@ export function ReportGrid ({
 										}
 									};
 							
-									if (reportData[rowIndex][0] === 'Income Total' || reportData[rowIndex][0] === 'Expense Total') {
+									if (type === 'label') {
 										return (
-											<SumCell key={key} style={style}>
-												{isNumber ? <Amount value={parseValue} /> : <Text title={value} />}
-											</SumCell>
-										);
-									} if (reportData[rowIndex][0] === 'Year' || reportData[rowIndex][0] === 'Category') {
-										return (
-											<ReportCell key={key} style={style}>
+											<ReportCell key={key} style={style} cellColor={cellColor}>
 												<Text title={value} />
 											</ReportCell>
 										);
 									} else if (typeof value === 'string' && value.includes('%')) {
 										return (
-											<ReportCell key={key} style={style}>
+											<ReportCell key={key} style={style} cellColor={cellColor}>
 												<Text title={value} />
 											</ReportCell>
 										);
+									} else {
+										return (
+											<ReportCell key={key} style={style} cellColor={cellColor} onClick={supportSearch ? handleClick:null}>
+												{isNumber ? <Amount value={typeof value == 'string' ? value:parseValue} /> : <Text title={value} />}
+											</ReportCell>
+										);
 									}
-									return (
-										<ReportCell key={key} style={style} onClick={handleClick}>
-											{isNumber ? <Amount value={typeof value == 'string' ? value:parseValue} /> : <Text title={value} />}
-										</ReportCell>
-									);
 								}}
 								columnWidth={isWidthUpLg ? width / 14 - 2 : COLUMN_WIDTH}
 								columnCount={reportData[0].length}
@@ -138,7 +141,8 @@ export function ReportGrid ({
 }
 
 ReportGrid.propTypes = {
-	reportData: PropTypes.array.isRequired
+	reportData: PropTypes.array.isRequired,
+	supportSearch: PropTypes.bool
 };
 
 export default ReportGrid;

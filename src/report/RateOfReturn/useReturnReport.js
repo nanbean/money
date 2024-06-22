@@ -51,30 +51,67 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 
 	reportData = [
 		[
-			'Year',
-			...YEAR_LIST.map(i => i.key)
+			{
+				type: 'label',
+				value: 'Year'
+			},
+			...YEAR_LIST.map(i => ({
+				type: 'label',
+				value: i.key.toString()
+			}))
 
 		],
 		[
-			'Net Worth',
-			...data.map(i => i.netWorth)
+			{
+				type: 'label',
+				value: 'Net Worth'
+			},
+			...data.map(i => ({
+				value: i.netWorth
+			}))
 		],
 		[
-			'Cash',
-			...data.map(i => i.cashBalance)
+			{
+				type: 'label',
+				value: 'Cash'
+			},
+			...data.map(i => ({
+				value: i.cashBalance
+			}))
 		],
 		[
-			'Investment',
-			...data.map(i => i.investmentBalance)
+			{
+				type: 'label',
+				value: 'Investment'
+			},
+			...data.map(i => ({
+				value: i.investmentBalance
+			}))
 		],
 		[
-			'Deposit/Withdrawal',
-			...data.map(i => i.depositWithdrawalSum)
+			{
+				type: 'label',
+				value: 'Deposit/Withdrawal'
+			},
+			...data.map(i => ({
+				value: i.depositWithdrawalSum
+			}))
 		],
 		[
-			'Rate of Return',
-			'',
-			...returns.map(i => ((i * 100).toFixed(3) + '%'))
+			{
+				cellColor: true,
+				type: 'label',
+				value: 'Rate of Return'
+			},
+			{
+				cellColor: true,
+				type: 'label',
+				value: ''
+			},
+			...returns.map(i => ({
+				cellColor: true,
+				value: ((i * 100).toFixed(3) + '%')
+			}))
 		]
 	];
 
