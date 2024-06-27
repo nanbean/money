@@ -94,7 +94,7 @@ export function Search () {
 	const onSearchKeyPress = (e) => {
 		if (e.key === 'Enter' && e.target.value) {
 			const params = {};
-			if (keyword) {
+			if (inputValue) {
 				params.keyword = inputValue;
 			}
 			if (category) {
