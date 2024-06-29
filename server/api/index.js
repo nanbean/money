@@ -11,6 +11,8 @@ const couchdb = require('../couchdb');
 
 const api = new Router();
 const auth = require('./auth');
+const stock = require('./stock');
+
 
 const upload = multer({
 	storage: multer.memoryStorage()
@@ -739,5 +741,6 @@ api.get('/dividends/:account', (ctx) => {
 });
 
 api.use('/auth', auth.routes());
+api.use('/stock', stock.routes());
 
 module.exports = api;

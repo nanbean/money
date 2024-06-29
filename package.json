@@ -32,6 +32,7 @@
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.45",
     "nano": "^8.0.1",
+    "node-fetch": "^1.7.3",
     "node-xlsx": "0.14.1",
     "ping": "^0.4.4",
     "pouchdb": "^7.3.0",
@@ -63,10 +64,6 @@
   },
   "homepage": "http://money.nanbean.net",
   "proxy": "http://money.nanbean.net:3004",
-  "devDependencies": {
-    "eslint-plugin-jest": "21.22.0",
-    "eslint-plugin-react": "7.11.1"
-  },
   "browserslist": [
     ">0.2%",
     "not dead",
