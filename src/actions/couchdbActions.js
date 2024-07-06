@@ -23,7 +23,6 @@ import {
 	ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS,
 	SET_HISTORY_LIST,
 	SET_PAYEE_LIST,
-	SET_CATEGORY_LIST,
 	SET_WEEKLY_TRANSACTIONS,
 	SET_TRANSACTIONS_FETCHING,
 	SET_LIFETIME_PLANNER_FLOW,
@@ -574,18 +573,6 @@ export const getPayeeListAction = () => {
 		dispatch({
 			type: SET_PAYEE_LIST,
 			payload: _.uniq(payees.sort())
-		});
-	};
-};
-
-export const getCategoryListAction = () => {
-	return async dispatch => {
-		const allTransactions = await getAllTransactions();
-		const categories = allTransactions.map(i => i.subcategory ? `${i.category}:${i.subcategory}` : i.category).filter(i => i);
-
-		dispatch({
-			type: SET_CATEGORY_LIST,
-			payload: _.uniq(categories.sort())
 		});
 	};
 };

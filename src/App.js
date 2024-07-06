@@ -13,7 +13,6 @@ import {
 	getAllAccountsTransactionsAction,
 	getAllInvestmentsListAction,
 	getPayeeListAction,
-	getCategoryListAction,
 	getSettingsAction
 } from './actions/couchdbActions';
 
@@ -41,7 +40,6 @@ function App () {
 		if (accountList.length > 0 && allAccountsTransactions.length < 1) {
 			dispatch(getAllAccountsTransactionsAction());
 			dispatch(getAllInvestmentsListAction());
-			dispatch(getCategoryListAction());
 			dispatch(getPayeeListAction());
 		}
 	}, [accountList]);
