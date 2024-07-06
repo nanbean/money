@@ -10,7 +10,7 @@ const ping = require('ping');
 const messaging = require('./messaging');
 const calendar = require('./calendar');
 
-const spreadSheet = require('./api/spreadSheet');
+const spreadSheet = require('./spreadSheet');
 
 const couchdbUtil = require('./couchdbUtil');
 

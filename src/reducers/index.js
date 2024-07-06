@@ -7,7 +7,6 @@ import dropInvestmentList from './dropInvestmentList';
 import accountInvestments from './accountInvestments';
 import mortgageSchedule from './mortgageSchedule';
 import investmentTransactions from './investmentTransactions';
-import investmentPrice from './investmentPrice';
 import allInvestmentsPrice from './allInvestmentsPrice';
 import allInvestmentsList from './allInvestmentsList';
 import filteredInvestments from './filteredInvestments';
@@ -38,7 +37,6 @@ const money = combineReducers({
 	accountInvestments,
 	mortgageSchedule,
 	investmentTransactions,
-	investmentPrice,
 	allInvestmentsPrice,
 	allInvestmentsList,
 	filteredInvestments,

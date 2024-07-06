@@ -1,10 +1,10 @@
+const config = require('./config');
+
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const moment = require('moment');
 
-const key = require('../nanbean-435f267e8481.json');
-
 // Initialize the sheet - doc ID is the long id in the sheets URL
-const doc = new GoogleSpreadsheet('1pJn7fykSr3hvJN6qOcS9hIcBDtW7AVbcVwm61dcpeBg');
+const doc = new GoogleSpreadsheet(config.googleSpreadsheetDocId);
 
 exports.getLifetimeFlowList = async (accounts) => {
 	let netWorth = [];
@@ -18,8 +18,8 @@ exports.getLifetimeFlowList = async (accounts) => {
 	const yearList = [];
 
 	await doc.useServiceAccountAuth({
-		client_email: key.client_email,
-		private_key: key.private_key,
+		client_email: config.key.client_email,
+		private_key: config.key.private_key,
 	});
 
 	await doc.loadInfo(); // loads document properties and worksheets

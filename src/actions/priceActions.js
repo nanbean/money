@@ -1,28 +1,6 @@
 import {
-	SET_INVESTMENT_PRICE,
 	SET_UPDATE_INVESTMENT_PRICE_FETCHING
 } from './actionTypes';
-
-export const fetchGetInvestmentPriceSuccess = params => ({
-	type: SET_INVESTMENT_PRICE,
-	payload: params
-});
-
-export const fetchGetInvestmentPriceFailure = () => ({
-	type: SET_INVESTMENT_PRICE,
-	payload: []
-});
-
-export const getInvestmentPriceAction = (investment) => (dispatch) => {
-	if (investment) {
-		const apiUrl = `/api/getInvestmentPrice?investment=${investment}`;
-
-		return fetch(apiUrl)
-			.then(res => res.json())
-			.then(body => dispatch(fetchGetInvestmentPriceSuccess(body)))
-			.catch(ex => dispatch(fetchGetInvestmentPriceFailure(ex)));
-	}
-};
 
 export const getInvestmentPriceFetching = params => ({
 	type: SET_UPDATE_INVESTMENT_PRICE_FETCHING,
@@ -37,7 +15,6 @@ export const updateInvestmentPriceAction = () => (dispatch) => {
 		.then(res => res.json())
 		.then(body => {
 			if (body.return) {
-				// dispatch(getAccountListAction());
 				dispatch(getInvestmentPriceFetching(false));
 			}
 		})
