@@ -17,7 +17,6 @@ import netWorthFlow from './netWorthFlow';
 import allAccountsTransactions from './allAccountsTransactions';
 import messagingToken from './messagingToken';
 import notifications from './notifications';
-import dropCategoryList from './dropCategoryList';
 import dropPayeeList from './dropPayeeList';
 import addTransaction from './addTransaction';
 import editTransaction from './editTransaction';
@@ -49,7 +48,6 @@ const money = combineReducers({
 	allAccountsTransactions,
 	messagingToken,
 	notifications,
-	dropCategoryList,
 	dropPayeeList,
 	addTransaction,
 	editTransaction,

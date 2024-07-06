@@ -39,7 +39,7 @@ const getAccountTransactions = (transactions, accountId) => transactions.filter(
 export function Bank () {
 	const account = useSelector((state) => state.account);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const dropCategoryList = useSelector((state) => state.dropCategoryList);
+	const categoryList = useSelector((state) => state.settings.categoryList);
 	const dropPayeeList = useSelector((state) => state.dropPayeeList);
 	const isModalOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen,);
 	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
@@ -113,7 +113,7 @@ export function Bank () {
 						accountId={accountId}
 						account={account}
 						transactions={accountTransactions}
-						dropCategoryList={dropCategoryList}
+						dropCategoryList={categoryList}
 						dropPayeeList={dropPayeeList}
 					/>
 				</Paper>
