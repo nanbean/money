@@ -68,6 +68,9 @@ export function InvestmentTransactionForm ({
 
 	const onAddButton = () => {
 		const data = {};
+		if (!form.investment) {
+			return;
+		}
 		data.account = account;
 		data.accountId = accountId;
 		data.date = form.date;

@@ -36,16 +36,14 @@ PouchDB.plugin(pouchdbFind);
 
 let accountsDB = new PouchDB('accounts');
 let transactionsDB = new PouchDB('transactions');
-let kospiDB = new PouchDB('kospi');
-let kosdaqDB = new PouchDB('kosdaq');
+let stocksDB = new PouchDB('stocks');
 let historiesDB = new PouchDB('histories');
 let reportsDB = new PouchDB('reports');
 let settingsDB = new PouchDB('settings');
 
 let accountsSync;
 let transactionsSync;
-let kospiSync;
-let kosdaqSync;
+let stocksSync;
 let historiesSync;
 let reportsSync;
 let settingsSync;
@@ -93,11 +91,13 @@ const getAllAccounts = async () => {
 };
 
 const getAllInvestments = async () => {
-	const kospi = await kospiDB.get('all'); // eslint-disable-line camelcase
-	const kosdaq = await kosdaqDB.get('all'); // eslint-disable-line camelcase
+	const kospi = await stocksDB.get('kospi'); // eslint-disable-line camelcase
+	const kosdaq = await stocksDB.get('kosdaq'); // eslint-disable-line camelcase
+	const us = await stocksDB.get('us'); // eslint-disable-line camelcase
 	const allInvestments = [
 		...kospi.data,
-		...kosdaq.data
+		...kosdaq.data,
+		...us.data
 	];
 
 	return allInvestments;
@@ -308,25 +308,8 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteKospiDB = new PouchDB(`${COUCHDB_URL}/kospi`, { skip_setup: true }); // eslint-disable-line camelcase
-		kospiSync = kospiDB.sync(remoteKospiDB, {})
-			.on('change', function () {
-				updateAllInvestmentsDebounce(dispatch);
-				// handle change
-			}).on('paused', function () {
-				// updateAllInvestmentsDebounce();
-				// replication paused (e.g. replication up to date, user went offline)
-			}).on('active', function () {
-				// replicate resumed (e.g. new changes replicating, user went back online)
-			}).on('denied', function () {
-				// a document failed to replicate (e.g. due to permissions)
-			}).on('complete', function () {
-				// handle complete
-			}).on('error', function () {
-				// handle error
-			});
-		let remoteKosdaqDB = new PouchDB(`${COUCHDB_URL}/kosdaq`, { skip_setup: true }); // eslint-disable-line camelcase
-		kosdaqSync = kosdaqDB.sync(remoteKosdaqDB, {})
+		let remoteStocksDB = new PouchDB(`${COUCHDB_URL}/stocks`, { skip_setup: true }); // eslint-disable-line camelcase
+		stocksSync = stocksDB.sync(remoteStocksDB, {})
 			.on('change', function () {
 				updateAllInvestmentsDebounce(dispatch);
 				// handle change
@@ -395,8 +378,7 @@ export const finalizeCouchdbAction = () => {
 	return async () => {
 		accountsSync && accountsSync.cancel();
 		transactionsSync && transactionsSync.cancel();
-		kospiSync && kospiSync.cancel();
-		kosdaqSync && kosdaqSync.cancel();
+		stocksSync && stocksSync.cancel();
 		historiesSync && historiesSync.cancel();
 		reportsSync && reportsSync.cancel();
 		settingsSync && settingsSync.cancel();

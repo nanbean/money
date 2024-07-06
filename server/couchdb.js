@@ -164,17 +164,17 @@ const updateAccountList = async () => {
 	console.log('updateAccountList start', new Date());
 	const accountsDB = nano.use('accounts_nanbean');
 	const transactionsDB = nano.use('transactions_nanbean');
-	const kospiDB = nano.use('kospi');
-	const kosdaqDB = nano.use('kosdaq');
+	const stocksDB = nano.use('stocks');
 
 	try {
 		const accountsResponse = await accountsDB.list({ include_docs: true });
 		const allAccounts = accountsResponse.rows.map(i => i.doc);
 		const transactionsResponse = await transactionsDB.list({ include_docs: true });
 		const allTransactions = transactionsResponse.rows.map(i => i.doc);
-		const kospiResponse = await kospiDB.get('all');
-		const kosdaqResponse = await kosdaqDB.get('all');
-		const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data];
+		const kospiResponse = await stocksDB.get('kospi');
+		const kosdaqResponse = await stocksDB.get('kosdaq');
+		const usResponse = await stocksDB.get('us');
+		const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
 
 		for (let i = 0; i < allAccounts.length; i++) {
 			const account = allAccounts[i];
@@ -205,8 +205,7 @@ const updateAccountList = async () => {
 
 const arrangeInvestmemt = async () => {
 	return new Promise(function (resolve, reject) {
-		const kospiDB = nano.use('kospi');
-		const kosdaqDB = nano.use('kosdaq');
+		const stocksDB = nano.use('stocks');
 
 		console.log('couchdb arrangeInvestmemt start', new Date());
 
@@ -320,10 +319,10 @@ const arrangeInvestmemt = async () => {
 		spooky.on('kospiParsed', async (investments, symbol, price) => {
 			console.log('couchdb arrangeInvestmemt kospiParsed', new Date());
 			try {
-				const oldKospi = await kospiDB.get('all', { revs_info: true });
+				const oldKospi = await stocksDB.get('kospi', { revs_info: true });
 
 				const transaction = {
-					_id: 'all',
+					_id: 'kospi',
 					_rev: oldKospi._rev,
 					data: investments.map((i, index) => ({
 						_id: `investment:${symbol[index]}`,
@@ -333,7 +332,7 @@ const arrangeInvestmemt = async () => {
 						price: parseFloat(price[index].replace(/,/g, ''))
 					}))
 				};
-				await kospiDB.insert(transaction);
+				await stocksDB.insert(transaction);
 			} catch (err) {
 				console.log(err);
 			}
@@ -343,10 +342,10 @@ const arrangeInvestmemt = async () => {
 		spooky.on('kodaqParsed', async (investments, symbol, price) => {
 			console.log('couchdb arrangeInvestmemt kodaqParsed', new Date());
 			try {
-				const oldKosdaq = await kosdaqDB.get('all', { revs_info: true });
+				const oldKosdaq = await stocksDB.get('kosdaq', { revs_info: true });
 
 				const transaction = {
-					_id: 'all',
+					_id: 'kosdaq',
 					_rev: oldKosdaq._rev,
 					data: investments.map((i, index) => ({
 						_id: `investment:${symbol[index]}`,
@@ -357,7 +356,7 @@ const arrangeInvestmemt = async () => {
 					}))
 				};
 
-				await kosdaqDB.insert(transaction);
+				await stocksDB.insert(transaction);
 			} catch (err) {
 				console.log(err);
 			}
@@ -558,11 +557,11 @@ const updateNetWorth = async () => {
 	const transactionsDB = nano.use('transactions_nanbean');
 	const transactionsResponse = await transactionsDB.list({ include_docs: true });
 	const allTransactions = transactionsResponse.rows.map(i => i.doc);
-	const kospiDB = nano.use('kospi');
-	const kosdaqDB = nano.use('kosdaq');
-	const kospiResponse = await kospiDB.get('all');
-	const kosdaqResponse = await kosdaqDB.get('all');
-	const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data];
+	const stocksDB = nano.use('stocks');
+	const kospiResponse = await stocksDB.get('kospi');
+	const kosdaqResponse = await stocksDB.get('kosdaq');
+	const usResponse = await stocksDB.get('us');
+	const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
 	const historiesDB = nano.use('histories_nanbean');
 	const historiesResponse = await historiesDB.list({ include_docs: true });
 	const histories = historiesResponse.rows.map(i => i.doc);
@@ -607,11 +606,11 @@ new CronJob('00 33 05 1 * *', async () => {
 	const transactionsResponse = await transactionsDB.list({ include_docs: true });
 	const allTransactions = transactionsResponse.rows.map(i => i.doc);
 	const historiesDB = nano.use('histories_nanbean');
-	const kospiDB = nano.use('kospi');
-	const kosdaqDB = nano.use('kosdaq');
-	const kospiResponse = await kospiDB.get('all');
-	const kosdaqResponse = await kosdaqDB.get('all');
-	const investments = [...kospiResponse.data, ...kosdaqResponse.data];
+	const stocksDB = nano.use('stocks');
+	const kospiResponse = await stocksDB.get('kospi');
+	const kosdaqResponse = await stocksDB.get('kosdaq');
+	const usResponse = await stocksDB.get('us');
+	const investments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
 	const historiesResponse = await historiesDB.list({ include_docs: true });
 	const oldHistories = historiesResponse.rows.map(i => i.doc);
 	const newHistories = oldHistories.map(i => ({
