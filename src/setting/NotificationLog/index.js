@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import Paper from '@mui/material/Paper';
 
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
+import TitleHeader from '../../components/TitleHeader';
+import Container from '../../components/Container';
 
-import { getNotificationsAction } from '../actions/notificationActions';
+import { getNotificationsAction } from '../../actions/notificationActions';
 
 export function NotificationLog () {
 	const notifications = useSelector((state) => state.notifications);
@@ -15,7 +15,7 @@ export function NotificationLog () {
 
 	useEffect(() => {
 		dispatch(getNotificationsAction());
-	}, []);
+	}, [dispatch]);
 
 	return (
 		<div>

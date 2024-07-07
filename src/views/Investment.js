@@ -63,7 +63,7 @@ export function Investment () {
 	useEffect(() => {
 		dispatch(setAccountAction(name));
 		dispatch(getAccountInvestmentsAction(accountId));
-	}, [accountId, name]);
+	}, [accountId, dispatch, name]);
 	
 	const onNewClick = () => {
 		dispatch(openTransactionInModal());
@@ -107,7 +107,7 @@ export function Investment () {
 									variant="outlined"
 									color="primary"
 								>
-								Cash
+									Cash
 									<MoneyIcon
 										sx={(theme) => ({
 											marginLeft: theme.spacing(1)

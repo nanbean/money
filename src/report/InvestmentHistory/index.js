@@ -119,7 +119,7 @@ function InvestmentHistory () {
 	useEffect(() => {
 		dispatch(getHistoryListAction());
 		dispatch(getNetWorthFlowAction());
-	}, []);
+	}, [dispatch]);
 
 	if (netWorthFlow.length > 0) {
 		return (

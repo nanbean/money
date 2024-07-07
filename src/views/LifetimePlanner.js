@@ -59,7 +59,7 @@ function LifetimePlanner () {
 
 	useEffect(() => {
 		dispatch(getLifetimeFlowAction());
-	}, []);
+	}, [dispatch]);
 
 	if (lifetimePlannerFlow.length > 0) {
 		return (

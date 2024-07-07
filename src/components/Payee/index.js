@@ -3,18 +3,20 @@ import PropTypes from 'prop-types';
 
 import Typography from '@mui/material/Typography';
 
-import useCategoryColor from '../../hooks/useCategoryColor';
+import { getCategoryColor } from '../../utils/categoryColor';
 
 function Payee ({
 	showColor = true,
 	value,
 	category
 }) {
+	const color = getCategoryColor(category);
+	
 	if (showColor && category) {
 		return (
 			<Typography
 				variant="body2"
-				sx={{ color: useCategoryColor(category) }}
+				sx={{ color }}
 			>
 				{value}
 			</Typography >

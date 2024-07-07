@@ -107,7 +107,7 @@ function NetWorth () {
 
 	useEffect(() => {
 		dispatch(getNetWorthFlowAction());
-	}, []);
+	}, [dispatch]);
 
 	if (rangedNetWorthFlow.length > 0) {
 		return (

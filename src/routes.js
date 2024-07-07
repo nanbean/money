@@ -14,11 +14,10 @@ import {
 	LifetimePlanner,
 	Performance,
 	AllPerformance,
-	Search,
-	Setting,
-	NotificationLog
+	Search
 } from './views';
 import ReportMain from './report/ReportMain';
+import SettingMain from './setting/SettingMain';
 
 import HomeMain from './home/HomeMain';
 import Signin from './user/Signin';
@@ -60,8 +59,7 @@ function RoutesMain () {
 						<Route exact path="/allperformance" element={<AllPerformance />} />
 						<Route exact path="/report" element={<ReportMain />} />
 						<Route exact path="/search" element={<Search />} />
-						<Route exact path="/setting" element={<Setting />} />
-						<Route exact path="/notificationlog" element={<NotificationLog />} />
+						<Route exact path="/setting" element={<SettingMain />} />
 						<Route exact path="/signin" element={<Signin />} />
 					</Routes>
 				</Content>

@@ -3,10 +3,11 @@
   "version": "0.9.0",
   "private": true,
   "dependencies": {
-    "@emotion/react": "^11.10.0",
-    "@emotion/styled": "^11.10.0",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.15.2",
-    "@mui/material": "^5.9.3",
+    "@mui/material": "^5.16.0",
+    "@mui/x-data-grid": "^7.9.0",
     "@reduxjs/toolkit": "^1.8.3",
     "async": "^2.6.0",
     "casperjs": "^1.1.4",
@@ -14,8 +15,8 @@
     "echarts": "^5.4.3",
     "echarts-for-react": "^3.0.2",
     "exceljs": "^3.5.0",
-    "firebase": "^8.10.0",
-    "firebase-admin": "^9.5.0",
+    "firebase": "^10.12.3",
+    "firebase-admin": "^12.2.0",
     "google-finance": "^0.1.11",
     "google-spreadsheet": "^3.3.0",
     "googleapis": "^60.0.1",
@@ -43,7 +44,7 @@
     "react-dropzone": "^4.2.7",
     "react-redux": "^8.0.2",
     "react-router-dom": "^6.3.0",
-    "react-scripts": "^2.1.8",
+    "react-scripts": "^5.0.1",
     "react-virtualized": "^9.16.1",
     "recharts": "^2.13.0-alpha.4",
     "redux": "^4.0.1",
@@ -51,7 +52,8 @@
     "redux-thunk": "^2.3.0",
     "spooky": "^0.2.5",
     "string-to-color": "^2.2.2",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "web-vitals": "^4.2.1"
   },
   "scripts": {
     "start": "HTTPS=true react-scripts start",
@@ -62,12 +64,81 @@
     "test:server": "jest server",
     "eject": "react-scripts eject"
   },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
+    "rules": {
+      "comma-dangle": [
+        "warn",
+        "never"
+      ],
+      "indent": [
+        "warn",
+        "tab"
+      ],
+      "linebreak-style": [
+        "warn",
+        "unix"
+      ],
+      "jsx-quotes": [
+        "warn",
+        "prefer-double"
+      ],
+      "no-lonely-if": [
+        "warn"
+      ],
+      "quotes": [
+        "warn",
+        "single"
+      ],
+      "semi": [
+        "warn",
+        "always"
+      ],
+      "keyword-spacing": [
+        "warn"
+      ],
+      "object-curly-spacing": [
+        "warn",
+        "always"
+      ],
+      "space-before-function-paren": [
+        "warn",
+        "always"
+      ],
+      "react/default-props-match-prop-types": [
+        "warn"
+      ],
+      "react/sort-comp": [
+        "warn"
+      ],
+      "react/sort-prop-types": [
+        "warn",
+        {
+          "ignoreCase": true,
+          "requiredFirst": true
+        }
+      ],
+      "react/jsx-indent": [
+        "warn",
+        "tab"
+      ]
+    }
+  },
   "homepage": "http://money.nanbean.net",
   "proxy": "http://money.nanbean.net:3004",
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
 }

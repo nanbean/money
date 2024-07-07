@@ -54,7 +54,7 @@ export function Bank () {
 
 	useEffect(() => {
 		dispatch(setAccountAction(name));
-	}, []);
+	}, [name, dispatch]);
 
 	const onNewClick = () => {
 		dispatch(openTransactionInModal());

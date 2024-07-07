@@ -4,13 +4,13 @@ import PropTypes from 'prop-types';
 import Avatar from '@mui/material/Avatar';
 
 import { getCategoryIcon } from '../../utils/categoryIcon';
-import useCategoryColor from '../../hooks/useCategoryColor';
+import { getCategoryColor } from '../../utils/categoryColor';
 
 export function CategoryIcon ({
 	category,
 	fontsize
 }) {
-	const bgcolor = useCategoryColor(category);
+	const bgcolor = getCategoryColor(category);
 	const sx = { bgcolor, margin: 'auto' };
 	if (fontsize) {
 		sx.width = fontsize + 5;

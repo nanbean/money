@@ -615,6 +615,7 @@ export const getSettingsAction = () => {
 		});
 	};
 };
+
 export const updateExchageRateAction = (value) => {
 	return async dispatch => {
 		const exchangeRate = await settingsDB.get('exchangeRate');
@@ -625,6 +626,21 @@ export const updateExchageRateAction = (value) => {
 			type: SET_SETTINGS,
 			payload: [
 				exchangeRate
+			]
+		});
+	};
+};
+
+export const updateCategoryAction = (index, value) => {
+	return async dispatch => {
+		const categoryList = await settingsDB.get('categoryList');
+		categoryList.data[index] = value;
+		await settingsDB.put(categoryList);
+
+		dispatch({
+			type: SET_SETTINGS,
+			payload: [
+				categoryList
 			]
 		});
 	};

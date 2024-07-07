@@ -27,7 +27,7 @@ export function RateOfReturn () {
 
 	useEffect(() => {
 		dispatch(getHistoryListAction());
-	}, []);
+	}, [dispatch]);
 
 	const onFilteredAccountsChange = (e) => {
 		setFilteredAccounts(e);

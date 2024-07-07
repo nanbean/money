@@ -10,7 +10,7 @@ import {
 	YAxis
 } from 'recharts';
 
-import useCategoryColor from '../../hooks/useCategoryColor';
+import { getCategoryColor } from '../../utils/categoryColor';
 
 const week = [
 	'Day1',
@@ -71,7 +71,7 @@ export function WeeklyGraph () {
 	const weeklyGraphAccount = useSelector((state) => state.settings.weeklyGraphAccount);
 
 	const filteredTransactions = useMemo(() => weeklyGraphAccount.reduce((total, i) => [...total, ...weeklyTransactions.filter(j => j.account === i)], []), [weeklyTransactions, weeklyGraphAccount]);
-	const data = useMemo(() => getData(week, filteredTransactions), [week, filteredTransactions]);
+	const data = useMemo(() => getData(week, filteredTransactions), [filteredTransactions]);
 
 	return (
 		<ResponsiveContainer width="99%" height={200}>
@@ -86,7 +86,7 @@ export function WeeklyGraph () {
 				<XAxis dataKey="dayofWeek" tickLine={false} />
 				<YAxis domain={[0, 'dataMax']} axisLine={false} tickLine={false} />
 				{
-					expenseCategories.map(i => <Bar key={i} dataKey={i} stackId="a" fill={useCategoryColor(i)} />)
+					expenseCategories.map(i => <Bar key={i} dataKey={i} stackId="a" fill={getCategoryColor(i)} />)
 				}
 			</BarChart>
 		</ResponsiveContainer>

@@ -7,7 +7,7 @@ export default function categoryList (state = initialState, action) {
 	case actions.SET_SETTINGS: {
 		const categoryList = action.payload.find(i => i._id === 'categoryList');
 		if (categoryList && categoryList.data) {
-            return categoryList.data.map(i => ({ key: i, value: i, text: i }));
+			return categoryList.data.map(i => ({ key: i, value: i, text: i }));
 		}
 		return state;
 	}

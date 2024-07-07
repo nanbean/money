@@ -36,7 +36,7 @@ export function HomeMain () {
 
 	useEffect(() => {
 		dispatch(getWeeklyTransactionsAction());
-	}, []);
+	}, [dispatch]);
 
 	const onAccountsExpansionPanelChangeHalder = (event, expanded) => dispatch(changeAccountsExpanded(expanded));
 
@@ -58,7 +58,7 @@ export function HomeMain () {
 						>
 							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
-								Summary
+									Summary
 								</Typography>
 							</AccordionSummary>
 							<AccordionDetails sx={{ padding: 0 }}>
@@ -73,7 +73,7 @@ export function HomeMain () {
 						>
 							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
-								Weekly Graph
+									Weekly Graph
 								</Typography>
 							</AccordionSummary>
 							<AccordionDetails sx={{ padding: 0 }}>
@@ -88,7 +88,7 @@ export function HomeMain () {
 						>
 							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 								<Typography variant="subtitle1">
-								Latest Transactions
+									Latest Transactions
 								</Typography>
 							</AccordionSummary>
 							<AccordionDetails sx={{ padding: 0 }}>

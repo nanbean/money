@@ -34,7 +34,7 @@ function App () {
 		dispatch(getAuthAction());
 		dispatch(getAccountListAction());
 		dispatch(getSettingsAction());
-	}, []);
+	}, [dispatch]);
 
 	useEffect(() => {
 		if (accountList.length > 0 && allAccountsTransactions.length < 1) {
@@ -42,7 +42,7 @@ function App () {
 			dispatch(getAllInvestmentsListAction());
 			dispatch(getPayeeListAction());
 		}
-	}, [accountList]);
+	}, [accountList, allAccountsTransactions, dispatch]);
 
 	return (
 		<ThemeProvider theme={theme({ prefersDarkMode })}>

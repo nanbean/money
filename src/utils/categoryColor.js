@@ -7,7 +7,6 @@ import {
 	MEDICAL_COLOR,
 	HOBBY_COLOR,
 	ETC_COLOR,
-	NO_COLOR,
 	FOOD_COLOR_CATEGORY,
 	TRANSPORT_COLOR_CATEGORY,
 	CULTURAL_LIFE_COLOR_CATEGORY,
@@ -37,5 +36,5 @@ export function getCategoryColor (category) {
 		return ETC_COLOR;
 	}
   
-	return NO_COLOR;
+	return null;
 }
