@@ -685,6 +685,26 @@ new CronJob('00 45 15 * * 1-5', async () => {
 	console.log('00 45 15 daily dailyArrangeInvestmemtjob ended');
 }, true, 'Asia/Seoul');
 
+new CronJob('00 10 13 * * 1-5', async () => {
+	/*
+		 * investment update automation.
+		 * Runs week day (Monday through Friday)
+		 * at 05:00:00 AM.
+		 */
+	console.log('couchdb 00 10 13 daily dailyArrangeInvestmemtjob started');
+	if (!calendar.isHoliday()) {
+		await updateAccountList();
+		await sendBalanceUpdateNotification();
+		await updateLifeTimePlanner();
+		await updateNetWorth();
+	} else {
+		console.log('holiday, dailyArrangeInvestmemtjob skip');
+	}
+}, () => {
+	/* This function is executed when the job stops */
+	console.log('00 10 13 daily dailyArrangeInvestmemtjob ended');
+}, true, 'America/Los_Angeles');
+
 var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
 	/*
 		 * investment update automation.

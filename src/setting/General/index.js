@@ -37,7 +37,7 @@ export function General () {
 		if (event.target.checked) {
 			dispatch(requestPermissionAction());
 		} else {
-			dispatch(removePermissionAction());
+			dispatch(removePermissionAction(messagingToken));
 		}
 	};
 

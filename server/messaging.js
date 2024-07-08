@@ -60,15 +60,14 @@ exports.sendNotification = async (title, body, target = '') => {
 		return result.tokens;
 	});
 
-	for (let i = 0; i < tokens.length; i++) {
-		const payload = {
-			notification: {
-				icon: 'https://nanbean.net/image/moneyicon.png',
-				title: title,
-				body: body,
-				click_action: `./${target}`
-			}
-		};
-		admin.messaging().sendToDevice(tokens[i], payload);
-	}
+	const payload = {
+		data: {
+			icon: 'https://money.nanbean.net/icon.png',
+			badge: 'https://money.nanbean.net/badge.png',
+			title: title,
+			body: body,
+			click_action: `./${target}`
+		}
+	};
+	admin.messaging().sendToDevice(tokens, payload);
 }

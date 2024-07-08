@@ -1,3 +1,5 @@
+import { getToken, deleteToken } from 'firebase/messaging';
+
 import {
 	SET_MESSAGING_TOKEN
 } from './actionTypes';
@@ -13,31 +15,34 @@ export const getTokenFailure = () => ({
 	payload: ''
 });
 
-export const requestPermissionAction = () => (dispatch) => {
-	return messaging.requestPermission()
-		.then(() => messaging.getToken())
-		.then(messagingToken => {
-			if (messagingToken) {
-				const apiUrl = '/api/registerMessageToken';
+export const requestPermissionAction = () => {
+	return async dispatch => {
+		const permission = await Notification.requestPermission();
 
-				return fetch(apiUrl, {
-					method: 'POST',
-					headers: {
-						'Accept': 'application/json, text/plain, */*',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ messagingToken })
-				})
-					.then(res => res.json())
-					.then(body => {
-						if (body.return === true) {
-							dispatch(getTokenSuccess(messagingToken));
-						}
-					})
-					.catch(() => dispatch(getTokenFailure()));
+		if (permission === 'granted') {
+		  const messagingToken = await getToken(messaging, {
+				vapidKey: process.env.REACT_APP_VAPID_KEY
+		  });
+
+			const apiUrl = '/api/registerMessageToken';
+			const response = await fetch(apiUrl, {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json, text/plain, */*',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ messagingToken })
+			});
+
+			const result = await response.json();
+
+			if (result.return === true) {
+				dispatch(getTokenSuccess(messagingToken));
+			} else {
+				dispatch(getTokenFailure());
 			}
-		})
-		.catch(() => dispatch(getTokenFailure()));
+		}
+	};
 };
 
 export const deleteTokenSuccess = () => ({
@@ -50,30 +55,29 @@ export const deleteTokenFailure = () => ({
 	payload: ''
 });
 
-export const removePermissionAction = () => (dispatch, getState) => {
-	const state = getState();
-	const { messagingToken } = state;
-	return messaging.deleteToken(messagingToken)
-		.then(() => {
-			if (messagingToken) {
-				const apiUrl = '/api/unRegisterMessageToken';
+export const removePermissionAction = (messagingToken) => {
+	return async dispatch => {
+		const success = await deleteToken(messaging);
 
-				return fetch(apiUrl, {
-					method: 'POST',
-					headers: {
-						'Accept': 'application/json, text/plain, */*',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ messagingToken })
-				})
-					.then(res => res.json())
-					.then(body => {
-						if (body.return === true) {
-							dispatch(deleteTokenSuccess());
-						}
-					})
-					.catch(() => dispatch(deleteTokenFailure()));
+		if (success) {
+			const apiUrl = '/api/unRegisterMessageToken';
+
+			const response = await fetch(apiUrl, {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json, text/plain, */*',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ messagingToken })
+			});
+
+			const result = await response.json();
+
+			if (result.return === true) {
+				dispatch(deleteTokenSuccess(messagingToken));
+			} else {
+				dispatch(deleteTokenFailure());
 			}
-		})
-		.catch(() => dispatch(deleteTokenFailure()));
+		}
+	};
 };

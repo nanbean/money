@@ -21,6 +21,13 @@ api.post('/addTransactionWithNotification', async (ctx) => {
 	ctx.body = { return: result };
 });
 
+api.post('/testNotification', async (ctx) => {
+	const body = ctx.request.body;
+	await messaging.sendNotification(body.title, body.body);
+
+	ctx.body = { return: true };
+});
+
 api.get('/notifications', async (ctx) => {
 	const size = ctx.request.query.size || 20;
 	const history = await notification.getHistory(size);

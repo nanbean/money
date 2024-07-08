@@ -631,6 +631,37 @@ export const updateExchageRateAction = (value) => {
 	};
 };
 
+export const addCategoryAction = (value) => {
+	return async dispatch => {
+		const categoryList = await settingsDB.get('categoryList');
+		categoryList.data.push(value);
+		categoryList.data.sort();
+		await settingsDB.put(categoryList);
+
+		dispatch({
+			type: SET_SETTINGS,
+			payload: [
+				categoryList
+			]
+		});
+	};
+};
+
+export const deleteCategoryAction = (index) => {
+	return async dispatch => {
+		const categoryList = await settingsDB.get('categoryList');
+		categoryList.data.splice(index, 1);
+		await settingsDB.put(categoryList);
+
+		dispatch({
+			type: SET_SETTINGS,
+			payload: [
+				categoryList
+			]
+		});
+	};
+};
+
 export const updateCategoryAction = (index, value) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
