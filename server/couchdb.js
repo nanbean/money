@@ -648,23 +648,6 @@ new CronJob('00 33 05 1 * *', async () => {
 	console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
 }, true, 'Asia/Seoul');
 
-new CronJob('00 00 03 * * 0', () => {
-	/*
-		 * investment update automation.
-		 * Runs week day (Monday through Friday)
-		 * at 05:00:00 AM.
-		 */
-	console.log('couchdb 00 00 03 weekly weeklyBackupjob started');
-
-	const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}_couch`;
-
-	exec(`mkdir ${backupDir}`, { cwd: __dirname });
-	exec(`echo ${config.sudoPassword} | cp '/opt/couchdb/data/*.couch ${backupDir}/`, { cwd: __dirname });
-}, () => {
-	/* This function is executed when the job stops */
-	console.log('00 00 03 weekly weeklyBackupjob ended');
-}, true, 'Asia/Seoul');
-
 new CronJob('00 45 15 * * 1-5', async () => {
 	/*
 		 * investment update automation.
@@ -692,38 +675,18 @@ new CronJob('00 10 13 * * 1-5', async () => {
 		 * at 05:00:00 AM.
 		 */
 	console.log('couchdb 00 10 13 daily dailyArrangeInvestmemtjob started');
-	if (!calendar.isHoliday()) {
+	if (!calendar.isUsHoliday()) {
 		await updateAccountList();
 		await sendBalanceUpdateNotification();
 		await updateLifeTimePlanner();
 		await updateNetWorth();
 	} else {
-		console.log('holiday, dailyArrangeInvestmemtjob skip');
+		console.log('US holiday, dailyArrangeInvestmemtjob skip');
 	}
 }, () => {
 	/* This function is executed when the job stops */
 	console.log('00 10 13 daily dailyArrangeInvestmemtjob ended');
 }, true, 'America/Los_Angeles');
-
-var weeklyBackupjob = new CronJob('00 00 03 * * 0', () => {
-	/*
-		 * investment update automation.
-		 * Runs week day (Monday through Friday)
-		 * at 05:00:00 AM.
-		 */
-	console.log('00 00 03 weekly weeklyBackupjob started');
-
-	const backupDir = `/home/nanbean/backup/money/backup_${moment().format('YYYYMMDD')}`;
-
-	exec(`mkdir ${backupDir}`, { cwd: __dirname });
-	exec(`echo ${config.sudoPassword} | sudo -S cp -r /var/lib/couchdb ${backupDir}/`, { cwd: __dirname });
-}, () => {
-	/* This function is executed when the job stops */
-	console.log('00 00 03 weekly weeklyBackupjob ended');
-},
-true, /* Start the job right now */
-'Asia/Seoul' /* Time zone of this job. */
-);
 
 new CronJob('00 00 * * * *', async () => {
 	/*
