@@ -1,5 +1,5 @@
 const {google} = require('googleapis');
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 const config = require('./config');
 const key = require('./nanbean-435f267e8481.json');
@@ -79,7 +79,7 @@ exports.isHoliday = () => {
 
 exports.isUsHoliday = () => {
 	const date = moment().tz('America/Los_Angeles').format('YYYY-MM-DD');
-	if (holidays.find(i => i.start === date)) {
+	if (usHolidays.find(i => i.start === date)) {
 		console.log('Today is ' + date + ' and it is holiday');
 		return true;
 	}
