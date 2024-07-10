@@ -58,8 +58,10 @@ function RoutesMain () {
 						<Route path="/performance/:investment" element={<Performance />} />
 						<Route exact path="/allperformance" element={<AllPerformance />} />
 						<Route exact path="/report" element={<ReportMain />} />
+						<Route exact path="/report/:tab" element={<ReportMain />} />
 						<Route exact path="/search" element={<Search />} />
 						<Route exact path="/setting" element={<SettingMain />} />
+						<Route exact path="/setting/:tab" element={<SettingMain />} />
 						<Route exact path="/signin" element={<Signin />} />
 					</Routes>
 				</Content>

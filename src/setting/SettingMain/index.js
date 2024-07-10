@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -17,18 +18,35 @@ import Category from '../Category';
 
 import useMobile from '../../hooks/useMobile';
 
-export const TAB_ICON = {
+const TAB_ICON = {
 	'General': <GeneralIcon />,
 	'Category': <CategoryIcon />,
 	'Notification': <NotificationLogIcon />
 };
 
+const TAB_LIST = [
+	'general',
+	'category',
+	'notificationLog'
+];
+
 export function SettingMain () {
+	const { tab } = useParams();
+	const navigate = useNavigate();
 	const [value, setValue] = useState(0);
 	const isMobile = useMobile();
 
+	useEffect(() => {
+		const index = TAB_LIST.findIndex(i => i === tab);
+		if (index >= 0) {
+			setValue(index);
+		} else {
+			setValue(0);
+		}
+	}, [tab]);
+
 	const handleChange = (event, val) => {
-		setValue(val);
+		navigate(`/setting/${TAB_LIST[val]}`);
 	};
 
 	return (

@@ -445,7 +445,7 @@ const sendBalanceUpdateNotification = async () => {
 	const exchangeRate = await getExchangeRate();
 	const balance = allAccounts.filter(i => !i.name.match(/_Cash/i)).map(i => i.currency === 'USD' ? i.balance * exchangeRate : i.balance).reduce((prev, curr) => prev + curr);
 	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-	messaging.sendNotification('NetWorth Update', `Today's NetWorth is ${netWorth}`);
+	messaging.sendNotification('NetWorth Update', `Today's NetWorth is ${netWorth}`, 'graph');
 };
 
 const updateLifeTimePlanner = async () => {
@@ -697,7 +697,7 @@ new CronJob('00 00 * * * *', async () => {
 	ping.sys.probe('rdp.nanbean.net', function(isAlive) {
 		if (!isAlive) {
 			console.log(`rdp.nanbean.net server is dead`);
-			messaging.sendNotification('Check server', 'ping error');
+			messaging.sendNotification('Check server', 'ping error', 'error');
 		}
 	});
 

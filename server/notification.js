@@ -282,7 +282,7 @@ exports.addTransaction = async function (body) {
 			result = false;
 		}
 
-		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction).replace(/({|})/gi,'').replace(/,/gi, ',\n'), './notificationlog');
+		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction).replace(/({|})/gi,'').replace(/,/gi, ',\n'), 'receipt');
 
 		return result;
 	} else {

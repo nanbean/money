@@ -54,7 +54,7 @@ exports.removeToken = async (removeToken) => {
 	}
 }
 
-exports.sendNotification = async (title, body, target = '') => {
+exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 	const tokens = await readMessagingFile().then(data => {
 		const result = JSON.parse(data);
 		return result.tokens;
@@ -62,7 +62,7 @@ exports.sendNotification = async (title, body, target = '') => {
 
 	const payload = {
 		data: {
-			icon: 'https://money.nanbean.net/icon.png',
+			icon: `https://money.nanbean.net/${type}.png`,
 			badge: 'https://money.nanbean.net/badge.png',
 			title: title,
 			body: body,
