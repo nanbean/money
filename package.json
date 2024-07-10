@@ -7,7 +7,6 @@
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.15.2",
     "@mui/material": "^5.16.0",
-    "@mui/x-data-grid": "^7.9.0",
     "@reduxjs/toolkit": "^1.8.3",
     "async": "^2.6.0",
     "casperjs": "^1.1.4",

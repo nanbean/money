@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { DataGrid } from '@mui/x-data-grid';
+import { AutoSizer, Column, Table } from 'react-virtualized';
 
-import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Input from '@mui/material/Input';
 import FormControl from '@mui/material/FormControl';
@@ -12,47 +12,49 @@ import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
+import AddIcon from '@mui/icons-material/Add';
+
 import {
 	addCategoryAction,
 	deleteCategoryAction,
 	updateCategoryAction
 } from '../../actions/couchdbActions';
 
-const columns = [
-	{ field: 'id', headerName: 'ID', width: 90 },
-	{
-		field: 'category',
-		headerName: 'Category',
-		width: 250,
-		editable: true
-	}
-];
-
 export function Category () {
 	const categoryList = useSelector((state) => state.settings.categoryList);
-	const [rowSelectionModel, setRowSelectionModel] = React.useState([]);
+	const [selectedRow, setSelectedRow] = useState(-1);
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [dialogEdit, setDialogEdit] = useState(false);
 	const [newCategoryInput, setNewCategoryInput] = useState('');
+	const rows = useMemo(() => categoryList.map((i, index) => ({ id: index, category: i.key })), [categoryList]);
 	const dispatch = useDispatch();
 
-	const handleProcessRowUpdate = (updatedRow) => {
-		dispatch(updateCategoryAction(updatedRow.id, updatedRow.category));
-		return updatedRow;
+	const onRowSelect = ({ index }) => {
+		const row = rows[index];
+
+		setSelectedRow(index);
+		setNewCategoryInput(row.category);
+		setDialogEdit(true);
+		setDialogOpen(true);
 	};
 
 	const handleAdd = () => {
+		setNewCategoryInput('');
+		setDialogEdit(false);
 		setDialogOpen(true);
 	};
 
 	const handleDelete = () => {
-		if (rowSelectionModel.length > 0) {
-			dispatch(deleteCategoryAction(rowSelectionModel[0]));
-			setRowSelectionModel([]);
+		if (selectedRow >= 0) {
+			dispatch(deleteCategoryAction(selectedRow));
+			setSelectedRow(-1);
 		}
+		handleClose();
 	};
 
 	const handleClose = () => {
 		setDialogOpen(false);
+		setSelectedRow(-1);
 	};
 
 	const handleNewCategoryInputChange = (e) => {
@@ -61,41 +63,61 @@ export function Category () {
 
 	const handleNewCategorySubmit = (e) => {
 		e.preventDefault();
-		dispatch(addCategoryAction(newCategoryInput));
+		if (dialogEdit) {
+			dispatch(updateCategoryAction(selectedRow, newCategoryInput));
+		} else {
+			dispatch(addCategoryAction(newCategoryInput));
+		}
 		setNewCategoryInput('');
 		setDialogOpen(false);
 	};
 
 	return (
-		<Paper
-			sx={(theme) => ({
-				[theme.breakpoints.up('lg')]: {
-					marginTop: theme.spacing(2)
-				},
-				[theme.breakpoints.down('sm')]: {
-					marginTop: 0
-				},
-				alignItems: 'center'
+		<Box
+			sx={() => ({
+				height:'80vh'
 			})}
 		>
-			<Button onClick={handleAdd}>Add</Button>
-			<Button onClick={handleDelete} disabled={rowSelectionModel.length < 1}>Delete</Button>
-			<DataGrid
-				columns={columns}
-				rows={
-					categoryList.map((i, index) => ({ id: index, category: i.key }))
-				}
-				processRowUpdate={handleProcessRowUpdate}
-				onRowSelectionModelChange={(newRowSelectionModel) => {
-					setRowSelectionModel(newRowSelectionModel);
-				}}
-				rowSelectionModel={rowSelectionModel}
-			/>
+			<Button
+				fullWidth
+				variant="outlined"
+				color="primary"
+				onClick={handleAdd}
+			>
+				Add
+				<AddIcon
+					sx={(theme) => ({
+						marginLeft: theme.spacing(1)
+					})}
+				/>
+			</Button>
+			<AutoSizer>
+				{({ height, width }) => (
+					<Table
+						headerClassName="header"
+						rowClassName="row"
+						width={width}
+						height={height}
+						headerHeight={40}
+						rowHeight={40}
+						rowCount={rows.length}
+						rowGetter={({ index }) => rows[index]}
+						onRowClick={onRowSelect}
+					>
+						<Column
+							label="Category"
+							dataKey="category"
+							width={width}
+							cellRenderer={({ cellData }) => cellData}
+						/>
+					</Table>
+				)}
+			</AutoSizer>
 			<Dialog
 				open={dialogOpen}
 				onClose={handleClose}
 			>
-				<DialogTitle id="form-dialog-title">Add</DialogTitle>
+				<DialogTitle id="form-dialog-title">{dialogEdit ? 'Edit':'Add'}</DialogTitle>
 				<DialogContent>
 					<form onSubmit={handleNewCategorySubmit}>
 						<FormControl required fullWidth>
@@ -107,21 +129,49 @@ export function Category () {
 								onChange={handleNewCategoryInputChange}
 							/>
 						</FormControl>
-						<Button
-							type="submit"
-							fullWidth
-							variant="contained"
-							color="primary"
-							sx={(theme) => ({
-								marginTop: theme.spacing(1)
-							})}
-						>
-							Add
-						</Button>
+						{
+							!dialogEdit && <Button
+								type="submit"
+								fullWidth
+								variant="contained"
+								color="primary"
+								sx={(theme) => ({
+									marginTop: theme.spacing(1)
+								})}
+							>
+								Add
+							</Button>
+						}
+						{
+							dialogEdit && <Button
+								type="submit"
+								fullWidth
+								variant="contained"
+								color="primary"
+								sx={(theme) => ({
+									marginTop: theme.spacing(1)
+								})}
+							>
+								Edit
+							</Button>
+						}
+						{
+							dialogEdit && <Button
+								fullWidth
+								variant="contained"
+								color="primary"
+								sx={(theme) => ({
+									marginTop: theme.spacing(1)
+								})}
+								onClick={handleDelete}
+							>
+								Delete
+							</Button>
+						}
 					</form>
 				</DialogContent>
 			</Dialog>
-		</Paper>
+		</Box>
 	);
 }
 

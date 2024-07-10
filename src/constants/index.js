@@ -9,7 +9,7 @@ import InvestmentIcon from '@mui/icons-material/TrendingUp';
 import LoanIcon from '@mui/icons-material/LocalAtm';
 import HouseIcon from '@mui/icons-material/House';
 
-export const COUCHDB_URL = 'https://couchdb.nanbean.net';
+export const COUCHDB_URL = process.env.REACT_APP_COUCHDB_URL;
 
 export const FOOD_COLOR = '#e4815f';
 export const TRANSPORT_COLOR = '#5e9cd4';
