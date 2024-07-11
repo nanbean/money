@@ -1,4 +1,4 @@
-const key = require('./key.json');
+const key = require('./nanbean-435f267e8481.json');
 
 const config = {
 	couchDBUrl: process.env.REACT_APP_COUCHDB_URL,
