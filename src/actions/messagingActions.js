@@ -21,7 +21,7 @@ export const requestPermissionAction = () => {
 
 		if (permission === 'granted') {
 		  const messagingToken = await getToken(messaging, {
-				vapidKey: process.env.REACT_APP_VAPID_KEY
+				vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY
 		  });
 
 			const apiUrl = '/api/registerMessageToken';
