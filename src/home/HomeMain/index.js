@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import Grid from '@mui/material/Grid';
+import Masonry from '@mui/lab/Masonry';
+import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
@@ -50,8 +51,8 @@ export function HomeMain () {
 		<React.Fragment>
 			<TitleHeader title="Home" />
 			<Container>
-				<Grid container>
-					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
+				<Masonry columns={{ xs:1, sm:1, md:2, lg:3 }}>
+					<Paper>
 						<Accordion
 							expanded={summaryExpanded}
 							onChange={onSummaryExpansionPanelChangeHalder}
@@ -65,8 +66,8 @@ export function HomeMain () {
 								<Summary />
 							</AccordionDetails>
 						</Accordion>
-					</Grid>
-					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
+					</Paper>
+					<Paper>
 						<Accordion
 							expanded={weeklyGraphExpanded}
 							onChange={onWeeklyGraphExpansionPanelChangeHalder}
@@ -80,8 +81,8 @@ export function HomeMain () {
 								<WeeklyGraph/>
 							</AccordionDetails>
 						</Accordion>
-					</Grid>
-					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
+					</Paper>
+					<Paper>
 						<Accordion
 							expanded={latestTransactionsExpanded}
 							onChange={onLatestTransactionsExpansionPanelChangeHalder}
@@ -95,8 +96,8 @@ export function HomeMain () {
 								<LatestTransactions/>
 							</AccordionDetails>
 						</Accordion>
-					</Grid>
-					<Grid item xs={12} sm={12} md={6} lg={6} xl={6} >
+					</Paper>
+					<Paper>
 						<Accordion
 							expanded={accountsExpanded}
 							onChange={onAccountsExpansionPanelChangeHalder}
@@ -110,8 +111,8 @@ export function HomeMain () {
 								<AccountList/>
 							</AccordionDetails>
 						</Accordion>
-					</Grid>
-				</Grid>
+					</Paper>
+				</Masonry>
 			</Container>
 		</React.Fragment>
 	);
