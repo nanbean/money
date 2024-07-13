@@ -2,7 +2,7 @@ const getClosePriceWithHistory = (investments, history) => {
 	if (investments && history) {
 		const investment = investments.find(j => j._id === history._id.replace('history', 'investment'));
 		if (investment) {
-			return investment.price
+			return investment.price;
 		}
 	}
 	return 0;
@@ -24,11 +24,25 @@ const getSymbolWithName = (investments, name) => {
 
 exports.getSymbolWithName = getSymbolWithName;
 
+const getGoogleSymbolWithName = (investments, name) => {
+	if (investments && name) {
+		const investment = investments && investments.find(i => i.name === name);
+
+		if (investment && investment.yahooSymbol) {
+			return investment.googleSymbol;
+		}
+	}
+
+	return '';
+};
+
+exports.getGoogleSymbolWithName = getGoogleSymbolWithName;
+
 const getInvestmentsFromTransactions = (investements, transactions) => {
 	if (investements && transactions) {
 		const investmentsTransactions = transactions.filter(i => i.accountId && i.accountId.startsWith('account:Invst'));
 
-		return investmentsTransactions.map(i => ({_id: `history:${getSymbolWithName(investements, i.investment)}`, name: i.investment}));
+		return investmentsTransactions.map(i => ({ _id: `history:${getSymbolWithName(investements, i.investment)}`, name: i.investment }));
 	}
 
 	return [];
@@ -36,9 +50,31 @@ const getInvestmentsFromTransactions = (investements, transactions) => {
 
 exports.getInvestmentsFromTransactions = getInvestmentsFromTransactions;
 
-const addInvestmentToDetail = (detail) => {
+const getInvestmentsFromAccounts = (investements, accounts) => {
+	if (investements && accounts) {
+		const accountInvestments = accounts.flatMap(i => i.investments).map(i => ({ name: i.name, quantity: i.quantity }));
+		const fiteredInvestments = accountInvestments.filter(i => investements.find(j => j.name === i.name));
+		const aggregatedQuantities = {};
+		fiteredInvestments.forEach(item => {
+			const { name, quantity } = item;
+			if (aggregatedQuantities[name]) {
+				aggregatedQuantities[name] += quantity;
+			} else {
+				aggregatedQuantities[name] = quantity;
+			}
+		});
+		const aggregatedList = Object.keys(aggregatedQuantities).map(name => ({
+			name,
+			quantity: aggregatedQuantities[name]
+		})).map(i => ({ name: i.name, quantity: i.quantity, googleSymbol: getGoogleSymbolWithName(investements, i.name) }));
 
-}
+		return aggregatedList;
+	}
+
+	return [];
+};
+
+exports.getInvestmentsFromAccounts = getInvestmentsFromAccounts;
 
 const getBalanceDetail = (account, allTransactions, transactions, date) => {
 	let balance = 0;

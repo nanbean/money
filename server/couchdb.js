@@ -125,9 +125,9 @@ const getInvestmentBalance = (investments, date, histories) => {
 					}
 				}
 			}
-			return i.price * i.quantity
+			return i.price * i.quantity;
 		})
-		.reduce((prev, curr) => prev + curr);
+			.reduce((prev, curr) => prev + curr);
 	}
 
 	return balance;
@@ -248,7 +248,7 @@ exports.addNotification = async (notification) => {
 
 exports.listNotifications = async (size) => {
 	const notificationsDB = nano.use('notifications_nanbean');
-	const notifications = await notificationsDB.list({include_docs: true});
+	const notifications = await notificationsDB.list({ include_docs: true });
 	return notifications.rows.slice(notifications.rows.length - size, notifications.rows.length).map(i => i.doc.text);
 };
 
@@ -288,7 +288,7 @@ const arrangeKRInvestmemt = async () => {
 	const investments = couchdbUtil.getInvestmentsFromAccounts(kospiResponse.data, allAccounts).filter(i => i.quantity > 0);
 	const accessToken = await getKisToken();
 	const promises = investments.map(i => getQuoteKorea(accessToken, i.googleSymbol));
-    const results = await Promise.all(promises);
+	const results = await Promise.all(promises);
 
 	await stocksDB.insert({
 		...kospiResponse,
@@ -318,7 +318,7 @@ const arrangeUSInvestmemt = async () => {
 	const investments  = couchdbUtil.getInvestmentsFromAccounts(usResponse.data, allAccounts).filter(i => i.quantity > 0);
 	const accessToken = await getKisToken();
 	const promises = investments.map(i => getQuoteUS(accessToken, i.googleSymbol));
-    const results = await Promise.all(promises);
+	const results = await Promise.all(promises);
 
 	await stocksDB.insert({
 		...usResponse,
@@ -372,7 +372,6 @@ exports.getLifetimeFlowList = async () => {
 };
 
 const getNetWorth = async (allAccounts, allTransactions, allInvestments, histories, date) => {
-	const dateAccounts = {};
 	let cashNetWorth = 0;
 	let investmentsNetWorth = 0;
 	let loanNetWorth = 0;
@@ -424,10 +423,10 @@ const updateNetWorth = async () => {
 
 	for (let i = 2005; i <= currentYear; i++) {
 		for (let j = 1; j <= (i === currentYear ? currentMonth : 12); j++) {
-			if (j == 1 || j == 3 || j == 5 || j == 7 || j == 8 || j == 10 || j == 12) {
+			if (j === 1 || j === 3 || j === 5 || j === 7 || j === 8 || j === 10 || j === 12) {
 				dates.push(`${i}-${_.padStart(j, 2, '0')}-31`);
-			} else if (j == 2) {
-				if (((i % 4 == 0) && (i % 100 != 0)) || (i % 400 == 0)) {
+			} else if (j === 2) {
+				if (((i % 4 === 0) && (i % 100 !== 0)) || (i % 400 === 0)) {
 					dates.push(`${i}-${_.padStart(j, 2, '0')}-29`);
 				} else {
 					dates.push(`${i}-${_.padStart(j, 2, '0')}-28`);
@@ -438,7 +437,7 @@ const updateNetWorth = async () => {
 		}
 	}
 
-	const data = dates.map(i => ({date: i}));
+	const data = dates.map(i => ({ date: i }));
 
 	const accountsDB = nano.use('accounts_nanbean');
 	const accountsResponse = await accountsDB.list({ include_docs: true });
@@ -458,7 +457,7 @@ const updateNetWorth = async () => {
 	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true });
 
 	for (const item of data) {
-		const {netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, netInvestments, movableAsset} = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
+		const { netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, netInvestments, movableAsset } = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
 		item.netWorth = netWorth;
 		item.cashNetWorth = cashNetWorth;
 		item.investmentsNetWorth = investmentsNetWorth;
@@ -506,7 +505,7 @@ const arrangeHistorical = async () => {
 			},
 			...i.data
 		].reduce((accumulator, currentValue) => {
-			if (!accumulator.find(i => i.date == currentValue.date && i.close == currentValue.close)) {
+			if (!accumulator.find(i => i.date === currentValue.date && i.close === currentValue.close)) {
 				accumulator.push(currentValue);
 			}
 			return accumulator;
@@ -528,7 +527,7 @@ const arrangeHistorical = async () => {
 		docs: newInvestments
 	});
 	console.log('arrangeHistorical done', new Date());
-}
+};
 
 new CronJob('00 33 05 1 * *', async () => {
 	/*
@@ -591,9 +590,9 @@ new CronJob('00 00 * * * *', async () => {
 		 * Runs week day (Monday through Friday)
 		 * at 05:00:00 AM.
 		 */
-	ping.sys.probe('rdp.nanbean.net', function(isAlive) {
+	ping.sys.probe('rdp.nanbean.net', function (isAlive) {
 		if (!isAlive) {
-			console.log(`rdp.nanbean.net server is dead`);
+			console.log('rdp.nanbean.net server is dead');
 			messaging.sendNotification('Check server', 'ping error', 'error');
 		}
 	});
