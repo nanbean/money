@@ -1,10 +1,8 @@
 const config = require('./config');
 const nano = require('nano')(`https://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}`);
-const Spooky = require('spooky');
 const CronJob = require('cron').CronJob;
 const moment = require('moment-timezone');
 const _ = require('lodash');
-const exec = require('child_process').exec;
 const ping = require('ping');
 
 const messaging = require('./messaging');
@@ -13,6 +11,8 @@ const calendar = require('./calendar');
 const spreadSheet = require('./spreadSheet');
 
 const couchdbUtil = require('./couchdbUtil');
+
+const { getKisToken, getQuoteKorea, getQuoteUS } = require('./kisConnector');
 
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
@@ -203,178 +203,9 @@ const updateAccountList = async () => {
 	console.log('updateAccountList done');
 };
 
-const arrangeInvestmemt = async () => {
-	return new Promise(function (resolve, reject) {
-		const stocksDB = nano.use('stocks');
-
-		console.log('couchdb arrangeInvestmemt start', new Date());
-
-		var spooky = new Spooky({
-			child: {
-				transport: 'http'
-			},
-			casper: {
-				logLevel: 'debug',
-				verbose: true,
-				viewportSize: { width: 1600, height: 1200 }
-			}
-		}, function (err) {
-			if (err) {
-				const e = new Error('Failed to initialize SpookyJS');
-				e.details = err;
-				throw e;
-			}
-
-			spooky.start('http://finance.daum.net/domestic/all_stocks?market=KOSPI');
-
-			spooky.wait(2500, function () { });
-
-			spooky.then(function () {
-				this.click('#orderStock');
-			});
-
-			spooky.wait(10000, function () { });
-
-			spooky.then(function () {
-				var investment1 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
-						return e.innerHTML.replace('&amp;', '&');
-					});
-				});
-				var investment2 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
-						return e.innerHTML.replace('&amp;', '&');
-					});
-				});
-				var symbol1 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
-						return e.href.substr(e.href.length - 6, 6);
-					});
-				});
-				var symbol2 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
-						return e.href.substr(e.href.length - 6, 6);
-					});
-				});
-				var price1 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
-						return e.innerHTML;
-					});
-				});
-				var price2 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
-						return e.innerHTML;
-					});
-				});
-				this.emit('kospiParsed', investment1.concat(investment2), symbol1.concat(symbol2), price1.concat(price2));
-			});
-
-			spooky.thenOpen('http://finance.daum.net/domestic/all_stocks?market=KOSDAQ');
-
-			spooky.wait(2500, function () { });
-
-			spooky.then(function () {
-				this.click('#orderStock');
-			});
-
-			spooky.wait(10000, function () { });
-
-			spooky.then(function () {
-				var investment1 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
-						return e.innerHTML.replace('&amp;', '&');
-					});
-				});
-				var investment2 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
-						return e.innerHTML.replace('&amp;', '&');
-					});
-				});
-				var symbol1 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(1) > a'), function (e) {
-						return e.href.substr(e.href.length - 6, 6);
-					});
-				});
-				var symbol2 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(4) > a'), function (e) {
-						return e.href.substr(e.href.length - 6, 6);
-					});
-				});
-				var price1 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(2) span'), function (e) {
-						return e.innerHTML;
-					});
-				});
-				var price2 = this.evaluate(function () {
-					return [].map.call(__utils__.findAll('#boxList > div > div:nth-child(2) > div > table > tbody > tr > td:nth-child(5) span'), function (e) {
-						return e.innerHTML;
-					});
-				});
-				this.emit('kodaqParsed', investment1.concat(investment2), symbol1.concat(symbol2), price1.concat(price2));
-			});
-
-			spooky.run();
-		});
-
-		spooky.on('kospiParsed', async (investments, symbol, price) => {
-			console.log('couchdb arrangeInvestmemt kospiParsed', new Date());
-			try {
-				const oldKospi = await stocksDB.get('kospi', { revs_info: true });
-
-				const transaction = {
-					_id: 'kospi',
-					_rev: oldKospi._rev,
-					data: investments.map((i, index) => ({
-						_id: `investment:${symbol[index]}`,
-						name: i,
-						googleSymbol: `KRX:${symbol[index]}`,
-						yahooSymbol: `${symbol[index]}.KS`,
-						price: parseFloat(price[index].replace(/,/g, ''))
-					}))
-				};
-				await stocksDB.insert(transaction);
-			} catch (err) {
-				console.log(err);
-			}
-			console.log('couchdb arrangeInvestmemt kospiParsed done', new Date());
-		});
-
-		spooky.on('kodaqParsed', async (investments, symbol, price) => {
-			console.log('couchdb arrangeInvestmemt kodaqParsed', new Date());
-			try {
-				const oldKosdaq = await stocksDB.get('kosdaq', { revs_info: true });
-
-				const transaction = {
-					_id: 'kosdaq',
-					_rev: oldKosdaq._rev,
-					data: investments.map((i, index) => ({
-						_id: `investment:${symbol[index]}`,
-						name: i,
-						googleSymbol: `KOSDAQ:${symbol[index]}`,
-						yahooSymbol: `${symbol[index]}.KQ`,
-						price: parseFloat(price[index].replace(/,/g, ''))
-					}))
-				};
-
-				await stocksDB.insert(transaction);
-			} catch (err) {
-				console.log(err);
-			}
-
-			console.log('couchdb arrangeInvestmemt done', new Date());
-
-			resolve('done');
-		});
-
-		// for debug
-		// spooky.on('console', function (line) {
-		//  	console.log(line);
-		// });
-	});
-};
-
 exports.updateInvestmentPrice = async () => {
-	// await arrangeInvestmemt();
+	await arrangeKRInvestmemt();
+	await arrangeUSInvestmemt();
 	await updateAccountList();
 	await updateLifeTimePlanner();
 	// await updateNetWorth();
@@ -446,6 +277,64 @@ const sendBalanceUpdateNotification = async () => {
 	const balance = allAccounts.filter(i => !i.name.match(/_Cash/i)).map(i => i.currency === 'USD' ? i.balance * exchangeRate : i.balance).reduce((prev, curr) => prev + curr);
 	const netWorth = parseInt(balance, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	messaging.sendNotification('NetWorth Update', `Today's NetWorth is ${netWorth}`, 'graph');
+};
+
+const arrangeKRInvestmemt = async () => {
+	const accountsDB = nano.use('accounts_nanbean');
+	const accountsResponse = await accountsDB.list({ include_docs: true });
+	const allAccounts = accountsResponse.rows.map(i => i.doc);
+	const stocksDB = nano.use('stocks');
+	const kospiResponse = await stocksDB.get('kospi', { revs_info: true });
+	const investments = couchdbUtil.getInvestmentsFromAccounts(kospiResponse.data, allAccounts).filter(i => i.quantity > 0);
+	const accessToken = await getKisToken();
+	const promises = investments.map(i => getQuoteKorea(accessToken, i.googleSymbol));
+    const results = await Promise.all(promises);
+
+	await stocksDB.insert({
+		...kospiResponse,
+		date: moment().tz('Asia/Seoul').format('YYYY-MM-DD'),
+		data: kospiResponse.data.map((i) => {
+			const foundResult = results.find(j => j.googleSymbol === i.googleSymbol);
+			if (foundResult) {
+				return {
+					...i,
+					price: parseInt(foundResult.output.stck_prpr, 10)
+				};
+			} else {
+				return i;
+			}
+		})
+	});
+};
+
+exports.arrangeKRInvestmemt = arrangeKRInvestmemt;
+
+const arrangeUSInvestmemt = async () => {
+	const accountsDB = nano.use('accounts_nanbean');
+	const accountsResponse = await accountsDB.list({ include_docs: true });
+	const allAccounts = accountsResponse.rows.map(i => i.doc);
+	const stocksDB = nano.use('stocks');
+	const usResponse = await stocksDB.get('us', { revs_info: true });
+	const investments  = couchdbUtil.getInvestmentsFromAccounts(usResponse.data, allAccounts).filter(i => i.quantity > 0);
+	const accessToken = await getKisToken();
+	const promises = investments.map(i => getQuoteUS(accessToken, i.googleSymbol));
+    const results = await Promise.all(promises);
+
+	await stocksDB.insert({
+		...usResponse,
+		date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+		data: usResponse.data.map((i) => {
+			const foundResult = results.find(j => j.googleSymbol === i.googleSymbol);
+			if (foundResult) {
+				return {
+					...i,
+					price: parseFloat(foundResult.output.last)
+				};
+			} else {
+				return i;
+			}
+		})
+	});
 };
 
 const updateLifeTimePlanner = async () => {
@@ -595,13 +484,8 @@ const updateNetWorth = async () => {
 	console.log('updateNetWorth done');
 };
 
-new CronJob('00 33 05 1 * *', async () => {
-	/*
-		 * update historical automation.
-		 * Runs every 1st day of month, and write last day of previous month price
-		 * at 03:00:00 AM.
-		 */
-	console.log('couchdb 00 33 05 monthly monthlyUpdateHistoricaljob started');
+const arrangeHistorical = async () => {
+	console.log('arrangeHistorical start', new Date());
 	const transactionsDB = nano.use('transactions_nanbean');
 	const transactionsResponse = await transactionsDB.list({ include_docs: true });
 	const allTransactions = transactionsResponse.rows.map(i => i.doc);
@@ -643,19 +527,32 @@ new CronJob('00 33 05 1 * *', async () => {
 	await historiesDB.bulk({
 		docs: newInvestments
 	});
+	console.log('arrangeHistorical done', new Date());
+}
+
+new CronJob('00 33 05 1 * *', async () => {
+	/*
+		 * update historical automation.
+		 * Runs every 1st day of month, and write last day of previous month price
+		 * at 03:00:00 AM.
+		 */
+	console.log('stock 00 33 05 monthly monthlyUpdateHistoricaljob started');
+	await arrangeHistorical();
 }, () => {
 	/* This function is executed when the job stops */
 	console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
 }, true, 'Asia/Seoul');
 
-new CronJob('00 45 15 * * 1-5', async () => {
+new CronJob('30 30 15 * * 1-5', async () => {
 	/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
 		 * at 05:00:00 AM.
 		 */
-	console.log('couchdb 00 45 15 daily dailyArrangeInvestmemtjob started');
+	console.log('couchdb 30 30 15 daily dailyArrangeInvestmemtjob started');
 	if (!calendar.isHoliday()) {
+		await arrangeKRInvestmemt();
+		await arrangeUSInvestmemt();
 		await updateAccountList();
 		await sendBalanceUpdateNotification();
 		await updateLifeTimePlanner();
@@ -665,16 +562,16 @@ new CronJob('00 45 15 * * 1-5', async () => {
 	}
 }, () => {
 	/* This function is executed when the job stops */
-	console.log('00 45 15 daily dailyArrangeInvestmemtjob ended');
+	console.log('30 30 15 daily dailyArrangeInvestmemtjob ended');
 }, true, 'Asia/Seoul');
 
-new CronJob('00 10 13 * * 1-5', async () => {
+new CronJob('30 00 13 * * 1-5', async () => {
 	/*
 		 * investment update automation.
 		 * Runs week day (Monday through Friday)
 		 * at 05:00:00 AM.
 		 */
-	console.log('couchdb 00 10 13 daily dailyArrangeInvestmemtjob started');
+	console.log('couchdb 30 00 13 daily dailyArrangeInvestmemtjob started');
 	if (!calendar.isUsHoliday()) {
 		await updateAccountList();
 		await sendBalanceUpdateNotification();
@@ -685,7 +582,7 @@ new CronJob('00 10 13 * * 1-5', async () => {
 	}
 }, () => {
 	/* This function is executed when the job stops */
-	console.log('00 10 13 daily dailyArrangeInvestmemtjob ended');
+	console.log('30 00 13 daily dailyArrangeInvestmemtjob ended');
 }, true, 'America/Los_Angeles');
 
 new CronJob('00 00 * * * *', async () => {
