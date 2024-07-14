@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-export function toCurrencyFormat (number) {
+export function toCurrencyFormat (number, currency = 'KRW') {
 	if (number) {
 		if (number % 1 !== 0) {
 			return parseFloat(number).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -27,3 +27,7 @@ export function toPriceFormat (number) {
 export function toPercentFormat (number) {
 	return `${(number * 100).toFixed(2)}%`;
 }
+
+export function toCurrencyFormatWithSymbol (number, currency = 'KRW') {
+	return number && number.toLocaleString(currency === 'USD' ? 'en-US':'ko-KR', { style: 'currency', currency: currency });
+};

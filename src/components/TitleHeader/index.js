@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
-import { styled } from '@mui/material/styles';
-
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -16,21 +14,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 
 import { toggleSidebar } from '../../actions/uiActions';
 import { logoutAction } from '../../actions/authActions';
-
-const Sticky = styled('div')(({ theme }) => ({
-	width: '100%',
-	position: 'sticky',
-	zIndex: theme.zIndex.drawer + 1,
-	[theme.breakpoints.down('sm')]: {
-		top: 56
-	},
-	[theme.breakpoints.up('sm')]: {
-		top: 64
-	},
-	[theme.breakpoints.up('md')]: {
-		marginBottom: 10
-	}
-}));
 
 const linkStyle = {
 	textDecoration: 'none',
@@ -89,9 +72,7 @@ function TitleHeader ({
 			</AppBar>
 			{
 				(updateInvestmentPriceFetching || trascationsFetching || loading) &&
-				<Sticky>
 					<LinearProgress color="secondary"/>
-				</Sticky>
 			}
 		</React.Fragment>
 	);

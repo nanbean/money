@@ -45,9 +45,14 @@ const Sticky = styled('div')(({ theme }) => ({
 
 const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
 const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
+const getCurrencyByAccountId = (accountId, accountList) => {
+	const account = accountList.find(account => account._id === accountId);
+	return account ? account.currency : undefined;
+};
 
 export function Investment () {
 	const account = useSelector((state) => state.account);
+	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const dropInvestmentList = useSelector((state) => state.dropInvestmentList);
 	const isEdit = useSelector((state) => state.ui.form.investmentTransaction.isEdit);
@@ -57,6 +62,7 @@ export function Investment () {
 	const { pathname } = useLocation();
 	const accountId = useMemo(() => getAccountId(pathname), [pathname]);
 	const accountTransactions = useMemo(() => getAccountTransactions(allAccountsTransactions, accountId), [allAccountsTransactions, accountId]);
+	const currency = useMemo(() => getCurrencyByAccountId(accountId, accountList), [accountId, accountList]);
 
 	const dispatch = useDispatch();
 
@@ -119,6 +125,7 @@ export function Investment () {
 					</Sticky>
 					<InvestmentTransactions
 						transactions={accountTransactions}
+						currency={currency}
 					/>
 
 					<InvestmentTransactionModal

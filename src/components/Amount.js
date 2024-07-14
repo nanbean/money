@@ -5,11 +5,13 @@ import Typography from '@mui/material/Typography';
 
 import useDarkMode from '../hooks/useDarkMode';
 
-import { toCurrencyFormat } from '../utils/formatting';
+import { toCurrencyFormat, toCurrencyFormatWithSymbol } from '../utils/formatting';
 
 function Amount ({
-	value,
-	showColor = true
+	currency = 'KRW',
+	showColor = true,
+	showSymbol = false,
+	value
 }) {
 	const isDarkMode = useDarkMode();
 
@@ -20,12 +22,13 @@ function Amount ({
 				color: isDarkMode ? 'rgb(125, 216, 161)':'rgb(40, 131, 76)'
 			}:{}}
 		>
-			{toCurrencyFormat(value)}
+			{showSymbol ? toCurrencyFormatWithSymbol(value, currency):toCurrencyFormat(value)}
 		</Typography >
 	);
 }
 
 Amount.propTypes = {
+	currency: PropTypes.string,
 	showColor: PropTypes.bool,
 	value: PropTypes.number
 };

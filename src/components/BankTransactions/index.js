@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { AutoSizer, Column, Table } from 'react-virtualized';
 
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
 import Amount from '../Amount';
 import Payee from '../Payee';
@@ -23,6 +24,7 @@ import './index.css';
 
 export function BankTransactions ({
 	account,
+	currency,
 	showAccount,
 	transactions
 }) {
@@ -106,14 +108,14 @@ export function BankTransactions ({
 									if (isWidthDownMd) {
 										return (
 											<Stack>
-												<Amount value={cellData.amount} />
-												<div>
+												<Amount value={cellData.amount} showSymbol />
+												<Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
 													{toDateFormat(cellData.date)}
-												</div>
+												</Typography>
 											</Stack>
 										);
 									} else {
-										return (<Amount value={cellData.amount} />);
+										return (<Amount value={cellData.amount} showSymbol currency={currency}/>);
 									}
 								}}
 							/>
@@ -127,6 +129,7 @@ export function BankTransactions ({
 
 BankTransactions.propTypes = {
 	account: PropTypes.string,
+	currency: PropTypes.string,
 	showAccount: PropTypes.bool,
 	transactions: PropTypes.array
 };

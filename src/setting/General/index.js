@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 
 import {
@@ -42,56 +41,38 @@ export function General () {
 	};
 
 	return (
-		<Paper
-			sx={(theme) => ({
-				[theme.breakpoints.up('lg')]: {
-					marginTop: theme.spacing(2)
-				},
-				[theme.breakpoints.down('sm')]: {
-					marginTop: 0
-				},
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				padding: `${theme.spacing(2)} ${theme.spacing(3)} ${theme.spacing(3)}`
-			})}
-		>
-			<Box>
-				<Box sx={{ width: '100%' }}>
-					<FormGroup>
-						<FormControlLabel
-							control={
-								<Switch checked={messagingToken ? true : false} onChange={handlePushNotificationChange} aria-label="PushSwitch" />
-							}
-							label="푸쉬 알림 받기"
-						/>
-					</FormGroup>
-				</Box>
-				<Divider sx={{ margin: 2 }} />
-				<Box>
-					<Box>
-						<TextField
-							label="Exchange Rate"
-							id="outlined-size-small"
-							value={exchangeRateValue}
-							size="small"
-							type="number"
-							InputLabelProps={{
-								shrink: true
-							}}
-							onChange={onValueChange}
-						/>
-						<Button
-							variant="contained"
-							color="primary"
-							onClick={handleExchangeRateSend}
-						>
-							Change
-						</Button>
-					</Box>
-				</Box>
-			</Box>
-		</Paper>
+		<Stack spacing={2}>
+			<FormGroup>
+				<FormControlLabel
+					control={
+						<Switch checked={messagingToken ? true : false} onChange={handlePushNotificationChange} aria-label="PushSwitch" />
+					}
+					label="푸쉬 알림 받기"
+				/>
+			</FormGroup>
+			<Divider sx={{ margin: 2 }} />
+			<Stack direction="row" spacing={1}>
+				<TextField
+					label="Exchange Rate"
+					id="outlined-size-small"
+					value={exchangeRateValue}
+					size="small"
+					type="number"
+					InputLabelProps={{
+						shrink: true
+					}}
+					onChange={onValueChange}
+				/>
+				<Button
+					variant="contained"
+					color="primary"
+					onClick={handleExchangeRateSend}
+				>
+					Change
+				</Button>
+			</Stack>
+
+		</Stack>
 	);
 }
 

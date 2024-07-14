@@ -12,10 +12,10 @@ import Summary from '../Summary';
 import LatestTransactions from '../LatestTransactions';
 import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
-
-import TitleHeader from '../../components/TitleHeader';
+import StockList from '../StockList';
 
 import Container from '../../components/Container';
+import TitleHeader from '../../components/TitleHeader';
 
 import {
 	getWeeklyTransactionsAction
@@ -109,6 +109,21 @@ export function HomeMain () {
 							</AccordionSummary>
 							<AccordionDetails sx={{ padding: 0 }}>
 								<AccountList/>
+							</AccordionDetails>
+						</Accordion>
+					</Paper>
+					<Paper>
+						<Accordion
+							expanded={accountsExpanded}
+							onChange={onAccountsExpansionPanelChangeHalder}
+						>
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
+								<Typography variant="subtitle1">
+									Stock List
+								</Typography>
+							</AccordionSummary>
+							<AccordionDetails sx={{ padding: 0 }}>
+								<StockList/>
 							</AccordionDetails>
 						</Accordion>
 					</Paper>

@@ -1,16 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 
+import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import Amount from '../../components/Amount';
 import BankTransactionModal from '../../components/BankTransactionModal';
 import Payee from '../../components/Payee';
 
@@ -20,16 +19,29 @@ import {
 
 import useWidth from '../../hooks/useWidth';
 
+import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
+
 import { TYPE_ICON } from '../../constants';
 
+const updateTransactionsWithAccounts = (transactions, accounts) => {
+	if (!accounts.length || !transactions.length) return [];
+
+	return transactions.map(transaction => {
+		const account = accounts.find(account => account._id === transaction.accountId);
+		return account ? { ...transaction, currency: account.currency } : transaction;
+	});
+};
+
 export function LastTransactions () {
+	const accountList = useSelector((state) => state.accountList);
 	const latestTransactions = useSelector((state) => state.latestTransactions);
+	const updatedTransactions = useMemo(() => updateTransactionsWithAccounts(latestTransactions, accountList), [accountList, latestTransactions]);
 	const dispatch = useDispatch();
 	const width = useWidth();
-	const isWidthDownMd = width === 'xs' || width === 'sm' || width === 'md';
+	const isWidthDownLg = width === 'xs' || width === 'sm' || width === 'md' || width === 'lg';
 
 	const onRowSelect = (index) => () => {
-		const transaction = latestTransactions[index];
+		const transaction = updatedTransactions[index];
 
 		dispatch(openTransactionInModal({
 			account: transaction.account,
@@ -44,23 +56,13 @@ export function LastTransactions () {
 	};
 
 	return (
-		<React.Fragment>
+		<Box p={{ xs:1 }}>
 			<Table>
-				<TableHead>
-					<TableRow>
-						<TableCell align="center">Account</TableCell>
-						{
-							!isWidthDownMd && <TableCell align="center">Date</TableCell>
-						}
-						<TableCell align="center">Payee</TableCell>
-						<TableCell align="center">Amount</TableCell>
-					</TableRow>
-				</TableHead>
 				<TableBody>
-					{latestTransactions && latestTransactions.map((row, index) => (
+					{updatedTransactions && updatedTransactions.map((row, index) => (
 						<TableRow key={index} onClick={onRowSelect(index)}>
-							<TableCell component="th" scope="row" align="center">
-								<Stack direction="row" justifyContent="center" alignItems="center" spacing={1}>
+							<TableCell component="th" scope="row" align="left">
+								<Stack direction="row" justifyContent="left" alignItems="center" spacing={1}>
 									{TYPE_ICON[row.type]}
 									<Typography variant="body2">
 										{row.account}
@@ -68,7 +70,7 @@ export function LastTransactions () {
 								</Stack>
 							</TableCell>
 							{
-								!isWidthDownMd &&  <TableCell align="center">
+								!isWidthDownLg &&  <TableCell align="center">
 									<span>
 										{moment(row.date).format('MM-DD')}
 									</span>
@@ -77,12 +79,14 @@ export function LastTransactions () {
 							<TableCell align="center">
 								<Payee category={row.category} value={row.payee} />
 							</TableCell>
-							<TableCell align="center">
-								<Amount value={row.amount} />
+							<TableCell align="right">
+								<Box>
+									{toCurrencyFormatWithSymbol(row.amount, row.currency)}
+								</Box>
 								{
-									isWidthDownMd && <span>
+									isWidthDownLg && <Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
 										{moment(row.date).format('MM-DD')}
-									</span>
+									</Typography>
 								}
 							</TableCell>
 						</TableRow>
@@ -93,7 +97,7 @@ export function LastTransactions () {
 				isEdit={true}
 				transactions={latestTransactions}
 			/>
-		</React.Fragment>
+		</Box>
 	);
 }
 

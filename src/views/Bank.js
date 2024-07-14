@@ -19,7 +19,7 @@ import BankTransactionForm from '../components/BankTransactionForm';
 import { setAccountAction } from '../actions/accountActions';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
 
-import { toCurrencyFormat } from '../utils/formatting';
+import { toCurrencyFormatWithSymbol } from '../utils/formatting';
 
 const Sticky = styled('div')(({ theme }) => ({
 	width: '100%',
@@ -35,9 +35,14 @@ const Sticky = styled('div')(({ theme }) => ({
 
 const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':')).replace(/%20/g, ' ')}`;
 const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
+const getCurrencyByAccountId = (accountId, accountList) => {
+	const account = accountList.find(account => account._id === accountId);
+	return account ? account.currency : undefined;
+};
 
 export function Bank () {
 	const account = useSelector((state) => state.account);
+	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const categoryList = useSelector((state) => state.settings.categoryList);
 	const dropPayeeList = useSelector((state) => state.dropPayeeList);
@@ -48,6 +53,7 @@ export function Bank () {
 	let { pathname } = useLocation();
 	const accountId = useMemo(() => getAccountId(pathname), [pathname]);
 	const accountTransactions = useMemo(() => getAccountTransactions(allAccountsTransactions, accountId), [allAccountsTransactions, accountId]);
+	const currency = useMemo(() => getCurrencyByAccountId(accountId, accountList), [accountId, accountList]);
 	const balance = accountTransactions.length > 0 && accountTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
 
 	const dispatch = useDispatch();
@@ -92,6 +98,7 @@ export function Bank () {
 					</Sticky>
 					<BankTransactions
 						account={account}
+						currency={currency}
 						transactions={accountTransactions}
 					/>
 					<Typography
@@ -104,7 +111,7 @@ export function Bank () {
 							marginRight: theme.spacing(1)
 						})}
 					>
-						잔액 : {toCurrencyFormat(balance)}
+						{`Balance : ${toCurrencyFormatWithSymbol(balance, currency)}`}
 					</Typography>
 					<BankTransactionModal
 						EditForm={BankTransactionForm}

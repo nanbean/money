@@ -50,28 +50,27 @@ const getInvestmentsFromTransactions = (investements, transactions) => {
 
 exports.getInvestmentsFromTransactions = getInvestmentsFromTransactions;
 
-const getInvestmentsFromAccounts = (investements, accounts) => {
-	if (investements && accounts) {
-		const accountInvestments = accounts.flatMap(i => i.investments).map(i => ({ name: i.name, quantity: i.quantity }));
-		const fiteredInvestments = accountInvestments.filter(i => investements.find(j => j.name === i.name));
-		const aggregatedQuantities = {};
-		fiteredInvestments.forEach(item => {
-			const { name, quantity } = item;
-			if (aggregatedQuantities[name]) {
-				aggregatedQuantities[name] += quantity;
-			} else {
-				aggregatedQuantities[name] = quantity;
-			}
-		});
-		const aggregatedList = Object.keys(aggregatedQuantities).map(name => ({
-			name,
-			quantity: aggregatedQuantities[name]
-		})).map(i => ({ name: i.name, quantity: i.quantity, googleSymbol: getGoogleSymbolWithName(investements, i.name) }));
+const getInvestmentsFromAccounts = (investments, accounts) => {
+	if (!investments || !accounts) return [];
 
-		return aggregatedList;
-	}
+	const accountInvestments = accounts
+		.flatMap(account => account.investments)
+		.map(({ name, quantity }) => ({ name, quantity }));
 
-	return [];
+	const filteredInvestments = accountInvestments.filter(accountInvestment =>
+		investments.some(investment => investment.name === accountInvestment.name)
+	);
+
+	const aggregatedQuantities = filteredInvestments.reduce((acc, { name, quantity }) => {
+		acc[name] = (acc[name] || 0) + quantity;
+		return acc;
+	}, {});
+
+	return Object.entries(aggregatedQuantities).map(([name, quantity]) => ({
+		name,
+		quantity,
+		googleSymbol: getGoogleSymbolWithName(investments, name)
+	}));
 };
 
 exports.getInvestmentsFromAccounts = getInvestmentsFromAccounts;

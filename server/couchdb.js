@@ -72,7 +72,11 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 			} else if (activity === 'ShrsOut') {
 				if (investmentIdx >= 0) {
 					investments[investmentIdx].quantity -= transaction.quantity;
-					investments[investmentIdx].amount -= transaction.amount;
+					if (investments[investmentIdx].quantity === 0) {
+						investments[investmentIdx].amount = 0;
+					} else {
+						investments[investmentIdx].amount -= (transaction.price * transaction.quantity);
+					}
 				} else {
 					console.log('error');
 				}

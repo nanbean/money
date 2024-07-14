@@ -6,7 +6,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
-import Amount from '../../components/Amount';
+import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
 
 const quickAssetAccount = [
 	'키움증권맥쿼리',
@@ -41,9 +41,9 @@ export function Summary () {
 		<Table>
 			<TableBody>
 				<TableRow>
-					<TableCell align="center"><Amount value={sum} /></TableCell>
-					<TableCell align="center"><Amount value={quickAssetsSum} /></TableCell>
-					<TableCell align="center"><Amount value={financeSum} /></TableCell>
+					<TableCell align="center">{toCurrencyFormatWithSymbol(Math.round(sum))}</TableCell>
+					<TableCell align="center">{toCurrencyFormatWithSymbol(Math.round(quickAssetsSum))}</TableCell>
+					<TableCell align="center">{toCurrencyFormatWithSymbol(Math.round(financeSum))}</TableCell>
 				</TableRow>
 			</TableBody>
 		</Table>
