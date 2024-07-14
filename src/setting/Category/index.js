@@ -18,7 +18,7 @@ import {
 	addCategoryAction,
 	deleteCategoryAction,
 	updateCategoryAction
-} from '../../actions/couchdbActions';
+} from '../../actions/couchdbSettingActions';
 
 export function Category () {
 	const categoryList = useSelector((state) => state.settings.categoryList);

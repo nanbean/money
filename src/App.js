@@ -12,9 +12,12 @@ import {
 	getAccountListAction,
 	getAllAccountsTransactionsAction,
 	getAllInvestmentsListAction,
-	getPayeeListAction,
-	getSettingsAction
+	getPayeeListAction
 } from './actions/couchdbActions';
+
+import {
+	getSettingsAction
+} from './actions/couchdbSettingActions';
 
 import useDarkMode from './hooks/useDarkMode';
 

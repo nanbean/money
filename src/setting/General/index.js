@@ -16,7 +16,7 @@ import {
 
 import {
 	updateExchageRateAction
-} from '../../actions/couchdbActions';
+} from '../../actions/couchdbSettingActions';
 
 export function General () {
 	const messagingToken = useSelector((state) => state.messagingToken);

@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack';
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
 
-import { getLifetimeFlowAction } from '../actions/couchdbActions';
+import { getLifetimeFlowAction } from '../actions/couchdbReportActions';
 import { toCurrencyFormat } from '../utils/formatting';
 
 const CustomTooltip = ({ active, payload }) => {

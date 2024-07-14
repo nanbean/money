@@ -389,7 +389,7 @@ const getNetWorth = async (allAccounts, allTransactions, allInvestments, histori
 			if (account.type === 'Invst') {
 				const investments = getInvestmentList(allInvestments, allTransactions, transactions);
 				const balance = getInvestmentBalance(investments, date, histories);
-				netInvestments = [...netInvestments, ...investments];
+				netInvestments = [...netInvestments, ...investments].filter(i => i.quantity > 0);
 				investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			} else if (account.type === 'Oth A') {
 				const balance = getBalance(account.name, allTransactions, transactions, date);

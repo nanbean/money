@@ -7,6 +7,16 @@ import debounce from 'lodash.debounce';
 import uuidv1 from 'uuid/v1';
 import moment from 'moment';
 
+import {
+	initCouchdbReportAction,
+	finalizeCouchdbReportAction
+} from './couchdbReportActions';
+
+import {
+	initCouchdbSettingAction,
+	finalizeCouchdbSettingAction
+} from './couchdbSettingActions';
+
 import { COUCHDB_URL } from '../constants';
 
 import {
@@ -24,10 +34,7 @@ import {
 	SET_HISTORY_LIST,
 	SET_PAYEE_LIST,
 	SET_WEEKLY_TRANSACTIONS,
-	SET_TRANSACTIONS_FETCHING,
-	SET_LIFETIME_PLANNER_FLOW,
-	SET_NET_WORTH_FLOW,
-	SET_SETTINGS
+	SET_TRANSACTIONS_FETCHING
 } from './actionTypes';
 
 PouchDB.plugin(pouchdbAuthentication);
@@ -37,19 +44,11 @@ let accountsDB = new PouchDB('accounts');
 let transactionsDB = new PouchDB('transactions');
 let stocksDB = new PouchDB('stocks');
 let historiesDB = new PouchDB('histories');
-let reportsDB = new PouchDB('reports');
-let settingsDB = new PouchDB('settings');
 
 let accountsSync;
 let transactionsSync;
 let stocksSync;
 let historiesSync;
-let reportsSync;
-let settingsSync;
-
-// const updateAllTransactions = async (dispatch) => {
-// 	dispatch(getAllAccountsTransactions());
-// };
 
 const updateAllAccounts = async (dispatch) => {
 	dispatch(getAccountList());
@@ -59,7 +58,6 @@ const updateAllInvestments = async (dispatch) => {
 	dispatch(getAllInvestmentsList());
 };
 
-// const updateAllTransactionsDebounce = debounce(updateAllTransactions, 1000);
 const updateAllAccountsDebounce = debounce(updateAllAccounts, 1000);
 const updateAllInvestmentsDebounce = debounce(updateAllInvestments, 1000);
 
@@ -165,8 +163,13 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 			} else if (activity === 'ShrsOut') {
 				if (investmentIdx >= 0) {
 					investments[investmentIdx].quantity -= transaction.quantity;
-					investments[investmentIdx].amount -= transaction.amount;
+					if (investments[investmentIdx].quantity === 0) {
+						investments[investmentIdx].amount = 0;
+					} else {
+						investments[investmentIdx].amount -= (transaction.price * transaction.quantity);
+					}
 				}
+
 			}
 		}
 	}
@@ -339,37 +342,9 @@ export const initCouchdbAction = username => {
 			}).on('error', function () {
 				// handle error
 			});
-		let remoteReportsDB = new PouchDB(`https://${COUCHDB_URL}/reports_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		reportsSync = reportsDB.sync(remoteReportsDB, {})
-			.on('change', function () {
-				// handle change
-			}).on('paused', function () {
-				// replication paused (e.g. replication up to date, user went offline)
-			}).on('active', function () {
-				// replicate resumed (e.g. new changes replicating, user went back online)
-			}).on('denied', function () {
-				// a document failed to replicate (e.g. due to permissions)
-			}).on('complete', function () {
-				// handle complete
-			}).on('error', function () {
-				// handle error
-			});
-		let settingsReportsDB = new PouchDB(`https://${COUCHDB_URL}/settings_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		settingsSync = settingsDB.sync(settingsReportsDB, { live: true, retry: true })
-			.on('change', function () {
-				dispatch(getSettingsAction());
-				// handle change
-			}).on('paused', function () {
-				// replication paused (e.g. replication up to date, user went offline)
-			}).on('active', function () {
-				// replicate resumed (e.g. new changes replicating, user went back online)
-			}).on('denied', function () {
-				// a document failed to replicate (e.g. due to permissions)
-			}).on('complete', function () {
-				// handle complete
-			}).on('error', function () {
-				// handle error
-			});
+
+		dispatch(initCouchdbReportAction(username));
+		dispatch(initCouchdbSettingAction(username));
 	};
 };
 
@@ -379,8 +354,8 @@ export const finalizeCouchdbAction = () => {
 		transactionsSync && transactionsSync.cancel();
 		stocksSync && stocksSync.cancel();
 		historiesSync && historiesSync.cancel();
-		reportsSync && reportsSync.cancel();
-		settingsSync && settingsSync.cancel();
+		finalizeCouchdbReportAction();
+		finalizeCouchdbSettingAction();
 	};
 };
 
@@ -581,98 +556,3 @@ export const setTranscationsFetchingAction = value => ({
 	type: SET_TRANSACTIONS_FETCHING,
 	payload: value
 });
-
-export const getLifetimeFlowAction = () => {
-	return async dispatch => {
-		const lifetimeplanner = await reportsDB.get('lifetimeplanner');
-
-		dispatch({
-			type: SET_LIFETIME_PLANNER_FLOW,
-			payload: lifetimeplanner.data
-		});
-	};
-};
-
-export const getNetWorthFlowAction = () => {
-	return async dispatch => {
-		const netWorth = await reportsDB.get('netWorth');
-
-		dispatch({
-			type: SET_NET_WORTH_FLOW,
-			payload: netWorth.data
-		});
-	};
-};
-
-export const getSettingsAction = () => {
-	return async dispatch => {
-		const settingsResponse = await settingsDB.allDocs({ include_docs: true }); // eslint-disable-line camelcase
-		const settings = settingsResponse.rows.map(i => i.doc);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: settings
-		});
-	};
-};
-
-export const updateExchageRateAction = (value) => {
-	return async dispatch => {
-		const exchangeRate = await settingsDB.get('exchangeRate');
-		exchangeRate.dollorWon = value;
-		await settingsDB.put(exchangeRate);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [
-				exchangeRate
-			]
-		});
-	};
-};
-
-export const addCategoryAction = (value) => {
-	return async dispatch => {
-		const categoryList = await settingsDB.get('categoryList');
-		categoryList.data.push(value);
-		categoryList.data.sort();
-		await settingsDB.put(categoryList);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [
-				categoryList
-			]
-		});
-	};
-};
-
-export const deleteCategoryAction = (index) => {
-	return async dispatch => {
-		const categoryList = await settingsDB.get('categoryList');
-		categoryList.data.splice(index, 1);
-		await settingsDB.put(categoryList);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [
-				categoryList
-			]
-		});
-	};
-};
-
-export const updateCategoryAction = (index, value) => {
-	return async dispatch => {
-		const categoryList = await settingsDB.get('categoryList');
-		categoryList.data[index] = value;
-		await settingsDB.put(categoryList);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [
-				categoryList
-			]
-		});
-	};
-};

@@ -12,7 +12,8 @@ import RangeToggle from '../components/RangeToggle';
 
 import {
 	getNetWorthFlowAction
-} from '../actions/couchdbActions';
+} from '../actions/couchdbReportActions';
+
 import { toCurrencyFormat } from '../utils/formatting';
 
 const CustomTooltip = ({ active, payload, label }) => {

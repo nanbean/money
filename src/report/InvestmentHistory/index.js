@@ -13,9 +13,12 @@ import InvestmentFilter from '../../components/InvestmentFilter';
 import TypeRangeToggles from './TypeRangeToggles.js';
 
 import {
-	getHistoryListAction,
-	getNetWorthFlowAction
+	getHistoryListAction
 } from '../../actions/couchdbActions';
+
+import {
+	getNetWorthFlowAction
+} from '../../actions/couchdbReportActions';
 
 const CustomTooltip = ({ active, payload, label }) => {
 	if (active) {
