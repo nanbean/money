@@ -20,7 +20,6 @@ import {
 } from '../../actions/ui/form/bankTransaction';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
-import './index.css';
 
 export function BankTransactions ({
 	account,
@@ -49,81 +48,77 @@ export function BankTransactions ({
 	};
 
 	return (
-		<div className="bank-transaction">
-			{
-				transactions &&
-				<AutoSizer>
-					{({ height, width }) => (
-						<Table
-							headerClassName="header"
-							rowClassName="row"
-							width={width}
-							height={height}
-							headerHeight={40}
-							rowHeight={!isWidthDownMd ? 30 : 50}
-							scrollToIndex={transactions.length-1}
-							rowCount={transactions.length}
-							rowGetter={({ index }) => transactions[index]}
-							onRowClick={onRowSelect}
-						>
-							{
-								showAccount &&
-								<Column
-									label="Account"
-									dataKey="account"
-									width={width/4}
-									cellRenderer={({ cellData }) => cellData}
-								/>
+		transactions &&
+		<AutoSizer>
+			{({ height, width }) => (
+				<Table
+					headerClassName="header"
+					rowClassName="row"
+					width={width}
+					height={height}
+					headerHeight={40}
+					rowHeight={!isWidthDownMd ? 30 : 50}
+					scrollToIndex={transactions.length-1}
+					rowCount={transactions.length}
+					rowGetter={({ index }) => transactions[index]}
+					onRowClick={onRowSelect}
+				>
+					{
+						showAccount &&
+						<Column
+							label="Account"
+							dataKey="account"
+							width={width/4}
+							cellRenderer={({ cellData }) => cellData}
+						/>
+					}
+					{
+						!isWidthDownMd &&
+						<Column
+							label="Date"
+							dataKey="date"
+							width={width/4}
+							cellRenderer={({ cellData }) => toDateFormat(cellData)}
+						/>
+					}
+					{
+						<Column
+							label="Category"
+							dataKey="category"
+							width={width/4}
+							cellRenderer={({ cellData }) => <CategoryIcon category={cellData} fontsize={!isWidthDownMd ? 20 : 40}/>}
+						/>
+					}
+					<Column
+						label="Payee"
+						dataKey="payee"
+						width={width/2}
+						cellDataGetter={({ rowData }) => ({ date: rowData.date, category: rowData.category, payee: rowData.payee, amount: rowData.amount })}
+						cellRenderer={({ cellData }) => <Payee value={cellData.payee} category={cellData.category} />}
+					/>
+					<Column
+						width={width/4}
+						label="Amount"
+						dataKey="amount"
+						cellDataGetter={({ rowData }) => ({ date: rowData.date, amount: rowData.amount })}
+						cellRenderer={({ cellData }) => {
+							if (isWidthDownMd) {
+								return (
+									<Stack>
+										<Amount value={cellData.amount} showSymbol />
+										<Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
+											{toDateFormat(cellData.date)}
+										</Typography>
+									</Stack>
+								);
+							} else {
+								return (<Amount value={cellData.amount} showSymbol currency={currency}/>);
 							}
-							{
-								!isWidthDownMd &&
-								<Column
-									label="Date"
-									dataKey="date"
-									width={width/4}
-									cellRenderer={({ cellData }) => toDateFormat(cellData)}
-								/>
-							}
-							{
-								<Column
-									label="Category"
-									dataKey="category"
-									width={width/4}
-									cellRenderer={({ cellData }) => <CategoryIcon category={cellData} fontsize={!isWidthDownMd ? 20 : 40}/>}
-								/>
-							}
-							<Column
-								label="Payee"
-								dataKey="payee"
-								width={width/2}
-								cellDataGetter={({ rowData }) => ({ date: rowData.date, category: rowData.category, payee: rowData.payee, amount: rowData.amount })}
-								cellRenderer={({ cellData }) => <Payee value={cellData.payee} category={cellData.category} />}
-							/>
-							<Column
-								width={width/4}
-								label="Amount"
-								dataKey="amount"
-								cellDataGetter={({ rowData }) => ({ date: rowData.date, amount: rowData.amount })}
-								cellRenderer={({ cellData }) => {
-									if (isWidthDownMd) {
-										return (
-											<Stack>
-												<Amount value={cellData.amount} showSymbol />
-												<Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
-													{toDateFormat(cellData.date)}
-												</Typography>
-											</Stack>
-										);
-									} else {
-										return (<Amount value={cellData.amount} showSymbol currency={currency}/>);
-									}
-								}}
-							/>
-						</Table>
-					)}
-				</AutoSizer>
-			}
-		</div>
+						}}
+					/>
+				</Table>
+			)}
+		</AutoSizer>
 	);
 }
 

@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { styled } from '@mui/material/styles';
 
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
@@ -65,7 +66,11 @@ export function Search () {
 		if (keyword || category || subcategory || startDate || endDate) {
 			let filteredTransactions = [];
 
-			filteredTransactions = allAccountsTransactions.filter(i => filteredAccounts.find(j => j === i.accountId.split(':')[2]));
+			filteredTransactions = allAccountsTransactions.filter(transaction => {
+				const accountIdParts = transaction?.accountId?.split(':');
+				const accountId = accountIdParts?.[2];
+				return filteredAccounts.includes(accountId);
+			});
 
 			if (category) {
 				const escapedCategoryString = category.replace(/[[\]()]/g, '\\$&');
@@ -283,13 +288,15 @@ export function Search () {
 							</Grid>
 						</Grid>
 					</Sticky>
-					{
-						filteredTransactions.length > 0 &&
-						<BankTransactions
-							showAccount
-							transactions={filteredTransactions}
-						/>
-					}
+					<Box sx={{ height: '50vh' }}>
+						{
+							filteredTransactions.length > 0 &&
+							<BankTransactions
+								showAccount
+								transactions={filteredTransactions}
+							/>
+						}
+					</Box>
 					<Typography
 						variant="h6"
 						color="inherit"

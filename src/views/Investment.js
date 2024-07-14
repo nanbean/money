@@ -5,6 +5,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 
 import { styled } from '@mui/material/styles';
 
+import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
@@ -79,17 +80,7 @@ export function Investment () {
 		<React.Fragment>
 			<TitleHeader title={account} />
 			<Container>
-				<Paper
-					sx={(theme) => ({
-						[theme.breakpoints.up('lg')]: {
-							marginTop: theme.spacing(2)
-						},
-						[theme.breakpoints.down('sm')]: {
-							marginTop: 0
-						},
-						alignItems: 'center'
-					})}
-				>
+				<Paper>
 					<Sticky>
 						<div style={{ display: 'inline-block', width: '50%' }}>
 							<Button
@@ -123,10 +114,12 @@ export function Investment () {
 							</Link>
 						</div>
 					</Sticky>
-					<InvestmentTransactions
-						transactions={accountTransactions}
-						currency={currency}
-					/>
+					<Box sx={{ height: '50vh' }}>
+						<InvestmentTransactions
+							transactions={accountTransactions}
+							currency={currency}
+						/>
+					</Box>
 
 					<InvestmentTransactionModal
 						EditForm={InvestmentTransactionForm}

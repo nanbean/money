@@ -4,6 +4,7 @@ import { useParams, useLocation } from 'react-router-dom';
 
 import { styled } from '@mui/material/styles';
 
+import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -70,17 +71,7 @@ export function Bank () {
 		<React.Fragment>
 			<TitleHeader title={account} />
 			<Container>
-				<Paper
-					sx={(theme) => ({
-						[theme.breakpoints.up('lg')]: {
-							marginTop: theme.spacing(2)
-						},
-						[theme.breakpoints.down('sm')]: {
-							marginTop: 0
-						},
-						alignItems: 'center'
-					})}
-				>
+				<Paper>
 					<Sticky>
 						<Button
 							fullWidth
@@ -96,11 +87,13 @@ export function Bank () {
 							/>
 						</Button>
 					</Sticky>
-					<BankTransactions
-						account={account}
-						currency={currency}
-						transactions={accountTransactions}
-					/>
+					<Box sx={{ height: '79vh' }}>
+						<BankTransactions
+							account={account}
+							currency={currency}
+							transactions={accountTransactions}
+						/>
+					</Box>
 					<Typography
 						variant="h6"
 						color="inherit"
