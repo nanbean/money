@@ -6,6 +6,19 @@ const KIS_URL = 'https://openapi.koreainvestment.com:9443';
 const storage = localdb.create({ ttl: true, logging: true });
 storage.init();
 
+const isUsRegularTime = () => {
+	const now = moment().tz('America/New_York');
+	const day = now.day();
+	const hour = now.hour();
+	const minute = now.minute();
+
+	// The regular trading hours for the U.S. stock market, 9:30 am to 4 pm
+	const isWeekday = day >= 1 && day <= 5;
+	const isMarketTime = (hour > 9 || (hour === 9 && minute >= 30)) && (hour < 16);
+
+	return isWeekday && isMarketTime;
+}
+
 async function getKisToken () {
 	const accessToken = await storage.getItem('access_token');
 	const accessTokenTokenExpired = await storage.getItem('access_token_token_expired');
@@ -64,10 +77,11 @@ async function getQuoteKorea (accessToken, googleSymbol) {
 async function getQuoteUS (accessToken, googleSymbol) {
 	let EXCD = '';
 	if (googleSymbol.startsWith('NYSE:')) {
-		EXCD = 'NYS';
+		EXCD = isUsRegularTime() ? 'NYS':'BAY';
 	} else if (googleSymbol.startsWith('NASDAQ:')) {
-		EXCD = 'NAS';
+		EXCD = isUsRegularTime() ? 'NAS':'BAQ';
 	}
+
 	return new Promise(async (resolve, reject) => {
 		const headers = {
 			'content-type': 'application/json; charset=utf-8',
