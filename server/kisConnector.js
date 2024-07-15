@@ -12,9 +12,9 @@ const isUsRegularTime = () => {
 	const hour = now.hour();
 	const minute = now.minute();
 
-	// The regular trading hours for the U.S. stock market, 9:30 am to 4 pm
+	// The regular trading hours for the U.S. stock market, 9:30 am to 4:01 pm
 	const isWeekday = day >= 1 && day <= 5;
-	const isMarketTime = (hour > 9 || (hour === 9 && minute >= 30)) && (hour < 16);
+	const isMarketTime = (hour > 9 || (hour === 9 && minute >= 30)) && (hour < 16 || (hour === 16 && minute <= 1));
 
 	return isWeekday && isMarketTime;
 }
