@@ -311,7 +311,7 @@ export const initCouchdbAction = username => {
 				// handle error
 			});
 		let remoteStocksDB = new PouchDB(`https://${COUCHDB_URL}/stocks`, { skip_setup: true }); // eslint-disable-line camelcase
-		stocksSync = stocksDB.sync(remoteStocksDB, {})
+		stocksSync = stocksDB.sync(remoteStocksDB, { live: true, retry: true })
 			.on('change', function () {
 				updateAllInvestmentsDebounce(dispatch);
 				// handle change
