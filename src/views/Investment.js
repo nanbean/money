@@ -114,7 +114,7 @@ export function Investment () {
 							</Link>
 						</div>
 					</Sticky>
-					<Box sx={{ height: '50vh' }}>
+					<Box sx={{ height: '50vh', textAlign: 'center' }}>
 						<InvestmentTransactions
 							transactions={accountTransactions}
 							currency={currency}

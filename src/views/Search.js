@@ -288,7 +288,7 @@ export function Search () {
 							</Grid>
 						</Grid>
 					</Sticky>
-					<Box sx={{ height: '50vh' }}>
+					<Box sx={{ height: '50vh', textAlign: 'center' }}>
 						{
 							filteredTransactions.length > 0 &&
 							<BankTransactions
