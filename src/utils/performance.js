@@ -84,6 +84,7 @@ export function getInvestmentPerformance (investmentTransactions, investmentPric
 				costBasis: meanPrice * remainQuantity,
 				marketValue: investmentPrice * remainQuantity,
 				periodGain: periodGain + periodDiv + periodMiscExp,
+				periodDiv: periodDiv,
 				periodReturn: periodGain + periodDiv + periodMiscExp + (remainQuantity * (investmentPrice - meanPrice)),
 				quantity: remainQuantity
 			};
@@ -136,6 +137,7 @@ export function getAccountInvestmentPerformance (account, investment, price, inv
 		costBasis: meanPrice * remainQuantity,
 		marketValue: price * remainQuantity,
 		periodGain: periodGain + periodDiv + periodMiscExp,
+		periodDiv: periodDiv,
 		periodReturn: periodGain + periodDiv + periodMiscExp + (remainQuantity * (price - meanPrice)),
 		quantity: remainQuantity
 	};

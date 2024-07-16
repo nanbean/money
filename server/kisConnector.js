@@ -6,17 +6,16 @@ const KIS_URL = 'https://openapi.koreainvestment.com:9443';
 const storage = localdb.create({ ttl: true, logging: true });
 storage.init();
 
-const isUsRegularTime = () => {
+const isUsDayMarketTime = () => {
 	const now = moment().tz('America/New_York');
 	const day = now.day();
 	const hour = now.hour();
-	const minute = now.minute();
 
-	// The regular trading hours for the U.S. stock market, 9:30 am to 4:01 pm
+	// The day market trading hours for the U.S. stock market, 17:00 ~ 24:00
 	const isWeekday = day >= 1 && day <= 5;
-	const isMarketTime = (hour > 9 || (hour === 9 && minute >= 30)) && (hour < 16 || (hour === 16 && minute <= 1));
+	const isDayMarketTime = (hour > 17) && (hour < 24);
 
-	return isWeekday && isMarketTime;
+	return isWeekday && isDayMarketTime;
 }
 
 async function getKisToken () {
@@ -77,9 +76,9 @@ async function getQuoteKorea (accessToken, googleSymbol) {
 async function getQuoteUS (accessToken, googleSymbol) {
 	let EXCD = '';
 	if (googleSymbol.startsWith('NYSE:')) {
-		EXCD = isUsRegularTime() ? 'NYS':'BAY';
+		EXCD = isUsDayMarketTime() ? 'BAY':'NYS';
 	} else if (googleSymbol.startsWith('NASDAQ:')) {
-		EXCD = isUsRegularTime() ? 'NAS':'BAQ';
+		EXCD = isUsDayMarketTime() ? 'BAQ':'NAS';
 	}
 
 	return new Promise(async (resolve, reject) => {

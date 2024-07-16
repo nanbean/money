@@ -12,6 +12,7 @@ export function InvestmentPerformance ({
 	const totalPerformance = performance.length > 0 ? performance.map(l => l.periodReturn).reduce((a, b) => a + b) : 0;
 	const totalQuantity = performance.length > 0 ? performance.map(m => m.quantity).reduce((a, b) => a + b) : 0;
 	const totalGain = performance.length > 0 ? performance.map(l => l.periodGain).reduce((a, b) => a + b) : 0;
+	const totalDividend = performance.length > 0 ? performance.map(l => l.periodDiv).reduce((a, b) => a + b) : 0;
 	const totalCostBasis = performance.length > 0 ? performance.map(m => m.costBasis).reduce((a, b) => a + b) : 0;
 	const totalMarketValue = performance.length > 0 ? performance.map(l => l.marketValue).reduce((a, b) => a + b) : 0;
 
@@ -21,6 +22,7 @@ export function InvestmentPerformance ({
 			'Cost Basis',
 			'Market Value',
 			'Realized Gain/Loss',
+			'Dividend',
 			'Return for Period',
 			'Quantity'
 		],
@@ -30,6 +32,7 @@ export function InvestmentPerformance ({
 				i.costBasis,
 				i.marketValue,
 				i.periodGain,
+				i.periodDiv,
 				i.periodReturn,
 				i.quantity
 			];
@@ -39,6 +42,7 @@ export function InvestmentPerformance ({
 			totalCostBasis,
 			totalMarketValue,
 			totalGain,
+			totalDividend,
 			totalPerformance,
 			totalQuantity
 		]
