@@ -3,14 +3,16 @@ import {
 	changeAccountsExpanded,
 	changeLatestTransactionsExpanded,
 	changeSummaryExpanded,
-	changeWeeklyGraphExpanded
+	changeWeeklyGraphExpanded,
+	changeStockListExpanded
 } from '../../actions/ui/homeActions';
 
 const initialState = {
 	accountsExpanded: true,
 	latestTransactionsExpanded: true,
 	summaryExpanded: true,
-	weeklyGraphExpanded: true
+	weeklyGraphExpanded: true,
+	stockListExpanded: true
 };
 
 export default handleActions(
@@ -30,6 +32,10 @@ export default handleActions(
 		[changeWeeklyGraphExpanded]: (state, { payload }) => ({
 			...state,
 			weeklyGraphExpanded: payload
+		}),
+		[changeStockListExpanded]: (state, { payload }) => ({
+			...state,
+			stockListExpanded: payload
 		})
 	},
 	initialState
