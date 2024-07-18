@@ -7,7 +7,9 @@ import NormalGrid from '../components/NormalGrid';
 
 export function InvestmentPerformance ({
 	investment,
-	performance
+	performance,
+	price,
+	currency
 }) {
 	const totalPerformance = performance.length > 0 ? performance.map(l => l.periodReturn).reduce((a, b) => a + b) : 0;
 	const totalQuantity = performance.length > 0 ? performance.map(m => m.quantity).reduce((a, b) => a + b) : 0;
@@ -18,33 +20,36 @@ export function InvestmentPerformance ({
 
 	const performanceData = [
 		[
-			'Account',
-			'Cost Basis',
-			'Market Value',
-			'Realized Gain/Loss',
-			'Dividend',
-			'Return for Period',
-			'Quantity'
+			{ type: 'label', value: 'Account' },
+			{ type: 'label', value: 'Cost Basis' },
+			{ type: 'label', value: 'Market Value' },
+			{ type: 'label', value: 'Realized Gain/Loss' },
+			{ type: 'label', value: 'Dividend' },
+			{ type: 'label', value: 'Return for Period' },
+			{ type: 'label', value: 'Price' },
+			{ type: 'label', value: 'Quantity' }
 		],
 		...performance.map(i => {
 			return [
-				i.account,
-				i.costBasis,
-				i.marketValue,
-				i.periodGain,
-				i.periodDiv,
-				i.periodReturn,
-				i.quantity
+				{ value: i.account },
+				{ type: 'currency', currency, value: i.costBasis },
+				{ type: 'currency', currency, value: i.marketValue },
+				{ type: 'currency', currency, value: i.periodGain },
+				{ type: 'currency', currency, value: i.periodDiv },
+				{ type: 'currency', currency, value: i.periodReturn },
+				{ type: 'currency', currency, value: price },
+				{ value: i.quantity }
 			];
 		}),
 		[
-			'Total',
-			totalCostBasis,
-			totalMarketValue,
-			totalGain,
-			totalDividend,
-			totalPerformance,
-			totalQuantity
+			{ type: 'label', value: 'Total' },
+			{ type: 'currency', currency, value: totalCostBasis },
+			{ type: 'currency', currency, value: totalMarketValue },
+			{ type: 'currency', currency, value: totalGain },
+			{ type: 'currency', currency, value: totalDividend },
+			{ type: 'currency', currency, value: totalPerformance },
+			{ type: 'label', value: '' },
+			{ value: totalQuantity }
 		]
 	];
 
@@ -66,7 +71,8 @@ export function InvestmentPerformance ({
 
 InvestmentPerformance.propTypes = {
 	investment: PropTypes.string.isRequired,
-	performance: PropTypes.array.isRequired
+	performance: PropTypes.array.isRequired,
+	currency: PropTypes.string
 };
 
 export default InvestmentPerformance;

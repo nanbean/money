@@ -130,7 +130,7 @@ export function Investment () {
 						transactions={accountTransactions}
 						autocompleteInvestmentList={dropInvestmentList}
 					/>
-					<AccountInvestments />
+					<AccountInvestments currency={currency} />
 				</Paper>
 			</Container>
 		</React.Fragment>

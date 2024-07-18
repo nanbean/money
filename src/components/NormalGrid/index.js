@@ -2,9 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { AutoSizer, ColumnSizer, MultiGrid } from 'react-virtualized';
 
-import { styled } from '@mui/material/styles';
-
+import Box from '@mui/material/Box';
 import TableContainer from '@mui/material/TableContainer';
+import Typography from '@mui/material/Typography';
 
 import Amount from '../Amount';
 
@@ -13,15 +13,46 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 const ROW_HEIGHT = 60;
 const COLUMN_MIN_WIDTH = 100;
 
-const NormalCell = styled('div')(() => ({
-	flex: 1,
-	display: 'flex',
-	alignItems: 'center',
-	boxSizing: 'border-box',
-	justifyContent: 'center',
-	height: ROW_HEIGHT,
-	borderBottom: '1px solid rgba(81, 81, 81, 1)'
-}));
+const NormalCell = ({
+	cellColor = false,
+	children,
+	onClick,
+	style
+}) => (
+	<Box onClick={onClick} style={style} sx={{
+		flex: 1,
+		display: 'flex',
+		alignItems: 'center',
+		boxSizing: 'border-box',
+		justifyContent: 'center',
+		height: ROW_HEIGHT,
+		backgroundColor: cellColor ? 'rgba(180, 180, 180, .5)':null,
+		borderBottom: '1px solid rgba(81, 81, 81, 1)'
+	}}>
+		{children}
+	</Box>
+);
+
+NormalCell.propTypes = {
+	cellColor: PropTypes.bool,
+	children: PropTypes.object,
+	onClick: PropTypes.func,
+	style: PropTypes.object
+};
+
+const Text = ({
+	title
+}) => (
+	<Typography
+		variant="body2"
+	>
+		{title}
+	</Typography >
+);
+
+Text.propTypes = {
+	title: PropTypes.string
+};
 
 export function NormalGrid ({
 	gridData
@@ -48,15 +79,36 @@ export function NormalGrid ({
 										fixedRowCount={1}
 										fixedColumnCount={1}
 										cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-											const value = gridData[rowIndex][columnIndex];
+											const item = gridData[rowIndex][columnIndex];
+											const { type, currency, value } = item;
 											const parseValue = parseInt(value, 10);
 											const isNumber = !Number.isNaN(parseValue);
 			
-											return (
-												<NormalCell key={key} style={style}>
-													{isNumber ? <Amount value={parseValue} /> : value}
-												</NormalCell>
-											);
+											if (type === 'label') {
+												return (
+													<NormalCell key={key} style={style}>
+														<Text title={value} />
+													</NormalCell>
+												);
+											} else if (type === 'currency') {
+												return (
+													<NormalCell key={key} style={style}>
+														<Amount value={value} showSymbol currency={currency}/>
+													</NormalCell>
+												);
+											} else if (typeof value === 'string' && value.includes('%')) {
+												return (
+													<NormalCell key={key} style={style}>
+														<Text title={value} />
+													</NormalCell>
+												);
+											} else {
+												return (
+													<NormalCell key={key} style={style}>
+														{isNumber ? <Amount value={parseValue} /> : value}
+													</NormalCell>
+												);
+											}
 										}}
 										columnWidth={columnWidth}
 										columnCount={gridData[0].length}

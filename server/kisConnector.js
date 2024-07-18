@@ -11,9 +11,9 @@ const isUsDayMarketTime = () => {
 	const day = now.day();
 	const hour = now.hour();
 
-	// The day market trading hours for the U.S. stock market, 17:00 ~ 24:00
+	// The day market trading hours for the U.S. stock market, 20:00 ~ 03:00
 	const isWeekday = day >= 1 && day <= 5;
-	const isDayMarketTime = (hour > 17) && (hour < 24);
+	const isDayMarketTime = (hour > 20) || (hour < 3);
 
 	return isWeekday && isDayMarketTime;
 }

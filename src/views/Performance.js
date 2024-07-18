@@ -18,6 +18,7 @@ export function Performance () {
 
 	const investmentItem = useMemo(() => getInvestmentItem(allInvestments, investment), [allInvestments, investment]);
 	const investmentPrice = investmentItem && investmentItem.price;
+	const investmentCurrency = investmentItem && investmentItem.currency;
 	const investmentTransactions = useMemo(() => getInvestmentTransactions(allAccountsTransactions, investment), [allAccountsTransactions, investment]);
 	const performance = useMemo(() => getInvestmentPerformance(investmentTransactions, investmentPrice), [investmentTransactions, investmentPrice]);
 
@@ -27,6 +28,8 @@ export function Performance () {
 			<Container>
 				<InvestmentPerformance
 					investment={investment}
+					price={investmentPrice}
+					currency={investmentCurrency}
 					performance={performance}
 				/>
 			</Container>

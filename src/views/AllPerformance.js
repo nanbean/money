@@ -29,6 +29,8 @@ export function AllPerformance () {
 
 			return {
 				investment: i.name,
+				price: i.price,
+				currency: i.currency,
 				performance: performance,
 				totalPerformance: totalPerformance,
 				totalQuantity: totalQuantity
@@ -65,6 +67,8 @@ export function AllPerformance () {
 								<InvestmentPerformance
 									key={i.investment}
 									investment={i.investment}
+									price={i.price}
+									currency={i.currency}
 									performance={i.performance}
 								/>
 							);

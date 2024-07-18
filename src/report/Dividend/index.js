@@ -37,27 +37,27 @@ export function Dividend () {
 	const dividendData = [];
 	_.forEach(_.groupBy(dividendTransactions.filter(i => filteredAccounts.includes(i.account)), 'account'), (value, key) => {
 		dividendData.push([
-			key,
-			value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
-			value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ),
-			(value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) -
-			value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ))
+			{ type: 'label', value: key },
+			{ type: 'currency', value: value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) },
+			{ type: 'currency', value: value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) },
+			{ type: 'currency', value: (value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) -
+			value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 )) }
 		]);
 	});
 
 	const dividendGridata = [
 		[
-			'Account',
-			'Dividend',
-			'Tax',
-			'Gain'
+			{ type: 'label', value: 'Account' },
+			{ type: 'label', value: 'Dividend' },
+			{ type: 'label', value: 'Tax' },
+			{ type: 'label', value: 'Gain' }
 		],
 		...dividendData,
 		[
-			'Total',
-			dividendData.map(i => i[1]).reduce( (prev, curr) => prev + curr, 0 ),
-			dividendData.map(i => i[2]).reduce( (prev, curr) => prev + curr, 0 ),
-			dividendData.map(i => i[3]).reduce( (prev, curr) => prev + curr, 0 )
+			{ type: 'label', value: 'Total' },
+			{ type: 'currency', value: dividendData.map(i => i[1].value).reduce( (prev, curr) => prev + curr, 0 ) },
+			{ type: 'currency', value: dividendData.map(i => i[2].value).reduce( (prev, curr) => prev + curr, 0 ) },
+			{ type: 'currency', value: dividendData.map(i => i[3].value).reduce( (prev, curr) => prev + curr, 0 ) }
 		]
 	];
 

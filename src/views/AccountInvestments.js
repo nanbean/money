@@ -1,11 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
 
 import NormalGrid from '../components/NormalGrid';
 
 import { getAccountPerformance } from '../utils/performance';
 
-export function AccountInvestments () {
+export function AccountInvestments ({ currency }) {
 	const account = useSelector((state) => state.account);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
@@ -19,36 +20,36 @@ export function AccountInvestments () {
 
 	const performanceData = [
 		[
-			'Investment',
-			'Price',
-			'Quantity',
-			'Cost Basis',
-			'Market Value',
-			'Realized Gain/Loss',
-			'Return for Period',
-			'%Port'
+			{ type: 'label', value: 'Investment' },
+			{ type: 'label', value: 'Price' },
+			{ type: 'label', value: 'Quantity' },
+			{ type: 'label', value: 'Cost Basis' },
+			{ type: 'label', value: 'Market Value' },
+			{ type: 'label', value: 'Realized Gain/Loss' },
+			{ type: 'label', value: 'Return for Period' },
+			{ type: 'label', value: '%Port' }
 		],
 		...accountPerformance.filter(j => j.name).map(i => {
 			return [
-				i.name,
-				i.price,
-				i.quantity,
-				i.costBasis,
-				i.marketValue,
-				i.periodGain,
-				i.periodReturn,
-				`${i.marketValue/totalMarketValue * 100}%`
+				{ value: i.name },
+				{ type: 'currency', currency, value: i.price },
+				{ value: i.quantity },
+				{ type: 'currency', currency, value: i.costBasis },
+				{ type: 'currency', currency, value: i.marketValue },
+				{ type: 'currency', currency, value: i.periodGain },
+				{ type: 'currency', currency, value: i.periodReturn },
+				{ value: `${(i.marketValue/totalMarketValue * 100).toFixed(2)}%` }
 			];
 		}),
 		[
-			'',
-			'',
-			'',
-			totalCostBasis,
-			totalMarketValue,
-			totalPeriodGain,
-			totalPeriodReturn,
-			''
+			{ type: 'label', value: '' },
+			{ type: 'label', value: '' },
+			{ type: 'label', value: '' },
+			{ type: 'currency', currency, value: totalCostBasis },
+			{ type: 'currency', currency, value: totalMarketValue },
+			{ type: 'currency', currency, value: totalPeriodGain },
+			{ type: 'currency', currency, value: totalPeriodReturn },
+			{ type: 'label', value: '' }
 		]
 	];
 
@@ -60,5 +61,9 @@ export function AccountInvestments () {
 		</div>
 	);
 }
+
+AccountInvestments.propTypes = {
+	currency: PropTypes.string
+};
 
 export default AccountInvestments;

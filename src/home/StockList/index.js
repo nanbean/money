@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -9,6 +10,11 @@ import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
 import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
+
+const linkStyle = {
+	textDecoration: 'none',
+	color: 'inherit'
+};
 
 const getInvestmentsFromAccounts = (accounts) => {
 	if (!accounts) return [];
@@ -59,9 +65,11 @@ export function StockList () {
 							return (
 								<TableRow key={i.name}>
 									<TableCell align="left">
-										<Box>
-											{i.name}
-										</Box>
+										<Link to={`/performance/${i.name}`} style={linkStyle}>
+											<Box>
+												{i.name}
+											</Box>
+										</Link>
 										<Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
 											{i.quantity.toLocaleString()}
 										</Typography>

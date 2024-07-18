@@ -10,6 +10,7 @@ const calendar = require('./calendar');
 
 const spreadSheet = require('./spreadSheet');
 
+const pouchdb = require('./pouchdb');
 const couchdbUtil = require('./couchdbUtil');
 
 const { getKisToken, getQuoteKorea, getQuoteUS } = require('./kisConnector');
@@ -165,16 +166,15 @@ const getBalance = (name, allTransactions, transactions, date) => {
 };
 
 const updateAccountList = async () => {
+	console.time('updateAccountList');
 	console.log('updateAccountList start', new Date());
 	const accountsDB = nano.use('accounts_nanbean');
-	const transactionsDB = nano.use('transactions_nanbean');
 	const stocksDB = nano.use('stocks');
 
 	try {
 		const accountsResponse = await accountsDB.list({ include_docs: true });
 		const allAccounts = accountsResponse.rows.map(i => i.doc);
-		const transactionsResponse = await transactionsDB.list({ include_docs: true });
-		const allTransactions = transactionsResponse.rows.map(i => i.doc);
+		const allTransactions = await pouchdb.getAllTransactions();
 		const kospiResponse = await stocksDB.get('kospi');
 		const kosdaqResponse = await stocksDB.get('kosdaq');
 		const usResponse = await stocksDB.get('us');
@@ -205,6 +205,7 @@ const updateAccountList = async () => {
 		console.log(err);
 	}
 	console.log('updateAccountList done');
+	console.timeEnd('updateAccountList');
 };
 
 exports.updateInvestmentPrice = async () => {
