@@ -8,6 +8,7 @@ import { getAccountPerformance } from '../utils/performance';
 
 export function AccountInvestments ({ currency }) {
 	const account = useSelector((state) => state.account);
+	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
 	const accountInvestments = useSelector((state) => state.accountInvestments);
@@ -17,6 +18,8 @@ export function AccountInvestments ({ currency }) {
 	const totalMarketValue = accountPerformance.length > 0 ? accountPerformance.map(i => i.marketValue).reduce((a, b) => a + b) : 0;
 	const totalPeriodGain = accountPerformance.length > 0 ? accountPerformance.map(i => i.periodGain).reduce((a, b) => a + b) : 0;
 	const totalPeriodReturn = accountPerformance.length > 0 ? accountPerformance.map(i => i.periodReturn).reduce((a, b) => a + b) : 0;
+	const totalBalance = (accountList.find(i => i.name === account) || {}).balance;
+	const cash = totalBalance - totalMarketValue;
 
 	const performanceData = [
 		[
@@ -42,11 +45,21 @@ export function AccountInvestments ({ currency }) {
 			];
 		}),
 		[
+			{ type: 'label', value: 'Cash' },
+			{ type: 'label', value: '' },
+			{ type: 'label', value: '' },
+			{ type: 'label', value: '' },
+			{ type: 'currency', currency, value: cash },
+			{ type: 'label', value: '' },
+			{ type: 'label', value: '' },
+			{ type: 'label', value: '' }
+		],
+		[
 			{ type: 'label', value: '' },
 			{ type: 'label', value: '' },
 			{ type: 'label', value: '' },
 			{ type: 'currency', currency, value: totalCostBasis },
-			{ type: 'currency', currency, value: totalMarketValue },
+			{ type: 'currency', currency, value: totalBalance },
 			{ type: 'currency', currency, value: totalPeriodGain },
 			{ type: 'currency', currency, value: totalPeriodReturn },
 			{ type: 'label', value: '' }
