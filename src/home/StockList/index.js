@@ -49,7 +49,7 @@ const getInvestmentsFromAccounts = (accounts) => {
 		appraisedValue: i.appraisedValue,
 		profit: i.profit,
 		return: i.profit / i.purchasedValue
-	})).filter(({ quantity }) => quantity > 0);
+	})).filter(({ quantity }) => quantity > 0).sort((a, b) => b.appraisedValue - a.appraisedValue);
 };
 
 export function StockList () {
