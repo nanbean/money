@@ -167,7 +167,7 @@ const getBalance = (name, allTransactions, transactions, date) => {
 
 const updateAccountList = async () => {
 	console.time('updateAccountList');
-	console.log('updateAccountList start', new Date());
+	console.log('updateAccountList start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 	const accountsDB = nano.use('accounts_nanbean');
 	const stocksDB = nano.use('stocks');
 
@@ -343,7 +343,8 @@ const arrangeUSInvestmemt = async () => {
 };
 
 const updateLifeTimePlanner = async () => {
-	console.log('updateLifeTimePlanner start', new Date());
+	console.time('updateLifeTimePlanner');
+	console.log('updateLifeTimePlanner start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 	const reportsDB = nano.use('reports_nanbean');
 	let oldLifeTimePlanner;
 
@@ -368,6 +369,7 @@ const updateLifeTimePlanner = async () => {
 	await reportsDB.insert(transaction);
 
 	console.log('updateLifeTimePlanner done');
+	console.timeEnd('updateLifeTimePlanner');
 };
 
 exports.getLifetimeFlowList = async () => {
@@ -420,7 +422,7 @@ const getNetWorth = async (allAccounts, allTransactions, allInvestments, histori
 };
 
 const updateNetWorth = async () => {
-	console.log('updateNetWorth start', new Date());
+	console.log('updateNetWorth start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 	let dates = [];
 	const date = new Date();
 	const currentYear = date.getFullYear();
@@ -489,7 +491,7 @@ const updateNetWorth = async () => {
 };
 
 const arrangeHistorical = async () => {
-	console.log('arrangeHistorical start', new Date());
+	console.log('arrangeHistorical start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 	const transactionsDB = nano.use('transactions_nanbean');
 	const transactionsResponse = await transactionsDB.list({ include_docs: true });
 	const allTransactions = transactionsResponse.rows.map(i => i.doc);
@@ -531,7 +533,7 @@ const arrangeHistorical = async () => {
 	await historiesDB.bulk({
 		docs: newInvestments
 	});
-	console.log('arrangeHistorical done', new Date());
+	console.log('arrangeHistorical done', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 };
 
 new CronJob('00 33 05 1 * *', async () => {
