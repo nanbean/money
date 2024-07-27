@@ -24,7 +24,7 @@ const getInvestmentsFromAccounts = (accounts) => {
 			name: investment.name,
 			currency: account.currency,
 			quantity: investment.quantity,
-			purchasedValue: investment.appraisedValue,
+			purchasedValue: investment.purchasedValue,
 			appraisedValue: investment.appraisedValue,
 			profit: investment.appraisedValue - investment.purchasedValue
 		}))
@@ -55,6 +55,13 @@ const getInvestmentsFromAccounts = (accounts) => {
 export function StockList () {
 	const accountList = useSelector((state) => state.accountList);
 	const stockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
+	const exchangeRate = useSelector((state) => state.settings.exchangeRate);
+	const { totalProfit, totalPurchasedValue, totalAppraisedValue } = stockList.reduce((totals, investment) => {
+		totals.totalProfit += investment.currency === 'USD' ? investment.profit * exchangeRate:investment.profit;
+		totals.totalPurchasedValue += investment.currency === 'USD' ? investment.purchasedValue * exchangeRate:investment.purchasedValue;
+		totals.totalAppraisedValue += investment.currency === 'USD' ? investment.appraisedValue * exchangeRate:investment.appraisedValue;
+		return totals;
+	}, { totalProfit: 0, totalPurchasedValue: 0, totalAppraisedValue: 0 });
 
 	return (
 		<Box p={{ xs:1 }}>
@@ -79,13 +86,28 @@ export function StockList () {
 											{toCurrencyFormatWithSymbol(i.appraisedValue, i.currency)}
 										</Box>
 										<Typography variant="caption" sx={{ color: i.return > 0 ? 'rgb(125, 216, 161)':'rgb(255, 80, 0)' }}>
-											{`${Math.round(i.profit).toLocaleString()} (${(i.return* 100).toFixed(2) + '%'})`}
+											{`${toCurrencyFormatWithSymbol(Math.round(i.profit), i.currency)} (${(i.return* 100).toFixed(2) + '%'})`}
 										</Typography>
 									</TableCell>
 								</TableRow>
 							);
 						})
 					}
+					<TableRow>
+						<TableCell align="left">
+							<Box>
+								Subtotal
+							</Box>
+						</TableCell>
+						<TableCell align="right">
+							<Box>
+								{toCurrencyFormatWithSymbol(totalAppraisedValue)}
+							</Box>
+							<Typography variant="caption" sx={{ color: totalProfit > 0 ? 'rgb(125, 216, 161)':'rgb(255, 80, 0)' }}>
+								{`${Math.round(totalProfit).toLocaleString()} (${(totalProfit / totalPurchasedValue * 100).toFixed(2) + '%'})`}
+							</Typography>
+						</TableCell>
+					</TableRow>
 				</TableBody>
 			</Table>
 		</Box>

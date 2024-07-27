@@ -8,7 +8,7 @@ import InvestmentFilter from '../components/InvestmentFilter';
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
 
-import { toCurrencyFormat } from '../utils/formatting';
+import { toCurrencyFormatWithSymbol } from '../utils/formatting';
 import { getInvestmentPerformance } from '../utils/performance';
 
 
@@ -16,6 +16,7 @@ export function AllPerformance () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
 	const filteredInvestments = useSelector((state) => state.filteredInvestments);
+	const exchangeRate = useSelector((state) => state.settings.exchangeRate);
 
 	const allInvestmentsTransactions = allAccountsTransactions.filter(i => i.accountId && i.accountId.startsWith('account:Invst'));
 
@@ -41,7 +42,10 @@ export function AllPerformance () {
 		const filteredPerformance = allPerformance.length > 0 && allPerformance.filter(i => {
 			return filteredInvestments.find(j => j === i.investment);
 		});
-		const grandTotalPerformance = filteredPerformance.length > 0 ? filteredPerformance.map(l => l.totalPerformance).reduce((a, b) => a + b) : 0;
+		const grandTotalPerformance = filteredPerformance.length > 0
+			? filteredPerformance.reduce((totals, l) =>
+				totals + (l.currency === 'USD' ? l.totalPerformance * exchangeRate : l.totalPerformance), 0)
+			: 0;
 
 		return (
 			<div>
@@ -59,7 +63,7 @@ export function AllPerformance () {
 							marginRight: theme.spacing(1)
 						})}
 					>
-						Grand Total : {toCurrencyFormat(grandTotalPerformance)}
+						Grand Total : {toCurrencyFormatWithSymbol(grandTotalPerformance)}
 					</Typography>
 					{
 						filteredPerformance && filteredPerformance.map(i => {

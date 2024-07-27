@@ -12,10 +12,9 @@ const isUsDayMarketTime = () => {
 	const hour = now.hour();
 
 	// The day market trading hours for the U.S. stock market, 20:00 ~ 03:00
-	const isWeekday = day >= 1 && day <= 5;
-	const isDayMarketTime = (hour > 20) || (hour < 3);
+	const isDayMarketTime = (hour >= 20) || (hour < 3);
 
-	return isWeekday && isDayMarketTime;
+	return isDayMarketTime;
 }
 
 async function getKisToken () {
@@ -54,7 +53,7 @@ async function getKisToken () {
 	return result.access_token;
 }
 
-async function getQuoteKorea (accessToken, googleSymbol) {
+async function getKisQuoteKorea (accessToken, googleSymbol) {
 	return new Promise(async (resolve, reject) => {
 		const headers = {
 			'content-type': 'application/json; charset=utf-8',
@@ -73,7 +72,7 @@ async function getQuoteKorea (accessToken, googleSymbol) {
 	});
 }
 
-async function getQuoteUS (accessToken, googleSymbol) {
+async function getKisQuoteUS (accessToken, googleSymbol) {
 	let EXCD = '';
 	if (googleSymbol.startsWith('NYSE:')) {
 		EXCD = isUsDayMarketTime() ? 'BAY':'NYS';
@@ -99,6 +98,26 @@ async function getQuoteUS (accessToken, googleSymbol) {
 	});
 }
 
+async function getKisExchangeRate (accessToken) {
+	return new Promise(async (resolve, reject) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${accessToken}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'CTRP6504R'
+		};
+		const response = await fetch(`${KIS_URL}/uapi/overseas-stock/v1/trading/inquire-present-balance?CANO=${process.env.KIS_ACCOUNT_NO}&ACNT_PRDT_CD=01&NATN_CD=000&WCRC_FRCR_DVSN_CD=01&TR_MKET_CD=00&INQR_DVSN_CD=00`, {
+			method: 'GET',
+			headers
+		});
+		const result = await response.json();
+		console.log(result)
+		resolve(parseFloat(result.output2[0].frst_bltn_exrt));
+	});
+}
+
 exports.getKisToken = getKisToken;
-exports.getQuoteKorea = getQuoteKorea;
-exports.getQuoteUS = getQuoteUS;
+exports.getKisQuoteKorea = getKisQuoteKorea;
+exports.getKisQuoteUS = getKisQuoteUS;
+exports.getKisExchangeRate = getKisExchangeRate;

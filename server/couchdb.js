@@ -13,7 +13,7 @@ const spreadSheet = require('./spreadSheet');
 const pouchdb = require('./pouchdb');
 const couchdbUtil = require('./couchdbUtil');
 
-const { getKisToken, getQuoteKorea, getQuoteUS } = require('./kisConnector');
+const { getKisToken, getKisQuoteKorea, getKisQuoteUS, getKisExchangeRate } = require('./kisConnector');
 
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
@@ -209,6 +209,7 @@ const updateAccountList = async () => {
 };
 
 exports.updateInvestmentPrice = async () => {
+	await arrangeExchangeRate();
 	await arrangeKRInvestmemt();
 	await arrangeUSInvestmemt();
 	await updateAccountList();
@@ -292,7 +293,7 @@ const arrangeKRInvestmemt = async () => {
 	const kospiResponse = await stocksDB.get('kospi', { revs_info: true });
 	const investments = couchdbUtil.getInvestmentsFromAccounts(kospiResponse.data, allAccounts).filter(i => i.quantity > 0);
 	const accessToken = await getKisToken();
-	const promises = investments.map(i => getQuoteKorea(accessToken, i.googleSymbol));
+	const promises = investments.map(i => getKisQuoteKorea(accessToken, i.googleSymbol));
 	const results = await Promise.all(promises);
 
 	await stocksDB.insert({
@@ -322,7 +323,7 @@ const arrangeUSInvestmemt = async () => {
 	const usResponse = await stocksDB.get('us', { revs_info: true });
 	const investments  = couchdbUtil.getInvestmentsFromAccounts(usResponse.data, allAccounts).filter(i => i.quantity > 0);
 	const accessToken = await getKisToken();
-	const promises = investments.map(i => getQuoteUS(accessToken, i.googleSymbol));
+	const promises = investments.map(i => getKisQuoteUS(accessToken, i.googleSymbol));
 	const results = await Promise.all(promises);
 
 	await stocksDB.insert({
@@ -341,6 +342,22 @@ const arrangeUSInvestmemt = async () => {
 		})
 	});
 };
+
+const arrangeExchangeRate = async () => {
+	const settingsDB = nano.use('settings_nanbean');
+	const settingsResponse = await settingsDB.list({ include_docs: true });
+	const settings = settingsResponse.rows.map(i => i.doc);
+	const exchangeRate = settings.find(i => i._id === 'exchangeRate');
+
+	const accessToken = await getKisToken();
+	const kisExchangeRate = await getKisExchangeRate(accessToken);
+	if (kisExchangeRate) {
+		exchangeRate.dollorWon = kisExchangeRate;
+		await settingsDB.insert(exchangeRate);
+	}
+};
+
+exports.arrangeExchangeRate = arrangeExchangeRate;
 
 const updateLifeTimePlanner = async () => {
 	console.time('updateLifeTimePlanner');
@@ -557,6 +574,7 @@ new CronJob('30 30 15 * * 1-5', async () => {
 		 */
 	console.log('couchdb 30 30 15 daily dailyArrangeInvestmemtjob started');
 	if (!calendar.isHoliday()) {
+		await arrangeExchangeRate();
 		await arrangeKRInvestmemt();
 		await arrangeUSInvestmemt();
 		await updateAccountList();
@@ -579,6 +597,8 @@ new CronJob('30 00 13 * * 1-5', async () => {
 		 */
 	console.log('couchdb 30 00 13 daily dailyArrangeInvestmemtjob started');
 	if (!calendar.isUsHoliday()) {
+		await arrangeExchangeRate();
+		await arrangeUSInvestmemt();
 		await updateAccountList();
 		await sendBalanceUpdateNotification();
 		await updateLifeTimePlanner();
