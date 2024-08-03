@@ -3,7 +3,6 @@ const nano = require('nano')(`https://${config.couchDBAdminId}:${config.couchDBA
 const CronJob = require('cron').CronJob;
 const moment = require('moment-timezone');
 const _ = require('lodash');
-const ping = require('ping');
 
 const messaging = require('./messaging');
 const calendar = require('./calendar');
@@ -610,21 +609,3 @@ new CronJob('30 00 13 * * 1-5', async () => {
 	/* This function is executed when the job stops */
 	console.log('30 00 13 daily dailyArrangeInvestmemtjob ended');
 }, true, 'America/Los_Angeles');
-
-new CronJob('00 00 * * * *', async () => {
-	/*
-		 * server alive check
-		 * Runs week day (Monday through Friday)
-		 * at 05:00:00 AM.
-		 */
-	ping.sys.probe('rdp.nanbean.net', function (isAlive) {
-		if (!isAlive) {
-			console.log('rdp.nanbean.net server is dead');
-			messaging.sendNotification('Check server', 'ping error', 'error');
-		}
-	});
-
-}, () => {
-	/* This function is executed when the job stops */
-	console.log(' 00 00 hourly servercheck ended');
-}, true, 'Asia/Seoul');

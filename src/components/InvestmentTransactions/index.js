@@ -80,7 +80,7 @@ export function InvestmentTransactions ({
 										>
 											{cellData.investment}
 										</Typography >
-										<Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
+										<Typography variant="caption" sx={{ color: 'grey.500' }}>
 											{toDateFormat(cellData.date)}
 										</Typography>
 									</React.Fragment>
@@ -138,7 +138,7 @@ export function InvestmentTransactions ({
 								return (
 									<React.Fragment>
 										<Amount value={cellData.amount} showColor={false} showSymbol currency={currency} />
-										<Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
+										<Typography variant="caption" sx={{ color: 'grey.500' }}>
 											{`${cellData.price} * ${cellData.amount.toLocaleString()}`}
 										</Typography>
 									</React.Fragment>

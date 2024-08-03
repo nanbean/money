@@ -106,7 +106,7 @@ export function BankTransactions ({
 								return (
 									<Stack>
 										<Amount value={cellData.amount} showSymbol />
-										<Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
+										<Typography variant="caption" sx={{ color: 'grey.500' }}>
 											{toDateFormat(cellData.date)}
 										</Typography>
 									</Stack>

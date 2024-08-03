@@ -84,7 +84,7 @@ export function LastTransactions () {
 									{toCurrencyFormatWithSymbol(row.amount, row.currency)}
 								</Box>
 								{
-									isWidthDownLg && <Typography variant="caption" sx={{ color: 'rgb(158, 158, 164)' }}>
+									isWidthDownLg && <Typography variant="caption" sx={{ color: 'grey.500' }}>
 										{moment(row.date).format('MM-DD')}
 									</Typography>
 								}

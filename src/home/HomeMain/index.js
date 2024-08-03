@@ -12,6 +12,7 @@ import LatestTransactions from '../LatestTransactions';
 import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
 import StockList from '../StockList';
+import PaymentList from '../PaymentList';
 
 import Container from '../../components/Container';
 import TitleHeader from '../../components/TitleHeader';
@@ -22,7 +23,8 @@ import {
 	changeLatestTransactionsExpanded,
 	changeSummaryExpanded,
 	changeWeeklyGraphExpanded,
-	changeStockListExpanded
+	changeStockListExpanded,
+	changePaymentListExpanded
 } from '../../actions/ui/homeActions';
 
 const panels = [
@@ -30,7 +32,8 @@ const panels = [
 	{ key: 'weeklyGraphExpanded', component: WeeklyGraph, title: 'Weekly Graph', action: changeWeeklyGraphExpanded },
 	{ key: 'latestTransactionsExpanded', component: LatestTransactions, title: 'Latest Transactions', action: changeLatestTransactionsExpanded },
 	{ key: 'accountsExpanded', component: AccountList, title: 'Accounts', action: changeAccountsExpanded },
-	{ key: 'stockListExpanded', component: StockList, title: 'Stock List', action: changeStockListExpanded }
+	{ key: 'stockListExpanded', component: StockList, title: 'Stock List', action: changeStockListExpanded },
+	{ key: 'paymentListExpanded', component: PaymentList, title: 'Payment List', action: changePaymentListExpanded }
 ];
 
 export function HomeMain () {
