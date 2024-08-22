@@ -10,7 +10,7 @@ import Amount from '../Amount';
 
 import useWidth from '../../hooks/useWidth';
 
-import { toDateFormat } from '../../utils/formatting';
+import { toDateFormat, toCurrencyFormatWithSymbol } from '../../utils/formatting';
 
 import {
 	openTransactionInModal
@@ -139,7 +139,7 @@ export function InvestmentTransactions ({
 									<React.Fragment>
 										<Amount value={cellData.amount} showColor={false} showSymbol currency={currency} />
 										<Typography variant="caption" sx={{ color: 'grey.500' }}>
-											{`${cellData.price} * ${cellData.amount.toLocaleString()}`}
+											{`${toCurrencyFormatWithSymbol(cellData.price, currency)} * ${cellData.quantity}`}
 										</Typography>
 									</React.Fragment>
 								);

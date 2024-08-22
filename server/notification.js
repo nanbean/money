@@ -4,6 +4,23 @@ const uuidv1 = require('uuid/v1');
 const messaging = require('./messaging');
 const couchdb = require('./couchdb');
 
+const {
+	GoogleGenerativeAI,
+	HarmCategory,
+	HarmBlockThreshold,
+} = require('@google/generative-ai');
+
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
+
+const generationConfig = {
+	temperature: 1,
+	topP: 0.95,
+	topK: 64,
+	maxOutputTokens: 8192,
+	responseMimeType: "text/plain",
+};
+
 const _lastTransaction = {
 	packageName: '',
 	text: '',
@@ -26,7 +43,25 @@ const setLastTransaction = (body) => {
 	_lastTransaction.date = new Date();
 }
 
-const findCategoryByPayee = (transactions, transaction) => {
+const findCategoryFromGemini = async (transaction) => {
+	const categoryList = await couchdb.getCategoryList();
+	const categoryListString = categoryList.filter(item => !item.startsWith("[")).join(", ");
+	const model = genAI.getGenerativeModel({
+		model: 'gemini-1.5-flash',
+		systemInstruction: 'Below are the categories. Just respond with the category only. If you can\'t find the category, reply with 분류없음\n' +
+		categoryListString
+	});
+
+	const chatSession = model.startChat({
+		generationConfig,
+		history: [],
+	  });
+
+	  const result = await chatSession.sendMessage(`What is the best category for ${transaction.payee}?`);
+	  return result.response.text().replace(/\s+$/g, '');
+}
+
+const findCategoryByPayee = async (transactions, transaction) => {
 	const matchTransaction = transactions.find(i => i.payee === transaction.payee || i.originalPayee === transaction.payee);
 	if (matchTransaction) {
 		if (matchTransaction.payee !== transaction.payee) {
@@ -39,45 +74,15 @@ const findCategoryByPayee = (transactions, transaction) => {
 		if (matchTransaction.subcategory) {
 			transaction.subcategory = matchTransaction.subcategory;
 		}
-	} else if (transaction.payee.match(/홈플러스/) || transaction.payee.match(/이마트/) ||
-						transaction.payee.match(/롯데마트/) || transaction.payee.match(/코스트코/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '식료품';
-	} else if (transaction.payee.match(/COSTCO WHSE/i) || transaction.payee.match(/HANKOOK SUPERMARKET/i) ||
-						transaction.payee.match(/WAL-MART/i) || transaction.payee.match(/SAFEWAY/i) || 
-						transaction.payee.match(/H MART/i) || transaction.payee.match(/WHOLEFDS/i) ||
-						transaction.payee.match(/TARGET/i) || transaction.payee.match(/TRADER JOE/i)) {
-		transaction.category = '식비';
-		transaction.subcategory = '식료품';
-	} else if (transaction.payee.match(/스타벅스/) || transaction.payee.match(/이디야/) ||
-						transaction.payee.match(/투썸플레이스/) || transaction.payee.match(/탐앤탐스/) ||
-						transaction.payee.match(/빽다방/) || transaction.payee.match(/셀렉토/) ||
-						transaction.payee.match(/카페/) || transaction.payee.match(/커피/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '군것질';
-	} else if (transaction.payee.match(/위드미/) || transaction.payee.match(/씨유/) ||
-						transaction.payee.match(/미니스톱/) || transaction.payee.match(/세븐일레븐/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '군것질';
-	} else if (transaction.payee.match(/STARBUCKS/i) || transaction.payee.match(/KRISPY KREME/i)) {
-		transaction.category = '식비';
-		transaction.subcategory = '군것질';
-	} else if (transaction.payee.match(/맥도날드/) || transaction.payee.match(/VIPS/) ||
-						transaction.payee.match(/본죽/) || transaction.payee.match(/신촌설렁탕/) ||
-						transaction.payee.match(/아웃백/) || transaction.payee.match(/계절밥상/)) {
-		transaction.category = '식비';
-		transaction.subcategory = '외식';
-	} else if (transaction.payee.match(/POPEYES/i) || transaction.payee.match(/PANDA EXPRESS/i) ||
-						transaction.payee.match(/CHICK-FIL-A/i) || transaction.payee.match(/IN N OUT BURGER/i) ||
-						transaction.payee.match(/TACO BELL/i)) {
-		transaction.category = '식비';
-		transaction.subcategory = '외식';
-	} else if (transaction.payee.match(/주유소/) || transaction.payee.match(/SK네트웍스/)) {
-		transaction.category = '교통비';
-		transaction.subcategory = '연료비';
-	} else if (transaction.payee.match(/COSTCO GAS/i) || transaction.payee.match(/ARCO/i)) {
-		transaction.category = '교통비';
-		transaction.subcategory = '연료비';
+	} else {
+		const category = await findCategoryFromGemini(transaction);
+		console.log("category from Gemini: ", category);
+		const splitCategory = category.split(':');
+
+		transaction.category = splitCategory[0];
+		if (splitCategory.length > 1) {
+			transaction.subcategory = splitCategory[1];
+		}
 	}
 
 	return transaction;
@@ -170,6 +175,17 @@ exports.addTransaction = async function (body) {
 				payee: body.text.match(/ at ([^;]+)/)[1].replace(/.$/,''),
 				category: '분류없음'
 			};
+		} else if (body.packageName.match(/com\.robinhood\.money/i)) {
+			account = 'BoA';
+			const dollorMatch = body.text.replace(',', '').match(/\$([\d,]+\.\d{2})/);
+			if (body.title && dollorMatch) {
+				transaction = {
+					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+					amount: dollorMatch[1] * (-1),
+					payee: body.title,
+					category: '분류없음'
+				};
+			}
 		} else if (body.text.match(/삼성체크/g)) {
 			account = '생활비카드';
 			items = body.text.split('\n');
@@ -266,7 +282,7 @@ exports.addTransaction = async function (body) {
 
 		if (account && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
 			const couchTransactions = await couchdb.getTransactions();
-			transaction = findCategoryByPayee(couchTransactions, transaction);
+			transaction = await findCategoryByPayee(couchTransactions, transaction);
 			transaction._id = `${transaction.date}:${account}:${uuidv1()}`;
 			transaction.accountId = (account === '급여계좌' || account === 'BoA') ?`account:Bank:${account}` : `account:CCard:${account}`;
 			await couchdb.addTransaction(transaction);

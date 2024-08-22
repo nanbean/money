@@ -105,7 +105,7 @@ export function BankTransactions ({
 							if (isWidthDownMd) {
 								return (
 									<Stack>
-										<Amount value={cellData.amount} showSymbol />
+										<Amount value={cellData.amount} showSymbol currency={currency}/>
 										<Typography variant="caption" sx={{ color: 'grey.500' }}>
 											{toDateFormat(cellData.date)}
 										</Typography>

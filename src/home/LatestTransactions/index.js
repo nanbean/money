@@ -17,8 +17,6 @@ import {
 	openTransactionInModal
 } from '../../actions/ui/form/bankTransaction';
 
-import useWidth from '../../hooks/useWidth';
-
 import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
 
 import { TYPE_ICON } from '../../constants';
@@ -37,8 +35,6 @@ export function LastTransactions () {
 	const latestTransactions = useSelector((state) => state.latestTransactions);
 	const updatedTransactions = useMemo(() => updateTransactionsWithAccounts(latestTransactions, accountList), [accountList, latestTransactions]);
 	const dispatch = useDispatch();
-	const width = useWidth();
-	const isWidthDownLg = width === 'xs' || width === 'sm' || width === 'md' || width === 'lg';
 
 	const onRowSelect = (index) => () => {
 		const transaction = updatedTransactions[index];
@@ -69,13 +65,6 @@ export function LastTransactions () {
 									</Typography >
 								</Stack>
 							</TableCell>
-							{
-								!isWidthDownLg &&  <TableCell align="center">
-									<span>
-										{moment(row.date).format('MM-DD')}
-									</span>
-								</TableCell>
-							}
 							<TableCell align="center">
 								<Payee category={row.category} value={row.payee} />
 							</TableCell>
@@ -83,11 +72,9 @@ export function LastTransactions () {
 								<Box>
 									{toCurrencyFormatWithSymbol(row.amount, row.currency)}
 								</Box>
-								{
-									isWidthDownLg && <Typography variant="caption" sx={{ color: 'grey.500' }}>
-										{moment(row.date).format('MM-DD')}
-									</Typography>
-								}
+								<Typography variant="caption" sx={{ color: 'grey.500' }}>
+									{moment(row.date).format('MM-DD')}
+								</Typography>
 							</TableCell>
 						</TableRow>
 					))}

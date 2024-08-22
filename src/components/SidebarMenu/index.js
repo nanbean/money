@@ -86,6 +86,7 @@ const Toolbar = styled('div')(({ theme }) => ({
 
 function SidebarMenu ()
 {
+	const username = useSelector((state) => state.username);
 	const isSidebarOpen = useSelector((state) => state.ui.isSidebarOpen);
 	const dispatch = useDispatch();
 	const isMobile = useMobile();
@@ -97,7 +98,7 @@ function SidebarMenu ()
 		}
 	};
 
-	const onRefreshClickHandler = () => dispatch(updateInvestmentPriceAction());
+	const onRefreshClickHandler = () => username && dispatch(updateInvestmentPriceAction());
 
 	return (
 		<Drawer

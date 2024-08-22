@@ -50,7 +50,7 @@ export function HomeMain () {
 		<>
 			<TitleHeader title="Home" />
 			<Container>
-				<Masonry columns={{ xs: 1, sm: 1, md: 2, lg: 3 }}>
+				<Masonry columns={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }}>
 					{panels.map(({ key, component: Component, title, action }) => (
 						<Paper key={key}>
 							<Accordion

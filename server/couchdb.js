@@ -276,6 +276,17 @@ const getExchangeRate = async () => {
 	return 1000;
 };
 
+exports.getCategoryList = async () => {
+	const settings = await getSettings();
+	const categoryList = settings.find(i => i._id === 'categoryList');
+
+	if (categoryList && categoryList.data) {
+		return categoryList.data;
+	}
+
+	return [];
+};
+
 const sendBalanceUpdateNotification = async () => {
 	const allAccounts = await getAllAccounts();
 	const exchangeRate = await getExchangeRate();
