@@ -60,7 +60,7 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 		return result.tokens;
 	});
 
-	const payload = {
+	const message = {
 		data: {
 			icon: `https://money.nanbean.net/${type}.png`,
 			badge: 'https://money.nanbean.net/badge.png',
@@ -69,5 +69,12 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 			click_action: `./${target}`
 		}
 	};
-	admin.messaging().sendToDevice(tokens, payload);
+
+	const sendPromises = tokens.map(async (token) => {
+		const tokenMessage = { ...message, token };
+		return await admin.messaging().send(tokenMessage);
+	});
+
+	const results = await Promise.all(sendPromises);
+	return results;
 }
