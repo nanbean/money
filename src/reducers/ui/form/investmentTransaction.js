@@ -49,17 +49,17 @@ export default handleActions(
 		[changeQuantity]: (state, { payload }) => ({
 			...state,
 			quantity: payload,
-			amount: state.price * payload + (state.activity === 'Buy' ? (1) : (-1)) * (state.commission ? state.commission : 0)
+			amount: Number((state.price * payload + (state.activity === 'Buy' ? (1) : (-1)) * (state.commission ? state.commission : 0)).toFixed(2))
 		}),
 		[changePrice]: (state, { payload }) => ({
 			...state,
 			price: payload,
-			amount: payload * state.quantity + (state.activity === 'Buy' ? (1) : (-1)) * (state.commission ? state.commission : 0)
+			amount: Number((payload * state.quantity + (state.activity === 'Buy' ? (1) : (-1)) * (state.commission ? state.commission : 0)).toFixed(2))
 		}),
 		[changeCommission]: (state, { payload }) => ({
 			...state,
 			commission: payload,
-			amount: state.price * state.quantity + (state.activity === 'Buy' ? (1) : (-1)) * (payload ? payload : 0)
+			amount: Number((state.price * state.quantity + (state.activity === 'Buy' ? (1) : (-1)) * (payload ? payload : 0)).toFixed(2))
 		}),
 		[changeAmount]: (state, { payload }) => ({
 			...state,

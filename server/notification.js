@@ -109,7 +109,7 @@ exports.addTransaction = async function (body) {
 		// const items = text.replace('\n', ' ').split(' ');
 		// const payee = items & item.length > 0 && item[item.length - 1];
 
-		console.log(body.text);
+		console.log(body.title, body.text);
 
 		if (body.text.match(/승인취소/g)) {
 			// do nothing
@@ -177,8 +177,8 @@ exports.addTransaction = async function (body) {
 			};
 		} else if (body.packageName.match(/com\.robinhood\.money/i)) {
 			account = 'BoA';
-			const dollorMatch = body.text.replace(',', '').match(/\$([\d,]+\.\d{2})/);
-			if (body.title && dollorMatch) {
+			const dollorMatch = body.text.replace(',', '').match(/\$(\d+(?:\.\d+)?)/);
+			if (body.title !== 'Upcoming payment' && body.title && dollorMatch) {
 				transaction = {
 					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 					amount: dollorMatch[1] * (-1),
@@ -284,11 +284,12 @@ exports.addTransaction = async function (body) {
 			const couchTransactions = await couchdb.getTransactions();
 			transaction = await findCategoryByPayee(couchTransactions, transaction);
 			transaction._id = `${transaction.date}:${account}:${uuidv1()}`;
-			transaction.accountId = (account === '급여계좌' || account === 'BoA') ?`account:Bank:${account}` : `account:CCard:${account}`;
+			transaction.accountId = (account === '급여계좌' || account === 'BoA') ? `account:Bank:${account}` : `account:CCard:${account}`;
 			await couchdb.addTransaction(transaction);
 			await couchdb.addNotification({
 				_id: `${transaction.date}:${uuidv1()}`,
 				packageName: body.packageName,
+				title: body.title,
 				text: body.text,
 				transaction: transaction
 			});

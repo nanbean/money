@@ -132,15 +132,17 @@ export function InvestmentTransactions ({
 						width={isWidthDownMd ? width/5*2:width/6}
 						label="Amount"
 						dataKey="amount"
-						cellDataGetter={({ rowData }) => ({ quantity: rowData.quantity, price: rowData.price, amount: rowData.amount })}
+						cellDataGetter={({ rowData }) => ({ activity: rowData.activity, quantity: rowData.quantity, price: rowData.price, amount: rowData.amount })}
 						cellRenderer={({ cellData }) => {
 							if (isWidthDownMd) {
 								return (
 									<React.Fragment>
 										<Amount value={cellData.amount} showColor={false} showSymbol currency={currency} />
-										<Typography variant="caption" sx={{ color: 'grey.500' }}>
-											{`${toCurrencyFormatWithSymbol(cellData.price, currency)} * ${cellData.quantity}`}
-										</Typography>
+										{
+											(cellData.activity === 'Buy' || cellData.activity === 'Sell') && <Typography variant="caption" sx={{ color: 'grey.500' }}>
+												{`${toCurrencyFormatWithSymbol(cellData.price, currency)} * ${cellData.quantity}`}
+											</Typography>
+										}
 									</React.Fragment>
 								);
 							} else {
