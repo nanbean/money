@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, Outlet } from 'react-router-dom';
 
 import { styled } from '@mui/material/styles';
 
@@ -36,6 +36,13 @@ const Toolbar = styled('div')(({ theme }) => ({
 	...theme.mixins.toolbar
 }));
 
+const Layout = () => (
+	<>
+		<Toolbar />
+		<Outlet />
+	</>
+);
+
 // eslint-disable-next-line react/display-name
 function RoutesMain () {
 	return (
@@ -44,24 +51,29 @@ function RoutesMain () {
 				<CssBaseline />
 				<SidebarMenu />
 				<Content>
-					<Toolbar />
 					<Routes>
-						<Route path="/" element={<HomeMain />} />
-						{
-							BANK_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Bank />} />))
-						}
-						{
-							INVEST_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Investment />} />))
-						}
-						<Route exact path="/networth" element={<NetWorth />} />
-						<Route path="/lifetimeplanner" element={<LifetimePlanner />} />
-						<Route path="/performance/:investment" element={<Performance />} />
-						<Route exact path="/allperformance" element={<AllPerformance />} />
-						<Route exact path="/report" element={<ReportMain />} />
-						<Route exact path="/report/:tab" element={<ReportMain />} />
-						<Route exact path="/search" element={<Search />} />
-						<Route exact path="/setting" element={<SettingMain />} />
-						<Route exact path="/setting/:tab" element={<SettingMain />} />
+						<Route path="/" element={<Layout />}>
+							<Route path="/" element={<HomeMain />} />
+							{
+								BANK_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Bank />} />))
+							}
+							{
+								INVEST_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Investment />} />))
+							}
+							<Route path="/networth" element={<NetWorth />} />
+							<Route path="/lifetimeplanner" element={<LifetimePlanner />} />
+							<Route path="/performance/:investment" element={<Performance />} />
+							<Route path="/allperformance" element={<AllPerformance />} />
+							<Route path="/search" element={<Search />} />
+						</Route>
+						<Route path="/report" element={<Layout />}>
+							<Route path="/report" element={<ReportMain />} />
+							<Route path="/report/:tab" element={<ReportMain />} />
+						</Route>
+						<Route path="/setting" element={<Layout />}>
+							<Route path="/setting" element={<SettingMain />} />
+							<Route path="/setting/:tab" element={<SettingMain />} />
+						</Route>
 						<Route exact path="/signin" element={<Signin />} />
 					</Routes>
 				</Content>
