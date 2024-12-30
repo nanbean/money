@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { Link, useLocation, useParams } from 'react-router-dom';
 
+import { CSVLink } from 'react-csv';
+
 import { styled } from '@mui/material/styles';
 
 import Box from '@mui/material/Box';
@@ -46,6 +48,16 @@ const Sticky = styled('div')(({ theme }) => ({
 	}
 }));
 
+const csvHeaders = [
+	{ label: 'Date', key: 'date' },
+	{ label: 'Investment', key: 'investment' },
+	{ label: 'Activity', key: 'activity' },
+	{ label: 'Quantity', key: 'quantity' },
+	{ label: 'Price', key: 'price' },
+	{ label: 'Amount', key: 'amount' },
+	{ label: 'Commission', key: 'commission' }
+];
+
 const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
 const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
 const getCurrencyByAccountId = (accountId, accountList) => {
@@ -85,7 +97,7 @@ export function Investment () {
 			<Container>
 				<Paper>
 					<Sticky>
-						<div style={{ display: 'inline-block', width: '50%' }}>
+						<div style={{ display: 'inline-block', width: '40%' }}>
 							<Button
 								fullWidth
 								variant="outlined"
@@ -101,7 +113,7 @@ export function Investment () {
 								/>
 							</Button>
 						</div>
-						<div style={{ display: 'inline-block', width: '50%' }}>
+						<div style={{ display: 'inline-block', width: '40%' }}>
 							<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
 								<Button
 									fullWidth
@@ -117,6 +129,23 @@ export function Investment () {
 									/>
 								</Button>
 							</Link>
+						</div>
+						<div style={{ display: 'inline-block', width: '20%' }}>
+							<Button
+								fullWidth
+								variant="outlined"
+								color="primary"
+								sx={{ backdropFilter: 'blur(5px)' }}
+							>
+								<CSVLink
+									data={accountTransactions}
+									headers={csvHeaders}
+									filename="transactions.csv"
+									style={{ color: 'inherit', textDecoration: 'none' }}
+								>
+									CSV
+								</CSVLink>
+							</Button>
 						</div>
 					</Sticky>
 					<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
