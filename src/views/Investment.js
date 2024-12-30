@@ -18,6 +18,8 @@ import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 
+import useHeight from '../hooks/useHeight';
+
 import { setAccountAction } from '../actions/accountActions';
 
 import {
@@ -58,6 +60,7 @@ export function Investment () {
 	const dropInvestmentList = useSelector((state) => state.dropInvestmentList);
 	const isEdit = useSelector((state) => state.ui.form.investmentTransaction.isEdit);
 	const isModalOpen = useSelector((state) => state.ui.form.investmentTransaction.isModalOpen);
+	const transactionsHeight = useHeight() - 350 - 64 - 64 - 56; // TODO: Optimize calculation
 
 	const { name } = useParams();
 	const { pathname } = useLocation();
@@ -88,6 +91,7 @@ export function Investment () {
 								variant="outlined"
 								color="primary"
 								onClick={onNewClick}
+								sx={{ backdropFilter: 'blur(5px)' }}
 							>
 								New
 								<AddIcon
@@ -103,6 +107,7 @@ export function Investment () {
 									fullWidth
 									variant="outlined"
 									color="primary"
+									sx={{ backdropFilter: 'blur(5px)' }}
 								>
 									Cash
 									<MoneyIcon
@@ -114,7 +119,7 @@ export function Investment () {
 							</Link>
 						</div>
 					</Sticky>
-					<Box sx={{ height: '50vh', textAlign: 'center' }}>
+					<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
 						<InvestmentTransactions
 							transactions={accountTransactions}
 							currency={currency}

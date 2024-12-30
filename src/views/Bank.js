@@ -17,6 +17,8 @@ import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 
+import useHeight from '../hooks/useHeight';
+
 import { setAccountAction } from '../actions/accountActions';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
 
@@ -49,6 +51,7 @@ export function Bank () {
 	const dropPayeeList = useSelector((state) => state.dropPayeeList);
 	const isModalOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen,);
 	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
+	const transactionsHeight = useHeight() - 64 - 64 - 56; // TODO: Optimize calculation
 
 	let { name } = useParams();
 	let { pathname } = useLocation();
@@ -87,7 +90,7 @@ export function Bank () {
 							/>
 						</Button>
 					</Sticky>
-					<Box sx={{ height: '79vh', textAlign: 'center' }}>
+					<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
 						<BankTransactions
 							account={account}
 							currency={currency}
