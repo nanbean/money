@@ -97,7 +97,7 @@ export function Investment () {
 			<Container>
 				<Paper>
 					<Sticky>
-						<div style={{ display: 'inline-block', width: '40%' }}>
+						<div style={{ display: 'inline-block', width: '35%' }}>
 							<Button
 								fullWidth
 								variant="outlined"
@@ -113,7 +113,7 @@ export function Investment () {
 								/>
 							</Button>
 						</div>
-						<div style={{ display: 'inline-block', width: '40%' }}>
+						<div style={{ display: 'inline-block', width: '35%' }}>
 							<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
 								<Button
 									fullWidth
@@ -130,7 +130,7 @@ export function Investment () {
 								</Button>
 							</Link>
 						</div>
-						<div style={{ display: 'inline-block', width: '20%' }}>
+						<div style={{ display: 'inline-block', width: '30%' }}>
 							<Button
 								fullWidth
 								variant="outlined"
@@ -143,7 +143,7 @@ export function Investment () {
 									filename="transactions.csv"
 									style={{ color: 'inherit', textDecoration: 'none' }}
 								>
-									CSV
+									Export CSV
 								</CSVLink>
 							</Button>
 						</div>
