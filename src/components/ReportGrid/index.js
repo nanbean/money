@@ -65,7 +65,7 @@ export function ReportGrid ({
 	const navigate = useNavigate();
 	const width = useWidth();
 	const isWidthUpLg = width !== 'xs' && width !== 'sm' && width !== 'md';
-	const reportHeight = useHeight() - 64 - 64 - 64 - 64; // TODO: Optimize calculation
+	const reportHeight = useHeight() - 64 - 64 - 64 - 100; // TODO: Optimize calculation
 
 	return (
 		<div
