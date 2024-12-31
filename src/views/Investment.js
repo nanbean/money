@@ -12,6 +12,7 @@ import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import MoneyIcon from '@mui/icons-material/Money';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import AccountInvestments from './AccountInvestments';
 import TitleHeader from '../components/TitleHeader';
@@ -58,6 +59,8 @@ const csvHeaders = [
 	{ label: 'Commission', key: 'commission' }
 ];
 
+const ROW_HEIGHT = 60;
+
 const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
 const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
 const getCurrencyByAccountId = (accountId, accountList) => {
@@ -72,7 +75,9 @@ export function Investment () {
 	const dropInvestmentList = useSelector((state) => state.dropInvestmentList);
 	const isEdit = useSelector((state) => state.ui.form.investmentTransaction.isEdit);
 	const isModalOpen = useSelector((state) => state.ui.form.investmentTransaction.isModalOpen);
-	const transactionsHeight = useHeight() - 350 - 64 - 64 - 56; // TODO: Optimize calculation
+	const accountInvestments = useSelector((state) => state.accountInvestments);
+	const performanceRowCount = accountInvestments.filter(i => i.quantity > 0).length + 3; // 3 : Header, Cash, Total
+	const transactionsHeight = useHeight() - ROW_HEIGHT * performanceRowCount - 64 - 64 - 56; // TODO: Optimize calculation
 
 	const { name } = useParams();
 	const { pathname } = useLocation();
@@ -131,21 +136,26 @@ export function Investment () {
 							</Link>
 						</div>
 						<div style={{ display: 'inline-block', width: '30%' }}>
-							<Button
-								fullWidth
-								variant="outlined"
-								color="primary"
-								sx={{ backdropFilter: 'blur(5px)' }}
+							<CSVLink
+								data={accountTransactions}
+								headers={csvHeaders}
+								filename="transactions.csv"
+								style={{ color: 'inherit', textDecoration: 'none' }}
 							>
-								<CSVLink
-									data={accountTransactions}
-									headers={csvHeaders}
-									filename="transactions.csv"
-									style={{ color: 'inherit', textDecoration: 'none' }}
+								<Button
+									fullWidth
+									variant="outlined"
+									color="primary"
+									sx={{ backdropFilter: 'blur(5px)' }}
 								>
-									Export CSV
-								</CSVLink>
-							</Button>
+									CSV
+									<FileDownloadIcon
+										sx={(theme) => ({
+											marginLeft: theme.spacing(1)
+										})}
+									/>
+								</Button>
+							</CSVLink>
 						</div>
 					</Sticky>
 					<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>

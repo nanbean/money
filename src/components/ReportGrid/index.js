@@ -8,6 +8,7 @@ import TableContainer from '@mui/material/TableContainer';
 import Typography from '@mui/material/Typography';
 
 import useWidth from '../../hooks/useWidth';
+import useHeight from '../../hooks/useHeight';
 
 import Amount from '../Amount';
 
@@ -64,12 +65,13 @@ export function ReportGrid ({
 	const navigate = useNavigate();
 	const width = useWidth();
 	const isWidthUpLg = width !== 'xs' && width !== 'sm' && width !== 'md';
+	const reportHeight = useHeight() - 64 - 64 - 64 - 64; // TODO: Optimize calculation
 
 	return (
 		<div
 			style={{
 				display: 'flex',
-				height: '65vh',
+				height: reportHeight,
 				textAlign: 'center'
 			}}
 		>

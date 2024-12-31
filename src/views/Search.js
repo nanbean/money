@@ -23,6 +23,8 @@ import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import AccountFilter from '../components/AccountFilter';
 
+import useHeight from '../hooks/useHeight';
+
 import { toCurrencyFormat } from '../utils/formatting';
 
 const Sticky = styled('div')(({ theme }) => ({
@@ -53,6 +55,7 @@ export function Search () {
 	const startDate = searchParams.get('startDate') || '';
 	const endDate = searchParams.get('endDate') || '';
 	const balance = filteredTransactions.length > 0 && filteredTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
+	const transactionHeight = useHeight() - 64 - 64 - 64 - 200; // TODO: Optimize calculation
 
 	useEffect(() => {
 		updateFilteredTransactions(filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
@@ -288,7 +291,7 @@ export function Search () {
 							</Grid>
 						</Grid>
 					</Sticky>
-					<Box sx={{ height: '50vh', textAlign: 'center' }}>
+					<Box sx={{ height: transactionHeight, textAlign: 'center' }}>
 						{
 							filteredTransactions.length > 0 &&
 							<BankTransactions

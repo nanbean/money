@@ -14,6 +14,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import AddIcon from '@mui/icons-material/Add';
 
+import useHeight from '../../hooks/useHeight';
+
 import {
 	addCategoryAction,
 	deleteCategoryAction,
@@ -27,6 +29,8 @@ export function Category () {
 	const [dialogEdit, setDialogEdit] = useState(false);
 	const [newCategoryInput, setNewCategoryInput] = useState('');
 	const rows = useMemo(() => categoryList.map((i, index) => ({ id: index, category: i.key })), [categoryList]);
+	const categoryHeight = useHeight() - 64 - 64 - 64; // TODO: Optimize calculation
+
 	const dispatch = useDispatch();
 
 	const onRowSelect = ({ index }) => {
@@ -75,7 +79,7 @@ export function Category () {
 	return (
 		<Box
 			sx={() => ({
-				height:'80vh'
+				height: categoryHeight
 			})}
 		>
 			<Button
