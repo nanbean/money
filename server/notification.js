@@ -47,8 +47,8 @@ const findCategoryFromGemini = async (transaction) => {
 	const categoryList = await couchdb.getCategoryList();
 	const categoryListString = categoryList.filter(item => !item.startsWith("[")).join(", ");
 	const model = genAI.getGenerativeModel({
-		model: 'gemini-1.5-flash',
-		systemInstruction: 'Below are the categories. Just respond with the category only. If you can\'t find the category, reply with 분류없음\n' +
+		model: 'gemini-2.0-flash',
+		systemInstruction: 'Below are the expense categories. Just respond with the category only. If you can\'t find the category, reply with 분류없음\n' +
 		categoryListString
 	});
 
@@ -57,7 +57,7 @@ const findCategoryFromGemini = async (transaction) => {
 		history: [],
 	  });
 
-	  const result = await chatSession.sendMessage(`What is the best category for ${transaction.payee}?`);
+	  const result = await chatSession.sendMessage(`What is the best expense category for ${transaction.payee}?`);
 	  return result.response.text().replace(/\s+$/g, '');
 }
 
@@ -87,6 +87,16 @@ const findCategoryByPayee = async (transactions, transaction) => {
 
 	return transaction;
 };
+
+const formatNotification = (transaction) => {
+	if (!transaction) {
+		return '';
+	}
+
+	const { amount, payee, category, subcategory } = transaction;
+
+	return `amount: ${amount},\npayee: ${payee},\n\category: ${category}:${subcategory ? subcategory:''}`;
+}
 
 exports.addTransaction = async function (body) {
 	let result = false;
@@ -299,7 +309,7 @@ exports.addTransaction = async function (body) {
 			result = false;
 		}
 
-		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, JSON.stringify(transaction).replace(/({|})/gi,'').replace(/,/gi, ',\n'), 'receipt');
+		messaging.sendNotification(`${result ? '👍' : '⚠️'} Transaction`, formatNotification(transaction), 'receipt');
 
 		return result;
 	} else {

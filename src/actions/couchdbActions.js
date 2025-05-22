@@ -368,8 +368,13 @@ export const addTransactionAction = param => {
 	return async dispatch => {
 		if (param && param.date && param.account) {
 			const transaction = { ...param, _id: `${param.date}:${param.account}:${uuidv1()}` };
-			delete param.account;
-			delete param.type;
+			Object.keys(transaction).forEach(key => {
+				if (Number.isNaN(transaction[key])) {
+					delete transaction[key];
+				}
+			});
+			delete transaction.account;
+			delete transaction.type;
 
 			dispatch(setAddTransactionFetchingAction(true));
 			dispatch({

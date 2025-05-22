@@ -48,6 +48,21 @@ export const getSettingsAction = () => {
 	};
 };
 
+export const updateEnableExchageRateUpdateAction = (value) => {
+	return async dispatch => {
+		const enableExchangeRateUpdate = await settingsDB.get('enableExchangeRateUpdate');
+		enableExchangeRateUpdate.value = value;
+		await settingsDB.put(enableExchangeRateUpdate);
+
+		dispatch({
+			type: SET_SETTINGS,
+			payload: [
+				enableExchangeRateUpdate
+			]
+		});
+	};
+};
+
 export const updateExchageRateAction = (value) => {
 	return async dispatch => {
 		const exchangeRate = await settingsDB.get('exchangeRate');

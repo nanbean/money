@@ -112,7 +112,8 @@ async function getKisExchangeRate (accessToken) {
 			headers
 		});
 		const result = await response.json();
-		resolve(parseFloat(result.output2[0].frst_bltn_exrt));
+		const rateString = result?.output2?.[0]?.frst_bltn_exrt;
+		resolve(parseFloat(rateString));
 	});
 }
 

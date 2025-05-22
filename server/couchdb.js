@@ -311,10 +311,11 @@ const arrangeKRInvestmemt = async () => {
 		date: moment().tz('Asia/Seoul').format('YYYY-MM-DD'),
 		data: kospiResponse.data.map((i) => {
 			const foundResult = results.find(j => j.googleSymbol === i.googleSymbol);
-			if (foundResult) {
+			const priceString = foundResult?.output?.stck_prpr;
+			if (priceString) {
 				return {
 					...i,
-					price: parseInt(foundResult.output.stck_prpr, 10)
+					price: parseInt(priceString, 10)
 				};
 			} else {
 				return i;
@@ -341,10 +342,11 @@ const arrangeUSInvestmemt = async () => {
 		date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 		data: usResponse.data.map((i) => {
 			const foundResult = results.find(j => j.googleSymbol === i.googleSymbol);
-			if (foundResult) {
+			const priceString = foundResult?.output?.last;
+			if (priceString) {
 				return {
 					...i,
-					price: parseFloat(foundResult.output.last)
+					price: parseFloat(priceString)
 				};
 			} else {
 				return i;
@@ -358,12 +360,15 @@ const arrangeExchangeRate = async () => {
 	const settingsResponse = await settingsDB.list({ include_docs: true });
 	const settings = settingsResponse.rows.map(i => i.doc);
 	const exchangeRate = settings.find(i => i._id === 'exchangeRate');
+	const enableExchangeRateUpdate = settings.find(i => i._id === 'enableExchangeRateUpdate');
 
-	const accessToken = await getKisToken();
-	const kisExchangeRate = await getKisExchangeRate(accessToken);
-	if (kisExchangeRate) {
-		exchangeRate.dollorWon = kisExchangeRate;
-		await settingsDB.insert(exchangeRate);
+	if (enableExchangeRateUpdate.value) {
+		const accessToken = await getKisToken();
+		const kisExchangeRate = await getKisExchangeRate(accessToken);
+		if (kisExchangeRate) {
+			exchangeRate.dollorWon = kisExchangeRate;
+			await settingsDB.insert(exchangeRate);
+		}
 	}
 };
 

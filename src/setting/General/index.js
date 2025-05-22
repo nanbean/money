@@ -15,11 +15,13 @@ import {
 } from '../../actions/messagingActions';
 
 import {
+	updateEnableExchageRateUpdateAction,
 	updateExchageRateAction
 } from '../../actions/couchdbSettingActions';
 
 export function General () {
 	const messagingToken = useSelector((state) => state.messagingToken);
+	const enableExchangeRateUpdate = useSelector((state) => state.settings.enableExchangeRateUpdate);
 	const exchangeRate = useSelector((state) => state.settings.exchangeRate);
 	const [exchangeRateValue, setExchangeRateValue] = useState(exchangeRate);
 	const dispatch = useDispatch();
@@ -40,6 +42,10 @@ export function General () {
 		}
 	};
 
+	const handleEnabeExchangeRateUpdateChange = (event) => {
+		dispatch(updateEnableExchageRateUpdateAction(event.target.checked));
+	};
+
 	return (
 		<Stack spacing={2}>
 			<FormGroup>
@@ -52,6 +58,12 @@ export function General () {
 			</FormGroup>
 			<Divider sx={{ margin: 2 }} />
 			<Stack direction="row" spacing={1}>
+				<FormControlLabel
+					control={
+						<Switch checked={enableExchangeRateUpdate ? true : false} onChange={handleEnabeExchangeRateUpdateChange} aria-label="PushSwitch" />
+					}
+					label="Enable Update"
+				/>
 				<TextField
 					label="Exchange Rate"
 					id="outlined-size-small"
