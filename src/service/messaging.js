@@ -1,16 +1,18 @@
-import firebase from 'firebase';
+import { initializeApp } from 'firebase/app';
+import { getMessaging } from 'firebase/messaging';
 
 const config = {
-	apiKey: 'your_api_key',
-	authDomain: 'project_id.firebaseapp.com',
-	databaseURL: 'https://project_id.firebaseio.com',
-	projectId: 'project_id',
-	storageBucket: 'project_id.appspot.com',
-	messagingSenderId: 'your_sender_id'
+	appId: process.env.REACT_APP_FIREBASE_APP_ID,
+	apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+	authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+	databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
+	projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+	storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+	messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID
 };
 
-firebase.initializeApp(config);
+const app = initializeApp(config);
 
-const messaging = firebase.messaging();
+const messaging = getMessaging(app);
 
 export default messaging;
