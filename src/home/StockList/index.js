@@ -104,7 +104,7 @@ export function StockList () {
 								{toCurrencyFormatWithSymbol(totalAppraisedValue)}
 							</Box>
 							<Typography variant="caption" sx={{ color: totalProfit > 0 ? 'rgb(125, 216, 161)':'rgb(255, 80, 0)' }}>
-								{`${Math.round(totalProfit).toLocaleString()} (${(totalProfit / totalPurchasedValue * 100).toFixed(2) + '%'})`}
+								{`${toCurrencyFormatWithSymbol(Math.round(totalProfit))} (${(totalProfit / totalPurchasedValue * 100).toFixed(2) + '%'})`}
 							</Typography>
 						</TableCell>
 					</TableRow>

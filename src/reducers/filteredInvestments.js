@@ -1,11 +1,9 @@
 import * as actions from '../actions/actionTypes';
 
 const initialState = [
-	'HD한국조선해양',
-	'HD현대',
-	'HD현대일렉트릭',
-	'HD현대건설기계',
-	'HD현대중공업'
+	'ACE 테슬라밸류체인액티브',
+	'TIGER 테슬라채권혼합Fn',
+	'TSLA'
 ];
 
 export default function filteredInvestments (state = initialState, action) {

@@ -9,17 +9,9 @@ import TableRow from '@mui/material/TableRow';
 import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
 
 const quickAssetAccount = [
-	'키움증권맥쿼리',
-	'키움증권',
-	'몬쁭스SK증권',
 	'동양종금장마',
-	'급여계좌',
-	'KB체크카드',
-	'KB카드',
-	'LG카드',
-	'생활비카드',
-	'지갑',
 	'연금저축',
+	'오은미연금저축',
 	'IRP',
 	'IRP오은미'
 ];

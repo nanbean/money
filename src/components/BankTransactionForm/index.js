@@ -1,8 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
+import { evaluate } from 'mathjs';
 
 import FormControl from '@mui/material/FormControl';
+import Box from '@mui/material/Box';
 import Input from '@mui/material/Input';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -49,6 +51,20 @@ export function BankTransactionForm ({
 	};
 
 	const onChange = handler => event => dispatch(handler(event.target.value));
+
+	const handleCalculateAmount = () => {
+		try {
+			const result = evaluate(form.amount);
+			if (typeof result === 'number' && !isNaN(result)) {
+				const roundedResult = parseFloat(result.toFixed(2));
+				dispatch(changeAmount(roundedResult));
+			} else {
+				console.warn('Calculation resulted in a non-numeric value or an error:', result);
+			}
+		} catch (e) {
+			console.error('Invalid amount expression:', e);
+		}
+	};
 
 	const onPayeeChange = handler => (event, value) => dispatch(handler(value));
 
@@ -199,18 +215,28 @@ export function BankTransactionForm ({
 						}
 					</Select>
 				</FormControl>
-				<FormControl required fullWidth>
-					<Input
-						id="amount"
-						type="number"
-						name="amount"
-						autoComplete="off"
-						placeholder="Amount"
-						fullWidth
-						value={form.amount}
-						onChange={onChange(changeAmount)}
-					/>
-				</FormControl>
+				<Box display="flex" alignItems="center" width="100%">
+					<FormControl required sx={{ flexGrow: 1, mr: 1 }}>
+						<Input
+							id="amount"
+							type="text"
+							name="amount"
+							autoComplete="off"
+							placeholder="Amount"
+							fullWidth
+							value={form.amount}
+							onChange={onChange(changeAmount)}
+						/>
+					</FormControl>
+					<Button
+						variant="contained"
+						color="secondary"
+						onClick={handleCalculateAmount}
+						sx={{ width: 30, height: 30, minWidth: 0 }}
+					>
+						=
+					</Button>
+				</Box>
 				<FormControl fullWidth>
 					<Input
 						id="memo"
