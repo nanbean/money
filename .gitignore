@@ -15,6 +15,7 @@
 
 # production
 /build
+deploy.sh
 
 # misc
 .DS_Store

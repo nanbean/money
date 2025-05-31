@@ -21,7 +21,7 @@ import { YEAR_LIST } from '../../constants';
 const MonthlyExpense = () => {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const exchangeRate = useSelector((state) => state.settings.exchangeRate);
+	const { exchangeRate } = useSelector((state) => state.settings.general);
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(false);
 	const [livingExpenseCardOnly, setLivingExpenseCardOnly] = useState(false);

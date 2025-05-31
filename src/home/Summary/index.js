@@ -22,7 +22,7 @@ const getQuickAssetsSum = (accounts, exchangeRate) => accounts.filter(i => quick
 
 export function Summary () {
 	const accountList = useSelector((state) => state.accountList);
-	const exchangeRate = useSelector((state) => state.settings.exchangeRate);
+	const { exchangeRate } = useSelector((state) => state.settings.general);
 
 	const summaryAccountList = useMemo(() => accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i)), [accountList]);
 	const sum = useMemo(() => getSum(summaryAccountList, exchangeRate), [summaryAccountList, exchangeRate]);

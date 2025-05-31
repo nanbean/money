@@ -63,7 +63,7 @@ export function PaymentList () {
 							const payDay = moment().date(i.day);
 							const nowDay = moment();
 							return (
-								<TableRow key={i.name} onClick={onRowSelect(index)}>
+								<TableRow key={index} onClick={onRowSelect(index)}>
 									<TableCell align="left">
 										<Typography variant="caption" sx={{ color: payDay < nowDay ? 'warning.main': 'grey.500' }}>
 											{payDay.format('On MM-DD')}

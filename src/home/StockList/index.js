@@ -55,7 +55,7 @@ const getInvestmentsFromAccounts = (accounts) => {
 export function StockList () {
 	const accountList = useSelector((state) => state.accountList);
 	const stockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
-	const exchangeRate = useSelector((state) => state.settings.exchangeRate);
+	const { exchangeRate } = useSelector((state) => state.settings.general);
 	const { totalProfit, totalPurchasedValue, totalAppraisedValue } = stockList.reduce((totals, investment) => {
 		totals.totalProfit += investment.currency === 'USD' ? investment.profit * exchangeRate:investment.profit;
 		totals.totalPurchasedValue += investment.currency === 'USD' ? investment.purchasedValue * exchangeRate:investment.purchasedValue;

@@ -267,10 +267,10 @@ const getSettings = async () => {
 
 const getExchangeRate = async () => {
 	const settings = await getSettings();
-	const exchangeRate = settings.find(i => i._id === 'exchangeRate');
+	const general = settings.find(i => i._id === 'general');
 
-	if (exchangeRate && exchangeRate.dollorWon) {
-		return exchangeRate.dollorWon;
+	if (general && general.exchangeRate) {
+		return general.exchangeRate;
 	}
 
 	return 1000;
@@ -359,15 +359,14 @@ const arrangeExchangeRate = async () => {
 	const settingsDB = nano.use('settings_nanbean');
 	const settingsResponse = await settingsDB.list({ include_docs: true });
 	const settings = settingsResponse.rows.map(i => i.doc);
-	const exchangeRate = settings.find(i => i._id === 'exchangeRate');
-	const enableExchangeRateUpdate = settings.find(i => i._id === 'enableExchangeRateUpdate');
+	const general = settings.find(i => i._id === 'general');
 
-	if (enableExchangeRateUpdate.value) {
+	if (general.enableExchangeRateUpdate) {
 		const accessToken = await getKisToken();
 		const kisExchangeRate = await getKisExchangeRate(accessToken);
 		if (kisExchangeRate) {
-			exchangeRate.dollorWon = kisExchangeRate;
-			await settingsDB.insert(exchangeRate);
+			general.exchangeRate = kisExchangeRate;
+			await settingsDB.insert(general);
 		}
 	}
 };
