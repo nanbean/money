@@ -2,15 +2,15 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import Typography from '@mui/material/Typography';
+import Stack from '@mui/material/Stack';
 
+import Amount from '../components/Amount';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import InvestmentFilter from '../components/InvestmentFilter';
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
 
-import { toCurrencyFormatWithSymbol } from '../utils/formatting';
 import { getInvestmentPerformance } from '../utils/performance';
-
 
 export function AllPerformance () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
@@ -55,16 +55,19 @@ export function AllPerformance () {
 						allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
 						filteredInvestments={filteredInvestments}
 					/>
-					<Typography
-						variant="subtitle1"
-						align="right"
-						sx={(theme) => ({
-							marginTop: theme.spacing(1),
-							marginRight: theme.spacing(1)
-						})}
-					>
-						Grand Total : {toCurrencyFormatWithSymbol(grandTotalPerformance)}
-					</Typography>
+					<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+						<Typography
+							variant="subtitle1"
+							align="right"
+							sx={(theme) => ({
+								marginTop: theme.spacing(1),
+								marginRight: theme.spacing(1)
+							})}
+						>
+							{'Grand Total : '}
+						</Typography>
+						<Amount value={grandTotalPerformance} size="large" negativeColor showSymbol currency="KRW"/>
+					</Stack>
 					{
 						filteredPerformance && filteredPerformance.map(i => {
 							return (

@@ -80,6 +80,7 @@ CustomTooltip.propTypes = {
 
 function NetWorth () {
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
 	const [range, setRange] = useState('monthly');
 	const rangedNetWorthFlow = useMemo(() => netWorthFlow.filter(item => {
 		const currentDate = new Date();
@@ -99,7 +100,13 @@ function NetWorth () {
 		}
 
 		return true;
-	}).map(item => ({ ...item, date: range === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7) })), [netWorthFlow, range]);
+	}).map(item => ({ ...item, date: range === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7) })).map(item => ({
+		...item,
+		assetNetWorth: displayCurrency === 'USD' ? item.assetNetWorth / exchangeRate:item.assetNetWorth,
+		investmentsNetWorth: displayCurrency === 'USD' ? item.investmentsNetWorth / exchangeRate:item.investmentsNetWorth,
+		cashNetWorth: displayCurrency === 'USD' ? item.cashNetWorth / exchangeRate:item.cashNetWorth,
+		netWorth: displayCurrency === 'USD' ? item.netWorth / exchangeRate:item.netWorth
+	})), [netWorthFlow, range, displayCurrency, exchangeRate]);
 	const dispatch = useDispatch();
 
 	const handleRangeChange = (event, newRange) => {

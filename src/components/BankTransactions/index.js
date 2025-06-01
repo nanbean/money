@@ -105,14 +105,14 @@ export function BankTransactions ({
 							if (isWidthDownMd) {
 								return (
 									<Stack>
-										<Amount value={cellData.amount} showSymbol currency={currency}/>
+										<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={currency}/>
 										<Typography variant="caption" sx={{ color: 'grey.500' }}>
 											{toDateFormat(cellData.date)}
 										</Typography>
 									</Stack>
 								);
 							} else {
-								return (<Amount value={cellData.amount} showSymbol currency={currency}/>);
+								return (<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={currency}/>);
 							}
 						}}
 					/>

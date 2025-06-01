@@ -39,7 +39,7 @@ export function Dividend () {
 		dividendData.push([
 			{ type: 'label', value: key },
 			{ type: 'currency', value: value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) },
-			{ type: 'currency', value: value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) },
+			{ type: 'noColorCurrency', value: value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) },
 			{ type: 'currency', value: (value.filter(i => i.activity === 'Div').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 ) -
 			value.filter(i => i.activity === 'MiscExp').map((l) => l.amount).reduce( (prev, curr) => prev + curr, 0 )) }
 		]);
@@ -56,7 +56,7 @@ export function Dividend () {
 		[
 			{ type: 'label', value: 'Total' },
 			{ type: 'currency', value: dividendData.map(i => i[1].value).reduce( (prev, curr) => prev + curr, 0 ) },
-			{ type: 'currency', value: dividendData.map(i => i[2].value).reduce( (prev, curr) => prev + curr, 0 ) },
+			{ type: 'noColorCurrency', value: dividendData.map(i => i[2].value).reduce( (prev, curr) => prev + curr, 0 ) },
 			{ type: 'currency', value: dividendData.map(i => i[3].value).reduce( (prev, curr) => prev + curr, 0 ) }
 		]
 	];

@@ -54,6 +54,12 @@ CustomTooltip.propTypes = {
 
 function LifetimePlanner () {
 	const lifetimePlannerFlow = useSelector((state) => state.lifetimePlannerFlow);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const lifetimePlannerFlowWithCurrency = lifetimePlannerFlow.map(item => ({
+		...item,
+		amount: displayCurrency === 'USD' ? item.amount / exchangeRate:item.amount,
+		amountInflation: displayCurrency === 'USD' ? item.amountInflation / exchangeRate:item.amountInflation
+	}));
 
 	const dispatch = useDispatch();
 
@@ -61,16 +67,16 @@ function LifetimePlanner () {
 		dispatch(getLifetimeFlowAction());
 	}, [dispatch]);
 
-	if (lifetimePlannerFlow.length > 0) {
+	if (lifetimePlannerFlowWithCurrency.length > 0) {
 		return (
 			<div>
 				<TitleHeader title="Lifetime Planner" />
 				<Container>
 					{
-						lifetimePlannerFlow.length > 1 &&
+						lifetimePlannerFlowWithCurrency.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
 							<ComposedChart
-								data={lifetimePlannerFlow}
+								data={lifetimePlannerFlowWithCurrency}
 								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 							>
 								<XAxis dataKey="year" />

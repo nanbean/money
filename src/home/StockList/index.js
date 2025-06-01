@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
+import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
@@ -9,7 +10,14 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
-import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
+import Amount from '../../components/Amount';
+
+import useDarkMode from '../../hooks/useDarkMode';
+import {
+	POSITIVE_AMOUNT_DARK_COLOR,
+	POSITIVE_AMOUNT_LIGHT_COLOR,
+	NEGATIVE_AMOUNT_COLOR
+} from '../../constants';
 
 const linkStyle = {
 	textDecoration: 'none',
@@ -56,6 +64,7 @@ export function StockList () {
 	const accountList = useSelector((state) => state.accountList);
 	const stockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
 	const { exchangeRate } = useSelector((state) => state.settings.general);
+	const isDarkMode = useDarkMode();
 	const { totalProfit, totalPurchasedValue, totalAppraisedValue } = stockList.reduce((totals, investment) => {
 		totals.totalProfit += investment.currency === 'USD' ? investment.profit * exchangeRate:investment.profit;
 		totals.totalPurchasedValue += investment.currency === 'USD' ? investment.purchasedValue * exchangeRate:investment.purchasedValue;
@@ -83,11 +92,14 @@ export function StockList () {
 									</TableCell>
 									<TableCell align="right">
 										<Box>
-											{toCurrencyFormatWithSymbol(i.appraisedValue, i.currency)}
+											<Amount value={i.appraisedValue} showSymbol currency={i.currency}/>
 										</Box>
-										<Typography variant="caption" sx={{ color: i.return > 0 ? 'rgb(125, 216, 161)':'rgb(255, 80, 0)' }}>
-											{`${toCurrencyFormatWithSymbol(Math.round(i.profit), i.currency)} (${(i.return* 100).toFixed(2) + '%'})`}
-										</Typography>
+										<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+											<Amount value={Math.round(i.profit)} size="small" negativeColor showSymbol currency={i.currency}/>
+											<Typography variant="caption" sx={{ color: i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+												({(i.return* 100).toFixed(2) + '%'})
+											</Typography>
+										</Stack>
 									</TableCell>
 								</TableRow>
 							);
@@ -101,11 +113,14 @@ export function StockList () {
 						</TableCell>
 						<TableCell align="right">
 							<Box>
-								{toCurrencyFormatWithSymbol(totalAppraisedValue)}
+								<Amount value={totalAppraisedValue} showSymbol currency="KRW"/>
 							</Box>
-							<Typography variant="caption" sx={{ color: totalProfit > 0 ? 'rgb(125, 216, 161)':'rgb(255, 80, 0)' }}>
-								{`${toCurrencyFormatWithSymbol(Math.round(totalProfit))} (${(totalProfit / totalPurchasedValue * 100).toFixed(2) + '%'})`}
-							</Typography>
+							<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+								<Amount value={Math.round(totalProfit)} size="small" negativeColor showSymbol currency="KRW"/>
+								<Typography variant="caption" sx={{ color: totalProfit > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+									({(totalProfit / totalPurchasedValue * 100).toFixed(2) + '%'})
+								</Typography>
+							</Stack>
 						</TableCell>
 					</TableRow>
 				</TableBody>

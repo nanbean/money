@@ -9,11 +9,11 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
+import Amount from '../../components/Amount';
+
 import {
 	openTransactionInModal
 } from '../../actions/ui/form/bankTransaction';
-
-import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
 
 const isPaidFromTransactions = (payment, allAccountsTransactions) => {
 	if (!allAccountsTransactions.length) return true;
@@ -76,7 +76,7 @@ export function PaymentList () {
 									</TableCell>
 									<TableCell align="right">
 										<Box>
-											{toCurrencyFormatWithSymbol(i.amount, i.currency)}
+											<Amount value={i.amount} showSymbol currency={i.currency}/>
 										</Box>
 									</TableCell>
 								</TableRow>

@@ -56,7 +56,9 @@ export const END_YEAR = parseInt(moment().format('YYYY'), 10);
 export const YEAR_LIST = Array.from({ length: END_YEAR - START_YEAR + 1 }, (v, k) => k + START_YEAR).map(i => ({ key: i, value: i, text: i }));
 export const MONTH_LIST = Array.from({ length: 12 }, (v, k) => _.padStart(k + 1, 2, '0'));
 
-
+export const POSITIVE_AMOUNT_LIGHT_COLOR = 'rgb(40, 131, 76)';
+export const POSITIVE_AMOUNT_DARK_COLOR = 'rgb(125, 216, 161)';
+export const NEGATIVE_AMOUNT_COLOR = 'rgb(255, 80, 0)';
 
 export const TYPE_ICON = {
 	'Bank': <BankIcon />,

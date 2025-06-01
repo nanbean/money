@@ -12,37 +12,54 @@ import { toCurrencyFormat } from '../../utils/formatting';
 function InvestmentPortfolio () {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccounts = accountList.filter(i => i.type === 'Invst' && !i.closed).map(j => j.name);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
 	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
 	const allInvestments = useMemo(() => accountList.filter(i => filteredAccounts.find(j => j === i.name)).reduce((acc, item) => {
-		var investments = item.investments;
+		const investments = item.investments;
+		const accountOriginalCurrency = item.currency || 'KRW';
+		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
 		investments.forEach(investment => {
+			let convertedAmount = investment.quantity * investment.price;
+
+			if (displayCurrency && accountOriginalCurrency && accountOriginalCurrency !== displayCurrency) {
+				if (displayCurrency === 'KRW') {
+					if (accountOriginalCurrency === 'USD') {
+						convertedAmount *= validExchangeRate;
+					}
+				} else if (displayCurrency === 'USD') {
+					if (accountOriginalCurrency === 'KRW') {
+						convertedAmount /= validExchangeRate;
+					}
+				}
+			}
+
 			var existingInvestment = acc.find(el => {
 				return el.name === investment.name;
 			});
 	
 			if (existingInvestment) {
 				existingInvestment.quantity += investment.quantity;
-				existingInvestment.amount += investment.quantity * investment.price;
+				existingInvestment.amount += convertedAmount;
 				existingInvestment.children.push({
 					account: item.name,
 					name: investment.name,
 					quantity: investment.quantity,
 					price: investment.price,
-					amount: investment.quantity * investment.price
+					amount: convertedAmount
 				});
 			} else {
 				acc.push({
 					name: investment.name,
 					quantity: investment.quantity,
 					price: investment.price,
-					amount: investment.quantity * investment.price,
+					amount: convertedAmount,
 					children: [
 						{
 							account: item.name,
 							name: investment.name,
 							quantity: investment.quantity,
 							price: investment.price,
-							amount: investment.quantity * investment.price
+							amount: convertedAmount
 						}
 					]
 				});
@@ -60,7 +77,7 @@ function InvestmentPortfolio () {
 			return -1;
 		}
 		return 0;
-	}), [accountList, filteredAccounts]);
+	}), [accountList, filteredAccounts, displayCurrency, exchangeRate]);
 	const color =  useMemo(() => {
 		return allInvestments.map(i => stc(i.name));
 	}, [allInvestments]);
@@ -75,7 +92,7 @@ function InvestmentPortfolio () {
 	const option = {
 		tooltip: {
 			trigger: 'item',
-			formatter: d => `${d.name}\n${toCurrencyFormat(d.value)}\n${(d.value / totalAmount* 100).toFixed(3)}%`
+			formatter: d => `${d.name}\n${toCurrencyFormat(d.value, displayCurrency)}\n${(d.value / totalAmount * 100).toFixed(3)}%`
 		},
 		series: [
 			{
@@ -87,7 +104,7 @@ function InvestmentPortfolio () {
 				},
 				label: {
 					show: true,
-					formatter: d => `${d.name}\n${(d.value / totalAmount* 100).toFixed(3)}%`
+					formatter: d => `${d.name}\n${(d.value / totalAmount * 100).toFixed(3)}%`
 				},
 				data: allInvestments.map(i => ({
 					name: i.name,

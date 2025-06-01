@@ -23,7 +23,7 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 		const filtered = data[key].filter(i => i.date.substr(5, 2) === month);
 
 		if (filtered.length > 0) {
-			return filtered.map(i => usd ? (isUsdAccount(i.account) ? i.amount:(i.amount / exchangeRate)):(isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount)).reduce((a, b) => a + b);
+			return filtered.map(i => isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount).reduce((a, b) => a + b);
 		}
 
 		return 0;
@@ -39,7 +39,7 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 			return {
 				category: key,
 				month: MONTH_LIST.map(i => getMonthFiltered(groupedExpenseData, key, i)),
-				sum: groupedExpenseData[key].map(i => usd ? (isUsdAccount(i.account) ? i.amount:(i.amount / exchangeRate)):(isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount)).reduce((a, b) => a + b)
+				sum: groupedExpenseData[key].map(i => isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount).reduce((a, b) => a + b)
 			};
 		}).sort((a, b) => {
 			const categoryA = a.category.toLowerCase();

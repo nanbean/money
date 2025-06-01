@@ -4,6 +4,7 @@ import { useParams, useLocation } from 'react-router-dom';
 
 import { styled } from '@mui/material/styles';
 
+import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
@@ -16,13 +17,12 @@ import Container from '../components/Container';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
+import Amount from '../components/Amount';
 
 import useHeight from '../hooks/useHeight';
 
 import { setAccountAction } from '../actions/accountActions';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
-
-import { toCurrencyFormatWithSymbol } from '../utils/formatting';
 
 const Sticky = styled('div')(({ theme }) => ({
 	width: '100%',
@@ -97,18 +97,21 @@ export function Bank () {
 							transactions={accountTransactions}
 						/>
 					</Box>
-					<Typography
-						variant="h6"
-						color="inherit"
-						gutterBottom
-						align="right"
-						sx={(theme) => ({
-							marginTop: theme.spacing(1),
-							marginRight: theme.spacing(1)
-						})}
-					>
-						{`Balance : ${toCurrencyFormatWithSymbol(balance, currency)}`}
-					</Typography>
+					<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+						<Typography
+							variant="h6"
+							color="inherit"
+							gutterBottom
+							align="right"
+							sx={(theme) => ({
+								marginTop: theme.spacing(1),
+								marginRight: theme.spacing(1)
+							})}
+						>
+							{'Balance : '}
+						</Typography>
+						<Amount value={balance} size="large" negativeColor showSymbol currency={currency}/>
+					</Stack>
 					<BankTransactionModal
 						EditForm={BankTransactionForm}
 						isOpen={isModalOpen}

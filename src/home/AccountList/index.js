@@ -10,9 +10,8 @@ import TableCell from '@mui/material/TableCell';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
+import Amount from '../../components/Amount';
 import { TYPE_ICON } from '../../constants';
-
-import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
 
 const linkStyle = {
 	textDecoration: 'none',
@@ -41,7 +40,9 @@ export default function AccountList () {
 									</Stack>
 								</Link>
 							</TableCell>
-							<TableCell align="right">{toCurrencyFormatWithSymbol(row.balance, row.currency)}</TableCell>
+							<TableCell align="right">
+								<Amount value={row.balance} currency={row.currency} showSymbol/>
+							</TableCell>
 						</TableRow>
 					))}
 				</TableBody>

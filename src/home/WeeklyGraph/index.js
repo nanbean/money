@@ -44,34 +44,71 @@ const expenseCategories = [
 	'실제지출아님'
 ];
 
-const getData = (week, filteredTransactions) => week.map((i, index) => {
-	const day = moment().subtract(6 - index, 'days').format('YYYY-MM-DD');
-	const dayofWeek = moment().subtract(6 - index, 'days').format('ddd');
-	const totalExpense = {};
-	expenseCategories.forEach(category => {
-		totalExpense[category] = 0;
-	});
-	for (var k = 0; k < filteredTransactions.length; k++) {
-		if (day === filteredTransactions[k].date) {
-			const transaction = filteredTransactions[k];
-			if (transaction.amount < 0) {
-				totalExpense[transaction.category] += Math.abs(parseInt(transaction.amount));
+const getData = (weekData, transactions, displayCurrency, exchangeRate, accountList) => {
+	const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
+
+	return weekData.map((_, index) => {
+		const day = moment().subtract(6 - index, 'days').format('YYYY-MM-DD');
+		const dayofWeek = moment().subtract(6 - index, 'days').format('ddd');
+		const dailyExpenses = {};
+		expenseCategories.forEach(category => {
+			dailyExpenses[category] = 0;
+		});
+
+		for (let k = 0; k < transactions.length; k++) {
+			const transaction = transactions[k];
+			if (day === transaction.date && transaction.amount < 0) {
+				let amount = Math.abs(parseInt(transaction.amount, 10));
+				const accountDetails = accountList.find(acc => acc._id === transaction.accountId);
+				const transactionOriginalCurrency = accountDetails ? accountDetails.currency : 'KRW';
+
+				if (displayCurrency && transactionOriginalCurrency !== displayCurrency) {
+					if (displayCurrency === 'KRW') {
+						if (transactionOriginalCurrency === 'USD') {
+							amount *= validExchangeRate;
+						}
+					} else if (displayCurrency === 'USD') {
+						if (transactionOriginalCurrency === 'KRW') {
+							amount /= validExchangeRate;
+						}
+					}
+				}
+
+				const primaryCategory = transaction.category.split(':')[0];
+				if (expenseCategories.includes(primaryCategory)) {
+					dailyExpenses[primaryCategory] += amount;
+				}
 			}
-			
 		}
-	}
-	return {
-		dayofWeek,
-		...totalExpense
-	};
-});
+		return {
+			dayofWeek,
+			...dailyExpenses
+		};
+	});
+};
 
 export function WeeklyGraph () {
 	const weeklyTransactions = useSelector((state) => state.weeklyTransactions);
-	const weeklyGraphAccount = useSelector((state) => state.settings.weeklyGraphAccount);
+	const weeklyGraphAccountSettings = useSelector((state) => state.settings.weeklyGraphAccount);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const accountList = useSelector((state) => state.accountList);
 
-	const filteredTransactions = useMemo(() => weeklyGraphAccount.reduce((total, i) => [...total, ...weeklyTransactions.filter(j => j.account === i)], []), [weeklyTransactions, weeklyGraphAccount]);
-	const data = useMemo(() => getData(week, filteredTransactions), [filteredTransactions]);
+	const filteredTransactions = useMemo(() => {
+		const accountsToFilter = Array.isArray(weeklyGraphAccountSettings) ? weeklyGraphAccountSettings : [];
+		if (accountsToFilter.length === 0) return [];
+		return accountsToFilter.reduce((total, accName) => [...total, ...weeklyTransactions.filter(j => j.account === accName)], []);
+	}, [weeklyTransactions, weeklyGraphAccountSettings]);
+
+	const data = useMemo(() => {
+		if (!displayCurrency || typeof exchangeRate === 'undefined' || exchangeRate === null || !accountList || accountList.length === 0) {
+			return week.map((_, index) => {
+				const dayofWeek = moment().subtract(6 - index, 'days').format('ddd');
+				const zeroedExpenses = expenseCategories.reduce((acc, cat) => ({ ...acc, [cat]: 0 }), {});
+				return { dayofWeek, ...zeroedExpenses };
+			});
+		}
+		return getData(week, filteredTransactions, displayCurrency, exchangeRate, accountList);
+	}, [filteredTransactions, displayCurrency, exchangeRate, accountList]);
 
 	return (
 		<ResponsiveContainer width="99%" height={200}>
@@ -80,7 +117,7 @@ export function WeeklyGraph () {
 				height={300}
 				data={data}
 				margin={{
-					top: 0, right: 5, left: 10, bottom: 0
+					top: 0, right: 5, left: 20, bottom: 0
 				}}
 			>
 				<XAxis dataKey="dayofWeek" tickLine={false} />

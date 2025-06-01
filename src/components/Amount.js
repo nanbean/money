@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import Typography from '@mui/material/Typography';
@@ -7,29 +8,64 @@ import useDarkMode from '../hooks/useDarkMode';
 
 import { toCurrencyFormat, toCurrencyFormatWithSymbol } from '../utils/formatting';
 
+import	{
+	POSITIVE_AMOUNT_DARK_COLOR,
+	POSITIVE_AMOUNT_LIGHT_COLOR,
+	NEGATIVE_AMOUNT_COLOR
+} from '../constants';
+
 function Amount ({
 	currency = 'KRW',
+	ignoreDisplayCurrency = false,
+	negativeColor = false,
 	showColor = true,
 	showSymbol = false,
+	size = '',
 	value
 }) {
 	const isDarkMode = useDarkMode();
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+
+	const displayValue = useMemo(() => {
+		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
+		if (ignoreDisplayCurrency) {
+			return value;
+		} else if (currency === displayCurrency) {
+			return value;
+		} else {
+			if (currency === 'KRW') {
+				return value / validExchangeRate;
+			}
+			return value * validExchangeRate;
+		}
+	}, [currency, displayCurrency, ignoreDisplayCurrency, value, exchangeRate]);
 
 	return (
 		<Typography
-			variant="body2"
-			sx={showColor && value > 0 ?{
-				color: isDarkMode ? 'rgb(125, 216, 161)':'rgb(40, 131, 76)'
-			}:{}}
+			variant={size === 'large' ? 'subtitle1' : (size === 'small' ? 'caption' : 'body2')}
+			sx={{
+				color: showColor
+					? (negativeColor && value < 0
+						? NEGATIVE_AMOUNT_COLOR
+						: (value > 0
+							? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR)
+							: undefined)
+					)
+					: undefined
+			}}
 		>
-			{showSymbol ? toCurrencyFormatWithSymbol(value, currency):toCurrencyFormat(value)}
+			{showSymbol ? toCurrencyFormatWithSymbol(displayValue, ignoreDisplayCurrency ? currency : displayCurrency):toCurrencyFormat(displayValue)}
 		</Typography >
 	);
 }
 
 Amount.propTypes = {
 	currency: PropTypes.string,
+	ignoreDisplayCurrency: PropTypes.bool,
+	negativeColor: PropTypes.bool,
 	showColor: PropTypes.bool,
+	showSymbol: PropTypes.bool,
+	size: PropTypes.string,
 	value: PropTypes.number
 };
 

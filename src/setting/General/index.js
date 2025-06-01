@@ -92,10 +92,10 @@ export function General () {
 					onChange={handleCurrencyChange}
 					aria-labelledby="currency-label"
 				>
-					<ToggleButton value="won" sx={{ width: 40 }}>
+					<ToggleButton value="KRW" sx={{ width: 40 }}>
 						₩
 					</ToggleButton>
-					<ToggleButton value="dollor" sx={{ width: 40 }}>
+					<ToggleButton value="USD" sx={{ width: 40 }}>
 						$
 					</ToggleButton>
 				</ToggleButtonGroup>

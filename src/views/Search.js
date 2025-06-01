@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { styled } from '@mui/material/styles';
 
+import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
@@ -17,6 +18,7 @@ import MenuItem from '@mui/material/MenuItem';
 
 import SearchIcon from '@mui/icons-material/Search';
 
+import Amount from '../components/Amount';
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
 import BankTransactions from '../components/BankTransactions';
@@ -24,8 +26,6 @@ import BankTransactionModal from '../components/BankTransactionModal';
 import AccountFilter from '../components/AccountFilter';
 
 import useHeight from '../hooks/useHeight';
-
-import { toCurrencyFormat } from '../utils/formatting';
 
 const Sticky = styled('div')(({ theme }) => ({
 	width: '100%',
@@ -45,6 +45,7 @@ export function Search () {
 	const allAccounts = accountList.filter(i => (i.type === 'CCard'|| i.type === 'Bank' || i.type === 'Cash') && !i.closed).map(j => j.name);
 	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
 	const categoryList = useSelector((state) => state.settings.categoryList);
 	const [filteredTransactions, setFilteredTransactions] = useState([]);
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -54,7 +55,33 @@ export function Search () {
 	const subcategory = searchParams.get('subcategory') || '';
 	const startDate = searchParams.get('startDate') || '';
 	const endDate = searchParams.get('endDate') || '';
-	const balance = filteredTransactions.length > 0 && filteredTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
+
+	const balance = useMemo(() => {
+		if (filteredTransactions.length === 0 || !displayCurrency || typeof exchangeRate === 'undefined') {
+			return 0;
+		}
+		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
+
+		return filteredTransactions.reduce((sum, transaction) => {
+			let amount = transaction.amount;
+			const accountDetails = accountList.find(acc => acc._id === transaction.accountId);
+			const transactionOriginalCurrency = accountDetails && accountDetails.currency ? accountDetails.currency : 'KRW';
+
+			if (transactionOriginalCurrency !== displayCurrency) {
+				if (displayCurrency === 'KRW') { // Display in KRW
+					if (transactionOriginalCurrency === 'USD') { // Transaction is USD
+						amount *= validExchangeRate;
+					}
+				} else if (displayCurrency === 'USD') { // Display in USD
+					if (transactionOriginalCurrency === 'KRW') { // Transaction is KRW
+						amount /= validExchangeRate;
+					}
+				}
+			}
+			return sum + amount;
+		}, 0);
+	}, [filteredTransactions, displayCurrency, exchangeRate, accountList]);
+
 	const transactionHeight = useHeight() - 64 - 64 - 64 - 200; // TODO: Optimize calculation
 
 	useEffect(() => {
@@ -300,18 +327,21 @@ export function Search () {
 							/>
 						}
 					</Box>
-					<Typography
-						variant="h6"
-						color="inherit"
-						gutterBottom
-						align="right"
-						sx={(theme) => ({
-							marginTop: theme.spacing(1),
-							marginRight: theme.spacing(1)
-						})}
-					>
-						Sum : {toCurrencyFormat(balance)}
-					</Typography>
+					<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+						<Typography
+							variant="subtitle1"
+							color="inherit"
+							gutterBottom
+							align="right"
+							sx={(theme) => ({
+								marginTop: theme.spacing(1),
+								marginRight: theme.spacing(1)
+							})}
+						>
+							{'Sum : '}
+						</Typography>
+						<Amount value={balance} size="large" negativeColor showSymbol currency={displayCurrency}/>
+					</Stack>
 					<BankTransactionModal
 						isEdit={true}
 						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete

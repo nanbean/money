@@ -93,7 +93,7 @@ export function NormalGrid ({
 											} else if (type === 'currency') {
 												return (
 													<NormalCell key={key} style={style}>
-														<Amount value={value} showSymbol currency={currency}/>
+														<Amount value={value} negativeColor showSymbol currency={currency}/>
 													</NormalCell>
 												);
 											} else if (typeof value === 'string' && value.includes('%')) {
@@ -105,7 +105,7 @@ export function NormalGrid ({
 											} else {
 												return (
 													<NormalCell key={key} style={style}>
-														{isNumber ? <Amount value={parseValue} /> : value}
+														{isNumber ? <Amount value={parseValue} showColor={false}/> : value}
 													</NormalCell>
 												);
 											}

@@ -276,6 +276,8 @@ const getExchangeRate = async () => {
 	return 1000;
 };
 
+exports.getExchangeRate = getExchangeRate;
+
 exports.getCategoryList = async () => {
 	const settings = await getSettings();
 	const categoryList = settings.find(i => i._id === 'categoryList');
@@ -452,6 +454,8 @@ const getNetWorth = async (allAccounts, allTransactions, allInvestments, histori
 	};
 };
 
+exports.getNetWorth = getNetWorth;
+
 const updateNetWorth = async () => {
 	console.log('updateNetWorth start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 	let dates = [];
@@ -520,6 +524,8 @@ const updateNetWorth = async () => {
 
 	console.log('updateNetWorth done');
 };
+
+exports.updateNetWorth = updateNetWorth;
 
 const arrangeHistorical = async () => {
 	console.log('arrangeHistorical start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));

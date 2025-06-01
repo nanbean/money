@@ -26,7 +26,7 @@ const MonthlyExpense = () => {
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(false);
 	const [livingExpenseCardOnly, setLivingExpenseCardOnly] = useState(false);
 	const [boAOnly, setBoAOnly] = useState(false);
-	const [usd, setUsd] = useState(true);
+	const usd = useSelector((state) => state.settings.general.currency === 'USD');
 
 	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
 	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate);
@@ -47,10 +47,6 @@ const MonthlyExpense = () => {
 
 	const onBoAOnlyChange = event => {
 		setBoAOnly(event.target.checked);
-	};
-
-	const onUsdChange = event => {
-		setUsd(event.target.checked);
 	};
 
 	return (
@@ -99,15 +95,6 @@ const MonthlyExpense = () => {
 							/>
 						}
 						label="BoA Only"
-					/>
-					<FormControlLabel
-						control={
-							<Switch
-								checked={usd}
-								onChange={onUsdChange}
-							/>
-						}
-						label="USD"
 					/>
 				</div>
 			</div>

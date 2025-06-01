@@ -12,12 +12,11 @@ import Typography from '@mui/material/Typography';
 
 import BankTransactionModal from '../../components/BankTransactionModal';
 import Payee from '../../components/Payee';
+import Amount from '../../components/Amount';
 
 import {
 	openTransactionInModal
 } from '../../actions/ui/form/bankTransaction';
-
-import { toCurrencyFormatWithSymbol } from '../../utils/formatting';
 
 import { TYPE_ICON } from '../../constants';
 
@@ -70,7 +69,7 @@ export function LastTransactions () {
 							</TableCell>
 							<TableCell align="right">
 								<Box>
-									{toCurrencyFormatWithSymbol(row.amount, row.currency)}
+									<Amount value={row.amount} currency={row.currency} showSymbol/>
 								</Box>
 								<Typography variant="caption" sx={{ color: 'grey.500' }}>
 									{moment(row.date).format('MM-DD')}

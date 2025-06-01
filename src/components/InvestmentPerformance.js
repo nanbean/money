@@ -32,19 +32,19 @@ export function InvestmentPerformance ({
 		...performance.map(i => {
 			return [
 				{ value: i.account },
-				{ type: 'currency', currency, value: i.costBasis },
-				{ type: 'currency', currency, value: i.marketValue },
+				{ type: 'noColorCurrency', currency, value: i.costBasis },
+				{ type: 'noColorCurrency', currency, value: i.marketValue },
 				{ type: 'currency', currency, value: i.periodGain },
 				{ type: 'currency', currency, value: i.periodDiv },
 				{ type: 'currency', currency, value: i.periodReturn },
-				{ type: 'currency', currency, value: price },
+				{ type: 'noColorCurrency', currency, value: price },
 				{ value: i.quantity }
 			];
 		}),
 		[
 			{ type: 'label', value: 'Total' },
-			{ type: 'currency', currency, value: totalCostBasis },
-			{ type: 'currency', currency, value: totalMarketValue },
+			{ type: 'noColorCurrency', currency, value: totalCostBasis },
+			{ type: 'noColorCurrency', currency, value: totalMarketValue },
 			{ type: 'currency', currency, value: totalGain },
 			{ type: 'currency', currency, value: totalDividend },
 			{ type: 'currency', currency, value: totalPerformance },

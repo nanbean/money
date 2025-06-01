@@ -108,7 +108,7 @@ export function InvestmentTransactions ({
 							label="Quantity"
 							dataKey="quantity"
 							width={width/10}
-							cellRenderer={({ cellData }) => <Amount value={cellData} showColor={false} />}
+							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} />}
 						/>
 					}
 					{
@@ -116,7 +116,7 @@ export function InvestmentTransactions ({
 							label="Price"
 							dataKey="price"
 							width={width/9}
-							cellRenderer={({ cellData }) => <Amount value={cellData} showColor={false} showSymbol currency={currency} />}
+							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />}
 						/>
 					}
 					{
@@ -125,7 +125,7 @@ export function InvestmentTransactions ({
 							label="Commission"
 							dataKey="commission"
 							width={width/7}
-							cellRenderer={({ cellData }) => cellData ? <Amount value={cellData} showColor={false} /> : ''}
+							cellRenderer={({ cellData }) => cellData ? <Amount value={cellData} ignoreDisplayCurrency showColor={false} /> : ''}
 						/>
 					}
 					<Column
@@ -137,7 +137,7 @@ export function InvestmentTransactions ({
 							if (isWidthDownMd) {
 								return (
 									<React.Fragment>
-										<Amount value={cellData.amount} showColor={false} showSymbol currency={currency} />
+										<Amount value={cellData.amount} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />
 										{
 											(cellData.activity === 'Buy' || cellData.activity === 'Sell') && <Typography variant="caption" sx={{ color: 'grey.500' }}>
 												{`${toCurrencyFormatWithSymbol(cellData.price, currency)} * ${cellData.quantity}`}
@@ -147,7 +147,7 @@ export function InvestmentTransactions ({
 								);
 							} else {
 								return (
-									<Amount value={cellData.amount} showColor={false} showSymbol currency={currency} />
+									<Amount value={cellData.amount} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />
 								);
 							}
 

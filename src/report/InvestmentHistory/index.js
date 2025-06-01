@@ -20,6 +20,8 @@ import {
 	getNetWorthFlowAction
 } from '../../actions/couchdbReportActions';
 
+import { toCurrencyFormat } from '../../utils/formatting';
+
 const CustomTooltip = ({ active, payload, label }) => {
 	if (active) {
 		return (
@@ -36,16 +38,26 @@ const CustomTooltip = ({ active, payload, label }) => {
 				</Typography>
 				{
 					payload.map(i => (
-						<Typography
-							variant="body1"
-							gutterBottom
-							key={i.dataKey}
-							sx={() => ({
-								color: stc(i.dataKey)
-							})}
-						>
-							{`${i.dataKey} : ${i.value}`}
-						</Typography>
+						<Stack key={i.dataKey} direction="row">
+							<Typography
+								variant="body1"
+								gutterBottom
+								sx={() => ({
+									color: stc(i.dataKey)
+								})}
+							>
+								{`${i.dataKey} `}
+							</Typography>
+							<Typography
+								variant="body1"
+								gutterBottom
+								sx={() => ({
+									color: stc(i.dataKey)
+								})}
+							>
+								{`: ${toCurrencyFormat(i.value)}`}
+							</Typography>
+						</Stack>
 					))
 				}
 			</Stack>
@@ -66,6 +78,7 @@ function InvestmentHistory () {
 	const filteredInvestments = useSelector((state) => state.filteredInvestments);
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const historyList = useSelector((state) => state.historyList);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
 	const [type, setType] = useState('quantity');
 	const [range, setRange] = useState('monthly');
 	const dispatch = useDispatch();
@@ -80,12 +93,13 @@ function InvestmentHistory () {
 
 	const allInvestments = useMemo(() => allInvestmentsPrice.filter(i => allAccountsTransactions.find(j => j.investment === i.name)), [allAccountsTransactions, allInvestmentsPrice]);
 	const investmentHistory = useMemo(() => netWorthFlow.map(i => {
+		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
 		const item = {
 			date: i.date
 		};
 		filteredInvestments.forEach(j => {
 			if (i.netInvestments.length > 0) {
-				item[j] = i.netInvestments.filter(k => k.name === j).reduce((sum, l) => {
+				let calculatedValue = i.netInvestments.filter(k => k.name === j).reduce((sum, l) => {
 					if (type === 'amount') {
 						const history = historyList.find(h => h.name === j);
 						const historyData = history && history.data && history.data.find(hd => hd.date.startsWith(i.date));
@@ -94,6 +108,24 @@ function InvestmentHistory () {
 					}
 					return sum + l.quantity;
 				}, 0);
+
+				if (type === 'amount' && displayCurrency && exchangeRate !== undefined) {
+					const investmentDetails = allInvestments.find(inv => inv.name === j);
+					const investmentOriginalCurrency = investmentDetails && investmentDetails.currency ? investmentDetails.currency : 'KRW';
+
+					if (investmentOriginalCurrency !== displayCurrency) {
+						if (displayCurrency === 'KRW') {
+							if (investmentOriginalCurrency === 'USD') {
+								calculatedValue *= validExchangeRate;
+							}
+						} else if (displayCurrency === 'USD') {
+							if (investmentOriginalCurrency === 'KRW') {
+								calculatedValue /= validExchangeRate;
+							}
+						}
+					}
+				}
+				item[j] = calculatedValue;
 			}
 		});
 
@@ -117,7 +149,7 @@ function InvestmentHistory () {
 		return true;
 	}).map(item => ({
 		...item, date: range === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7)
-	})), [netWorthFlow, historyList, filteredInvestments, type, range]);
+	})), [netWorthFlow, historyList, filteredInvestments, type, range, displayCurrency, exchangeRate, allInvestments]);
 
 	useEffect(() => {
 		dispatch(getHistoryListAction());
