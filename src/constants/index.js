@@ -61,12 +61,12 @@ export const POSITIVE_AMOUNT_DARK_COLOR = 'rgb(125, 216, 161)';
 export const NEGATIVE_AMOUNT_COLOR = 'rgb(255, 80, 0)';
 
 export const TYPE_ICON = {
-	'Bank': <BankIcon />,
-	'CCard': <CreditCardIcon />,
-	'Cash': <CashIcon />,
-	'Invst': <InvestmentIcon />,
-	'Oth L': <LoanIcon />,
-	'Oth A': <HouseIcon />
+	'Bank': <BankIcon sx={{ fontSize: 12 }}/>,
+	'CCard': <CreditCardIcon sx={{ fontSize: 12 }}/>,
+	'Cash': <CashIcon sx={{ fontSize: 12 }}/>,
+	'Invst': <InvestmentIcon sx={{ fontSize: 12 }}/>,
+	'Oth L': <LoanIcon sx={{ fontSize: 12 }}/>,
+	'Oth A': <HouseIcon sx={{ fontSize: 12 }}/>
 };
 
 export const BANK_TYPE = [

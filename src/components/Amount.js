@@ -19,6 +19,7 @@ function Amount ({
 	ignoreDisplayCurrency = false,
 	negativeColor = false,
 	showColor = true,
+	showOriginal = false,
 	showSymbol = false,
 	size = '',
 	value
@@ -40,6 +41,18 @@ function Amount ({
 		}
 	}, [currency, displayCurrency, ignoreDisplayCurrency, value, exchangeRate]);
 
+	let amountText;
+	const currencyForDisplaySymbol = ignoreDisplayCurrency ? currency : displayCurrency;
+
+	if (showSymbol) {
+		amountText = toCurrencyFormatWithSymbol(displayValue, currencyForDisplaySymbol);
+		if (showOriginal && displayValue !== value) {
+			amountText += ` (${toCurrencyFormatWithSymbol(value, currency)})`;
+		}
+	} else {
+		amountText = toCurrencyFormat(displayValue);
+	}
+
 	return (
 		<Typography
 			variant={size === 'large' ? 'subtitle1' : (size === 'small' ? 'caption' : 'body2')}
@@ -54,7 +67,7 @@ function Amount ({
 					: undefined
 			}}
 		>
-			{showSymbol ? toCurrencyFormatWithSymbol(displayValue, ignoreDisplayCurrency ? currency : displayCurrency):toCurrencyFormat(displayValue)}
+			{amountText}
 		</Typography >
 	);
 }
@@ -64,6 +77,7 @@ Amount.propTypes = {
 	ignoreDisplayCurrency: PropTypes.bool,
 	negativeColor: PropTypes.bool,
 	showColor: PropTypes.bool,
+	showOriginal: PropTypes.bool,
 	showSymbol: PropTypes.bool,
 	size: PropTypes.string,
 	value: PropTypes.number

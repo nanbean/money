@@ -32,7 +32,7 @@ export default function AccountList () {
 						<TableRow key={row.name}>
 							<TableCell component="th" scope="row" align="left" >
 								<Link to={`/${row.type}/${row.name}`} style={linkStyle}>
-									<Stack direction="row" justifyContent="left" alignItems="center" spacing={1}>
+									<Stack direction="row" justifyContent="left" alignItems="center" spacing={0.5}>
 										{TYPE_ICON[row.type]}
 										<Typography variant="body2">
 											{row.name}

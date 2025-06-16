@@ -57,15 +57,13 @@ export function LastTransactions () {
 					{updatedTransactions && updatedTransactions.map((row, index) => (
 						<TableRow key={index} onClick={onRowSelect(index)}>
 							<TableCell component="th" scope="row" align="left">
-								<Stack direction="row" justifyContent="left" alignItems="center" spacing={1}>
+								<Payee category={row.category} value={row.payee} />
+								<Stack direction="row" justifyContent="left" alignItems="center" spacing={0.5}>
 									{TYPE_ICON[row.type]}
-									<Typography variant="body2">
+									<Typography variant="caption">
 										{row.account}
 									</Typography >
 								</Stack>
-							</TableCell>
-							<TableCell align="center">
-								<Payee category={row.category} value={row.payee} />
 							</TableCell>
 							<TableCell align="right">
 								<Box>
