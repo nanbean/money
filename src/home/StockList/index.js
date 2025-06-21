@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
@@ -6,13 +6,9 @@ import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import SortIcon from '@mui/icons-material/Sort';
 
 import Amount from '../../components/Amount';
-
+import SortMenuButton from '../../components/SortMenuButton';
 import { updateGeneralAction } from '../../actions/couchdbSettingActions';
 
 import useDarkMode from '../../hooks/useDarkMode';
@@ -69,23 +65,10 @@ export function StockList () {
 	const { exchangeRate } = useSelector((state) => state.settings.general);
 	const sortBy = useSelector((state) => state.settings.general.stockListSortBy || 'equity');
 	const isDarkMode = useDarkMode();
-	const [anchorEl, setAnchorEl] = useState(null);
-	const open = Boolean(anchorEl);
 	const dispatch = useDispatch();
 
-	const handleSortClick = (event) => {
-		setAnchorEl(event.currentTarget);
-	};
-
-	const handleSortClose = () => {
-		setAnchorEl(null);
-	};
-
-	const handleSortMenuItemClick = (newSortBy) => {
-		if (newSortBy) {
-			dispatch(updateGeneralAction('stockListSortBy', newSortBy));
-		}
-		handleSortClose();
+	const handleSortChange = (newSortBy) => {
+		dispatch(updateGeneralAction('stockListSortBy', newSortBy));
 	};
 
 	const stockList = useMemo(() => {
@@ -119,34 +102,16 @@ export function StockList () {
 		<Box p={1}>
 			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 1, pt: 1 }}>
 				<Typography variant="subtitle1">Stock List</Typography>
-				<div>
-					<Button
-						id="sort-button"
-						aria-controls={open ? 'sort-menu' : undefined}
-						aria-haspopup="true"
-						aria-expanded={open ? 'true' : undefined}
-						onClick={handleSortClick}
-						size="small"
-						startIcon={<SortIcon />}
-						sx={{ textTransform: 'none' }}
-					>
-						{sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
-					</Button>
-					<Menu
-						id="sort-menu"
-						anchorEl={anchorEl}
-						open={open}
-						onClose={handleSortClose}
-						MenuListProps={{
-							'aria-labelledby': 'sort-button'
-						}}
-					>
-						<MenuItem onClick={() => handleSortMenuItemClick('equity')} selected={'equity' === sortBy}>Equity</MenuItem>
-						<MenuItem onClick={() => handleSortMenuItemClick('quantity')} selected={'quantity' === sortBy}>Quantity</MenuItem>
-						<MenuItem onClick={() => handleSortMenuItemClick('allocation')} selected={'allocation' === sortBy}>Allocation</MenuItem>
-						<MenuItem onClick={() => handleSortMenuItemClick('return')} selected={'return' === sortBy}>Return</MenuItem>
-					</Menu>
-				</div>
+				<SortMenuButton
+					value={sortBy}
+					onChange={handleSortChange}
+					options={[
+						{ value: 'equity', label: 'Equity' },
+						{ value: 'quantity', label: 'Quantity' },
+						{ value: 'allocation', label: 'Allocation' },
+						{ value: 'return', label: 'Return' }
+					]}
+				/>
 			</Stack>
 			{stockList.map(i => (
 				<Link key={i.name} to={`/performance/${i.name}`} style={linkStyle}>

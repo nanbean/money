@@ -1,14 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import SortIcon from '@mui/icons-material/Sort';
 
 import {
 	ResponsiveContainer,
@@ -20,6 +16,7 @@ import {
 	Cell
 } from 'recharts';
 
+import SortMenuButton from '../../components/SortMenuButton';
 import { updateGeneralAction } from '../../actions/couchdbSettingActions';
 
 import { getCategoryColor } from '../../utils/categoryColor';
@@ -136,17 +133,10 @@ export function WeeklyGraph () {
 	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
 	const accountList = useSelector((state) => state.accountList);
 	const { weeklyGraphChartType = 'weekly' } = useSelector((state) => state.settings.general);
-	const [anchorEl, setAnchorEl] = useState(null);
-	const open = Boolean(anchorEl);
 	const dispatch = useDispatch();
 
-	const handleChartTypeClick = (event) => setAnchorEl(event.currentTarget);
-	const handleChartTypeClose = () => setAnchorEl(null);
-	const handleChartTypeMenuItemClick = (newChartType) => {
-		if (newChartType) {
-			dispatch(updateGeneralAction('weeklyGraphChartType', newChartType));
-		}
-		handleChartTypeClose();
+	const handleChartTypeChange = (newChartType) => {
+		dispatch(updateGeneralAction('weeklyGraphChartType', newChartType));
 	};
 
 	const filteredTransactions = useMemo(() => {
@@ -191,29 +181,14 @@ export function WeeklyGraph () {
 		<Box p={1}>
 			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, p: 1 }}>
 				<Typography variant="subtitle1">Weekly Graph</Typography>
-				<div>
-					<Button
-						id="sort-button"
-						aria-controls={open ? 'sort-menu' : undefined}
-						aria-haspopup="true"
-						aria-expanded={open ? 'true' : undefined}
-						onClick={handleChartTypeClick}
-						size="small"
-						startIcon={<SortIcon />}
-						sx={{ textTransform: 'none' }}
-					>
-						{weeklyGraphChartType.charAt(0).toUpperCase() + weeklyGraphChartType.slice(1)}
-					</Button>
-					<Menu
-						id="sort-menu"
-						anchorEl={anchorEl}
-						open={open}
-						onClose={handleChartTypeClose}
-						MenuListProps={{ 'aria-labelledby': 'sort-button' }}>
-						<MenuItem onClick={() => handleChartTypeMenuItemClick('weekly')} selected={'weekly' === weeklyGraphChartType}>Weekly</MenuItem>
-						<MenuItem onClick={() => handleChartTypeMenuItemClick('category')} selected={'category' === weeklyGraphChartType}>Category</MenuItem>
-					</Menu>
-				</div>
+				<SortMenuButton
+					value={weeklyGraphChartType}
+					onChange={handleChartTypeChange}
+					options={[
+						{ value: 'weekly', label: 'Weekly' },
+						{ value: 'category', label: 'Category' }
+					]}
+				/>
 			</Stack>
 			<ResponsiveContainer width="99%" height={200}>
 				{weeklyGraphChartType === 'weekly' ? (

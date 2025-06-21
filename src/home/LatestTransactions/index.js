@@ -1,16 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import SortIcon from '@mui/icons-material/Sort';
 
 import BankTransactionModal from '../../components/BankTransactionModal';
+import SortMenuButton from '../../components/SortMenuButton';
 import Payee from '../../components/Payee';
 import Amount from '../../components/Amount';
 import CategoryIcon from '../../components/CategoryIcon';
@@ -35,23 +32,10 @@ export function LatestTransactions () {
 	const accountList = useSelector((state) => state.accountList);
 	const latestTransactions = useSelector((state) => state.latestTransactions);
 	const { currency: displayCurrency, exchangeRate, latestTransactionsSortBy = 'date' } = useSelector((state) => state.settings.general);
-	const [anchorEl, setAnchorEl] = useState(null);
-	const open = Boolean(anchorEl);
 	const dispatch = useDispatch();
 
-	const handleSortClick = (event) => {
-		setAnchorEl(event.currentTarget);
-	};
-
-	const handleSortClose = () => {
-		setAnchorEl(null);
-	};
-
-	const handleSortMenuItemClick = (newSortBy) => {
-		if (newSortBy) {
-			dispatch(updateGeneralAction('latestTransactionsSortBy', newSortBy));
-		}
-		handleSortClose();
+	const handleSortChange = (newSortBy) => {
+		dispatch(updateGeneralAction('latestTransactionsSortBy', newSortBy));
 	};
 
 	const updatedTransactions = useMemo(() => {
@@ -95,29 +79,14 @@ export function LatestTransactions () {
 		<Box p={1}>
 			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 1, pt: 1 }}>
 				<Typography variant="subtitle1">Latest Transactions</Typography>
-				<div>
-					<Button
-						id="sort-button"
-						aria-controls={open ? 'sort-menu' : undefined}
-						aria-haspopup="true"
-						aria-expanded={open ? 'true' : undefined}
-						onClick={handleSortClick}
-						size="small"
-						startIcon={<SortIcon />}
-						sx={{ textTransform: 'none' }}
-					>
-						{latestTransactionsSortBy.charAt(0).toUpperCase() + latestTransactionsSortBy.slice(1)}
-					</Button>
-					<Menu
-						id="sort-menu"
-						anchorEl={anchorEl}
-						open={open}
-						onClose={handleSortClose}
-						MenuListProps={{ 'aria-labelledby': 'sort-button' }}>
-						<MenuItem onClick={() => handleSortMenuItemClick('date')} selected={'date' === latestTransactionsSortBy}>Date</MenuItem>
-						<MenuItem onClick={() => handleSortMenuItemClick('amount')} selected={'amount' === latestTransactionsSortBy}>Amount</MenuItem>
-					</Menu>
-				</div>
+				<SortMenuButton
+					value={latestTransactionsSortBy}
+					onChange={handleSortChange}
+					options={[
+						{ value: 'date', label: 'Date' },
+						{ value: 'amount', label: 'Amount' }
+					]}
+				/>
 			</Stack>
 			{updatedTransactions && updatedTransactions.map((row, index) => {
 				const IconComponent = TYPE_ICON_MAP[row.type];

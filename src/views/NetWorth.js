@@ -1,15 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import SortIcon from '@mui/icons-material/Sort';
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
+import SortMenuButton from '../components/SortMenuButton';
 import {
 	updateGeneralAction
 } from '../actions/couchdbSettingActions';
@@ -84,8 +81,6 @@ CustomTooltip.propTypes = {
 function NetWorth () {
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const { currency: displayCurrency, exchangeRate, netWorthChartRange = 'monthly' } = useSelector((state) => state.settings.general);
-	const [anchorEl, setAnchorEl] = useState(null);
-	const open = Boolean(anchorEl);
 	const rangedNetWorthFlow = useMemo(() => netWorthFlow.filter(item => {
 		const currentDate = new Date();
 		const currentYear = currentDate.getFullYear();
@@ -110,17 +105,8 @@ function NetWorth () {
 	})), [netWorthFlow, netWorthChartRange, displayCurrency, exchangeRate]);
 	const dispatch = useDispatch();
 
-	const handleMenuClick = (event) => {
-		setAnchorEl(event.currentTarget);
-	};
-
-	const handleMenuClose = () => {
-		setAnchorEl(null);
-	};
-
-	const handleMenuItemClick = (newRange) => {
+	const handleRangeChange = (newRange) => {
 		dispatch(updateGeneralAction('netWorthChartRange', newRange));
-		handleMenuClose();
 	};
 
 	useEffect(() => {
@@ -133,29 +119,14 @@ function NetWorth () {
 				<TitleHeader title="Net Worth" />
 				<Container>
 					<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-						<div>
-							<Button
-								id="range-button"
-								aria-controls={open ? 'range-menu' : undefined}
-								aria-haspopup="true"
-								aria-expanded={open ? 'true' : undefined}
-								onClick={handleMenuClick}
-								size="small"
-								startIcon={<SortIcon />}
-								sx={{ textTransform: 'none' }}
-							>
-								{netWorthChartRange.charAt(0).toUpperCase() + netWorthChartRange.slice(1)}
-							</Button>
-							<Menu
-								id="range-menu"
-								anchorEl={anchorEl}
-								open={open}
-								onClose={handleMenuClose}
-								MenuListProps={{ 'aria-labelledby': 'range-button' }}>
-								<MenuItem onClick={() => handleMenuItemClick('monthly')} selected={'monthly' === netWorthChartRange}>Monthly</MenuItem>
-								<MenuItem onClick={() => handleMenuItemClick('yearly')} selected={'yearly' === netWorthChartRange}>Yearly</MenuItem>
-							</Menu>
-						</div>
+						<SortMenuButton
+							value={netWorthChartRange}
+							onChange={handleRangeChange}
+							options={[
+								{ value: 'monthly', label: 'Monthly' },
+								{ value: 'yearly', label: 'Yearly' }
+							]}
+						/>
 					</Stack>
 					{
 						rangedNetWorthFlow.length > 1 &&

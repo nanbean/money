@@ -7,14 +7,11 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import SortIcon from '@mui/icons-material/Sort';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import Amount from '../../components/Amount';
+import SortMenuButton from '../../components/SortMenuButton';
 import Summary from '../Summary';
 
 import {
@@ -88,23 +85,10 @@ export default function AccountList () {
 	const accountList = useSelector((state) => state.accountList);
 	const [expandedRows, setExpandedRows] = useState(new Set());
 	const { currency: displayCurrency, exchangeRate, accountListSortBy = 'name' } = useSelector((state) => state.settings.general);
-	const [anchorEl, setAnchorEl] = useState(null);
-	const open = Boolean(anchorEl);
 	const dispatch = useDispatch();
 
-	const handleSortClick = (event) => {
-		setAnchorEl(event.currentTarget);
-	};
-
-	const handleSortClose = () => {
-		setAnchorEl(null);
-	};
-
-	const handleSortMenuItemClick = (newSortBy) => {
-		if (newSortBy) {
-			dispatch(updateGeneralAction('accountListSortBy', newSortBy));
-		}
-		handleSortClose();
+	const handleSortChange = (newSortBy) => {
+		dispatch(updateGeneralAction('accountListSortBy', newSortBy));
 	};
 
 	const groupedAccounts = useMemo(() => {
@@ -128,29 +112,14 @@ export default function AccountList () {
 		<Box p={1}>
 			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 1, pt: 1 }}>
 				<Typography variant="subtitle1">Accounts</Typography>
-				<div>
-					<Button
-						id="sort-button"
-						aria-controls={open ? 'sort-menu' : undefined}
-						aria-haspopup="true"
-						aria-expanded={open ? 'true' : undefined}
-						onClick={handleSortClick}
-						size="small"
-						startIcon={<SortIcon />}
-						sx={{ textTransform: 'none' }}
-					>
-						{accountListSortBy.charAt(0).toUpperCase() + accountListSortBy.slice(1)}
-					</Button>
-					<Menu
-						id="sort-menu"
-						anchorEl={anchorEl}
-						open={open}
-						onClose={handleSortClose}
-						MenuListProps={{ 'aria-labelledby': 'sort-button' }}>
-						<MenuItem onClick={() => handleSortMenuItemClick('name')} selected={'name' === accountListSortBy}>Name</MenuItem>
-						<MenuItem onClick={() => handleSortMenuItemClick('balance')} selected={'balance' === accountListSortBy}>Balance</MenuItem>
-					</Menu>
-				</div>
+				<SortMenuButton
+					value={accountListSortBy}
+					onChange={handleSortChange}
+					options={[
+						{ value: 'name', label: 'Name' },
+						{ value: 'balance', label: 'Balance' }
+					]}
+				/>
 			</Stack>
 			<Summary />
 			<Box>
