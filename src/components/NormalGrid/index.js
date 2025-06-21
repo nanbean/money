@@ -7,6 +7,7 @@ import TableContainer from '@mui/material/TableContainer';
 import Typography from '@mui/material/Typography';
 
 import Amount from '../Amount';
+import Quantity from '../Quantity';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
 
@@ -100,6 +101,12 @@ export function NormalGrid ({
 												return (
 													<NormalCell key={key} style={style}>
 														<Amount value={value} showColor={false} showOriginal={showOriginal} showSymbol currency={currency}/>
+													</NormalCell>
+												);
+											} else if (type === 'quantity') {
+												return (
+													<NormalCell key={key} style={style}>
+														<Quantity value={value}/>
 													</NormalCell>
 												);
 											} else if (typeof value === 'string' && value.includes('%')) {

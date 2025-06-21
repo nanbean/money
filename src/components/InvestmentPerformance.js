@@ -38,7 +38,7 @@ export function InvestmentPerformance ({
 				{ type: 'currency', currency, value: i.periodDiv },
 				{ type: 'currency', currency, value: i.periodReturn },
 				{ type: 'noColorCurrency', currency, value: price, showOriginal: true },
-				{ value: i.quantity }
+				{ type: 'quantity', value: i.quantity }
 			];
 		}),
 		[
@@ -49,7 +49,7 @@ export function InvestmentPerformance ({
 			{ type: 'currency', currency, value: totalDividend },
 			{ type: 'currency', currency, value: totalPerformance },
 			{ type: 'label', value: '' },
-			{ value: totalQuantity }
+			{ type: 'quantity', value: totalQuantity }
 		]
 	];
 
