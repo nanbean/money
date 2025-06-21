@@ -1,73 +1,101 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import Collapse from '@mui/material/Collapse';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 export function AccountFilter ({
 	allAccounts,
 	filteredAccounts,
 	setfilteredAccounts
 }) {
-	const onFilteredAccountsChange = account => event => {
-		const checked = event.target.checked;
-		const findIndex = filteredAccounts.findIndex(i => i === account);
+	const [isExpanded, setIsExpanded] = useState(false);
 
-		if ( checked === true) {
-			if (findIndex >= 0) {
-				// do nothing
-			} else {
-				setfilteredAccounts([
-					...filteredAccounts,
-					account
-				]);
-			}
-		} else if (findIndex >= 0) {
-			setfilteredAccounts([
-				...filteredAccounts.slice(0, findIndex),
-				...filteredAccounts.slice(findIndex + 1)
-			]);
-		} else {
-			// do nothing
+	const handleToggleExpand = () => setIsExpanded(!isExpanded);
+
+	const onFilteredAccountsChange = (account, isChecked) => {
+		const isPresent = filteredAccounts.includes(account);
+
+		if (isChecked && !isPresent) {
+			setfilteredAccounts([...filteredAccounts, account]);
+		} else if (!isChecked && isPresent) {
+			setfilteredAccounts(filteredAccounts.filter(i => i !== account));
 		}
 	};
 
 	const onAllAccountClick = event => {
-		const checked = event.target.checked;
-
-		if ( checked === true) {
-			setfilteredAccounts([
-				...allAccounts
-			]);
+		const { checked } = event.target;
+		if (checked) {
+			setfilteredAccounts([...allAccounts]);
 		} else {
-			setfilteredAccounts([
-			]);
+			setfilteredAccounts([]);
 		}
 	};
 
 	return (
-		<div style={{ padding: 5 }}>
-			{
-				allAccounts && allAccounts.map(j => {
-					return (
-						<div key={j} style={{ display: 'inline-block' }}>
+		<Paper sx={{ p: 1 }}>
+			<Stack spacing={1}>
+				<Stack direction="row" spacing={1} alignItems="center">
+					{!isExpanded && (
+						<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ flexGrow: 1 }}>
+							{filteredAccounts.map(item => (
+								<Chip
+									key={item}
+									label={item}
+									onDelete={() => onFilteredAccountsChange(item, false)}
+									size="small"
+								/>
+							))}
+						</Stack>
+					)}
+					<Button
+						onClick={handleToggleExpand}
+						startIcon={<FilterListIcon />}
+						fullWidth={isExpanded}
+						sx={isExpanded ? {} : { flexShrink: 0 }}
+					>
+						Filter ({filteredAccounts.length} / {allAccounts.length})
+					</Button>
+				</Stack>
+
+				<Collapse in={isExpanded}>
+					<Stack sx={{ pl: 1, maxHeight: 300, overflowY: 'auto' }}>
+						{allAccounts && allAccounts.map(j => (
 							<FormControlLabel
+								key={j}
 								control={
-									<Checkbox size="small" checked={filteredAccounts.find(q => q === j) ? true : false} onChange={onFilteredAccountsChange(j)}/>
+									<Checkbox
+										sx={{ py: 0.5 }}
+										size="small"
+										checked={filteredAccounts.includes(j)}
+										onChange={(e) => onFilteredAccountsChange(j, e.target.checked)}
+									/>
 								}
 								label={j}
 							/>
-						</div>
-					);
-				})
-			}
-			<FormControlLabel
-				control={
-					<Checkbox key="All" size="small" checked={allAccounts.length === filteredAccounts.length} onClick={onAllAccountClick}/>
-				}
-				label="All"
-			/>
-		</div>
+						))}
+						<FormControlLabel
+							control={
+								<Checkbox
+									key="All"
+									sx={{ py: 0.5 }}
+									size="small"
+									checked={allAccounts.length > 0 && filteredAccounts.length === allAccounts.length}
+									onChange={onAllAccountClick}
+								/>
+							}
+							label="All"
+						/>
+					</Stack>
+				</Collapse>
+			</Stack>
+		</Paper>
 	);
 }
 
