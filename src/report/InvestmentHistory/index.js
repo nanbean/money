@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import stc from 'string-to-color';
 
 import InvestmentFilter from '../../components/InvestmentFilter';
-import TypeRangeToggles from './TypeRangeToggles.js';
+import ChartControls from './ChartControls.js';
 
 import {
 	getHistoryListAction
@@ -78,18 +78,8 @@ function InvestmentHistory () {
 	const filteredInvestments = useSelector((state) => state.filteredInvestments);
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const historyList = useSelector((state) => state.historyList);
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
-	const [type, setType] = useState('quantity');
-	const [range, setRange] = useState('monthly');
+	const { currency: displayCurrency, exchangeRate, investmentHistoryRange = 'monthly', investmentHistoryType = 'quantity' } = useSelector((state) => state.settings.general);
 	const dispatch = useDispatch();
-
-	const handleTypeChange = (event, newType) => {
-		setType(newType);
-	};
-
-	const handleRangeChange = (event, newRange) => {
-		setRange(newRange);
-	};
 
 	const allInvestments = useMemo(() => allInvestmentsPrice.filter(i => allAccountsTransactions.find(j => j.investment === i.name)), [allAccountsTransactions, allInvestmentsPrice]);
 	const investmentHistory = useMemo(() => netWorthFlow.map(i => {
@@ -100,7 +90,7 @@ function InvestmentHistory () {
 		filteredInvestments.forEach(j => {
 			if (i.netInvestments.length > 0) {
 				let calculatedValue = i.netInvestments.filter(k => k.name === j).reduce((sum, l) => {
-					if (type === 'amount') {
+					if (investmentHistoryType === 'amount') {
 						const history = historyList.find(h => h.name === j);
 						const historyData = history && history.data && history.data.find(hd => hd.date.startsWith(i.date));
 						const price = historyData && historyData.close;
@@ -109,7 +99,7 @@ function InvestmentHistory () {
 					return sum + l.quantity;
 				}, 0);
 
-				if (type === 'amount' && displayCurrency && exchangeRate !== undefined) {
+				if (investmentHistoryType === 'amount' && displayCurrency && exchangeRate !== undefined) {
 					const investmentDetails = allInvestments.find(inv => inv.name === j);
 					const investmentOriginalCurrency = investmentDetails && investmentDetails.currency ? investmentDetails.currency : 'KRW';
 
@@ -131,7 +121,7 @@ function InvestmentHistory () {
 
 		return item;
 	}).filter(item => {
-		if (range === 'yearly') {
+		if (investmentHistoryRange === 'yearly') {
 			const currentDate = new Date();
 			const currentYear = currentDate.getFullYear();
 			const currentMonth = currentDate.getMonth() + 1;
@@ -148,8 +138,8 @@ function InvestmentHistory () {
 
 		return true;
 	}).map(item => ({
-		...item, date: range === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7)
-	})), [netWorthFlow, historyList, filteredInvestments, type, range, displayCurrency, exchangeRate, allInvestments]);
+		...item, date: investmentHistoryRange === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7)
+	})), [netWorthFlow, historyList, filteredInvestments, investmentHistoryType, investmentHistoryRange, displayCurrency, exchangeRate, allInvestments]);
 
 	useEffect(() => {
 		dispatch(getHistoryListAction());
@@ -163,7 +153,7 @@ function InvestmentHistory () {
 					allInvestments={allInvestments.map(i => i.name).sort()}
 					filteredInvestments={filteredInvestments}
 				/>
-				<TypeRangeToggles type={type} range={range} onTypeChange={handleTypeChange} onRangeChange={handleRangeChange} />
+				<ChartControls />
 				{
 					netWorthFlow.length > 1 &&
 					<ResponsiveContainer width="100%" height={400}>

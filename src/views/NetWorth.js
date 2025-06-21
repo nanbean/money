@@ -1,15 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
-
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import SortIcon from '@mui/icons-material/Sort';
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
-import RangeToggle from '../components/RangeToggle';
-
+import {
+	updateGeneralAction
+} from '../actions/couchdbSettingActions';
 import {
 	getNetWorthFlowAction
 } from '../actions/couchdbReportActions';
@@ -80,37 +83,44 @@ CustomTooltip.propTypes = {
 
 function NetWorth () {
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
-	const [range, setRange] = useState('monthly');
+	const { currency: displayCurrency, exchangeRate, netWorthChartRange = 'monthly' } = useSelector((state) => state.settings.general);
+	const [anchorEl, setAnchorEl] = useState(null);
+	const open = Boolean(anchorEl);
 	const rangedNetWorthFlow = useMemo(() => netWorthFlow.filter(item => {
 		const currentDate = new Date();
 		const currentYear = currentDate.getFullYear();
 		const currentMonth = currentDate.getMonth() + 1;
-
-		if (range === 'yearly') {
+		if (netWorthChartRange === 'yearly') {
 			const date = new Date(item.date);
 			const month = date.getMonth() + 1;
 			const year = date.getFullYear();
-
 			if (year !== currentYear) {
 				return month === 12;
 			} else {
 				return year === currentYear && month === currentMonth;
 			}
 		}
-
 		return true;
-	}).map(item => ({ ...item, date: range === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7) })).map(item => ({
+	}).map(item => ({ ...item, date: netWorthChartRange === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7) })).map(item => ({
 		...item,
 		assetNetWorth: displayCurrency === 'USD' ? item.assetNetWorth / exchangeRate:item.assetNetWorth,
 		investmentsNetWorth: displayCurrency === 'USD' ? item.investmentsNetWorth / exchangeRate:item.investmentsNetWorth,
 		cashNetWorth: displayCurrency === 'USD' ? item.cashNetWorth / exchangeRate:item.cashNetWorth,
 		netWorth: displayCurrency === 'USD' ? item.netWorth / exchangeRate:item.netWorth
-	})), [netWorthFlow, range, displayCurrency, exchangeRate]);
+	})), [netWorthFlow, netWorthChartRange, displayCurrency, exchangeRate]);
 	const dispatch = useDispatch();
 
-	const handleRangeChange = (event, newRange) => {
-		setRange(newRange);
+	const handleMenuClick = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleMenuClose = () => {
+		setAnchorEl(null);
+	};
+
+	const handleMenuItemClick = (newRange) => {
+		dispatch(updateGeneralAction('netWorthChartRange', newRange));
+		handleMenuClose();
 	};
 
 	useEffect(() => {
@@ -121,8 +131,32 @@ function NetWorth () {
 		return (
 			<div>
 				<TitleHeader title="Net Worth" />
-				<RangeToggle range={range} onRangeChange={handleRangeChange} />
 				<Container>
+					<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+						<div>
+							<Button
+								id="range-button"
+								aria-controls={open ? 'range-menu' : undefined}
+								aria-haspopup="true"
+								aria-expanded={open ? 'true' : undefined}
+								onClick={handleMenuClick}
+								size="small"
+								startIcon={<SortIcon />}
+								sx={{ textTransform: 'none' }}
+							>
+								{netWorthChartRange.charAt(0).toUpperCase() + netWorthChartRange.slice(1)}
+							</Button>
+							<Menu
+								id="range-menu"
+								anchorEl={anchorEl}
+								open={open}
+								onClose={handleMenuClose}
+								MenuListProps={{ 'aria-labelledby': 'range-button' }}>
+								<MenuItem onClick={() => handleMenuItemClick('monthly')} selected={'monthly' === netWorthChartRange}>Monthly</MenuItem>
+								<MenuItem onClick={() => handleMenuItemClick('yearly')} selected={'yearly' === netWorthChartRange}>Yearly</MenuItem>
+							</Menu>
+						</div>
+					</Stack>
 					{
 						rangedNetWorthFlow.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
