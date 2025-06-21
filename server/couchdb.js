@@ -137,7 +137,7 @@ const getInvestmentBalance = (investments, date, histories) => {
 	return balance;
 };
 
-const getBalance = (name, allTransactions, transactions, date) => {
+const getBalance = (name, transactions, investmentTransactions) => {
 	let balance = 0;
 	for (let i = 0; i < transactions.length; i++) {
 		const transaction = transactions[i];
@@ -148,15 +148,14 @@ const getBalance = (name, allTransactions, transactions, date) => {
 
 	// We have to subtract ivestment in investment cash account
 	if (name.match(/_Cash/i)) {
-		const accountId = `account:Invst:${name.split('_')[0]}`;
-		const investmemtTransaction = date ? allTransactions.filter(i => i.accountId === accountId && i.date <= date) : allTransactions.filter(i => i.accountId === accountId);
-
-		for (let i = 0; i < investmemtTransaction.length; i++) {
-			const transaction = investmemtTransaction[i];
-			if (transaction.activity === 'Buy' || transaction.activity === 'MiscExp') {
-				balance -= transaction.amount;
-			} else if (transaction.activity === 'Sell' || transaction.activity === 'Div') {
-				balance += transaction.amount;
+		if (investmentTransactions) {
+			for (let i = 0; i < investmentTransactions.length; i++) {
+				const transaction = investmentTransactions[i];
+				if (transaction.activity === 'Buy' || transaction.activity === 'MiscExp') {
+					balance -= transaction.amount;
+				} else if (transaction.activity === 'Sell' || transaction.activity === 'Div') {
+					balance += transaction.amount;
+				}
 			}
 		}
 	}
@@ -190,11 +189,13 @@ const updateAccountList = async () => {
 			if (type === 'Invst') {
 				investments = getInvestmentList(allInvestments, allTransactions, allTransactions.filter(i => i.accountId === `account:${type}:${name}`));
 				balance = getInvestmentBalance(investments);
-				const cashBalance = getBalance(account.cashAccountId.split(':')[2], allTransactions, allTransactions.filter(i => i.accountId === account.cashAccountId));
+				const cashAccountTransactions = allTransactions.filter(i => i.accountId === account.cashAccountId);
+				const investmentAccountTransactions = allTransactions.filter(i => i.accountId === `account:${type}:${name}`);
+				const cashBalance = getBalance(account.cashAccountId.split(':')[2], cashAccountTransactions, investmentAccountTransactions);
 				account.cashBalance = cashBalance;
 				balance += cashBalance;
 			} else {
-				balance = getBalance(name, allTransactions, allTransactions.filter(i => i.accountId === `account:${type}:${name}`));
+				balance = getBalance(name, allTransactions.filter(i => i.accountId === `account:${type}:${name}`));
 			}
 			allAccounts[i].investments = investments;
 			allAccounts[i].balance = balance;
@@ -213,7 +214,7 @@ exports.updateInvestmentPrice = async () => {
 	await arrangeUSInvestmemt();
 	await updateAccountList();
 	await updateLifeTimePlanner();
-	// await updateNetWorth();
+	await updateNetWorth();
 };
 
 const getAllAccounts = async () => {
@@ -411,7 +412,7 @@ exports.getLifetimeFlowList = async () => {
 	return lifeTimePlanner.data;
 };
 
-const getNetWorth = async (allAccounts, allTransactions, allInvestments, histories, date) => {
+const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, allInvestments, histories, date) => {
 	let cashNetWorth = 0;
 	let investmentsNetWorth = 0;
 	let loanNetWorth = 0;
@@ -420,7 +421,8 @@ const getNetWorth = async (allAccounts, allTransactions, allInvestments, histori
 	const exchangeRate = await getExchangeRate();
 
 	for (const account of allAccounts) {
-		const transactions = allTransactions.filter(i => i.date <= date).filter(i => i.accountId === `account:${account.type}:${account.name}`);
+		const accountTransactions = transactionsByAccount[`account:${account.type}:${account.name}`] || [];
+		const transactions = accountTransactions.filter(i => i.date <= date);
 		if (transactions.length > 0) {
 			if (account.type === 'Invst') {
 				const investments = getInvestmentList(allInvestments, allTransactions, transactions);
@@ -428,16 +430,19 @@ const getNetWorth = async (allAccounts, allTransactions, allInvestments, histori
 				netInvestments = [...netInvestments, ...investments].filter(i => i.quantity > 0);
 				investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			} else if (account.type === 'Oth A') {
-				const balance = getBalance(account.name, allTransactions, transactions, date);
+				const balance = getBalance(account.name, transactions);
 				assetNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			} else if (account.type === 'Oth L') {
-				const balance = getBalance(account.name, allTransactions, transactions, date);
+				const balance = getBalance(account.name, transactions);
 				loanNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			} else if (account.name.match(/_Cash/)) {
-				const balance = getBalance(account.name, allTransactions, transactions, date);
+				const invAccountId = `account:Invst:${account.name.split('_')[0]}`;
+				const invAllTransactions = transactionsByAccount[invAccountId] || [];
+				const invTransactions = invAllTransactions.filter(i => i.date <= date);
+				const balance = getBalance(account.name, transactions, invTransactions);
 				investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			} else {
-				const balance = getBalance(account.name, allTransactions, transactions, date);
+				const balance = getBalance(account.name, transactions);
 				cashNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 			}
 		}
@@ -458,6 +463,7 @@ exports.getNetWorth = getNetWorth;
 
 const updateNetWorth = async () => {
 	console.log('updateNetWorth start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
+	console.time('updateNetWorth');
 	let dates = [];
 	const date = new Date();
 	const currentYear = date.getFullYear();
@@ -492,14 +498,15 @@ const updateNetWorth = async () => {
 	const kosdaqResponse = await stocksDB.get('kosdaq');
 	const usResponse = await stocksDB.get('us');
 	const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
+	const transactionsByAccount = _.groupBy(allTransactions, 'accountId');
 	const historiesDB = nano.use('histories_nanbean');
 	const historiesResponse = await historiesDB.list({ include_docs: true });
 	const histories = historiesResponse.rows.map(i => i.doc);
 	const reportsDB = nano.use('reports_nanbean');
-	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true });
+	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true }).catch(() => null);
 
 	for (const item of data) {
-		const { netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, netInvestments, movableAsset } = await getNetWorth(allAccounts, allTransactions, allInvestments, histories, item.date);
+		const { netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, netInvestments, movableAsset } = await getNetWorth(allAccounts, allTransactions, transactionsByAccount, allInvestments, histories, item.date);
 		item.netWorth = netWorth;
 		item.cashNetWorth = cashNetWorth;
 		item.investmentsNetWorth = investmentsNetWorth;
@@ -523,6 +530,7 @@ const updateNetWorth = async () => {
 	await reportsDB.insert(netWorth);
 
 	console.log('updateNetWorth done');
+	console.timeEnd('updateNetWorth');
 };
 
 exports.updateNetWorth = updateNetWorth;
