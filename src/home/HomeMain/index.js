@@ -17,9 +17,9 @@ import { getWeeklyTransactionsAction } from '../../actions/couchdbActions';
 
 const panels = [
 	{ key: 'accounts', component: AccountList },
+	{ key: 'stockList', component: StockList },
 	{ key: 'weeklyGraph', component: WeeklyGraph },
 	{ key: 'latestTransactions', component: LatestTransactions },
-	{ key: 'stockList', component: StockList },
 	{ key: 'paymentList', component: PaymentList }
 ];
 
