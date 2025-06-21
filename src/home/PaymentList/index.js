@@ -4,15 +4,11 @@ import moment from 'moment';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
 import Stack from '@mui/material/Stack';
 
 import Amount from '../../components/Amount';
 
-import { TYPE_ICON } from '../../constants';
+import { TYPE_ICON_MAP } from '../../constants';
 
 import {
 	openTransactionInModal
@@ -59,40 +55,39 @@ export function PaymentList () {
 
 	return (
 		<Box p={{ xs:1 }}>
-			<Table>
-				<TableBody>
-					{
-						filteredPaymentList.map((i, index) => {
-							const payDay = moment().date(i.day);
-							const nowDay = moment();
-							const accountType = i.accountId.includes(':') ? i.accountId.split(':')[1] : undefined;
-							return (
-								<TableRow key={index} onClick={onRowSelect(index)}>
-									<TableCell align="left">
-										<Box>
-											{i.payee}
-											<Stack direction="row" justifyContent="left" alignItems="center" spacing={0.5}>
-												{accountType && TYPE_ICON[accountType]}
-												<Typography variant="caption">
-													{i.account}
-												</Typography >
-											</Stack>
-										</Box>
-									</TableCell>
-									<TableCell align="right">
-										<Box>
-											<Amount value={i.amount} showOriginal showSymbol currency={i.currency}/>
-											<Typography variant="caption" sx={{ color: payDay < nowDay ? 'warning.main': 'grey.500' }}>
-												{payDay.format('On MM-DD')}
-											</Typography>
-										</Box>
-									</TableCell>
-								</TableRow>
-							);
-						})
-					}
-				</TableBody>
-			</Table>
+			{
+				filteredPaymentList.map((i, index) => {
+					const payDay = moment().date(i.day);
+					const nowDay = moment();
+					const accountType = i.accountId.includes(':') ? i.accountId.split(':')[1] : undefined;
+					const IconComponent = TYPE_ICON_MAP[accountType];
+
+					return (
+						<Stack
+							key={index}
+							direction="row"
+							justifyContent="space-between"
+							alignItems="center"
+							onClick={onRowSelect(index)}
+							sx={{ cursor: 'pointer', p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}
+						>
+							<Box>
+								<Typography variant="body2">{i.payee}</Typography>
+								<Stack direction="row" justifyContent="left" alignItems="center" spacing={0.5}>
+									{accountType && IconComponent && <IconComponent sx={{ fontSize: 12 }} />}
+									<Typography variant="caption">{i.account}</Typography>
+								</Stack>
+							</Box>
+							<Stack alignItems="flex-end">
+								<Amount value={i.amount} showOriginal showSymbol currency={i.currency}/>
+								<Typography variant="caption" sx={{ color: payDay < nowDay ? 'warning.main': 'grey.500' }}>
+									{payDay.format('On MM-DD')}
+								</Typography>
+							</Stack>
+						</Stack>
+					);
+				})
+			}
 			{
 				filteredPaymentList.length === 0 && <Box p={{ xs:1 }} display="flex" justifyContent="center" alignItems="center">
 					<Typography variant="caption" sx={{ color: 'grey.500' }}>

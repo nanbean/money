@@ -2,7 +2,6 @@ import { handleActions } from 'redux-actions';
 import {
 	changeAccountsExpanded,
 	changeLatestTransactionsExpanded,
-	changeSummaryExpanded,
 	changeWeeklyGraphExpanded,
 	changeStockListExpanded,
 	changePaymentListExpanded
@@ -11,7 +10,6 @@ import {
 const initialState = {
 	accountsExpanded: true,
 	latestTransactionsExpanded: true,
-	summaryExpanded: true,
 	weeklyGraphExpanded: true,
 	stockListExpanded: true,
 	paymentListExpanded: true
@@ -26,10 +24,6 @@ export default handleActions(
 		[changeLatestTransactionsExpanded]: (state, { payload }) => ({
 			...state,
 			latestTransactionsExpanded: payload
-		}),
-		[changeSummaryExpanded]: (state, { payload }) => ({
-			...state,
-			summaryExpanded: payload
 		}),
 		[changeWeeklyGraphExpanded]: (state, { payload }) => ({
 			...state,

@@ -4,11 +4,8 @@ import { Link } from 'react-router-dom';
 
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
 
 import Amount from '../../components/Amount';
 
@@ -71,60 +68,49 @@ export function StockList () {
 		totals.totalAppraisedValue += investment.currency === 'USD' ? investment.appraisedValue * exchangeRate:investment.appraisedValue;
 		return totals;
 	}, { totalProfit: 0, totalPurchasedValue: 0, totalAppraisedValue: 0 });
+	const totalReturn = totalPurchasedValue !== 0 ? (totalProfit / totalPurchasedValue * 100) : 0;
 
 	return (
 		<Box p={{ xs:1 }}>
-			<Table>
-				<TableBody>
-					{
-						stockList.map(i => {
-							return (
-								<TableRow key={i.name}>
-									<TableCell align="left">
-										<Link to={`/performance/${i.name}`} style={linkStyle}>
-											<Box>
-												{i.name}
-											</Box>
-										</Link>
-										<Typography variant="caption" sx={{ color: 'grey.500' }}>
-											{i.quantity.toLocaleString()}
-										</Typography>
-									</TableCell>
-									<TableCell align="right">
-										<Box>
-											<Amount value={i.appraisedValue} showSymbol currency={i.currency}/>
-										</Box>
-										<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
-											<Amount value={Math.round(i.profit)} size="small" negativeColor showSymbol currency={i.currency}/>
-											<Typography variant="caption" sx={{ color: i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-												({(i.return* 100).toFixed(2) + '%'})
-											</Typography>
-										</Stack>
-									</TableCell>
-								</TableRow>
-							);
-						})
-					}
-					<TableRow>
-						<TableCell align="left">
-							<Box>
-								Subtotal
-							</Box>
-						</TableCell>
-						<TableCell align="right">
-							<Box>
-								<Amount value={totalAppraisedValue} showSymbol currency="KRW"/>
-							</Box>
-							<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
-								<Amount value={Math.round(totalProfit)} size="small" negativeColor showSymbol currency="KRW"/>
-								<Typography variant="caption" sx={{ color: totalProfit > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-									({(totalProfit / totalPurchasedValue * 100).toFixed(2) + '%'})
+			{stockList.map(i => (
+				<Link key={i.name} to={`/performance/${i.name}`} style={linkStyle}>
+					<Stack
+						direction="row"
+						justifyContent="space-between"
+						alignItems="center"
+						sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}
+					>
+						<Box>
+							<Typography variant="body2">{i.name}</Typography>
+							<Typography variant="caption" sx={{ color: 'grey.500' }}>
+								{i.quantity.toLocaleString()}
+							</Typography>
+						</Box>
+						<Stack alignItems="flex-end">
+							<Amount value={i.appraisedValue} showSymbol currency={i.currency}/>
+							<Stack direction="row" alignItems="baseline" spacing={0.5}>
+								<Amount value={Math.round(i.profit)} size="small" negativeColor showSymbol currency={i.currency}/>
+								<Typography variant="caption" sx={{ color: i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+									({(i.return * 100).toFixed(2)}%)
 								</Typography>
 							</Stack>
-						</TableCell>
-					</TableRow>
-				</TableBody>
-			</Table>
+						</Stack>
+					</Stack>
+				</Link>
+			))}
+			<Divider sx={{ my: 1 }} />
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1 }}>
+				<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Subtotal</Typography>
+				<Stack alignItems="flex-end">
+					<Amount value={totalAppraisedValue} showSymbol currency="KRW"/>
+					<Stack direction="row" alignItems="baseline" spacing={0.5}>
+						<Amount value={Math.round(totalProfit)} size="small" negativeColor showSymbol currency="KRW"/>
+						<Typography variant="caption" sx={{ color: totalProfit > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+							({totalReturn.toFixed(2)}%)
+						</Typography>
+					</Stack>
+				</Stack>
+			</Stack>
 		</Box>
 	);
 }

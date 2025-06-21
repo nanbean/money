@@ -7,7 +7,6 @@ import Typography from '@mui/material/Typography';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import Summary from '../Summary';
 import LatestTransactions from '../LatestTransactions';
 import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
@@ -21,17 +20,15 @@ import { getWeeklyTransactionsAction } from '../../actions/couchdbActions';
 import {
 	changeAccountsExpanded,
 	changeLatestTransactionsExpanded,
-	changeSummaryExpanded,
 	changeWeeklyGraphExpanded,
 	changeStockListExpanded,
 	changePaymentListExpanded
 } from '../../actions/ui/homeActions';
 
 const panels = [
-	{ key: 'summaryExpanded', component: Summary, title: 'Summary', action: changeSummaryExpanded },
+	{ key: 'accountsExpanded', component: AccountList, title: 'Accounts', action: changeAccountsExpanded },
 	{ key: 'weeklyGraphExpanded', component: WeeklyGraph, title: 'Weekly Graph', action: changeWeeklyGraphExpanded },
 	{ key: 'latestTransactionsExpanded', component: LatestTransactions, title: 'Latest Transactions', action: changeLatestTransactionsExpanded },
-	{ key: 'accountsExpanded', component: AccountList, title: 'Accounts', action: changeAccountsExpanded },
 	{ key: 'stockListExpanded', component: StockList, title: 'Stock List', action: changeStockListExpanded },
 	{ key: 'paymentListExpanded', component: PaymentList, title: 'Payment List', action: changePaymentListExpanded }
 ];

@@ -3,22 +3,19 @@ import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 
 import Box from '@mui/material/Box';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import BankTransactionModal from '../../components/BankTransactionModal';
 import Payee from '../../components/Payee';
 import Amount from '../../components/Amount';
+import CategoryIcon from '../../components/CategoryIcon';
 
 import {
 	openTransactionInModal
 } from '../../actions/ui/form/bankTransaction';
 
-import { TYPE_ICON } from '../../constants';
+import { TYPE_ICON_MAP } from '../../constants';
 
 const updateTransactionsWithAccounts = (transactions, accounts) => {
 	if (!accounts.length || !transactions.length) return [];
@@ -52,31 +49,37 @@ export function LastTransactions () {
 
 	return (
 		<Box p={{ xs:1 }}>
-			<Table>
-				<TableBody>
-					{updatedTransactions && updatedTransactions.map((row, index) => (
-						<TableRow key={index} onClick={onRowSelect(index)}>
-							<TableCell component="th" scope="row" align="left">
+			{updatedTransactions && updatedTransactions.map((row, index) => {
+				const IconComponent = TYPE_ICON_MAP[row.type];
+
+				return (
+					<Stack
+						key={index}
+						direction="row"
+						justifyContent="space-between"
+						alignItems="center"
+						onClick={onRowSelect(index)}
+						sx={{ cursor: 'pointer', p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}
+					>
+						<Stack direction="row" alignItems="center" spacing={1}>
+							<CategoryIcon category={row.category} fontsize={20}/>
+							<Box>
 								<Payee category={row.category} value={row.payee} />
 								<Stack direction="row" justifyContent="left" alignItems="center" spacing={0.5}>
-									{TYPE_ICON[row.type]}
-									<Typography variant="caption">
-										{row.account}
-									</Typography >
+									{IconComponent && <IconComponent sx={{ fontSize: 12 }} />}
+									<Typography variant="caption">{row.account}</Typography>
 								</Stack>
-							</TableCell>
-							<TableCell align="right">
-								<Box>
-									<Amount value={row.amount} currency={row.currency} showSymbol/>
-								</Box>
-								<Typography variant="caption" sx={{ color: 'grey.500' }}>
-									{moment(row.date).format('MM-DD')}
-								</Typography>
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
+							</Box>
+						</Stack>
+						<Stack alignItems="flex-end">
+							<Amount value={row.amount} currency={row.currency} showSymbol/>
+							<Typography variant="caption" sx={{ color: 'grey.500' }}>
+								{moment(row.date).format('MM-DD')}
+							</Typography>
+						</Stack>
+					</Stack>
+				);
+			})}
 			<BankTransactionModal
 				isEdit={true}
 				transactions={latestTransactions}

@@ -1,4 +1,3 @@
-import React from 'react';
 import moment from 'moment';
 import _ from 'lodash';
 
@@ -60,13 +59,22 @@ export const POSITIVE_AMOUNT_LIGHT_COLOR = 'rgb(40, 131, 76)';
 export const POSITIVE_AMOUNT_DARK_COLOR = 'rgb(125, 216, 161)';
 export const NEGATIVE_AMOUNT_COLOR = 'rgb(255, 80, 0)';
 
-export const TYPE_ICON = {
-	'Bank': <BankIcon sx={{ fontSize: 12 }}/>,
-	'CCard': <CreditCardIcon sx={{ fontSize: 12 }}/>,
-	'Cash': <CashIcon sx={{ fontSize: 12 }}/>,
-	'Invst': <InvestmentIcon sx={{ fontSize: 12 }}/>,
-	'Oth L': <LoanIcon sx={{ fontSize: 12 }}/>,
-	'Oth A': <HouseIcon sx={{ fontSize: 12 }}/>
+export const TYPE_ICON_MAP = {
+	'Bank': BankIcon,
+	'CCard': CreditCardIcon,
+	'Cash': CashIcon,
+	'Invst': InvestmentIcon,
+	'Oth L': LoanIcon,
+	'Oth A': HouseIcon
+};
+
+export const TYPE_NAME_MAP = {
+	'Bank': 'Bank',
+	'CCard': 'Credit Card',
+	'Cash': 'Cash',
+	'Invst': 'Investement',
+	'Oth L': 'Loan',
+	'Oth A': 'Asset'
 };
 
 export const BANK_TYPE = [

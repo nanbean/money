@@ -80,7 +80,7 @@ export function NormalGrid ({
 										fixedColumnCount={1}
 										cellRenderer={({ columnIndex, key, rowIndex, style }) => {
 											const item = gridData[rowIndex][columnIndex];
-											const { type, currency, value } = item;
+											const { type, currency, value, showOriginal } = item;
 											const parseValue = parseInt(value, 10);
 											const isNumber = !Number.isNaN(parseValue);
 			
@@ -94,6 +94,12 @@ export function NormalGrid ({
 												return (
 													<NormalCell key={key} style={style}>
 														<Amount value={value} negativeColor showSymbol currency={currency}/>
+													</NormalCell>
+												);
+											} else if (type === 'noColorCurrency') {
+												return (
+													<NormalCell key={key} style={style}>
+														<Amount value={value} showColor={false} showOriginal={showOriginal} showSymbol currency={currency}/>
 													</NormalCell>
 												);
 											} else if (typeof value === 'string' && value.includes('%')) {
