@@ -1,12 +1,18 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import SortIcon from '@mui/icons-material/Sort';
 
 import Amount from '../../components/Amount';
+
+import { updateGeneralAction } from '../../actions/couchdbSettingActions';
 
 import { TYPE_ICON_MAP } from '../../constants';
 
@@ -35,8 +41,40 @@ const isPaidFromTransactions = (payment, allAccountsTransactions) => {
 export function PaymentList () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const paymentList = useSelector((state) => state.settings.paymentList);
-	const filteredPaymentList = useMemo(() => paymentList.filter(i => i.valid && !isPaidFromTransactions(i, allAccountsTransactions)), [paymentList, allAccountsTransactions]);
+	const { exchangeRate, paymentListSortBy = 'date' } = useSelector((state) => state.settings.general);
+	const [anchorEl, setAnchorEl] = useState(null);
+	const open = Boolean(anchorEl);
 	const dispatch = useDispatch();
+
+	const handleSortClick = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleSortClose = () => {
+		setAnchorEl(null);
+	};
+
+	const handleSortMenuItemClick = (newSortBy) => {
+		if (newSortBy) {
+			dispatch(updateGeneralAction('paymentListSortBy', newSortBy));
+		}
+		handleSortClose();
+	};
+
+	const filteredPaymentList = useMemo(() => {
+		const list = paymentList.filter(i => i.valid && !isPaidFromTransactions(i, allAccountsTransactions));
+		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
+		const convertToKRW = (item) => {
+			const value = item.amount;
+			return item.currency === 'USD' ? value * validExchangeRate : value;
+		};
+
+		return list.sort((a, b) => {
+			if (paymentListSortBy === 'amount') return convertToKRW(a) - convertToKRW(b); // Sort descending (largest first)
+			// default sort by date
+			return a.day - b.day;
+		});
+	}, [paymentList, allAccountsTransactions, paymentListSortBy, exchangeRate]);
 
 	const onRowSelect = (index) => () => {
 		const transaction = filteredPaymentList[index];
@@ -54,7 +92,33 @@ export function PaymentList () {
 	};
 
 	return (
-		<Box p={{ xs:1 }}>
+		<Box p={1}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 1, pt: 1 }}>
+				<Typography variant="subtitle1">Payment List</Typography>
+				<div>
+					<Button
+						id="sort-button"
+						aria-controls={open ? 'sort-menu' : undefined}
+						aria-haspopup="true"
+						aria-expanded={open ? 'true' : undefined}
+						onClick={handleSortClick}
+						size="small"
+						startIcon={<SortIcon />}
+						sx={{ textTransform: 'none' }}
+					>
+						{paymentListSortBy.charAt(0).toUpperCase() + paymentListSortBy.slice(1)}
+					</Button>
+					<Menu
+						id="sort-menu"
+						anchorEl={anchorEl}
+						open={open}
+						onClose={handleSortClose}
+						MenuListProps={{ 'aria-labelledby': 'sort-button' }}>
+						<MenuItem onClick={() => handleSortMenuItemClick('date')} selected={'date' === paymentListSortBy}>Date</MenuItem>
+						<MenuItem onClick={() => handleSortMenuItemClick('amount')} selected={'amount' === paymentListSortBy}>Amount</MenuItem>
+					</Menu>
+				</div>
+			</Stack>
 			{
 				filteredPaymentList.map((i, index) => {
 					const payDay = moment().date(i.day);

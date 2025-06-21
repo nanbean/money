@@ -1,13 +1,19 @@
-import React, { useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import SortIcon from '@mui/icons-material/Sort';
 
 import Amount from '../../components/Amount';
+
+import { updateGeneralAction } from '../../actions/couchdbSettingActions';
 
 import useDarkMode from '../../hooks/useDarkMode';
 import {
@@ -53,15 +59,54 @@ const getInvestmentsFromAccounts = (accounts) => {
 		purchasedValue: i.purchasedValue,
 		appraisedValue: i.appraisedValue,
 		profit: i.profit,
-		return: i.profit / i.purchasedValue
-	})).filter(({ quantity }) => quantity > 0).sort((a, b) => b.appraisedValue - a.appraisedValue);
+		return: i.purchasedValue !== 0 ? i.profit / i.purchasedValue : 0
+	})).filter(({ quantity }) => quantity > 0);
 };
 
 export function StockList () {
 	const accountList = useSelector((state) => state.accountList);
-	const stockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
+	const rawStockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
 	const { exchangeRate } = useSelector((state) => state.settings.general);
+	const sortBy = useSelector((state) => state.settings.general.stockListSortBy || 'equity');
 	const isDarkMode = useDarkMode();
+	const [anchorEl, setAnchorEl] = useState(null);
+	const open = Boolean(anchorEl);
+	const dispatch = useDispatch();
+
+	const handleSortClick = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleSortClose = () => {
+		setAnchorEl(null);
+	};
+
+	const handleSortMenuItemClick = (newSortBy) => {
+		if (newSortBy) {
+			dispatch(updateGeneralAction('stockListSortBy', newSortBy));
+		}
+		handleSortClose();
+	};
+
+	const stockList = useMemo(() => {
+		const list = [...rawStockList];
+		const convertToKRW = (item, key) => {
+			const value = item[key];
+			return item.currency === 'USD' ? value * exchangeRate : value;
+		};
+
+		switch (sortBy) {
+		case 'quantity':
+			return list.sort((a, b) => b.quantity - a.quantity);
+		case 'return':
+			return list.sort((a, b) => b.return - a.return);
+		case 'equity':
+		case 'allocation':
+		default:
+			return list.sort((a, b) => convertToKRW(b, 'appraisedValue') - convertToKRW(a, 'appraisedValue'));
+		}
+	}, [rawStockList, sortBy, exchangeRate]);
+
 	const { totalProfit, totalPurchasedValue, totalAppraisedValue } = stockList.reduce((totals, investment) => {
 		totals.totalProfit += investment.currency === 'USD' ? investment.profit * exchangeRate:investment.profit;
 		totals.totalPurchasedValue += investment.currency === 'USD' ? investment.purchasedValue * exchangeRate:investment.purchasedValue;
@@ -71,7 +116,38 @@ export function StockList () {
 	const totalReturn = totalPurchasedValue !== 0 ? (totalProfit / totalPurchasedValue * 100) : 0;
 
 	return (
-		<Box p={{ xs:1 }}>
+		<Box p={1}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 1, pt: 1 }}>
+				<Typography variant="subtitle1">Stock List</Typography>
+				<div>
+					<Button
+						id="sort-button"
+						aria-controls={open ? 'sort-menu' : undefined}
+						aria-haspopup="true"
+						aria-expanded={open ? 'true' : undefined}
+						onClick={handleSortClick}
+						size="small"
+						startIcon={<SortIcon />}
+						sx={{ textTransform: 'none' }}
+					>
+						{sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
+					</Button>
+					<Menu
+						id="sort-menu"
+						anchorEl={anchorEl}
+						open={open}
+						onClose={handleSortClose}
+						MenuListProps={{
+							'aria-labelledby': 'sort-button'
+						}}
+					>
+						<MenuItem onClick={() => handleSortMenuItemClick('equity')} selected={'equity' === sortBy}>Equity</MenuItem>
+						<MenuItem onClick={() => handleSortMenuItemClick('quantity')} selected={'quantity' === sortBy}>Quantity</MenuItem>
+						<MenuItem onClick={() => handleSortMenuItemClick('allocation')} selected={'allocation' === sortBy}>Allocation</MenuItem>
+						<MenuItem onClick={() => handleSortMenuItemClick('return')} selected={'return' === sortBy}>Return</MenuItem>
+					</Menu>
+				</div>
+			</Stack>
 			{stockList.map(i => (
 				<Link key={i.name} to={`/performance/${i.name}`} style={linkStyle}>
 					<Stack

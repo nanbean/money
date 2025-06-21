@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
@@ -7,11 +7,19 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import SortIcon from '@mui/icons-material/Sort';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import Amount from '../../components/Amount';
 import Summary from '../Summary';
+
+import {
+	updateGeneralAction
+} from '../../actions/couchdbSettingActions';
 
 import { TYPE_ICON_MAP, TYPE_NAME_MAP } from '../../constants';
 
@@ -22,7 +30,7 @@ const linkStyle = {
 
 const filterAccountList = accountList => accountList.filter(i => i.closed === false && !i.name.match(/_Cash/i));
 
-const groupAndSummarizeAccounts = (accountList, displayCurrency, exchangeRate) => {
+const groupAndSummarizeAccounts = (accountList, displayCurrency, exchangeRate, sortBy) => {
 	const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
 
 	const grouped = accountList.reduce((acc, account) => {
@@ -58,27 +66,53 @@ const groupAndSummarizeAccounts = (accountList, displayCurrency, exchangeRate) =
 
 	// Sort accounts within each group by name
 	Object.values(grouped).forEach(group => {
-		group.accounts.sort((a, b) => a.name.localeCompare(b.name));
+		group.accounts.sort((a, b) => {
+			if (sortBy === 'balance') {
+				const convert = (item) => {
+					const numericBalance = Number(item.balance) || 0;
+					const accountCurrency = item.currency || 'KRW';
+					if (accountCurrency === displayCurrency) return numericBalance;
+					if (accountCurrency === 'KRW') return numericBalance / validExchangeRate;
+					return numericBalance * validExchangeRate;
+				};
+				return convert(b) - convert(a);
+			}
+			return a.name.localeCompare(b.name); // Default sort by name
+		});
 	});
 
-	// Return sorted groups by type name
-	return Object.keys(grouped).sort().reduce(
-		(obj, key) => {
-			obj[key] = grouped[key];
-			return obj;
-		},
-		{}
-	);
+	return grouped;
 };
 
 export default function AccountList () {
 	const accountList = useSelector((state) => state.accountList);
 	const [expandedRows, setExpandedRows] = useState(new Set());
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, accountListSortBy = 'name' } = useSelector((state) => state.settings.general);
+	const [anchorEl, setAnchorEl] = useState(null);
+	const open = Boolean(anchorEl);
+	const dispatch = useDispatch();
+
+	const handleSortClick = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleSortClose = () => {
+		setAnchorEl(null);
+	};
+
+	const handleSortMenuItemClick = (newSortBy) => {
+		if (newSortBy) {
+			dispatch(updateGeneralAction('accountListSortBy', newSortBy));
+		}
+		handleSortClose();
+	};
+
 	const groupedAccounts = useMemo(() => {
 		const filtered = filterAccountList(accountList);
-		return groupAndSummarizeAccounts(filtered, displayCurrency, exchangeRate);
-	}, [accountList, displayCurrency, exchangeRate]);
+		const grouped = groupAndSummarizeAccounts(filtered, displayCurrency, exchangeRate, accountListSortBy);
+		// Always sort the groups by name, regardless of the sortBy state for inner items.
+		return Object.entries(grouped).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+	}, [accountList, displayCurrency, exchangeRate, accountListSortBy]);
 
 	const handleRowToggle = (type) => {
 		const newExpandedRows = new Set(expandedRows);
@@ -91,10 +125,36 @@ export default function AccountList () {
 	};
 
 	return (
-		<Box p={{ xs:1 }}>
+		<Box p={1}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 1, pt: 1 }}>
+				<Typography variant="subtitle1">Accounts</Typography>
+				<div>
+					<Button
+						id="sort-button"
+						aria-controls={open ? 'sort-menu' : undefined}
+						aria-haspopup="true"
+						aria-expanded={open ? 'true' : undefined}
+						onClick={handleSortClick}
+						size="small"
+						startIcon={<SortIcon />}
+						sx={{ textTransform: 'none' }}
+					>
+						{accountListSortBy.charAt(0).toUpperCase() + accountListSortBy.slice(1)}
+					</Button>
+					<Menu
+						id="sort-menu"
+						anchorEl={anchorEl}
+						open={open}
+						onClose={handleSortClose}
+						MenuListProps={{ 'aria-labelledby': 'sort-button' }}>
+						<MenuItem onClick={() => handleSortMenuItemClick('name')} selected={'name' === accountListSortBy}>Name</MenuItem>
+						<MenuItem onClick={() => handleSortMenuItemClick('balance')} selected={'balance' === accountListSortBy}>Balance</MenuItem>
+					</Menu>
+				</div>
+			</Stack>
 			<Summary />
 			<Box>
-				{Object.entries(groupedAccounts).map(([type, data]) => {
+				{groupedAccounts.map(([type, data]) => {
 					const IconComponent = TYPE_ICON_MAP[type];
 					const isExpanded = expandedRows.has(type);
 					return (

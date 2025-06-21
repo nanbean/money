@@ -56,9 +56,7 @@ export const updateGeneralAction = (key, value) => {
 
 		dispatch({
 			type: SET_SETTINGS,
-			payload: [
-				general
-			]
+			payload: [general]
 		});
 	};
 };

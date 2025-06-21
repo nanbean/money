@@ -126,30 +126,27 @@ export function Search () {
 		}
 	};
 
-	const onSearchKeyPress = (e) => {
-		if (e.key === 'Enter' && e.target.value) {
-			const params = {};
-			if (inputValue) {
-				params.keyword = inputValue;
-			}
-			if (category) {
-				params.category = category;
-			}
-			if (subcategory) {
-				params.subcategory = subcategory;
-			}
-			if (startDate) {
-				params.startDate = startDate;
-			}
-			if (endDate) {
-				params.endDate = endDate;
-			}
-			setSearchParams(params);
-		}
-	};
-
 	const onInputValueChange = (e) => {
-		setInputValue(e.target.value);
+		const newKeyword = e.target.value;
+		setInputValue(newKeyword);
+
+		const params = {};
+		if (newKeyword) {
+			params.keyword = newKeyword;
+		}
+		if (category) {
+			params.category = category;
+		}
+		if (subcategory) {
+			params.subcategory = subcategory;
+		}
+		if (startDate) {
+			params.startDate = startDate;
+		}
+		if (endDate) {
+			params.endDate = endDate;
+		}
+		setSearchParams(params, { replace: true });
 	};
 
 	const onCategoryChange = (e) => {
@@ -253,7 +250,6 @@ export function Search () {
 										autoFocus
 										value={inputValue}
 										onChange={onInputValueChange}
-										onKeyPress={onSearchKeyPress}
 										startAdornment={
 											<InputAdornment position="start">
 												<SearchIcon />
