@@ -63,7 +63,7 @@
     "build": "react-scripts build",
     "lint": "eslint",
     "test": "react-scripts test --env=jsdom",
-    "test:server": "jest server",
+    "test:server": "jest server --detectOpenHandles",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
