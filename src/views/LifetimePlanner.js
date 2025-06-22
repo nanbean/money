@@ -8,12 +8,19 @@ import Stack from '@mui/material/Stack';
 
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
+import SortMenuButton from '../components/SortMenuButton';
 
+import {
+	updateGeneralAction
+} from '../actions/couchdbSettingActions';
 import { getLifetimeFlowAction } from '../actions/couchdbReportActions';
 import { toCurrencyFormat } from '../utils/formatting';
 
 const CustomTooltip = ({ active, payload }) => {
-	if (active) {
+	if (active && payload && payload.length) {
+		const amountData = payload.find(p => p.dataKey === 'amount');
+		const amountInflationData = payload.find(p => p.dataKey === 'amountInflation');
+
 		return (
 			<Stack
 				sx={(theme) => ({
@@ -23,24 +30,27 @@ const CustomTooltip = ({ active, payload }) => {
 					backgroundColor: theme.palette.secondary.main
 				})}
 			>
-				<Typography
-					variant="body1"
-					gutterBottom
-					sx={() => ({
-						color: '#e48274'
-					})}
-				>
-					{`Amount(Inflation) : ${toCurrencyFormat(payload[0].value)}`}
-				</Typography>
-				<Typography
-					variant="body1"
-					gutterBottom
-					sx={() => ({
-						color: '#b04333'
-					})}
-				>
-					{`Amount : ${toCurrencyFormat(payload[1].value)}`}
-				</Typography>
+				{amountData &&
+					<Typography
+						variant="body1"
+						gutterBottom
+						sx={() => ({
+							color: '#e48274'
+						})}
+					>
+						{`Amount(Inflation) : ${toCurrencyFormat(amountData.value)}`}
+					</Typography>
+				}
+				{amountInflationData &&
+					<Typography
+						variant="body1"
+						gutterBottom
+						sx={() => ({
+							color: '#b04333'
+						})}
+					>
+						{`Amount : ${toCurrencyFormat(amountInflationData.value)}`}
+					</Typography>}
 			</Stack>
 		);
 	}
@@ -54,7 +64,7 @@ CustomTooltip.propTypes = {
 
 function LifetimePlanner () {
 	const lifetimePlannerFlow = useSelector((state) => state.lifetimePlannerFlow);
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, lifetimePlannerChartType = 'withInflation' } = useSelector((state) => state.settings.general);
 	const lifetimePlannerFlowWithCurrency = lifetimePlannerFlow.map(item => ({
 		...item,
 		amount: displayCurrency === 'USD' ? item.amount / exchangeRate:item.amount,
@@ -62,6 +72,10 @@ function LifetimePlanner () {
 	}));
 
 	const dispatch = useDispatch();
+
+	const handleChartTypeChange = (newType) => {
+		dispatch(updateGeneralAction('lifetimePlannerChartType', newType));
+	};
 
 	useEffect(() => {
 		dispatch(getLifetimeFlowAction());
@@ -72,6 +86,16 @@ function LifetimePlanner () {
 			<div>
 				<TitleHeader title="Lifetime Planner" />
 				<Container>
+					<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+						<SortMenuButton
+							value={lifetimePlannerChartType}
+							onChange={handleChartTypeChange}
+							options={[
+								{ value: 'withInflation', label: 'With Inflation' },
+								{ value: 'withoutInflation', label: 'Without Inflation' }
+							]}
+						/>
+					</Stack>
 					{
 						lifetimePlannerFlowWithCurrency.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
@@ -83,7 +107,7 @@ function LifetimePlanner () {
 								<YAxis hide />
 								<Tooltip content={<CustomTooltip />} />
 								<Bar dataKey="amount" name="Amount" fill="#e48274" />
-								<Line dataKey="amountInflation" stroke="#b04333" strokeDasharray="5 5"/>
+								{lifetimePlannerChartType === 'withInflation' && <Line dataKey="amountInflation" name="Amount" stroke="#b04333" strokeDasharray="5 5"/>}
 							</ComposedChart>
 						</ResponsiveContainer>
 					}
