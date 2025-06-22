@@ -64,7 +64,7 @@ CustomTooltip.propTypes = {
 
 function LifetimePlanner () {
 	const lifetimePlannerFlow = useSelector((state) => state.lifetimePlannerFlow);
-	const { currency: displayCurrency, exchangeRate, lifetimePlannerChartType = 'withInflation' } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, lifetimePlannerChartType = 'both' } = useSelector((state) => state.settings.general);
 	const lifetimePlannerFlowWithCurrency = lifetimePlannerFlow.map(item => ({
 		...item,
 		amount: displayCurrency === 'USD' ? item.amount / exchangeRate:item.amount,
@@ -91,6 +91,7 @@ function LifetimePlanner () {
 							value={lifetimePlannerChartType}
 							onChange={handleChartTypeChange}
 							options={[
+								{ value: 'both', label: 'Both' },
 								{ value: 'withInflation', label: 'With Inflation' },
 								{ value: 'withoutInflation', label: 'Without Inflation' }
 							]}
@@ -106,8 +107,9 @@ function LifetimePlanner () {
 								<XAxis dataKey="year" />
 								<YAxis hide />
 								<Tooltip content={<CustomTooltip />} />
-								<Bar dataKey="amount" name="Amount" fill="#e48274" />
-								{lifetimePlannerChartType === 'withInflation' && <Line dataKey="amountInflation" name="Amount" stroke="#b04333" strokeDasharray="5 5"/>}
+								{(lifetimePlannerChartType === 'withInflation' || lifetimePlannerChartType === 'both') && <Bar dataKey="amount" name="Amount(Inflation)" fill="#e48274" />}
+								{lifetimePlannerChartType === 'withoutInflation' && <Bar dataKey="amountInflation" name="Amount" fill="#b04333" />}
+								{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke="#b04333" strokeDasharray="5 5"/>}
 							</ComposedChart>
 						</ResponsiveContainer>
 					}
