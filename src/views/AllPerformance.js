@@ -32,6 +32,7 @@ export function AllPerformance () {
 				investment: i.name,
 				price: i.price,
 				currency: i.currency,
+				symbol: i.yahooSymbol,
 				performance: performance,
 				totalPerformance: totalPerformance,
 				totalQuantity: totalQuantity
@@ -77,6 +78,7 @@ export function AllPerformance () {
 									price={i.price}
 									currency={i.currency}
 									performance={i.performance}
+									symbol={i.symbol}
 								/>
 							);
 						})

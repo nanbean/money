@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
 import InvestmentPerformance from '../components/InvestmentPerformance';
+import Typography from '@mui/material/Typography';
 
 import { getInvestmentPerformance } from '../utils/performance';
 
@@ -14,23 +15,40 @@ const getInvestmentTransactions = (transactions, investment) => transactions.fil
 export function Performance () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestments = useSelector((state) => state.allInvestments);
-	const { investment } = useParams();
+	const { investment: investmentName } = useParams();
 
-	const investmentItem = useMemo(() => getInvestmentItem(allInvestments, investment), [allInvestments, investment]);
-	const investmentPrice = investmentItem && investmentItem.price;
-	const investmentCurrency = investmentItem && investmentItem.currency;
-	const investmentTransactions = useMemo(() => getInvestmentTransactions(allAccountsTransactions, investment), [allAccountsTransactions, investment]);
-	const performance = useMemo(() => getInvestmentPerformance(investmentTransactions, investmentPrice), [investmentTransactions, investmentPrice]);
+	const investmentItem = useMemo(() => getInvestmentItem(allInvestments, investmentName), [allInvestments, investmentName]);
+	const investmentTransactions = useMemo(() => getInvestmentTransactions(allAccountsTransactions, investmentName), [allAccountsTransactions, investmentName]);
+
+	const performance = useMemo(() => {
+		// Performance can only be calculated if we have the investment item (and its price)
+		if (!investmentItem) {
+			return [];
+		}
+		return getInvestmentPerformance(investmentTransactions, investmentItem.price);
+	}, [investmentTransactions, investmentItem]);
+
+	if (!investmentItem) {
+		return (
+			<React.Fragment>
+				<TitleHeader title="Not Found" />
+				<Container>
+					<Typography>Investment "{investmentName}" could not be found.</Typography>
+				</Container>
+			</React.Fragment>
+		);
+	}
 
 	return (
 		<React.Fragment>
-			<TitleHeader title={investment} />
+			<TitleHeader title={investmentName} />
 			<Container>
 				<InvestmentPerformance
-					investment={investment}
-					price={investmentPrice}
-					currency={investmentCurrency}
+					investment={investmentName}
+					price={investmentItem.price}
+					currency={investmentItem.currency}
 					performance={performance}
+					symbol={investmentItem.yahooSymbol}
 				/>
 			</Container>
 		</React.Fragment>

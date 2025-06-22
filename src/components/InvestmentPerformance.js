@@ -1,13 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 
 import NormalGrid from '../components/NormalGrid';
+import TossIcon from './icons/TossIcon';
 
 export function InvestmentPerformance ({
 	investment,
 	performance,
+	symbol,
 	price,
 	currency
 }) {
@@ -17,6 +21,12 @@ export function InvestmentPerformance ({
 	const totalDividend = performance.length > 0 ? performance.map(l => l.periodDiv).reduce((a, b) => a + b) : 0;
 	const totalCostBasis = performance.length > 0 ? performance.map(m => m.costBasis).reduce((a, b) => a + b) : 0;
 	const totalMarketValue = performance.length > 0 ? performance.map(l => l.marketValue).reduce((a, b) => a + b) : 0;
+	const tossSymbol = symbol ? symbol.split('.')[0] : '';
+	const handleTossClick = () => {
+		if (tossSymbol) {
+			window.open(`https://tossinvest.com/stocks/${tossSymbol}`, '_blank', 'noopener,noreferrer');
+		}
+	};
 
 	const performanceData = [
 		[
@@ -55,13 +65,23 @@ export function InvestmentPerformance ({
 
 	return (
 		<div>
-			<Typography
-				variant="subtitle1"
+			<Stack
+				direction="row"
+				alignItems="center"
+				spacing={0.5}
 				sx={(theme) => ({
 					margin: theme.spacing(0.5)
-				})}>
-				{investment}
-			</Typography>
+				})}
+			>
+				<Typography variant="subtitle1">
+					{investment}
+				</Typography>
+				{tossSymbol && (
+					<IconButton onClick={handleTossClick} size="small" aria-label="open in toss">
+						<TossIcon sx={{ width: '1.25rem', height: '1.25rem' }} />
+					</IconButton>
+				)}
+			</Stack>
 			<NormalGrid
 				gridData={performanceData}
 			/>
@@ -72,7 +92,9 @@ export function InvestmentPerformance ({
 InvestmentPerformance.propTypes = {
 	investment: PropTypes.string.isRequired,
 	performance: PropTypes.array.isRequired,
-	currency: PropTypes.string
+	currency: PropTypes.string,
+	price: PropTypes.number,
+	symbol: PropTypes.string
 };
 
 export default InvestmentPerformance;
