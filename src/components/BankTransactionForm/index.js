@@ -187,7 +187,6 @@ export function BankTransactionForm ({
 						type="date"
 						name="date"
 						autoComplete="off"
-						autoFocus
 						placeholder="Date"
 						value={form.date}
 						fullWidth

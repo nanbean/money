@@ -65,7 +65,6 @@ export function SigninForm () {
 							id="username"
 							name="username"
 							autoComplete="signin email"
-							autoFocus
 							value={username}
 							onChange={handleUsernameOrEmailChange}
 						/>

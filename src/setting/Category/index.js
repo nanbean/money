@@ -14,8 +14,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import AddIcon from '@mui/icons-material/Add';
 
-import useHeight from '../../hooks/useHeight';
-
 import {
 	addCategoryAction,
 	deleteCategoryAction,
@@ -29,8 +27,6 @@ export function Category () {
 	const [dialogEdit, setDialogEdit] = useState(false);
 	const [newCategoryInput, setNewCategoryInput] = useState('');
 	const rows = useMemo(() => categoryList.map((i, index) => ({ id: index, category: i.key })), [categoryList]);
-	const categoryHeight = useHeight() - 64 - 64 - 64; // TODO: Optimize calculation
-
 	const dispatch = useDispatch();
 
 	const onRowSelect = ({ index }) => {
@@ -78,9 +74,13 @@ export function Category () {
 
 	return (
 		<Box
-			sx={() => ({
-				height: categoryHeight
-			})}
+			sx={{
+				// JS로 높이를 계산하는 대신 CSS의 flexbox와 calc()를 사용해 레이아웃을 자동화합니다.
+				// 192px는 기존 코드의 `64 * 3`에 해당하며, 앱의 헤더 등 다른 UI 요소의 높이를 의미합니다.
+				height: 'calc(100vh - 192px)',
+				display: 'flex',
+				flexDirection: 'column'
+			}}
 		>
 			<Button
 				fullWidth
@@ -95,28 +95,30 @@ export function Category () {
 					})}
 				/>
 			</Button>
-			<AutoSizer>
-				{({ height, width }) => (
-					<Table
-						headerClassName="header"
-						rowClassName="row"
-						width={width}
-						height={height}
-						headerHeight={40}
-						rowHeight={40}
-						rowCount={rows.length}
-						rowGetter={({ index }) => rows[index]}
-						onRowClick={onRowSelect}
-					>
-						<Column
-							label="Category"
-							dataKey="category"
+			<Box sx={{ flex: 1, mt: 1 }}>
+				<AutoSizer>
+					{({ height, width }) => (
+						<Table
+							headerClassName="header"
+							rowClassName="row"
 							width={width}
-							cellRenderer={({ cellData }) => cellData}
-						/>
-					</Table>
-				)}
-			</AutoSizer>
+							height={height}
+							headerHeight={40}
+							rowHeight={40}
+							rowCount={rows.length}
+							rowGetter={({ index }) => rows[index]}
+							onRowClick={onRowSelect}
+						>
+							<Column
+								label="Category"
+								dataKey="category"
+								width={width}
+								cellRenderer={({ cellData }) => cellData}
+							/>
+						</Table>
+					)}
+				</AutoSizer>
+			</Box>
 			<Dialog
 				open={dialogOpen}
 				onClose={handleClose}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
@@ -71,7 +72,13 @@ const MonthlyExpense = () => {
 	};
 
 	return (
-		<Stack spacing={2}>
+		<Box
+			sx={{
+				height: 'calc(100vh - 192px)',
+				display: 'flex',
+				flexDirection: 'column'
+			}}
+		>
 			<Stack direction="row" justifyContent="space-between" alignItems="center">
 				<FormControl variant="standard" sx={{ minWidth: 120 }}>
 					<Select
@@ -118,8 +125,10 @@ const MonthlyExpense = () => {
 				</div>
 			</Stack>
 			<MonthlyComparisonChart chartData={chartData} />
-			{reportData.length > 0 && <ReportGrid reportData={reportData} supportSearch/>}
-		</Stack>
+			<Box sx={{ flex: 1, mt: 1 }}>
+				{reportData.length > 0 && <ReportGrid reportData={reportData} supportSearch/>}
+			</Box>
+		</Box>
 	);
 };
 

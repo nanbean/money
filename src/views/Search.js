@@ -247,7 +247,6 @@ export function Search () {
 										id="search"
 										name="search"
 										autoComplete="search"
-										autoFocus
 										value={inputValue}
 										onChange={onInputValueChange}
 										startAdornment={
@@ -279,7 +278,6 @@ export function Search () {
 										type="date"
 										name="startDate"
 										autoComplete="off"
-										autoFocus
 										placeholder="Start Date"
 										value={startDate}
 										fullWidth
@@ -299,7 +297,6 @@ export function Search () {
 										type="date"
 										name="endDate"
 										autoComplete="off"
-										autoFocus
 										placeholder="End Date"
 										value={endDate}
 										fullWidth
