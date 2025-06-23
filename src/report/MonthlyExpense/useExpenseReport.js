@@ -65,8 +65,10 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 			];
 			expenseReport = expenseReport.filter(i => !exemptionCategory.find(j => i.category && i.category.startsWith(j)));
 		}
-		totalMonthExpenseSum = expenseReport.length > 0 && MONTH_LIST.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
-		totalExpenseSum = expenseReport.length > 0 && expenseReport.map(i => i.sum).reduce((a, b) => a + b);
+		if (expenseReport.length > 0) {
+			totalMonthExpenseSum = MONTH_LIST.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
+			totalExpenseSum = expenseReport.map(i => i.sum).reduce((a, b) => a + b);
+		}
 	}
     
 	return { expenseReport, totalMonthExpenseSum, totalExpenseSum };

@@ -19,9 +19,9 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 				type: 'label',
 				value: 'Category'
 			},
-			...MONTH_LIST.map((i, index) => ({
+			...MONTH_LIST.map((_, index) => ({
 				type: 'label',
-				value: i,
+				value: moment().month(index).format('MMM'),
 				startDate: getStartDate(year, index + 1),
 				endDate: getEndDate(year, index + 1)
 			})),

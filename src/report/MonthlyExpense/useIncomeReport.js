@@ -53,8 +53,10 @@ const useIncomeReport = (accountList, incomeTransactions, year, usd, exchangeRat
 			return 0;
 		});
   
-		totalMonthIncomeSum = incomeReport.length > 0 && MONTH_LIST.map((m, index) => incomeReport.map(i => i.month[index]).reduce((a, b) => a + b));
-		totalIncomeSum = incomeReport.length > 0 && incomeReport.map(i => i.sum).reduce((a, b) => a + b);
+		if (incomeReport.length > 0) {
+			totalMonthIncomeSum = MONTH_LIST.map((m, index) => incomeReport.map(i => i.month[index]).reduce((a, b) => a + b));
+			totalIncomeSum = incomeReport.map(i => i.sum).reduce((a, b) => a + b);
+		}
 	}
     
 	return { incomeReport, totalMonthIncomeSum, totalIncomeSum };
