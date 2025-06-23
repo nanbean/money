@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
+import ListSubheader from '@mui/material/ListSubheader';
 import Divider from '@mui/material/Divider';
 import Switch from '@mui/material/Switch';
-import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -30,11 +32,17 @@ export function General () {
 	};
 
 	const handleExchangeRateSend = () => {
-		dispatch(updateGeneralAction('exchangeRate', exchangeRateValue));
+		const newRate = parseFloat(exchangeRateValue);
+		if (!isNaN(newRate) && newRate !== exchangeRate) {
+			dispatch(updateGeneralAction('exchangeRate', newRate));
+		} else {
+			setExchangeRateValue(exchangeRate);
+		}
 	};
 
 	const handleExchangeRateKeyDown = (event) => {
 		if (event.key === 'Enter') {
+			// Save when Enter key is pressed
 			handleExchangeRateSend();
 			event.target.blur();
 		}
@@ -49,7 +57,9 @@ export function General () {
 	};
 
 	const handleCurrencyChange = (event, newCurrency) => {
-		dispatch(updateGeneralAction('currency', newCurrency));
+		if (newCurrency !== null) { // Prevent unselecting
+			dispatch(updateGeneralAction('currency', newCurrency));
+		}
 	};
 
 	const handleEnabeExchangeRateUpdateChange = (event) => {
@@ -57,92 +67,87 @@ export function General () {
 	};
 
 	return (
-		<Stack spacing={2}>
-			<Box
-				display="flex"
-				justifyContent="space-between"
-				alignItems="center"
-				width="100%"
-			>
-				<Typography
-					component="label"
-					htmlFor="push-notification-switch"
-					sx={{ cursor: 'pointer' }}
-				>
-					Push Notification
-				</Typography>
-				<Switch
-					id="push-notification-switch"
-					checked={!!messagingToken} onChange={handlePushNotificationChange} aria-label="Enable push notification switch" />
-			</Box>
-			<Divider sx={{ margin: 2 }} />
-			<Box
-				display="flex"
-				justifyContent="space-between"
-				alignItems="center"
-				width="100%"
-			>
-				<Typography id="currency-label">
-					Currency
-				</Typography>
-				<ToggleButtonGroup
-					size="small"
-					value={currency}
-					exclusive
-					onChange={handleCurrencyChange}
-					aria-labelledby="currency-label"
-				>
-					<ToggleButton value="KRW" sx={{ width: 40 }}>
-						₩
-					</ToggleButton>
-					<ToggleButton value="USD" sx={{ width: 40 }}>
-						$
-					</ToggleButton>
-				</ToggleButtonGroup>
-			</Box>
-			<Box
-				display="flex"
-				justifyContent="space-between"
-				alignItems="center"
-				width="100%"
-			>
-				<Typography
-					component="label"
-					htmlFor="exchange-rate-update-switch"
-					sx={{ cursor: 'pointer' }}
-				>
-					Exchange Rate Update
-				</Typography>
-				<Switch
-					id="exchange-rate-update-switch"
-					checked={enableExchangeRateUpdate} onChange={handleEnabeExchangeRateUpdateChange} aria-label="Enable exchange rate update switch" />
-			</Box>
-			<Box
-				display="flex"
-				justifyContent="space-between"
-				alignItems="center"
-				width="100%"
-			>
-				<Typography
-					component="label"
-					htmlFor="exchange-rate-input"
-					sx={{ cursor: 'pointer' }}
-				>
-					Exchange Rate
-				</Typography>
+		<List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+			<ListSubheader>Notifications</ListSubheader>
+			<ListItem>
+				<ListItemText
+					id="push-notification-label"
+					primary="Push Notification"
+					secondary="Enable to receive transaction notifications"
+				/>
+				<ListItemSecondaryAction>
+					<Switch
+						edge="end"
+						checked={!!messagingToken}
+						onChange={handlePushNotificationChange}
+						inputProps={{
+							'aria-labelledby': 'push-notification-label'
+						}}
+					/>
+				</ListItemSecondaryAction>
+			</ListItem>
+			<Divider component="li" sx={{ my: 1 }} />
+			<ListSubheader>Currency</ListSubheader>
+			<ListItem>
+				<ListItemText
+					id="currency-label"
+					primary="Display Currency"
+					secondary="Select the currency for displaying amounts"
+				/>
+				<ListItemSecondaryAction>
+					<ToggleButtonGroup
+						size="small"
+						value={currency}
+						exclusive
+						onChange={handleCurrencyChange}
+						aria-labelledby="currency-label"
+					>
+						<ToggleButton value="KRW" aria-label="Korean Won" sx={{ width: 40 }}>
+							₩
+						</ToggleButton>
+						<ToggleButton value="USD" aria-label="US Dollar" sx={{ width: 40 }}>
+							$
+						</ToggleButton>
+					</ToggleButtonGroup>
+				</ListItemSecondaryAction>
+			</ListItem>
+			<ListItem>
+				<ListItemText
+					id="exchange-rate-update-label"
+					primary="Automatic Exchange Rate"
+					secondary="Automatically fetch the latest KRW-USD rate"
+				/>
+				<ListItemSecondaryAction>
+					<Switch
+						edge="end"
+						checked={enableExchangeRateUpdate}
+						onChange={handleEnabeExchangeRateUpdateChange}
+						inputProps={{
+							'aria-labelledby': 'exchange-rate-update-label'
+						}}
+					/>
+				</ListItemSecondaryAction>
+			</ListItem>
+			<ListItem>
+				<ListItemText
+					id="exchange-rate-label"
+					primary="Manual Exchange Rate"
+					secondary={enableExchangeRateUpdate ? 'Disabled when automatic update is on' : 'Set the rate manually'}
+				/>
 				<TextField
 					id="exchange-rate-input"
 					value={exchangeRateValue}
 					size="small"
 					type="number"
 					onChange={onExchangeRateValueChange}
-					onBlur={handleExchangeRateSend} // Save when focus leaves the field
-					onKeyDown={handleExchangeRateKeyDown} // Save when Enter key is pressed
+					onBlur={handleExchangeRateSend}
+					onKeyDown={handleExchangeRateKeyDown}
 					sx={{ width: '120px' }}
 					variant="outlined"
+					inputProps={{ 'aria-labelledby': 'exchange-rate-label' }}
 				/>
-			</Box>
-		</Stack>
+			</ListItem>
+		</List>
 	);
 }
 
