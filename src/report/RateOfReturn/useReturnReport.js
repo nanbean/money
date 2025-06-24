@@ -13,7 +13,7 @@ const findGeometricMean = (returns) => {
 	return Math.pow(result, 1/filteredReturns.length);
 };
 
-const useReturnReport = (allInvestments, allAccountsTransactions, investementTransactions, cashTransactions, historyList, filteredAccounts, allCashAccounts) => {
+const useReturnReport = (allInvestments, allAccountsTransactions, investementTransactions, cashTransactions, historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate) => {
 	let reportData = [];
 
 	let dates = [];
@@ -29,11 +29,39 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 	for (let i = 0; i < data.length; i++) {
 		const curItem = data[i];
 		const prevItem = i === 0 ? { date: '0' }:data[i-1];
-		const investments = getInvestmentList(allInvestments, allAccountsTransactions, investementTransactions.filter(j => j.date <= curItem.date).filter(k => filteredAccounts.includes(k.accountId.split(':')[2])));
-		curItem.investmentBalance = getInvestmentBalance(investments, curItem.date, historyList);
-		curItem.cashBalance = allCashAccounts.reduce((sum, j) => getBalance(j, allAccountsTransactions, cashTransactions.filter(k => k.date <= curItem.date).filter(l => l.accountId === `account:Bank:${j}`), curItem.date) + sum, 0);
+
+		const usdInvestmentAccounts = filteredAccounts.filter(accName => {
+			const account = accountList.find(acc => acc.name === accName);
+			return account && account.currency === 'USD';
+		});
+		const krwInvestmentAccounts = filteredAccounts.filter(accName => !usdInvestmentAccounts.includes(accName));
+
+		const krwInvestments = getInvestmentList(allInvestments, allAccountsTransactions, investementTransactions.filter(j => j.date <= curItem.date).filter(k => krwInvestmentAccounts.includes(k.accountId.split(':')[2])));
+		const krwInvestmentBalance = getInvestmentBalance(krwInvestments, curItem.date, historyList);
+
+		const usdInvestments = getInvestmentList(allInvestments, allAccountsTransactions, investementTransactions.filter(j => j.date <= curItem.date).filter(k => usdInvestmentAccounts.includes(k.accountId.split(':')[2])));
+		const usdInvestmentBalance = getInvestmentBalance(usdInvestments, curItem.date, historyList);
+
+		curItem.investmentBalance = krwInvestmentBalance + (usdInvestmentBalance * exchangeRate);
+		curItem.cashBalance = allCashAccounts.reduce((sum, j) => {
+			const balance = getBalance(j, allAccountsTransactions, cashTransactions.filter(k => k.date <= curItem.date).filter(l => l.accountId === `account:Bank:${j}`), curItem.date);
+			const investmentAccountName = j.split('_')[0];
+			const account = accountList.find(acc => acc.name === investmentAccountName);
+			if (account && account.currency === 'USD') {
+				return sum + (balance * exchangeRate);
+			}
+			return sum + balance;
+		}, 0);
 		curItem.netWorth = curItem.investmentBalance + curItem.cashBalance;
-		curItem.depositWithdrawalSum = allCashAccounts.reduce((sum, j) => getDepositWithdrawalSum(j, allAccountsTransactions, cashTransactions.filter(k => k.date > prevItem.date && k.date <= curItem.date).filter(l => l.accountId === `account:Bank:${j}`), curItem.date) + sum, 0);
+		curItem.depositWithdrawalSum = allCashAccounts.reduce((sum, j) => {
+			const depositWithdrawal = getDepositWithdrawalSum(j, allAccountsTransactions, cashTransactions.filter(k => k.date > prevItem.date && k.date <= curItem.date).filter(l => l.accountId === `account:Bank:${j}`), curItem.date);
+			const investmentAccountName = j.split('_')[0];
+			const account = accountList.find(acc => acc.name === investmentAccountName);
+			if (account && account.currency === 'USD') {
+				return sum + (depositWithdrawal * exchangeRate);
+			}
+			return sum + depositWithdrawal;
+		}, 0);
 	}
 
 	const returns = [];
