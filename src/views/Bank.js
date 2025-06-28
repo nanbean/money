@@ -110,7 +110,7 @@ export function Bank () {
 						>
 							{'Balance : '}
 						</Typography>
-						<Amount value={balance} size="large" negativeColor showSymbol currency={currency}/>
+						<Amount value={balance} size="large" negativeColor showSymbol showOriginal currency={currency}/>
 					</Stack>
 					<BankTransactionModal
 						EditForm={BankTransactionForm}
