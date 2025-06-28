@@ -20,6 +20,7 @@ module.exports = {
 
 	// settingService
 	getExchangeRate: settingService.getExchangeRate,
+	getCurrency: settingService.getCurrency,
 	getCategoryList: settingService.getCategoryList,
 	arrangeExchangeRate: settingService.arrangeExchangeRate,
 

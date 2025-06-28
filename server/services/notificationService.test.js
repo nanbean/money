@@ -21,7 +21,8 @@ jest.mock('./accountService', () => ({
 }));
 
 jest.mock('./settingService', () => ({
-	getExchangeRate: jest.fn()
+	getExchangeRate: jest.fn(),
+	getCurrency: jest.fn()
 }));
 
 describe('notificationService', () => {
@@ -108,13 +109,14 @@ describe('notificationService', () => {
 
 			accountService.getAllAccounts.mockResolvedValue(mockAccounts);
 			settingService.getExchangeRate.mockResolvedValue(mockExchangeRate);
+			settingService.getCurrency.mockResolvedValue('KRW');
 
 			// Act: Call the function.
 			await sendBalanceUpdateNotification();
 
 			// Assert: Verify the calculation and the final notification message.
 			// Calculation: 1000 (KRW) + 10000 (KRW) + (500 (USD) * 1300) = 661,000
-			const expectedNetWorth = '661,000';
+			const expectedNetWorth = (661000).toLocaleString('ko-KR', { style: 'currency', currency: 'KRW' });
 
 			expect(messaging.sendNotification).toHaveBeenCalledWith('NetWorth Update', `Today's NetWorth is ${expectedNetWorth}`, 'graph');
 		});
@@ -123,12 +125,13 @@ describe('notificationService', () => {
 			// Arrange: Mock an empty array of accounts.
 			accountService.getAllAccounts.mockResolvedValue([]);
 			settingService.getExchangeRate.mockResolvedValue(1300);
+			settingService.getCurrency.mockResolvedValue('KRW');
 
 			// Act: Call the function.
 			await sendBalanceUpdateNotification();
 
 			// Assert: The net worth should be '0' and the notification sent correctly.
-			const expectedNetWorth = '0';
+			const expectedNetWorth = (0).toLocaleString('ko-KR', { style: 'currency', currency: 'KRW' });
 			expect(messaging.sendNotification).toHaveBeenCalledWith('NetWorth Update', `Today's NetWorth is ${expectedNetWorth}`, 'graph');
 		});
 	});

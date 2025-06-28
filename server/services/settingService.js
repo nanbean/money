@@ -19,6 +19,17 @@ const getExchangeRate = async () => {
 	return 1000;
 };
 
+const getCurrency = async () => {
+	const settings = await getSettings();
+	const general = settings.find(i => i._id === 'general');
+
+	if (general && general.currency) {
+		return general.currency;
+	}
+
+	return 'KRW';
+};
+
 const getCategoryList = async () => {
 	const settings = await getSettings();
 	const categoryList = settings.find(i => i._id === 'categoryList');
@@ -48,6 +59,7 @@ const arrangeExchangeRate = async () => {
 module.exports = {
 	getSettings,
 	getExchangeRate,
+	getCurrency,
 	getCategoryList,
 	arrangeExchangeRate
 };
