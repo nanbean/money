@@ -42,15 +42,19 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 				sum: groupedExpenseData[key].map(i => isUsdAccount(i.account) ? (i.amount * exchangeRate):i.amount).reduce((a, b) => a + b)
 			};
 		}).sort((a, b) => {
-			const categoryA = a.category.toLowerCase();
-			const categoryB = b.category.toLowerCase();
-			if (categoryA < categoryB) {
+			const aHasParent = a.category.includes(':');
+			const bHasParent = b.category.includes(':');
+
+			if (aHasParent && !bHasParent) {
 				return -1;
 			}
-			if (categoryB < categoryA) {
+			if (!aHasParent && bHasParent) {
 				return 1;
 			}
-			return 0;
+
+			const categoryA = a.category.toLowerCase();
+			const categoryB = b.category.toLowerCase();
+			return categoryA.localeCompare(categoryB);
 		});
 
 		if (livingExpenseOnly) {

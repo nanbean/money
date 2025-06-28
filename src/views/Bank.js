@@ -19,8 +19,6 @@ import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 import Amount from '../components/Amount';
 
-import useHeight from '../hooks/useHeight';
-
 import { setAccountAction } from '../actions/accountActions';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
 
@@ -51,7 +49,6 @@ export function Bank () {
 	const dropPayeeList = useSelector((state) => state.dropPayeeList);
 	const isModalOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen,);
 	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
-	const transactionsHeight = useHeight() - 64 - 64 - 56; // TODO: Optimize calculation
 
 	let { name } = useParams();
 	let { pathname } = useLocation();
@@ -74,7 +71,13 @@ export function Bank () {
 		<React.Fragment>
 			<TitleHeader title={account} />
 			<Container>
-				<Paper>
+				<Paper
+					sx={{
+						height: 'calc(100vh - 128px)',
+						display: 'flex',
+						flexDirection: 'column'
+					}}
+				>
 					<Sticky>
 						<Button
 							fullWidth
@@ -90,7 +93,7 @@ export function Bank () {
 							/>
 						</Button>
 					</Sticky>
-					<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
+					<Box sx={{ flex: 1, mt: 1 }}>
 						<BankTransactions
 							account={account}
 							currency={currency}
