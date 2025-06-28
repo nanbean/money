@@ -30,3 +30,4 @@ deploy_server.sh
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.vscode/launch.json

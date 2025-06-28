@@ -292,7 +292,11 @@ export const initCouchdbAction = username => {
 					for (let i = 0; i < change.docs.length; i++) {
 						dispatch({
 							type: ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS,
-							payload: change.docs[i]
+							payload: {
+								...change.docs[i],
+								type: change.docs[i].accountId.split(':')[1],
+								account: change.docs[i].accountId.split(':')[2]
+							}
 						});
 					}
 				}
@@ -379,7 +383,11 @@ export const addTransactionAction = param => {
 			dispatch(setAddTransactionFetchingAction(true));
 			dispatch({
 				type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
-				payload: transaction
+				payload: {
+					...transaction,
+					type: transaction.accountId.split(':')[1],
+					account: transaction.accountId.split(':')[2]
+				}
 			});
 			await transactionsDB.put(transaction);
 
