@@ -93,7 +93,7 @@ export function Bank () {
 							/>
 						</Button>
 					</Sticky>
-					<Box sx={{ flex: 1, mt: 1 }}>
+					<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
 						<BankTransactions
 							account={account}
 							currency={currency}
