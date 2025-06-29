@@ -1,49 +1,82 @@
 const config = require('./config');
-const CronJob = require('cron').CronJob;
 const PouchDB = require('pouchdb');
-const debounce = require('lodash.debounce');
 
 const transactionsDB = new PouchDB('transactions');
 
+// In-memory transaction cache
 let allTransactions = [];
+// A Promise to track if the cache is being initialized or has been completed
+let isCacheInitialized = null;
 
-const updateAllTransactions = async () => {
-	const transactionsResponse = await transactionsDB.allDocs({ include_docs: true });
-	allTransactions = transactionsResponse.rows.map(i => i.doc);
+/**
+ * Incrementally updates the cache.
+ * Used in the PouchDB 'change' event handler.
+ * @param {object} change - The PouchDB change object
+ */
+const updateCacheIncrementally = (change) => {
+	// Do not process if `change.doc` is missing
+	if (!change.doc) {
+		return;
+	}
+
+	const index = allTransactions.findIndex(t => t._id === change.id);
+
+	if (change.deleted) {
+		// If the document was deleted
+		if (index !== -1) {
+			allTransactions.splice(index, 1);
+			// console.log(`Cache updated: removed transaction ${change.id}`);
+		}
+	} else {
+		// If the document was added or updated
+		if (index !== -1) {
+			// Update existing document
+			allTransactions[index] = change.doc;
+			// console.log(`Cache updated: updated transaction ${change.id}`);
+		} else {
+			// Add new document
+			allTransactions.push(change.doc);
+			// console.log(`Cache updated: added transaction ${change.id}`);
+		}
+	}
 };
 
-const updateAllTransactionsDebounce = debounce(updateAllTransactions, 1000);
-
 const initPouchDB = () => {
-	let remoteTransactionsDB = new PouchDB(`https://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}/transactions_nanbean`, { skip_setup: true }); // eslint-disable-line camelcase
-	PouchDB.replicate(remoteTransactionsDB, transactionsDB, { live: true, retry: true }).on('change', function ({ change, deleted }) {
-		updateAllTransactionsDebounce();
-		console.log('transaction change');
+	const remoteTransactionsDB = new PouchDB(`https://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}/transactions_nanbean`, { skip_setup: true });
+
+	// Set up the cache initialization Promise
+	isCacheInitialized = transactionsDB.allDocs({ include_docs: true })
+		.then(response => {
+			allTransactions = response.rows.map(row => row.doc);
+			// console.log(`Transaction cache initialized with ${allTransactions.length} documents.`);
+		})
+		.catch(err => {
+			console.error('Failed to initialize transaction cache:', err);
+			return Promise.resolve(); // Prevent app blocking on failure
+		});
+
+	// Real-time replication and change detection
+	PouchDB.replicate(remoteTransactionsDB, transactionsDB, {
+		live: true,
+		retry: true,
+		include_docs: true // Required to include the doc in the change event
+	}).on('change', (change) => {
+		isCacheInitialized.then(() => {
+			if (Array.isArray(change.docs)) {
+				change.docs.forEach(docChange => updateCacheIncrementally({ doc: docChange, id: docChange._id, deleted: docChange._deleted }));
+			} else {
+				updateCacheIncrementally(change);
+			}
+		});
+	}).on('error', (err) => {
+		console.error('PouchDB replication error:', err);
 	});
 };
 
 exports.getAllTransactions = async () => {
-	if (allTransactions.length > 0) {
-		return allTransactions;
-	}
-
-	await updateAllTransactions();
+	// Wait for the cache initialization to complete
+	await isCacheInitialized;
 	return allTransactions;
 };
-
-new CronJob('00 00 01 * * *', async () => {
-	updateAllTransactionsDebounce();
-}, () => {
-}, true, 'America/Los_Angeles');
-
-new CronJob('00 29 15 * * 1-5', async () => {
-	updateAllTransactionsDebounce();
-}, () => {
-}, true, 'Asia/Seoul');
-
-new CronJob('00 59 12 * * 1-5', async () => {
-	updateAllTransactionsDebounce();
-}, () => {
-}, true, 'America/Los_Angeles');
 
 initPouchDB();
