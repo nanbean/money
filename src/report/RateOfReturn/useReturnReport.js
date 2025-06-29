@@ -77,6 +77,12 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 
 	const geometricMean = findGeometricMean(returns);
 
+	const initialValue = data[0]?.netWorth || 0;
+	const finalValue = data[data.length - 1]?.netWorth || 0;
+	const totalCashFlow = data.reduce((sum, d) => sum + (d.depositWithdrawalSum || 0), 0);
+	const finalCash = data[data.length - 1]?.cashBalance || 0;
+	const capitalGains = finalValue - initialValue - totalCashFlow;
+
 	reportData = [
 		[
 			{
@@ -143,7 +149,16 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 		]
 	];
 
-	return { reportData, geometricMean };
+	return {
+		reportData,
+		geometricMean,
+		overallSummary: {
+			finalValue,
+			totalCashFlow,
+			capitalGains,
+			finalCash
+		}
+	};
 };
 
 export default useReturnReport;
