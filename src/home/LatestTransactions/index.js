@@ -121,7 +121,7 @@ export function LatestTransactions () {
 			})}
 			<BankTransactionModal
 				isEdit={true}
-				transactions={latestTransactions}
+				transactions={updatedTransactions}
 			/>
 		</Box>
 	);
