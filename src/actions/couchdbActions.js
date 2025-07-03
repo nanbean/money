@@ -391,8 +391,33 @@ export const addTransactionAction = param => {
 			});
 			await transactionsDB.put(transaction);
 
+			if (transaction.category && transaction.category.startsWith('[') && transaction.category.endsWith(']')) {
+				const accountList = await getAllAccounts();
+				const doubleEntryAccount = transaction.category.replace(/^\[|\]$/g, '');
+				const doubleEntryType = accountList.find(i => i.name === doubleEntryAccount).type;
+				const doubleEntryAccountId = `account:${doubleEntryType}:${doubleEntryAccount}`;
+				const doubleEntryTransaction = {
+					...transaction,
+					_id: `${transaction.date}:${doubleEntryAccount}:${uuidv1()}`,
+					accountId: doubleEntryAccountId,
+					category: `[${transaction.accountId.split(':')[2]}]`,
+					amount: -transaction.amount
+				};
+
+				dispatch({
+					type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
+					payload: {
+						...doubleEntryTransaction,
+						type: doubleEntryTransaction.accountId.split(':')[1],
+						account: doubleEntryTransaction.accountId.split(':')[2]
+					}
+				});
+				await transactionsDB.put(doubleEntryTransaction);
+				await updateAccount(doubleEntryTransaction.accountId);
+			}
+
 			await updateAccount(transaction.accountId);
-			// dispatch(setAddTransactionFetchingAction(false));
+			dispatch(setAddTransactionFetchingAction(false));
 			// dispatch(getAllAccountsTransactionsAction());
 		}
 	};

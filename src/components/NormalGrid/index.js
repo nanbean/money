@@ -14,29 +14,34 @@ import 'react-virtualized/styles.css'; // only needs to be imported once
 const ROW_HEIGHT = 60;
 const COLUMN_MIN_WIDTH = 100;
 
+
 const NormalCell = ({
 	cellColor = false,
 	children,
 	onClick,
 	style
 }) => (
-	<Box onClick={onClick} style={style} sx={{
-		flex: 1,
-		display: 'flex',
-		alignItems: 'center',
-		boxSizing: 'border-box',
-		justifyContent: 'center',
-		height: ROW_HEIGHT,
-		backgroundColor: cellColor ? 'rgba(180, 180, 180, .5)':null,
-		borderBottom: '1px solid rgba(81, 81, 81, 1)'
-	}}>
+	<Box
+		onClick={onClick}
+		style={style}
+		sx={{
+			flex: 1,
+			display: 'flex',
+			alignItems: 'center',
+			boxSizing: 'border-box',
+			justifyContent: 'center',
+			height: ROW_HEIGHT,
+			backgroundColor: cellColor ? 'rgba(180, 180, 180, .5)' : undefined,
+			borderBottom: '1px solid rgba(81, 81, 81, 1)'
+		}}
+	>
 		{children}
 	</Box>
 );
 
 NormalCell.propTypes = {
 	cellColor: PropTypes.bool,
-	children: PropTypes.object,
+	children: PropTypes.node,
 	onClick: PropTypes.func,
 	style: PropTypes.object
 };
@@ -118,7 +123,11 @@ export function NormalGrid ({
 											} else {
 												return (
 													<NormalCell key={key} style={style}>
-														{isNumber ? <Amount value={parseValue} showColor={false}/> : value}
+														{isNumber && value !== null && value !== undefined && value !== '' ? (
+															<Amount value={parseValue} showColor={false} />
+														) : (
+															<Text title={value == null ? '' : String(value)} />
+														)}
 													</NormalCell>
 												);
 											}

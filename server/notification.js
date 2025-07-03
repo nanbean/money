@@ -196,7 +196,20 @@ exports.addTransaction = async function (body) {
 					category: '분류없음'
 				};
 			}
-		} else if (body.text.match(/삼성체크/g)) {
+		} else if (body.packageName.match(/com\.usbank\.mobilebanking/i)) {
+			account = 'BoA';
+			const dollorMatch = body.text.replace(',', '').match(/\$([0-9,]+(?:\.[0-9]{1,2})?)/);
+			const payeeMatch = body.text.match(/2901\s*(.*?)\s*\$/);
+			console.log('dollorMatch', dollorMatch, 'payeeMatch', payeeMatch);
+			if (dollorMatch && payeeMatch) {
+				transaction = {
+					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+					amount: dollorMatch ? parseFloat(dollorMatch[1].replace(/,/g, '')) * (-1) : null,
+					payee: payeeMatch ? payeeMatch[1].trim() : null,
+					category: '분류없음'
+				};
+			}
+		}else if (body.text.match(/삼성체크/g)) {
 			account = '생활비카드';
 			items = body.text.split('\n');
 			transaction = {

@@ -102,14 +102,10 @@ export function Bank () {
 					</Box>
 					<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
 						<Typography
-							variant="h6"
-							color="inherit"
+							variant="subtitle1"
 							gutterBottom
 							align="right"
-							sx={(theme) => ({
-								marginTop: theme.spacing(1),
-								marginRight: theme.spacing(1)
-							})}
+							sx={{ mt: 1, mb: 1 }}
 						>
 							{'Balance : '}
 						</Typography>

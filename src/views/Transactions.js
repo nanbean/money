@@ -1,0 +1,97 @@
+import React, { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Paper from '@mui/material/Paper';
+
+import moment from 'moment';
+
+import TitleHeader from '../components/TitleHeader';
+import Container from '../components/Container';
+import BankTransactions from '../components/BankTransactions';
+import BankTransactionModal from '../components/BankTransactionModal';
+import SortMenuButton from '../components/SortMenuButton';
+
+const filterTransactionsByDate = ( transactions, startDate, endDate ) =>{
+	const validTypes = ['Bank', 'CCard', 'Cash'];
+	return transactions.filter(t => {
+		const accountId = t.accountId;
+		// accountId: 'account:Bank:XXX' or 'account:CCard:XXX' or 'account:Cash:XXX'
+		const type = accountId && accountId.split(':')[1];
+		if (!validTypes.includes(type)) return false;
+		const date = moment(t.date);
+		return (!startDate || date.isSameOrAfter(moment(startDate), 'day')) &&
+				(!endDate || date.isSameOrBefore(moment(endDate), 'day'));
+	});
+};
+
+const Transactions = () => {
+	const allAccountsTransactions = useSelector(state => state.allAccountsTransactions);
+	const [dateRange, setDateRange] = useState(() => {
+		const end = moment();
+		const start = moment().subtract(1, 'months');
+		return { start, end };
+	});
+	const [selectedRange, setSelectedRange] = useState('1m');
+
+	const dateRangeOptions = [
+		{ value: '1m', label: '1 Month', getRange: () => ({ start: moment().subtract(1, 'months'), end: moment() }) },
+		{ value: '3m', label: '3 Months', getRange: () => ({ start: moment().subtract(3, 'months'), end: moment() }) },
+		{ value: '6m', label: '6 Months', getRange: () => ({ start: moment().subtract(6, 'months'), end: moment() }) },
+		{ value: '1y', label: '1 Year', getRange: () => ({ start: moment().subtract(12, 'months'), end: moment() }) },
+		{ value: 'all', label: 'All', getRange: () => ({ start: moment('2000-01-01'), end: moment() }) }
+	];
+
+	const filteredTransactions = useMemo(() => {
+		return filterTransactionsByDate(allAccountsTransactions, dateRange.start, dateRange.end);
+	}, [allAccountsTransactions, dateRange]);
+
+	const handleDateChange = (start, end) => {
+		setDateRange({ start: moment(start), end: moment(end) });
+	};
+
+	const handleRangeChange = (value) => {
+		setSelectedRange(value);
+		const option = dateRangeOptions.find(opt => opt.value === value);
+		if (option) {
+			const { start, end } = option.getRange();
+			handleDateChange(start, end);
+		}
+	};
+
+	return (
+		<React.Fragment>
+			<TitleHeader title="Transactions" />
+			<Container>
+				<Paper
+					sx={{
+						height: 'calc(100vh - 128px)',
+						display: 'flex',
+						flexDirection: 'column'
+					}}
+				>
+					<Stack direction="row" justifyContent="flex-end" sx={{ m: 1 }}>
+						<SortMenuButton
+							value={selectedRange}
+							onChange={handleRangeChange}
+							options={dateRangeOptions}
+						/>
+					</Stack>
+					<Box sx={{ flex: 1, mb: 1, textAlign: 'center' }}>
+						<BankTransactions
+							showAccount
+							transactions={filteredTransactions}
+						/>
+					</Box>
+					<BankTransactionModal
+						isEdit={true}
+						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
+					/>
+				</Paper>
+			</Container>
+		</React.Fragment>
+	);
+};
+
+export default Transactions;

@@ -15,6 +15,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import CategoryIcon from '@mui/icons-material/Category';
 import HomeIcon from '@mui/icons-material/Home';
+import ArticleIcon from '@mui/icons-material/Article';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
@@ -40,6 +41,11 @@ const routes = [
 		exact: true,
 		label: 'Home',
 		icon: <HomeIcon />
+	},
+	{
+		path: '/transactions',
+		label: 'Transactions',
+		icon: <ArticleIcon />
 	},
 	{
 		path: '/allperformance',

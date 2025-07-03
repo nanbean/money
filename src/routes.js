@@ -14,7 +14,8 @@ import {
 	LifetimePlanner,
 	Performance,
 	AllPerformance,
-	Search
+	Search,
+	Transactions
 } from './views';
 import ReportMain from './report/ReportMain';
 import SettingMain from './setting/SettingMain';
@@ -65,6 +66,7 @@ function RoutesMain () {
 							<Route path="/performance/:investment" element={<Performance />} />
 							<Route path="/allperformance" element={<AllPerformance />} />
 							<Route path="/search" element={<Search />} />
+							<Route path="/transactions" element={<Transactions />} />
 						</Route>
 						<Route path="/report" element={<Layout />}>
 							<Route path="/report" element={<ReportMain />} />

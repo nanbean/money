@@ -276,8 +276,8 @@ export function BankTransactionForm ({
 }
 
 BankTransactionForm.propTypes = {
-	accountId: PropTypes.string.isRequired,
 	account: PropTypes.string,
+	accountId: PropTypes.string,
 	dropCategoryList: PropTypes.array,
 	dropPayeeList: PropTypes.array,
 	transactions: PropTypes.array
