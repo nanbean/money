@@ -26,6 +26,7 @@ describe('calendar service', () => {
 			}
 			return todaySeoul;
 		});
+		jest.spyOn(console, 'log').mockImplementation(() => {});
 	});
 
 	afterAll(() => {

@@ -22,6 +22,9 @@ describe('accountService', () => {
 	// Before each test, clear all mock call history to ensure tests are independent.
 	beforeEach(() => {
 		jest.clearAllMocks();
+		jest.spyOn(console, 'log').mockImplementation(() => {});
+		jest.spyOn(console, 'time').mockImplementation(() => {});
+		jest.spyOn(console, 'timeEnd').mockImplementation(() => {});
 	});
 
 	describe('getAllAccounts', () => {

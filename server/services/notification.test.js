@@ -49,6 +49,7 @@ describe('notification service', () => {
 		if (notification.reset) {
 			notification.reset();
 		}
+		jest.spyOn(console, 'log').mockImplementation(() => {});
 	});
 
 	afterEach(() => {

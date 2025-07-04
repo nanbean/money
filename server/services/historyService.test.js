@@ -28,6 +28,7 @@ describe('historyService', () => {
 			// Use fake timers to control moment()
 			jest.useFakeTimers();
 			jest.setSystemTime(new Date(MOCK_TODAY));
+			jest.spyOn(console, 'log').mockImplementation(() => {});
 		});
 
 		afterEach(() => {
