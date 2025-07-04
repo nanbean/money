@@ -1,4 +1,4 @@
-const {google} = require('googleapis');
+const { google } = require('googleapis');
 const moment = require('moment-timezone');
 
 const config = require('./config');
@@ -64,8 +64,14 @@ const getUsHolidays = async () => {
 	}
 };
 
-getHolidays().catch(console.error);
-getUsHolidays().catch(console.error);
+exports.initialize = async () => {
+	const results = await Promise.allSettled([getHolidays(), getUsHolidays()]);
+	results.forEach(result => {
+		if (result.status === 'rejected') {
+			console.error('Failed to fetch a holiday calendar:', result.reason);
+		}
+	});
+};
 
 exports.isHoliday = () => {
 	const date = moment().tz('Asia/Seoul').format('YYYY-MM-DD');
@@ -86,3 +92,12 @@ exports.isUsHoliday = () => {
 
 	return false;
 };
+
+if (process.env.NODE_ENV === 'test') {
+	exports.setHolidays = (newHolidays) => {
+		holidays = newHolidays;
+	};
+	exports.setUsHolidays = (newUsHolidays) => {
+		usHolidays = newUsHolidays;
+	};
+}
