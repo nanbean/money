@@ -1,8 +1,10 @@
 const moment = require('moment-timezone');
 const uuidv1 = require('uuid/v1');
 const messaging = require('./messaging');
-const couchdb = require('./couchdb');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const settingService = require('./services/settingService');
+const transactionService = require('./services/transactionService');
+const notificationService = require('./services/notificationService');
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -20,7 +22,7 @@ const systemInstructionBase = 'Below are the expense categories. Just respond wi
 
 const initGeminiModel = async () => {
 	if (model) return;
-	const categoryList = await couchdb.getCategoryList();
+	const categoryList = await settingService.getCategoryList();
 	const categoryListString = (categoryList || []).filter((item) => !item.startsWith('[')).join(', ');
 	const systemInstruction = systemInstructionBase + categoryListString;
 	model = genAI.getGenerativeModel({
@@ -393,12 +395,12 @@ exports.addTransaction = async function (body) {
 	const { account, transaction } = parser.parser(body);
 
 	if (account && transaction && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
-		const couchTransactions = await couchdb.getTransactions();
+		const couchTransactions = await transactionService.getAllTransactions();
 		const categorizedTransaction = await findCategoryByPayee(couchTransactions, transaction);
 		categorizedTransaction._id = `${categorizedTransaction.date}:${account}:${uuidv1()}`;
 		categorizedTransaction.accountId = (account === '급여계좌' || account === 'BoA') ? `account:Bank:${account}` : `account:CCard:${account}`;
-		await couchdb.addTransaction(categorizedTransaction);
-		await couchdb.addNotification({
+		await transactionService.addTransaction(categorizedTransaction);
+		await notificationService.addNotification({
 			_id: `${categorizedTransaction.date}:${uuidv1()}`,
 			packageName: body.packageName,
 			title: body.title,
@@ -415,7 +417,7 @@ exports.addTransaction = async function (body) {
 };
 
 exports.getHistory = async function (size) {
-	const history = await couchdb.listNotifications(size);
+	const history = await notificationService.listNotifications(size);
 	return history;
 };
 

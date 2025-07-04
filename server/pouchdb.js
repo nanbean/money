@@ -27,17 +27,14 @@ const updateCacheIncrementally = (change) => {
 			allTransactions.splice(index, 1);
 			// console.log(`Cache updated: removed transaction ${change.id}`);
 		}
+	} else if (index !== -1) {
+		// Update existing document
+		allTransactions[index] = change.doc;
+		// console.log(`Cache updated: updated transaction ${change.id}`);
 	} else {
-		// If the document was added or updated
-		if (index !== -1) {
-			// Update existing document
-			allTransactions[index] = change.doc;
-			// console.log(`Cache updated: updated transaction ${change.id}`);
-		} else {
-			// Add new document
-			allTransactions.push(change.doc);
-			// console.log(`Cache updated: added transaction ${change.id}`);
-		}
+		// Add new document
+		allTransactions.push(change.doc);
+		// console.log(`Cache updated: added transaction ${change.id}`);
 	}
 };
 

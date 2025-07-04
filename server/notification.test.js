@@ -1,14 +1,20 @@
 const notification = require('./notification');
 const { addTransaction, getHistory } = notification;
-const couchdb = require('./couchdb');
 const messaging = require('./messaging');
 const moment = require('moment-timezone');
+const settingService = require('./services/settingService');
+const transactionService = require('./services/transactionService');
+const notificationService = require('./services/notificationService');
 
 // Mock dependencies
-jest.mock('./couchdb', () => ({
-	getCategoryList: jest.fn(),
-	getTransactions: jest.fn(),
-	addTransaction: jest.fn(),
+jest.mock('./services/settingService', () => ({
+	getCategoryList: jest.fn()
+}));
+jest.mock('./services/transactionService', () => ({
+	getAllTransactions: jest.fn(),
+	addTransaction: jest.fn()
+}));
+jest.mock('./services/notificationService', () => ({
 	addNotification: jest.fn(),
 	listNotifications: jest.fn()
 }));
@@ -53,14 +59,14 @@ describe('notification service', () => {
 		it('should call couchdb.listNotifications and return the result', async () => {
 			// Arrange
 			const mockHistory = ['notification1', 'notification2'];
-			couchdb.listNotifications.mockResolvedValue(mockHistory);
+			notificationService.listNotifications.mockResolvedValue(mockHistory);
 			const size = 2;
 
 			// Act
 			const result = await getHistory(size);
 
 			// Assert
-			expect(couchdb.listNotifications).toHaveBeenCalledWith(size);
+			expect(notificationService.listNotifications).toHaveBeenCalledWith(size);
 			expect(result).toEqual(mockHistory);
 		});
 	});
@@ -68,8 +74,8 @@ describe('notification service', () => {
 	describe('addTransaction', () => {
 		beforeEach(() => {
 			// addTransaction 테스트를 위한 공통 mock 설정
-			couchdb.getTransactions.mockResolvedValue([]);
-			couchdb.getCategoryList.mockResolvedValue(['식비', '교통비', '생활용품']);
+			transactionService.getAllTransactions.mockResolvedValue([]);
+			settingService.getCategoryList.mockResolvedValue(['식비', '교통비', '생활용품']);
 			mockSendMessage.mockResolvedValue({ response: { text: () => '식비' } });
 		});
 
@@ -91,7 +97,7 @@ describe('notification service', () => {
 			expect(firstCallResult).toBe(true);
 			expect(secondCallResult).toBe(false);
 			// DB에는 한 번만 추가되어야 함
-			expect(couchdb.addTransaction).toHaveBeenCalledTimes(1);
+			expect(transactionService.addTransaction).toHaveBeenCalledTimes(1);
 		});
 
 		it('should process transaction if it is not a duplicate (time elapsed)', async () => {
@@ -108,7 +114,7 @@ describe('notification service', () => {
 			await addTransaction(body);
 
 			// Assert
-			expect(couchdb.addTransaction).toHaveBeenCalledTimes(2);
+			expect(transactionService.addTransaction).toHaveBeenCalledTimes(2);
 		});
 
 		it('should return false if body is incomplete', async () => {
@@ -125,7 +131,7 @@ describe('notification service', () => {
 			const result = await addTransaction(body);
 
 			// Assert
-			expect(couchdb.addTransaction).not.toHaveBeenCalled();
+			expect(transactionService.addTransaction).not.toHaveBeenCalled();
 			// 파싱 실패로 간주하여 실패 알림 전송
 			expect(messaging.sendNotification).toHaveBeenCalledWith('⚠️ Transaction', 'Failed to parse transaction', 'receipt');
 			expect(result).toBe(false);
@@ -144,7 +150,7 @@ describe('notification service', () => {
 				await addTransaction(body);
 
 				// Assert
-				const transactionArg = couchdb.addTransaction.mock.calls[0][0];
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
 				expect(transactionArg).toMatchObject({
 					date: expectedDate,
 					amount: -25.50,
@@ -165,7 +171,7 @@ describe('notification service', () => {
 				await addTransaction(body);
 
 				// Assert
-				const transactionArg = couchdb.addTransaction.mock.calls[0][0];
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
 				expect(transactionArg).toMatchObject({
 					date: expectedDate,
 					amount: -5000,
@@ -187,7 +193,7 @@ describe('notification service', () => {
 				await addTransaction(body);
 
 				// Assert
-				const transactionArg = couchdb.addTransaction.mock.calls[0][0];
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
 				expect(transactionArg).toMatchObject({
 					date: expectedDate,
 					amount: -140.78,
@@ -208,7 +214,7 @@ describe('notification service', () => {
 				await addTransaction(body);
 
 				// Assert
-				expect(couchdb.addTransaction).not.toHaveBeenCalled();
+				expect(transactionService.addTransaction).not.toHaveBeenCalled();
 			});
 
 			it('should correctly parse a US Bank (com.usbank.mobilebanking) notification', async () => {
@@ -223,7 +229,7 @@ describe('notification service', () => {
 				await addTransaction(body);
 
 				// Assert
-				const transactionArg = couchdb.addTransaction.mock.calls[0][0];
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
 				expect(transactionArg).toMatchObject({
 					date: expectedDate,
 					amount: -12.34,
@@ -241,7 +247,7 @@ describe('notification service', () => {
 					category: '식비',
 					subcategory: '카페'
 				};
-				couchdb.getTransactions.mockResolvedValue([existingTransaction]);
+				transactionService.getAllTransactions.mockResolvedValue([existingTransaction]);
 				const body = {
 					packageName: 'com.usbank.mobilebanking',
 					text: 'PURCHASE SKYPASS Visa Signature® Card 2901 스타벅스 $44.84.'
@@ -251,7 +257,7 @@ describe('notification service', () => {
 				await addTransaction(body);
 
 				// Assert
-				const transactionArg = couchdb.addTransaction.mock.calls[0][0];
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
 				expect(transactionArg).toMatchObject({
 					payee: '스타벅스',
 					category: '식비',
@@ -263,7 +269,7 @@ describe('notification service', () => {
 
 			it('should call Gemini to find category if no existing transaction is found', async () => {
 				// Arrange
-				couchdb.getTransactions.mockResolvedValue([]); // 기존 거래 내역 없음
+				transactionService.getAllTransactions.mockResolvedValue([]); // 기존 거래 내역 없음
 				mockSendMessage.mockResolvedValue({ response: { text: () => '생활용품:잡화' } });
 				const body = {
 					packageName: 'com.usbank.mobilebanking',
@@ -277,7 +283,7 @@ describe('notification service', () => {
 				expect(mockGetGenerativeModel).toHaveBeenCalled();
 				expect(mockSendMessage).toHaveBeenCalledWith('What is the best expense category for Lemonade?');
 				
-				const transactionArg = couchdb.addTransaction.mock.calls[0][0];
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
 				expect(transactionArg).toMatchObject({
 					payee: 'Lemonade',
 					category: '생활용품',
@@ -298,7 +304,7 @@ describe('notification service', () => {
 
 			// Assert
 			expect(result).toBe(false);
-			expect(couchdb.addTransaction).not.toHaveBeenCalled();
+			expect(transactionService.addTransaction).not.toHaveBeenCalled();
 			expect(messaging.sendNotification).toHaveBeenCalledWith('⚠️ Transaction', 'Failed to find parser', 'receipt');
 		});
 	});

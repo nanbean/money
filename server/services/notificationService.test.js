@@ -47,32 +47,37 @@ describe('notificationService', () => {
 
 	describe('listNotifications', () => {
 		test('should return the last `size` notifications correctly', async () => {
-			// Arrange: Create a mock database response with several notifications.
+			// Arrange: Mock the DB to return the latest 3 notifications in descending order.
 			const mockDbResponse = {
 				rows: [
-					{ doc: { text: 'Notification 1' } },
-					{ doc: { text: 'Notification 2' } },
 					{ doc: { text: 'Notification 3' } },
 					{ doc: { text: 'Notification 4' } },
 					{ doc: { text: 'Notification 5' } }
 				]
 			};
-			notificationsDB.list.mockResolvedValue(mockDbResponse);
+			notificationsDB.list.mockResolvedValue({
+				rows: [
+					{ doc: { text: 'Notification 5' } },
+					{ doc: { text: 'Notification 4' } },
+					{ doc: { text: 'Notification 3' } }
+				]
+			});
 
 			// Act: Request the last 3 notifications.
 			const result = await listNotifications(3);
 
-			// Assert: Verify that the list method was called and the result is correctly sliced and mapped.
-			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true });
+			// Assert: Verify that the list method was called with limit and descending,
+			// and the result is correctly reversed to be in chronological order.
+			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true, descending: true, limit: 3 });
 			expect(result).toEqual(['Notification 3', 'Notification 4', 'Notification 5']);
 		});
 
 		test('should return all notifications if `size` is larger than the total number', async () => {
-			// Arrange: Mock a response with fewer notifications than the requested size.
+			// Arrange: Mock a response with fewer notifications than the requested size, in descending order.
 			const mockDbResponse = {
 				rows: [
-					{ doc: { text: 'Notification 1' } },
-					{ doc: { text: 'Notification 2' } }
+					{ doc: { text: 'Notification 2' } },
+					{ doc: { text: 'Notification 1' } }
 				]
 			};
 			notificationsDB.list.mockResolvedValue(mockDbResponse);
@@ -80,7 +85,8 @@ describe('notificationService', () => {
 			// Act: Request 5 notifications.
 			const result = await listNotifications(5);
 
-			// Assert: The result should contain all available notifications.
+			// Assert: The result should contain all available notifications, in the correct order.
+			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true, descending: true, limit: 5 });
 			expect(result).toEqual(['Notification 1', 'Notification 2']);
 		});
 
@@ -92,6 +98,7 @@ describe('notificationService', () => {
 			const result = await listNotifications(5);
 
 			// Assert: The result should be an empty array.
+			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true, descending: true, limit: 5 });
 			expect(result).toEqual([]);
 		});
 	});

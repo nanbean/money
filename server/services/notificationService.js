@@ -8,8 +8,13 @@ const addNotification = async (notification) => {
 };
 
 const listNotifications = async (size) => {
-	const notifications = await notificationsDB.list({ include_docs: true });
-	return notifications.rows.slice(notifications.rows.length - size, notifications.rows.length).map(i => i.doc.text);
+	const notifications = await notificationsDB.list({
+		include_docs: true,
+		descending: true,
+		limit: size
+	});
+	// The result is in descending order (newest first), so we reverse it to get chronological order.
+	return notifications.rows.map(i => i.doc.text).reverse();
 };
 
 const sendBalanceUpdateNotification = async () => {
