@@ -8,14 +8,13 @@ storage.init();
 
 const isUsDayMarketTime = () => {
 	const now = moment().tz('America/New_York');
-	const day = now.day();
 	const hour = now.hour();
 
 	// The day market trading hours for the U.S. stock market, 20:00 ~ 03:00
 	const isDayMarketTime = (hour >= 20) || (hour < 3);
 
 	return isDayMarketTime;
-}
+};
 
 async function getKisToken () {
 	const accessToken = await storage.getItem('access_token');

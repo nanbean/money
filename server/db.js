@@ -16,5 +16,5 @@ module.exports = {
 	settingsDB,
 	reportsDB,
 	notificationsDB,
-	historiesDB,
+	historiesDB
 };

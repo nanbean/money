@@ -33,5 +33,5 @@ module.exports = {
 	updateNetWorth: reportService.updateNetWorth,
 
 	// scheduler
-	updateInvestmentPrice: scheduler.updateInvestmentPrice,
+	updateInvestmentPrice: scheduler.updateInvestmentPrice
 };

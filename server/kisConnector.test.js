@@ -1,6 +1,5 @@
 const { getKisToken, getKisQuoteKorea, getKisQuoteUS, getKisExchangeRate } = require('./kisConnector');
 const localdb = require('node-persist');
-const moment = require('moment-timezone');
 
 // Mock node-persist
 jest.mock('node-persist', () => ({
@@ -34,10 +33,10 @@ describe('kisConnector', () => {
 			localdb.getItem.mockResolvedValue(null); // No token in cache
 			const mockApiResponse = {
 				access_token: 'new-fake-token',
-				access_token_token_expired: '2025-01-01 10:00:00',
+				access_token_token_expired: '2025-01-01 10:00:00'
 			};
 			fetch.mockResolvedValueOnce({
-				json: () => Promise.resolve(mockApiResponse),
+				json: () => Promise.resolve(mockApiResponse)
 			});
 
 			// Act
@@ -81,10 +80,10 @@ describe('kisConnector', () => {
 
 			const mockApiResponse = {
 				access_token: 'new-fresh-token',
-				access_token_token_expired: '2024-01-04 00:00:00',
+				access_token_token_expired: '2024-01-04 00:00:00'
 			};
 			fetch.mockResolvedValueOnce({
-				json: () => Promise.resolve(mockApiResponse),
+				json: () => Promise.resolve(mockApiResponse)
 			});
 
 			// Act
@@ -108,7 +107,7 @@ describe('kisConnector', () => {
 				output: { stck_prpr: '75000' }
 			};
 			fetch.mockResolvedValueOnce({
-				json: () => Promise.resolve(mockApiResponse),
+				json: () => Promise.resolve(mockApiResponse)
 			});
 
 			// Act
@@ -116,7 +115,7 @@ describe('kisConnector', () => {
 
 			// Assert
 			expect(fetch).toHaveBeenCalledTimes(1);
-			const expectedUrl = `https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-price?fid_cond_mrkt_div_code=J&fid_input_iscd=005930`;
+			const expectedUrl = 'https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-price?fid_cond_mrkt_div_code=J&fid_input_iscd=005930';
 			const fetchCall = fetch.mock.calls[0];
 			expect(fetchCall[0]).toBe(expectedUrl);
 			expect(fetchCall[1].headers.authorization).toBe(`Bearer ${mockAccessToken}`);
@@ -169,7 +168,7 @@ describe('kisConnector', () => {
 				output2: [{ frst_bltn_exrt: '1350.50' }]
 			};
 			fetch.mockResolvedValueOnce({
-				json: () => Promise.resolve(mockApiResponse),
+				json: () => Promise.resolve(mockApiResponse)
 			});
 
 			// Act
@@ -193,7 +192,7 @@ describe('kisConnector', () => {
 				output2: [] // Missing exchange rate data
 			};
 			fetch.mockResolvedValueOnce({
-				json: () => Promise.resolve(mockApiResponse),
+				json: () => Promise.resolve(mockApiResponse)
 			});
 
 			// Act

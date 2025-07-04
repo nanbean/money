@@ -25,7 +25,7 @@ exports.getLifetimeFlowList = (accounts) => {
 				}
 
 				nameCol.eachCell(function (cell, rowNumber) {
-					const accountItem = accounts.find(i => i.name === cell.value && i.type == 'Invst');
+					const accountItem = accounts.find(i => i.name === cell.value && i.type === 'Invst');
 
 					if (accountItem) {
 						worksheet.getCell(`B${rowNumber}`).value = accountItem.balance;

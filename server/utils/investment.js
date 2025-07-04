@@ -1,5 +1,3 @@
-const moment = require('moment-timezone');
-
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
 	for (let i = 0; i < transactions.length; i++) {
@@ -177,5 +175,5 @@ module.exports = {
 	getSymbolWithName,
 	getGoogleSymbolWithName,
 	getInvestmentsFromTransactions,
-	getInvestmentsFromAccounts,
+	getInvestmentsFromAccounts
 };

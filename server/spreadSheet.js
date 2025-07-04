@@ -19,7 +19,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 
 	await doc.useServiceAccountAuth({
 		client_email: config.key.client_email,
-		private_key: config.key.private_key,
+		private_key: config.key.private_key
 	});
 
 	await doc.loadInfo(); // loads document properties and worksheets
@@ -81,7 +81,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 
 	for (let rowNumber = expenseStartIndex; rowNumber <= expenseEndIndex; rowNumber++) {
 		if (firstSheet.getCellByA1(`A${rowNumber}`).value === '키움증권') {
-			const accountItem = accounts.find(i => i.name === '키움증권' && i.type == 'Invst');
+			const accountItem = accounts.find(i => i.name === '키움증권' && i.type === 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
 				const year = currentYear + j - 1;
@@ -106,7 +106,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '교보변액연금보험') {
 
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '동양종금장마') {
-			const accountItem = accounts.find(i => i.name === '동양종금장마' && i.type == 'Invst');
+			const accountItem = accounts.find(i => i.name === '동양종금장마' && i.type === 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
 				const year = currentYear + j - 1;
@@ -127,7 +127,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '몬쁭스SK증권') {
-			const accountItem = accounts.find(i => i.name === '몬쁭스SK증권' && i.type == 'Invst');
+			const accountItem = accounts.find(i => i.name === '몬쁭스SK증권' && i.type === 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
 				const year = currentYear + j - 1;
@@ -141,12 +141,12 @@ exports.getLifetimeFlowList = async (accounts) => {
 					firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).value = 0;
 				} else {
 					firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).value = result;
-					firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).formula = `=${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))`
+					firstSheet.getCellByA1(`${colIndex[j]}${rowNumber}`).formula = `=${colIndex[j - 1]}${rowNumber}+${colIndex[j - 1]}${rowNumber}*(${expectCell}*IF(YEAR(TODAY())=${colIndex[j]}$1-1,(12-MONTH(TODAY()))/12,1))`;
 				}
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === 'IRP') {
-			const accountItem = accounts.find(i => i.name === 'IRP' && i.type == 'Invst');
+			const accountItem = accounts.find(i => i.name === 'IRP' && i.type === 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
 				const year = currentYear + j - 1;
@@ -168,7 +168,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '연금저축') {
-			const accountItem = accounts.find(i => i.name === '연금저축' && i.type == 'Invst');
+			const accountItem = accounts.find(i => i.name === '연금저축' && i.type === 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
 				const year = currentYear + j - 1;
@@ -190,7 +190,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === 'IRP오은미') {
-			const accountItem = accounts.find(i => i.name === 'IRP오은미' && i.type == 'Invst');
+			const accountItem = accounts.find(i => i.name === 'IRP오은미' && i.type === 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
 				const year = currentYear + j - 1;
@@ -212,7 +212,7 @@ exports.getLifetimeFlowList = async (accounts) => {
 				netWorth[j] = netWorth[j] ? netWorth[j] + result : result;
 			}
 		} else if (firstSheet.getCellByA1(`A${rowNumber}`).value === '오은미연금저축') {
-			const accountItem = accounts.find(i => i.name === '오은미연금저축' && i.type == 'Invst');
+			const accountItem = accounts.find(i => i.name === '오은미연금저축' && i.type === 'Invst');
 			firstSheet.getCellByA1(`B${rowNumber}`).value = accountItem.balance;
 			for (let j = 1; j < colIndex.length; j++) {
 				const year = currentYear + j - 1;
