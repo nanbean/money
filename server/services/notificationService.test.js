@@ -47,19 +47,12 @@ describe('notificationService', () => {
 
 	describe('listNotifications', () => {
 		test('should return the last `size` notifications correctly', async () => {
-			// Arrange: Mock the DB to return the latest 3 notifications in descending order.
-			const mockDbResponse = {
-				rows: [
-					{ doc: { text: 'Notification 3' } },
-					{ doc: { text: 'Notification 4' } },
-					{ doc: { text: 'Notification 5' } }
-				]
-			};
+			// Arrange: Mock the DB to return notifications with and without titles.
 			notificationsDB.list.mockResolvedValue({
 				rows: [
-					{ doc: { text: 'Notification 5' } },
+					{ doc: { title: 'T5', text: 'Notification 5' } },
 					{ doc: { text: 'Notification 4' } },
-					{ doc: { text: 'Notification 3' } }
+					{ doc: { title: 'T3', text: 'Notification 3' } }
 				]
 			});
 
@@ -69,7 +62,7 @@ describe('notificationService', () => {
 			// Assert: Verify that the list method was called with limit and descending,
 			// and the result is correctly reversed to be in chronological order.
 			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true, descending: true, limit: 3 });
-			expect(result).toEqual(['Notification 3', 'Notification 4', 'Notification 5']);
+			expect(result).toEqual(['title: \'T3\', text: \'Notification 3\'', 'text: \'Notification 4\'', 'title: \'T5\', text: \'Notification 5\'']);
 		});
 
 		test('should return all notifications if `size` is larger than the total number', async () => {
@@ -87,7 +80,7 @@ describe('notificationService', () => {
 
 			// Assert: The result should contain all available notifications, in the correct order.
 			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true, descending: true, limit: 5 });
-			expect(result).toEqual(['Notification 1', 'Notification 2']);
+			expect(result).toEqual(['text: \'Notification 1\'', 'text: \'Notification 2\'']);
 		});
 
 		test('should return an empty array if the database has no notifications', async () => {

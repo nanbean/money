@@ -14,7 +14,13 @@ const listNotifications = async (size) => {
 		limit: size
 	});
 	// The result is in descending order (newest first), so we reverse it to get chronological order.
-	return notifications.rows.map(i => i.doc.text).reverse();
+	return notifications.rows.map(i => {
+		const doc = i.doc;
+		if (doc.title) {
+			return `title: '${doc.title}', text: '${doc.text}'`;
+		}
+		return `text: '${doc.text}'`;
+	}).reverse();
 };
 
 const sendBalanceUpdateNotification = async () => {

@@ -56,9 +56,12 @@ describe('notification service', () => {
 	});
 
 	describe('getHistory', () => {
-		it('should call couchdb.listNotifications and return the result', async () => {
+		it('should call notificationService.listNotifications and return the result', async () => {
 			// Arrange
-			const mockHistory = ['notification1', 'notification2'];
+			const mockHistory = [
+				'text: \'notification1\'',
+				'title: \'T2\', text: \'notification2\''
+			];
 			notificationService.listNotifications.mockResolvedValue(mockHistory);
 			const size = 2;
 
