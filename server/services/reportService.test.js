@@ -1,6 +1,6 @@
 const reportService = require('./reportService');
 const { reportsDB, accountsDB, transactionsDB, stocksDB, historiesDB } = require('../db');
-const spreadSheet = require('../spreadSheet');
+const spreadSheet = require('../utils/spreadSheet');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
 const { getBalance } = require('../utils/account');
 const settingService = require('./settingService');
@@ -19,14 +19,20 @@ jest.mock('../db', () => ({
 		list: jest.fn()
 	},
 	stocksDB: {
-		get: jest.fn()
+		get: jest.fn((id) => {
+			// Mock the behavior of stocksDB.get based on the ID
+			if (id === 'kospi') return Promise.resolve({ data: [] });
+			if (id === 'kosdaq') return Promise.resolve({ data: [] });
+			if (id === 'us') return Promise.resolve({ data: [] });
+			return Promise.resolve({});
+		})
 	},
 	historiesDB: {
 		list: jest.fn()
 	}
 }));
 
-jest.mock('../spreadSheet', () => ({
+jest.mock('../utils/spreadSheet', () => ({
 	getLifetimeFlowList: jest.fn()
 }));
 
@@ -266,9 +272,9 @@ describe('reportService', () => {
 			// 1. Verify all data was fetched
 			expect(accountsDB.list).toHaveBeenCalledTimes(1);
 			expect(transactionsDB.list).toHaveBeenCalledTimes(1);
-			expect(stocksDB.get).toHaveBeenCalledWith('kospi');
-			expect(stocksDB.get).toHaveBeenCalledWith('kosdaq');
-			expect(stocksDB.get).toHaveBeenCalledWith('us');
+			expect(stocksDB.get).toHaveBeenCalledWith('kospi', { revs_info: true });
+			expect(stocksDB.get).toHaveBeenCalledWith('kosdaq', { revs_info: true });
+			expect(stocksDB.get).toHaveBeenCalledWith('us', { revs_info: true });
 			expect(historiesDB.list).toHaveBeenCalledTimes(1);
 			expect(reportsDB.get).toHaveBeenCalledWith('netWorth', { revs_info: true });
 

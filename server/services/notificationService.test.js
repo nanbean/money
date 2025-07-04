@@ -1,6 +1,6 @@
 const { addNotification, listNotifications, sendBalanceUpdateNotification } = require('./notificationService');
 const { notificationsDB } = require('../db');
-const messaging = require('../messaging');
+const messaging = require('./messaging');
 const accountService = require('./accountService');
 const settingService = require('./settingService');
 
@@ -12,7 +12,7 @@ jest.mock('../db', () => ({
 	}
 }));
 
-jest.mock('../messaging', () => ({
+jest.mock('./messaging', () => ({
 	sendNotification: jest.fn()
 }));
 

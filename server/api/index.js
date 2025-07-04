@@ -1,8 +1,9 @@
 const Router = require('koa-router');
 
-const messaging = require('../messaging');
-const notification = require('../notification');
-const couchdb = require('../couchdb');
+
+const messaging = require('../services/messaging');
+const notification = require('../services/notification');
+const couchdb = require('../db/couchdb');
 
 const api = new Router();
 const auth = require('./auth');

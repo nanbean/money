@@ -1,5 +1,5 @@
 const moment = require('moment-timezone');
-const { isHoliday, isUsHoliday, setHolidays, setUsHolidays } = require('./calendar');
+const { isHoliday, isUsHoliday, setHolidays, setUsHolidays } = require('../utils/calendar');
 
 // Mock dependencies
 jest.mock('googleapis', () => ({
@@ -11,8 +11,8 @@ jest.mock('googleapis', () => ({
 	}
 }));
 
-jest.mock('./config', () => ({ calendarPrimaryEmail: 'test@example.com' }), { virtual: true });
-jest.mock('./nanbean-435f267e8481.json', () => ({ client_email: 'test@client.com', private_key: 'private_key' }), { virtual: true });
+jest.mock('../config', () => ({ calendarPrimaryEmail: 'test@example.com' }), { virtual: true });
+jest.mock('../nanbean-435f267e8481.json', () => ({ client_email: 'test@client.com', private_key: 'private_key' }), { virtual: true });
 
 describe('calendar service', () => {
 	const todaySeoul = '2025-07-04';

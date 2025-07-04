@@ -1,21 +1,17 @@
-const { notificationsDB } = require('../db');
-const messaging = require('../messaging');
+const notificationDB = require('../db/notificationDB');
+const messaging = require('./messaging');
 const { getAllAccounts } = require('./accountService');
 const { getExchangeRate, getCurrency } = require('./settingService');
 
 const addNotification = async (notification) => {
-	await notificationsDB.insert(notification);
+	await notificationDB.addNotification(notification);
 };
 
 const listNotifications = async (size) => {
-	const notifications = await notificationsDB.list({
-		include_docs: true,
-		descending: true,
-		limit: size
-	});
+	const notifications = await notificationDB.listNotifications(size);
 	// The result is in descending order (newest first), so we reverse it to get chronological order.
-	return notifications.rows.map(i => {
-		const doc = i.doc;
+	return notifications.map(i => {
+		const doc = i;
 		if (doc.title) {
 			return `title: '${doc.title}', text: '${doc.text}'`;
 		}

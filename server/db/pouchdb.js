@@ -1,4 +1,4 @@
-const config = require('./config');
+const config = require('../config');
 const PouchDB = require('pouchdb');
 
 const transactionsDB = new PouchDB('transactions');

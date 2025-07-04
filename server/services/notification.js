@@ -2,9 +2,9 @@ const moment = require('moment-timezone');
 const uuidv1 = require('uuid/v1');
 const messaging = require('./messaging');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const settingService = require('./services/settingService');
-const transactionService = require('./services/transactionService');
-const notificationService = require('./services/notificationService');
+const settingService = require('./settingService');
+const transactionService = require('./transactionService');
+const notificationService = require('./notificationService');
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);

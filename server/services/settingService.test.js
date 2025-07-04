@@ -1,6 +1,6 @@
 const { getSettings, getExchangeRate, getCategoryList, arrangeExchangeRate } = require('./settingService');
 const { settingsDB } = require('../db');
-const kisConnector = require('../kisConnector');
+const kisConnector = require('./kisConnector');
 
 // Mock dependencies
 jest.mock('../db', () => ({
@@ -10,7 +10,7 @@ jest.mock('../db', () => ({
 	}
 }));
 
-jest.mock('../kisConnector', () => ({
+jest.mock('./kisConnector', () => ({
 	getKisToken: jest.fn(),
 	getKisExchangeRate: jest.fn()
 }));

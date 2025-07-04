@@ -1,5 +1,6 @@
 const moment = require('moment-timezone');
-const { historiesDB, stocksDB, transactionsDB } = require('../db');
+const { stocksDB, transactionsDB } = require('../db');
+const historyDB = require('../db/historyDB');
 const { getClosePriceWithHistory, getInvestmentsFromTransactions } = require('../utils/investment');
 
 const arrangeHistorical = async () => {
@@ -10,8 +11,7 @@ const arrangeHistorical = async () => {
 	const kosdaqResponse = await stocksDB.get('kosdaq');
 	const usResponse = await stocksDB.get('us');
 	const investments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
-	const historiesResponse = await historiesDB.list({ include_docs: true });
-	const oldHistories = historiesResponse.rows.map(i => i.doc);
+	const oldHistories = await historyDB.listHistories();
 	const newHistories = oldHistories.map(i => ({
 		...i,
 		data: [
@@ -27,9 +27,7 @@ const arrangeHistorical = async () => {
 			return accumulator;
 		}, [])
 	}));
-	await historiesDB.bulk({
-		docs: newHistories
-	});
+	await historyDB.bulkDocs(newHistories);
 	const newInvestments = getInvestmentsFromTransactions(investments, allTransactions).filter(i => !newHistories.find(j => j.name === i.name)).map(i => ({
 		...i,
 		data: [
@@ -39,9 +37,7 @@ const arrangeHistorical = async () => {
 			}
 		]
 	}));
-	await historiesDB.bulk({
-		docs: newInvestments
-	});
+	await historyDB.bulkDocs(newInvestments);
 	console.log('arrangeHistorical done', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 };
 

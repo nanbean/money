@@ -1,4 +1,4 @@
-const config = require('./config');
+const config = require('../config');
 const nano = require('nano')(`https://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}`);
 
 const accountsDB = nano.use('accounts_nanbean');

@@ -1,8 +1,5 @@
-const config = require('../config');
-const nano = require('nano')(`https://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}`);
 const router = require('koa-router')();
-
-const _users = nano.use('_users');
+const userDB = require('../db/userDB');
 
 router.post('/signin', (ctx) => {
 	ctx.body = { return: true };
@@ -20,7 +17,7 @@ router.post('/signup', async (ctx) => {
 	let result;
 
 	try {
-		result = await _users.insert(user, `org.couchdb.user:${name}`);
+		result = await userDB.insertUser(user, `org.couchdb.user:${name}`);
 	} catch (err) {
 		ret.message = err.message;
 	}

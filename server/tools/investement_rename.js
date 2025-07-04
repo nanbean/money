@@ -1,4 +1,4 @@
-const config = require('./config');
+const config = require('../config');
 const nano = require('nano')(`http://${config.couchDBAdminId}:${config.couchDBAdminPassword}@${config.couchDBUrl}`);
 const args = process.argv.slice(2);
 

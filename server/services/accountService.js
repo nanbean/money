@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
 const { accountsDB, stocksDB } = require('../db');
 const _ = require('lodash');
-const pouchdb = require('../pouchdb');
+const pouchdb = require('../db/pouchdb');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
 const { getBalance } = require('../utils/account');
 

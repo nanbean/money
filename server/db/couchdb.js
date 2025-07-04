@@ -1,10 +1,10 @@
-const accountService = require('./services/accountService');
-const transactionService = require('./services/transactionService');
-const notificationService = require('./services/notificationService');
-const settingService = require('./services/settingService');
-const investmentService = require('./services/investmentService');
-const reportService = require('./services/reportService');
-const scheduler = require('./scheduler');
+const accountService = require('../services/accountService');
+const transactionService = require('../services/transactionService');
+const notificationService = require('../services/notificationService');
+const settingService = require('../services/settingService');
+const investmentService = require('../services/investmentService');
+const reportService = require('../services/reportService');
+const scheduler = require('../services/scheduler');
 
 module.exports = {
 	// accountService

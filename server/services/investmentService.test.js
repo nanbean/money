@@ -1,6 +1,6 @@
 const { arrangeKRInvestmemt, arrangeUSInvestmemt } = require('./investmentService');
 const { accountsDB, stocksDB } = require('../db');
-const kisConnector = require('../kisConnector');
+const kisConnector = require('./kisConnector');
 const moment = require('moment-timezone');
 
 // Mock dependencies
@@ -15,7 +15,7 @@ jest.mock('../db', () => ({
 	}
 }));
 
-jest.mock('../kisConnector', () => ({
+jest.mock('./kisConnector', () => ({
 	getKisToken: jest.fn(),
 	getKisQuoteKorea: jest.fn(),
 	getKisQuoteUS: jest.fn()

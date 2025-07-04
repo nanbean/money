@@ -1,7 +1,11 @@
 const moment = require('moment-timezone');
 const _ = require('lodash');
-const { reportsDB, accountsDB, transactionsDB, stocksDB, historiesDB } = require('../db');
-const spreadSheet = require('../spreadSheet');
+const reportDB = require('../db/reportDB');
+const accountDB = require('../db/accountDB');
+const transactionDB = require('../db/transactionDB');
+const stockDB = require('../db/stockDB');
+const historyDB = require('../db/historyDB');
+const spreadSheet = require('../utils/spreadSheet');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
 const { getBalance } = require('../utils/account');
 const { getExchangeRate } = require('./settingService');
@@ -13,7 +17,7 @@ const updateLifeTimePlanner = async () => {
 	let oldLifeTimePlanner;
 
 	try {
-		oldLifeTimePlanner = await reportsDB.get('lifetimeplanner', { revs_info: true });
+		oldLifeTimePlanner = await reportDB.getReport('lifetimeplanner');
 	} catch (err) {
 		console.log(err);
 	}
@@ -30,14 +34,14 @@ const updateLifeTimePlanner = async () => {
 		transaction._rev = oldLifeTimePlanner._rev;
 	}
 
-	await reportsDB.insert(transaction);
+	await reportDB.insertReport(transaction);
 
 	console.log('updateLifeTimePlanner done');
 	console.timeEnd('updateLifeTimePlanner');
 };
 
 const getLifetimeFlowList = async () => {
-	const lifeTimePlanner = await reportsDB.get('lifetimeplanner', { revs_info: true });
+	const lifeTimePlanner = await reportDB.getReport('lifetimeplanner');
 	return lifeTimePlanner.data;
 };
 
@@ -114,18 +118,15 @@ const updateNetWorth = async () => {
 
 	const data = dates.map(i => ({ date: i }));
 
-	const accountsResponse = await accountsDB.list({ include_docs: true });
-	const allAccounts = accountsResponse.rows.map(i => i.doc);
-	const transactionsResponse = await transactionsDB.list({ include_docs: true });
-	const allTransactions = transactionsResponse.rows.map(i => i.doc);
-	const kospiResponse = await stocksDB.get('kospi');
-	const kosdaqResponse = await stocksDB.get('kosdaq');
-	const usResponse = await stocksDB.get('us');
+	const allAccounts = await accountDB.listAccounts();
+	const allTransactions = await transactionDB.getAllTransactions();
+	const kospiResponse = await stockDB.getStock('kospi');
+	const kosdaqResponse = await stockDB.getStock('kosdaq');
+	const usResponse = await stockDB.getStock('us');
 	const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
 	const transactionsByAccount = _.groupBy(allTransactions, 'accountId');
-	const historiesResponse = await historiesDB.list({ include_docs: true });
-	const histories = historiesResponse.rows.map(i => i.doc);
-	const oldNetWorth = await reportsDB.get('netWorth', { revs_info: true }).catch(() => null);
+	const histories = await historyDB.listHistories();
+	const oldNetWorth = await reportDB.getReport('netWorth').catch(() => null);
 
 	for (const item of data) {
 		const { netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, netInvestments, movableAsset } = await getNetWorth(allAccounts, allTransactions, transactionsByAccount, allInvestments, histories, item.date);
@@ -149,7 +150,7 @@ const updateNetWorth = async () => {
 		netWorth._rev = oldNetWorth._rev;
 	}
 
-	await reportsDB.insert(netWorth);
+	await reportDB.insertReport(netWorth);
 
 	console.log('updateNetWorth done');
 	console.timeEnd('updateNetWorth');

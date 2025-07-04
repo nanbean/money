@@ -1,15 +1,12 @@
-const { transactionsDB } = require('../db');
+const transactionDB = require('../db/transactionDB');
 const { updateAccountList } = require('./accountService');
 
 const getAllTransactions = async () => {
-	const allTransactions = await transactionsDB.list({ include_docs: true });
-	const transactions = allTransactions.rows.map(i => i.doc);
-
-	return transactions;
+	return await transactionDB.getAllTransactions();
 };
 
 const addTransaction = async (transaction) => {
-	await transactionsDB.insert(transaction);
+	await transactionDB.insertTransaction(transaction);
 	await updateAccountList();
 };
 

@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const admin = require('firebase-admin');
 
-const serviceAccount = require('./firebase-credential.json');
+const serviceAccount = require('../firebase-credential.json');
 
 const filePath = path.resolve(__dirname, 'messaging.json');
 

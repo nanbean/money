@@ -2,19 +2,19 @@ const notification = require('./notification');
 const { addTransaction, getHistory } = notification;
 const messaging = require('./messaging');
 const moment = require('moment-timezone');
-const settingService = require('./services/settingService');
-const transactionService = require('./services/transactionService');
-const notificationService = require('./services/notificationService');
+const settingService = require('./settingService');
+const transactionService = require('./transactionService');
+const notificationService = require('./notificationService');
 
 // Mock dependencies
-jest.mock('./services/settingService', () => ({
+jest.mock('./settingService', () => ({
 	getCategoryList: jest.fn()
 }));
-jest.mock('./services/transactionService', () => ({
+jest.mock('./transactionService', () => ({
 	getAllTransactions: jest.fn(),
 	addTransaction: jest.fn()
 }));
-jest.mock('./services/notificationService', () => ({
+jest.mock('./notificationService', () => ({
 	addNotification: jest.fn(),
 	listNotifications: jest.fn()
 }));

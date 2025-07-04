@@ -1,8 +1,8 @@
 const { google } = require('googleapis');
 const moment = require('moment-timezone');
 
-const config = require('./config');
-const key = require('./nanbean-435f267e8481.json');
+const config = require('../config');
+const key = require('../nanbean-435f267e8481.json');
 const SCOPES = 'https://www.googleapis.com/auth/calendar';
 
 var auth = new google.auth.JWT(

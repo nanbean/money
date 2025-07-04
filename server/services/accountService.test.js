@@ -1,6 +1,6 @@
 const { getAllAccounts, updateAccountList } = require('./accountService');
 const { accountsDB, stocksDB } = require('../db');
-const pouchdb = require('../pouchdb');
+const pouchdb = require('../db/pouchdb');
 
 // Mocks the PouchDB `list` method.
 jest.mock('../db', () => ({
@@ -14,7 +14,7 @@ jest.mock('../db', () => ({
 }));
 
 // Mocks the pouchdb module to prevent CronJob from running during tests.
-jest.mock('../pouchdb', () => ({
+jest.mock('../db/pouchdb', () => ({
 	getAllTransactions: jest.fn()
 }));
 

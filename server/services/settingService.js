@@ -1,11 +1,8 @@
-const { settingsDB } = require('../db');
-const { getKisToken, getKisExchangeRate } = require('../kisConnector');
+const settingDB = require('../db/settingDB');
+const { getKisToken, getKisExchangeRate } = require('./kisConnector');
 
 const getSettings = async () => {
-	const settingsResponse = await settingsDB.list({ include_docs: true });
-	const settings = settingsResponse.rows.map(i => i.doc);
-
-	return settings;
+	return await settingDB.getSettings();
 };
 
 const getExchangeRate = async () => {
@@ -42,8 +39,7 @@ const getCategoryList = async () => {
 };
 
 const arrangeExchangeRate = async () => {
-	const settingsResponse = await settingsDB.list({ include_docs: true });
-	const settings = settingsResponse.rows.map(i => i.doc);
+	const settings = await settingDB.getSettings();
 	const general = settings.find(i => i._id === 'general');
 
 	if (general && general.enableExchangeRateUpdate) {
@@ -51,7 +47,7 @@ const arrangeExchangeRate = async () => {
 		const kisExchangeRate = await getKisExchangeRate(accessToken);
 		if (kisExchangeRate) {
 			general.exchangeRate = kisExchangeRate;
-			await settingsDB.insert(general);
+			await settingDB.insertSetting(general);
 		}
 	}
 };
