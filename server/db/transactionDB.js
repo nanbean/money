@@ -1,8 +1,8 @@
 const { transactionsDB } = require('./index');
+const pouchdb = require('./pouchdb');
 
 const getAllTransactions = async () => {
-	const allTransactions = await transactionsDB.list({ include_docs: true });
-	return allTransactions.rows.map(i => i.doc);
+	return pouchdb.getAllTransactions();
 };
 
 const insertTransaction = async (transaction) => {

@@ -1,13 +1,11 @@
 const { getAllTransactions, addTransaction } = require('./transactionService');
-const { transactionsDB } = require('../db');
+const transactionDB = require('../db/transactionDB');
 const { updateAccountList } = require('./accountService');
 
 // Mock dependencies
-jest.mock('../db', () => ({
-	transactionsDB: {
-		list: jest.fn(),
-		insert: jest.fn()
-	}
+jest.mock('../db/transactionDB', () => ({
+	getAllTransactions: jest.fn(),
+	insertTransaction: jest.fn()
 }));
 
 jest.mock('./accountService', () => ({
@@ -21,28 +19,25 @@ describe('transactionService', () => {
 	});
 
 	describe('getAllTransactions', () => {
-		test('should return all transaction documents', async () => {
+		test('should call transactionDB.getAllTransactions and return its result', async () => {
 			// Arrange
-			const mockDbResponse = {
-				rows: [
-					{ doc: { _id: 'tx1', amount: 100 } },
-					{ doc: { _id: 'tx2', amount: -50 } }
-				]
-			};
-			transactionsDB.list.mockResolvedValue(mockDbResponse);
+			const mockTransactions = [
+				{ _id: 'tx1', amount: 100 },
+				{ _id: 'tx2', amount: -50 }
+			];
+			transactionDB.getAllTransactions.mockResolvedValue(mockTransactions);
 
 			// Act
 			const transactions = await getAllTransactions();
 
 			// Assert
-			expect(transactionsDB.list).toHaveBeenCalledWith({ include_docs: true });
-			expect(transactions).toHaveLength(2);
-			expect(transactions).toEqual(mockDbResponse.rows.map(row => row.doc));
+			expect(transactionDB.getAllTransactions).toHaveBeenCalledTimes(1);
+			expect(transactions).toEqual(mockTransactions);
 		});
 
 		test('should return an empty array if there are no transactions', async () => {
 			// Arrange
-			transactionsDB.list.mockResolvedValue({ rows: [] });
+			transactionDB.getAllTransactions.mockResolvedValue([]);
 
 			// Act
 			const transactions = await getAllTransactions();
@@ -56,18 +51,18 @@ describe('transactionService', () => {
 		test('should insert a transaction and then update the account list', async () => {
 			// Arrange
 			const newTransaction = { _id: 'tx3', amount: 200, accountId: 'acc1' };
-			transactionsDB.insert.mockResolvedValue({}); // Mock successful insert
+			transactionDB.insertTransaction.mockResolvedValue({}); // Mock successful insert
 			updateAccountList.mockResolvedValue(); // Mock successful update
 
 			// Act
 			await addTransaction(newTransaction);
 
 			// Assert
-			expect(transactionsDB.insert).toHaveBeenCalledWith(newTransaction);
+			expect(transactionDB.insertTransaction).toHaveBeenCalledWith(newTransaction);
 			expect(updateAccountList).toHaveBeenCalledTimes(1);
 
 			// Verify that insert was called before update
-			const insertOrder = transactionsDB.insert.mock.invocationCallOrder[0];
+			const insertOrder = transactionDB.insertTransaction.mock.invocationCallOrder[0];
 			const updateOrder = updateAccountList.mock.invocationCallOrder[0];
 			expect(insertOrder).toBeLessThan(updateOrder);
 		});
@@ -76,7 +71,7 @@ describe('transactionService', () => {
 			// Arrange
 			const newTransaction = { _id: 'tx4', amount: -100 };
 			const insertError = new Error('Insert failed');
-			transactionsDB.insert.mockRejectedValue(insertError);
+			transactionDB.insertTransaction.mockRejectedValue(insertError);
 
 			// Act & Assert
 			await expect(addTransaction(newTransaction)).rejects.toThrow('Insert failed');

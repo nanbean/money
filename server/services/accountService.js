@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
 const { accountsDB, stocksDB } = require('../db');
 const _ = require('lodash');
-const pouchdb = require('../db/pouchdb');
+const transactionDB = require('../db/transactionDB');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
 const { getBalance } = require('../utils/account');
 
@@ -12,7 +12,7 @@ const updateAccountList = async () => {
 	try {
 		const accountsResponse = await accountsDB.list({ include_docs: true });
 		const allAccounts = accountsResponse.rows.map(i => i.doc);
-		const allTransactions = await pouchdb.getAllTransactions();
+		const allTransactions = await transactionDB.getAllTransactions();
 		const transactionsByAccount = _.groupBy(allTransactions, 'accountId');
 		const kospiResponse = await stocksDB.get('kospi');
 		const kosdaqResponse = await stocksDB.get('kosdaq');

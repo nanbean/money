@@ -1,5 +1,9 @@
 const reportService = require('./reportService');
-const { reportsDB, accountsDB, transactionsDB, stocksDB, historiesDB } = require('../db');
+const reportDB = require('../db/reportDB');
+const accountDB = require('../db/accountDB');
+const transactionDB = require('../db/transactionDB');
+const stockDB = require('../db/stockDB');
+const historyDB = require('../db/historyDB');
 const spreadSheet = require('../utils/spreadSheet');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
 const { getBalance } = require('../utils/account');
@@ -7,29 +11,23 @@ const settingService = require('./settingService');
 const accountService = require('./accountService');
 
 // Mock all external dependencies
-jest.mock('../db', () => ({
-	reportsDB: {
-		get: jest.fn(),
-		insert: jest.fn()
-	},
-	accountsDB: {
-		list: jest.fn()
-	},
-	transactionsDB: {
-		list: jest.fn()
-	},
-	stocksDB: {
-		get: jest.fn((id) => {
-			// Mock the behavior of stocksDB.get based on the ID
-			if (id === 'kospi') return Promise.resolve({ data: [] });
-			if (id === 'kosdaq') return Promise.resolve({ data: [] });
-			if (id === 'us') return Promise.resolve({ data: [] });
-			return Promise.resolve({});
-		})
-	},
-	historiesDB: {
-		list: jest.fn()
-	}
+jest.mock('../db/reportDB');
+jest.mock('../db/accountDB');
+jest.mock('../db/transactionDB');
+jest.mock('../db/stockDB', () => ({
+	getStock: jest.fn((id) => {
+		// Mock the behavior of stockDB.getStock based on the ID
+		if (id === 'kospi') return Promise.resolve({ data: [] });
+		if (id === 'kosdaq') return Promise.resolve({ data: [] });
+		if (id === 'us') return Promise.resolve({ data: [] });
+		return Promise.resolve({});
+	})
+}));
+jest.mock('../db/historyDB');
+
+// Mocks the pouchdb module to prevent CronJob from running during tests.
+jest.mock('../db/pouchdb', () => ({
+	getAllTransactions: jest.fn()
 }));
 
 jest.mock('../utils/spreadSheet', () => ({
@@ -75,7 +73,7 @@ describe('reportService', () => {
 
 			accountService.getAllAccounts.mockResolvedValue(mockAccounts);
 			spreadSheet.getLifetimeFlowList.mockResolvedValue(mockLifetimeData);
-			reportsDB.get.mockResolvedValue(mockOldReport);
+			reportDB.getReport.mockResolvedValue(mockOldReport);
 
 			// Act
 			await reportService.updateLifeTimePlanner();
@@ -83,10 +81,10 @@ describe('reportService', () => {
 			// Assert
 			expect(accountService.getAllAccounts).toHaveBeenCalledTimes(1);
 			expect(spreadSheet.getLifetimeFlowList).toHaveBeenCalledWith(mockAccounts);
-			expect(reportsDB.get).toHaveBeenCalledWith('lifetimeplanner', { revs_info: true });
-			expect(reportsDB.insert).toHaveBeenCalledTimes(1);
-			
-			const insertedDoc = reportsDB.insert.mock.calls[0][0];
+			expect(reportDB.getReport).toHaveBeenCalledWith('lifetimeplanner');
+			expect(reportDB.insertReport).toHaveBeenCalledTimes(1);
+
+			const insertedDoc = reportDB.insertReport.mock.calls[0][0];
 			expect(insertedDoc._id).toBe('lifetimeplanner');
 			expect(insertedDoc._rev).toBe('1-abc'); // Should have the _rev from the old report
 			expect(insertedDoc.data).toEqual(mockLifetimeData);
@@ -98,14 +96,14 @@ describe('reportService', () => {
 			const mockLifetimeData = [{ event: 'New Goal', age: 40 }];
 			accountService.getAllAccounts.mockResolvedValue([]);
 			spreadSheet.getLifetimeFlowList.mockResolvedValue(mockLifetimeData);
-			reportsDB.get.mockRejectedValue({ status: 404 }); // Simulate "not found"
+			reportDB.getReport.mockRejectedValue({ status: 404 }); // Simulate "not found"
 
 			// Act
 			await reportService.updateLifeTimePlanner();
 
 			// Assert
-			expect(reportsDB.insert).toHaveBeenCalledTimes(1);
-			const insertedDoc = reportsDB.insert.mock.calls[0][0];
+			expect(reportDB.insertReport).toHaveBeenCalledTimes(1);
+			const insertedDoc = reportDB.insertReport.mock.calls[0][0];
 			expect(insertedDoc._id).toBe('lifetimeplanner');
 			expect(insertedDoc._rev).toBeUndefined(); // Should be a new doc
 			expect(insertedDoc.data).toEqual(mockLifetimeData);
@@ -114,7 +112,7 @@ describe('reportService', () => {
 		test('should log an error if fetching the old report fails with a non-404 error', async () => {
 			// Arrange
 			const dbError = new Error('DB connection failed');
-			reportsDB.get.mockRejectedValue(dbError);
+			reportDB.getReport.mockRejectedValue(dbError);
 			accountService.getAllAccounts.mockResolvedValue([]);
 			spreadSheet.getLifetimeFlowList.mockResolvedValue([]);
 
@@ -123,8 +121,8 @@ describe('reportService', () => {
 
 			// Assert
 			// The function should still proceed and try to insert a new document
-			expect(reportsDB.insert).toHaveBeenCalledTimes(1);
-			const insertedDoc = reportsDB.insert.mock.calls[0][0];
+			expect(reportDB.insertReport).toHaveBeenCalledTimes(1);
+			const insertedDoc = reportDB.insertReport.mock.calls[0][0];
 			expect(insertedDoc._rev).toBeUndefined();
 			// And it should log the error
 			expect(console.log).toHaveBeenCalledWith(dbError);
@@ -138,13 +136,13 @@ describe('reportService', () => {
 				_id: 'lifetimeplanner',
 				data: [{ event: 'Buy House', age: 35 }]
 			};
-			reportsDB.get.mockResolvedValue(mockReport);
+			reportDB.getReport.mockResolvedValue(mockReport);
 
 			// Act
 			const result = await reportService.getLifetimeFlowList();
 
 			// Assert
-			expect(reportsDB.get).toHaveBeenCalledWith('lifetimeplanner', { revs_info: true });
+			expect(reportDB.getReport).toHaveBeenCalledWith('lifetimeplanner');
 			expect(result).toEqual(mockReport.data);
 		});
 	});
@@ -252,13 +250,13 @@ describe('reportService', () => {
 
 		test('should fetch all data, calculate net worth for each month, and create a new report', async () => {
 			// Arrange: Mock all DB and service calls
-			reportsDB.get.mockRejectedValue({ status: 404 }); // No existing report
-			accountsDB.list.mockResolvedValue({ rows: [{ doc: { type: 'Cash', name: 'Wallet', currency: 'KRW' } }] });
-			transactionsDB.list.mockResolvedValue({ rows: [{ doc: { accountId: 'account:Cash:Wallet', date: '2022-01-01', amount: 1000 } }] });
-			stocksDB.get.mockResolvedValue({ data: [] });
-			historiesDB.list.mockResolvedValue({ rows: [] });
+			reportDB.getReport.mockRejectedValue({ status: 404 }); // No existing report
+			accountDB.listAccounts.mockResolvedValue([{ type: 'Cash', name: 'Wallet', currency: 'KRW' }]);
+			transactionDB.getAllTransactions.mockResolvedValue([{ accountId: 'account:Cash:Wallet', date: '2022-01-01', amount: 1000 }]);
+			stockDB.getStock.mockResolvedValue({ data: [] });
+			historyDB.listHistories.mockResolvedValue([]);
 			settingService.getExchangeRate.mockResolvedValue(1300);
-			
+
 			// Mock the result of getBalance for simplicity.
 			// getNetWorth will call this for each date.
 			getBalance.mockReturnValue(1000);
@@ -270,17 +268,17 @@ describe('reportService', () => {
 
 			// Assert
 			// 1. Verify all data was fetched
-			expect(accountsDB.list).toHaveBeenCalledTimes(1);
-			expect(transactionsDB.list).toHaveBeenCalledTimes(1);
-			expect(stocksDB.get).toHaveBeenCalledWith('kospi', { revs_info: true });
-			expect(stocksDB.get).toHaveBeenCalledWith('kosdaq', { revs_info: true });
-			expect(stocksDB.get).toHaveBeenCalledWith('us', { revs_info: true });
-			expect(historiesDB.list).toHaveBeenCalledTimes(1);
-			expect(reportsDB.get).toHaveBeenCalledWith('netWorth', { revs_info: true });
+			expect(accountDB.listAccounts).toHaveBeenCalledTimes(1);
+			expect(transactionDB.getAllTransactions).toHaveBeenCalledTimes(1);
+			expect(stockDB.getStock).toHaveBeenCalledWith('kospi');
+			expect(stockDB.getStock).toHaveBeenCalledWith('kosdaq');
+			expect(stockDB.getStock).toHaveBeenCalledWith('us');
+			expect(historyDB.listHistories).toHaveBeenCalledTimes(1);
+			expect(reportDB.getReport).toHaveBeenCalledWith('netWorth');
 
 			// 2. Verify the report was inserted
-			expect(reportsDB.insert).toHaveBeenCalledTimes(1);
-			const insertedDoc = reportsDB.insert.mock.calls[0][0];
+			expect(reportDB.insertReport).toHaveBeenCalledTimes(1);
+			const insertedDoc = reportDB.insertReport.mock.calls[0][0];
 			expect(insertedDoc._id).toBe('netWorth');
 			expect(insertedDoc._rev).toBeUndefined(); // New document
 
@@ -301,12 +299,12 @@ describe('reportService', () => {
 
 		test('should update an existing report', async () => {
 			// Arrange
-			reportsDB.get.mockResolvedValue({ _id: 'netWorth', _rev: '2-xyz' });
+			reportDB.getReport.mockResolvedValue({ _id: 'netWorth', _rev: '2-xyz' });
 			// Mock other dependencies to return empty data to speed up the test
-			accountsDB.list.mockResolvedValue({ rows: [] });
-			transactionsDB.list.mockResolvedValue({ rows: [] });
-			stocksDB.get.mockResolvedValue({ data: [] });
-			historiesDB.list.mockResolvedValue({ rows: [] });
+			accountDB.listAccounts.mockResolvedValue([]);
+			transactionDB.getAllTransactions.mockResolvedValue([]);
+			stockDB.getStock.mockResolvedValue({ data: [] });
+			historyDB.listHistories.mockResolvedValue([]);
 			settingService.getExchangeRate.mockResolvedValue(1300);
 			getBalance.mockReturnValue(0);
 			getInvestmentList.mockReturnValue([]);
@@ -316,8 +314,8 @@ describe('reportService', () => {
 			await reportService.updateNetWorth();
 
 			// Assert
-			expect(reportsDB.insert).toHaveBeenCalledTimes(1);
-			const insertedDoc = reportsDB.insert.mock.calls[0][0];
+			expect(reportDB.insertReport).toHaveBeenCalledTimes(1);
+			const insertedDoc = reportDB.insertReport.mock.calls[0][0];
 			expect(insertedDoc._id).toBe('netWorth');
 			expect(insertedDoc._rev).toBe('2-xyz'); // Should use the existing _rev
 			const expectedDateCount = (2023 - 2005) * 12 + 3;
