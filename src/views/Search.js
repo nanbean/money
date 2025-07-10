@@ -82,7 +82,7 @@ export function Search () {
 		}, 0);
 	}, [filteredTransactions, displayCurrency, exchangeRate, accountList]);
 
-	const transactionHeight = useHeight() - 64 - 64 - 64 - 200; // TODO: Optimize calculation
+	const transactionHeight = useHeight() - 64 - 64 - 64 - 130; // TODO: Optimize calculation
 
 	useEffect(() => {
 		updateFilteredTransactions(filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
@@ -235,11 +235,13 @@ export function Search () {
 							})}
 						>
 							<Grid item xs={12}>
-								<AccountFilter
-									allAccounts={allAccounts}
-									filteredAccounts={filteredAccounts}
-									setfilteredAccounts={onFilteredAccountsChange}
-								/>
+								<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+									<AccountFilter
+										allAccounts={allAccounts}
+										filteredAccounts={filteredAccounts}
+										setfilteredAccounts={onFilteredAccountsChange}
+									/>
+								</Stack>
 							</Grid>
 							<Grid item xs={6}>
 								<FormControl required fullWidth>

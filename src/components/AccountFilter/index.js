@@ -1,23 +1,29 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Paper from '@mui/material/Paper';
-import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
-import Stack from '@mui/material/Stack';
-import Collapse from '@mui/material/Collapse';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
 
 export function AccountFilter ({
 	allAccounts,
 	filteredAccounts,
 	setfilteredAccounts
 }) {
-	const [isExpanded, setIsExpanded] = useState(false);
+	const [anchorEl, setAnchorEl] = useState(null);
+	const open = Boolean(anchorEl);
 
-	const handleToggleExpand = () => setIsExpanded(!isExpanded);
+	const handleClick = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleClose = () => {
+		setAnchorEl(null);
+	};
 
 	const onFilteredAccountsChange = (account, isChecked) => {
 		const isPresent = filteredAccounts.includes(account);
@@ -25,11 +31,11 @@ export function AccountFilter ({
 		if (isChecked && !isPresent) {
 			setfilteredAccounts([...filteredAccounts, account]);
 		} else if (!isChecked && isPresent) {
-			setfilteredAccounts(filteredAccounts.filter(i => i !== account));
+			setfilteredAccounts(filteredAccounts.filter((i) => i !== account));
 		}
 	};
 
-	const onAllAccountClick = event => {
+	const onAllAccountClick = (event) => {
 		const { checked } = event.target;
 		if (checked) {
 			setfilteredAccounts([...allAccounts]);
@@ -39,63 +45,54 @@ export function AccountFilter ({
 	};
 
 	return (
-		<Paper sx={{ p: 1 }}>
-			<Stack spacing={1}>
-				<Stack direction="row" spacing={1} alignItems="center">
-					{!isExpanded && (
-						<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ flexGrow: 1 }}>
-							{filteredAccounts.map(item => (
-								<Chip
-									key={item}
-									label={item}
-									onDelete={() => onFilteredAccountsChange(item, false)}
-									size="small"
-								/>
-							))}
-						</Stack>
-					)}
-					<Button
-						onClick={handleToggleExpand}
-						startIcon={<FilterListIcon />}
-						fullWidth={isExpanded}
-						sx={isExpanded ? {} : { flexShrink: 0 }}
-					>
-						Filter ({filteredAccounts.length} / {allAccounts.length})
-					</Button>
-				</Stack>
-
-				<Collapse in={isExpanded}>
-					<Stack sx={{ pl: 1, maxHeight: 300, overflowY: 'auto' }}>
-						{allAccounts && allAccounts.map(j => (
-							<FormControlLabel
-								key={j}
-								control={
-									<Checkbox
-										sx={{ py: 0.5 }}
-										size="small"
-										checked={filteredAccounts.includes(j)}
-										onChange={(e) => onFilteredAccountsChange(j, e.target.checked)}
-									/>
-								}
-								label={j}
-							/>
-						))}
+		<div>
+			<Button
+				id="account-filter-button"
+				aria-controls={open ? 'account-filter-menu' : undefined}
+				aria-haspopup="true"
+				aria-expanded={open ? 'true' : undefined}
+				onClick={handleClick}
+				size="small"
+				startIcon={<FilterListIcon />}
+				sx={{ textTransform: 'none' }}
+			>
+				Filter ({filteredAccounts.length})
+			</Button>
+			<Menu
+				id="account-filter-menu"
+				anchorEl={anchorEl}
+				open={open}
+				onClose={handleClose}
+				MenuListProps={{ 'aria-labelledby': 'account-filter-button' }}
+			>
+				<Box sx={{ pl: 2, pr: 2, maxHeight: 500, overflowY: 'auto' }}>
+					{allAccounts && allAccounts.map((j) => (
 						<FormControlLabel
-							control={
-								<Checkbox
-									key="All"
-									sx={{ py: 0.5 }}
-									size="small"
-									checked={allAccounts.length > 0 && filteredAccounts.length === allAccounts.length}
-									onChange={onAllAccountClick}
-								/>
-							}
-							label="All"
+							key={j}
+							control={<Checkbox size="small" checked={filteredAccounts.includes(j)} onChange={(e) => onFilteredAccountsChange(j, e.target.checked)} />}
+							label={j}
+							sx={{ display: 'block' }}
 						/>
-					</Stack>
-				</Collapse>
-			</Stack>
-		</Paper>
+					))}
+				</Box>
+				<Divider />
+				<Box sx={{ pl: 2, pr: 2, pt: 1, pb: 1 }}>
+					<FormControlLabel
+						control={
+							<Checkbox
+								key="All"
+								sx={{ py: 0.5 }}
+								size="small"
+								checked={allAccounts.length > 0 && filteredAccounts.length === allAccounts.length}
+								onChange={onAllAccountClick}
+							/>
+						}
+						label="All"
+						sx={{ display: 'block' }}
+					/>
+				</Box>
+			</Menu>
+		</div>
 	);
 }
 

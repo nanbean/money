@@ -52,22 +52,19 @@ export function AllPerformance () {
 			<div>
 				<TitleHeader title="Performance" />
 				<Container>
-					<InvestmentFilter
-						allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
-						filteredInvestments={filteredInvestments}
-					/>
-					<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
-						<Typography
-							variant="subtitle1"
-							align="right"
-							sx={(theme) => ({
-								marginTop: theme.spacing(1),
-								marginRight: theme.spacing(1)
-							})}
-						>
-							{'Grand Total : '}
-						</Typography>
-						<Amount value={grandTotalPerformance} size="large" negativeColor showSymbol currency="KRW"/>
+					<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 1 }}>
+						<Stack direction="row" alignItems="baseline" spacing={1}>
+							<Typography
+								variant="subtitle1"
+							>
+								{'Grand Total : '}
+							</Typography>
+							<Amount value={grandTotalPerformance} size="large" negativeColor showSymbol currency="KRW"/>
+						</Stack>
+						<InvestmentFilter
+							allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
+							filteredInvestments={filteredInvestments}
+						/>
 					</Stack>
 					{
 						filteredPerformance && filteredPerformance.map(i => {

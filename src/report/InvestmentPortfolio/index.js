@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import Stack from '@mui/material/Stack';
+
 import ReactEcharts from 'echarts-for-react'; 
 
 import stc from 'string-to-color';
@@ -138,13 +140,13 @@ function InvestmentPortfolio () {
 
 	return (
 		<React.Fragment>
-			<div>
+			<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
 				<AccountFilter
 					allAccounts={allAccounts}
 					filteredAccounts={filteredAccounts}
 					setfilteredAccounts={onFilteredAccountsChange}
 				/>
-			</div>
+			</Stack>
 			{
 				allInvestments.length > 0 && <ReactEcharts option={option} style={{ height: '600px' }} />
 			}

@@ -5,6 +5,8 @@ import _ from 'lodash';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Stack from '@mui/material/Stack';
+
 import Amount from '../../components/Amount';
 
 import ReportGrid from '../../components/ReportGrid';
@@ -47,11 +49,13 @@ export function RateOfReturn () {
 				flexDirection: 'column'
 			}}
 		>
-			<AccountFilter
-				allAccounts={allInvestmentAccounts}
-				filteredAccounts={filteredAccounts}
-				setfilteredAccounts={onFilteredAccountsChange}
-			/>
+			<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+				<AccountFilter
+					allAccounts={allInvestmentAccounts}
+					filteredAccounts={filteredAccounts}
+					setfilteredAccounts={onFilteredAccountsChange}
+				/>
+			</Stack>
 			{/* 전체 기간 요약 표 */}
 			{overallSummary && (
 				<Box sx={{ mt: 2, mb: 2 }}>

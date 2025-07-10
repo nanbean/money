@@ -149,11 +149,15 @@ function InvestmentHistory () {
 	if (netWorthFlow.length > 0) {
 		return (
 			<React.Fragment>
-				<InvestmentFilter
-					allInvestments={allInvestments.map(i => i.name).sort()}
-					filteredInvestments={filteredInvestments}
-				/>
-				<ChartControls />
+				<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+					<Stack direction="row" spacing={1} alignItems="center">
+						<ChartControls />
+						<InvestmentFilter
+							allInvestments={allInvestments.map(i => i.name).sort()}
+							filteredInvestments={filteredInvestments}
+						/>
+					</Stack>
+				</Stack>
 				{
 					netWorthFlow.length > 1 &&
 					<ResponsiveContainer width="100%" height={400}>

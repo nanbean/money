@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
 
 import moment from 'moment';
 import _ from 'lodash';
@@ -63,8 +64,8 @@ export function Dividend () {
 
 	return (
 		<div>
-			<div>
-				<FormControl fullWidth variant="standard">
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1 }}>
+				<FormControl variant="standard" sx={{ minWidth: 120 }}>
 					<Select
 						value={year}
 						onChange={onYearChange}
@@ -85,7 +86,7 @@ export function Dividend () {
 					filteredAccounts={filteredAccounts}
 					setfilteredAccounts={onFilteredAccountsChange}
 				/>
-			</div>
+			</Stack>
 			<NormalGrid
 				gridData={dividendGridata}
 			/>

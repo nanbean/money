@@ -113,7 +113,9 @@ const MonthlyExpense = () => {
 							aria-haspopup="true"
 							aria-expanded={open ? 'true' : undefined}
 							onClick={handleFilterClick}
+							size="small"
 							startIcon={<FilterListIcon />}
+							sx={{ textTransform: 'none' }}
 						>
 							Filters
 						</Button>

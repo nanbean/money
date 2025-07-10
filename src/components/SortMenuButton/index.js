@@ -35,7 +35,7 @@ const SortMenuButton = ({ value, onChange, options }) => {
 				aria-expanded={open ? 'true' : undefined}
 				onClick={handleClick}
 				size="small"
-				endIcon={<SortIcon />}
+				startIcon={<SortIcon />}
 				sx={{ textTransform: 'none' }}
 			>
 				{buttonLabel}
