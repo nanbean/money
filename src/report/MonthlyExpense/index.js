@@ -6,16 +6,13 @@ import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import Menu from '@mui/material/Menu';
-import Checkbox from '@mui/material/Checkbox';
+import FilterMenu from '../../components/FilterMenu';
 
 import moment from 'moment';
-import FilterListIcon from '@mui/icons-material/FilterList';
 
 import ReportGrid from '../../components/ReportGrid';
 import SortMenuButton from '../../components/SortMenuButton';
 import MonthlyComparisonChart from './MonthlyComparisonChart';
-import Button from '@mui/material/Button';
 
 import useMonthlyExpense from './useMonthlyExpense';
 import useTransactions from './useTransactions';
@@ -31,12 +28,13 @@ const MonthlyExpense = () => {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const { exchangeRate } = useSelector((state) => state.settings.general);
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
-	const [livingExpenseOnly, setLivingExpenseOnly] = useState(false);
-	const [livingExpenseCardOnly, setLivingExpenseCardOnly] = useState(false);
-	const [boAOnly, setBoAOnly] = useState(false);
-	const [anchorEl, setAnchorEl] = useState(null);
+	const [filters, setFilters] = useState([]);
 	const [view, setView] = useState('grid');
 	const usd = useSelector((state) => state.settings.general.currency === 'USD');
+
+	const livingExpenseOnly = filters.includes('livingExpenseOnly');
+	const livingExpenseCardOnly = filters.includes('livingExpenseCardOnly');
+	const boAOnly = filters.includes('boAOnly');
 
 	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
 	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate);
@@ -50,31 +48,15 @@ const MonthlyExpense = () => {
 		expense: Math.abs(totalMonthExpenseSum[index] || 0)
 	}));
 
-	const open = Boolean(anchorEl);
-
-	const handleFilterClick = (event) => {
-		setAnchorEl(event.currentTarget);
-	};
-
-	const handleFilterClose = () => {
-		setAnchorEl(null);
-	};
-
 	const onYearChange = event => {
 		setYear(event.target.value);
 	};
 
-	const onLivingExpenseOnlyChange = () => {
-		setLivingExpenseOnly(prev => !prev);
-	};
-
-	const onLivingExpenseCardOnlyChange = () => {
-		setLivingExpenseCardOnly(prev => !prev);
-	};
-
-	const onBoAOnlyChange = () => {
-		setBoAOnly(prev => !prev);
-	};
+	const filterOptions = [
+		{ value: 'livingExpenseOnly', label: '생활비만 보기' },
+		{ value: 'livingExpenseCardOnly', label: '생활비카드만 보기' },
+		{ value: 'boAOnly', label: 'BoA Only' }
+	];
 
 	return (
 		<Box
@@ -107,37 +89,12 @@ const MonthlyExpense = () => {
 								{ value: 'sankey', label: 'Sankey' }
 							]}
 						/>
-						<Button
-							id="filter-button"
-							aria-controls={open ? 'filter-menu' : undefined}
-							aria-haspopup="true"
-							aria-expanded={open ? 'true' : undefined}
-							onClick={handleFilterClick}
-							size="small"
-							startIcon={<FilterListIcon />}
-							sx={{ textTransform: 'none' }}
-						>
-							Filters
-						</Button>
-						<Menu
-							id="filter-menu"
-							anchorEl={anchorEl}
-							open={open}
-							onClose={handleFilterClose}
-						>
-							<MenuItem onClick={onLivingExpenseOnlyChange}>
-								<Checkbox checked={livingExpenseOnly} />
-								생활비만 보기
-							</MenuItem>
-							<MenuItem onClick={onLivingExpenseCardOnlyChange}>
-								<Checkbox checked={livingExpenseCardOnly} />
-								생활비카드만 보기
-							</MenuItem>
-							<MenuItem onClick={onBoAOnlyChange}>
-								<Checkbox checked={boAOnly} />
-								BoA Only
-							</MenuItem>
-						</Menu>
+						<FilterMenu
+							filterName="Filters"
+							options={filterOptions}
+							selectedOptions={filters}
+							onSelectionChange={setFilters}
+						/>
 					</Stack>
 				</div>
 			</Stack>
