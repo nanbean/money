@@ -11,7 +11,7 @@ export function AccountFilter ({
 
 	return (
 		<FilterMenu
-			filterName="Filter"
+			filterName="Account"
 			options={options}
 			selectedOptions={filteredAccounts}
 			onSelectionChange={setfilteredAccounts}

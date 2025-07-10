@@ -17,7 +17,7 @@ export function InvestmentFilter ({
 
 	return (
 		<FilterMenu
-			filterName="Filter"
+			filterName="Investment"
 			options={options}
 			selectedOptions={filteredInvestments}
 			onSelectionChange={handleSelectionChange}
