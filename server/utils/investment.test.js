@@ -209,6 +209,77 @@ describe('getInvestmentBalance', () => {
 		];
 		expect(getInvestmentBalance(investments)).toBe(1700);
 	});
+
+	describe('with date and histories arguments', () => {
+		const investments = [
+			{ name: 'AAPL', price: 170, quantity: 10 }, // current price
+			{ name: 'GOOG', price: 2800, quantity: 5 }
+		];
+
+		const histories = [
+			{
+				name: 'AAPL',
+				data: [
+					{ date: '2023-01-15', close: 140 },
+					{ date: '2023-01-31', close: 145 }, // This one should be picked for 2023-01
+					{ date: '2023-02-10', close: 150 }
+				]
+			},
+			{
+				name: 'GOOG',
+				data: [
+					{ date: '2023-01-20', close: 2600 }
+				]
+			}
+		];
+
+		test('should use historical price for a past date', () => {
+			const date = '2023-01-25';
+			// AAPL: 10 * 145 (last close price in Jan) = 1450
+			// GOOG: 5 * 2600 = 13000
+			// Total = 14450
+			const balance = getInvestmentBalance(investments, date, histories);
+			expect(balance).toBe(14450);
+		});
+
+		test('should use the last available historical price within the given month', () => {
+			const date = '2023-01-25';
+			// The histories for AAPL has two entries for Jan 2023. It should use the one from 2023-01-31 with price 145.
+			const singleInvestment = [{ name: 'AAPL', price: 170, quantity: 10 }];
+			const balance = getInvestmentBalance(singleInvestment, date, histories);
+			expect(balance).toBe(1450); // 10 * 145
+		});
+
+		test('should mix historical and current prices correctly if history is partial', () => {
+			const date = '2023-02-15';
+			// AAPL has history for Feb: 10 * 150 = 1500
+			// GOOG has no history for Feb, falls back to current: 5 * 2800 = 14000
+			// Total = 15500
+			const balance = getInvestmentBalance(investments, date, histories);
+			expect(balance).toBe(15500);
+		});
+
+		test('should use current price if the date is in the current month', () => {
+			const moment = require('moment');
+			const spy = jest.spyOn(moment.fn, 'format').mockReturnValue('2023-02');
+
+			const date = '2023-02-20'; // A date in the mocked "current" month
+			// Even though AAPL history exists for Feb (price 150), it should use the current price (170)
+			// GOOG also uses current price as it has no history for Feb.
+			// Total = (10 * 170) + (5 * 2800) = 1700 + 14000 = 15700
+			const balance = getInvestmentBalance(investments, date, histories);
+			expect(balance).toBe(15700);
+
+			spy.mockRestore();
+		});
+
+		test('should return 0 for an investment with zero quantity', () => {
+			const date = '2023-01-25';
+			const zeroQuantityInvestment = [{ name: 'AAPL', price: 170, quantity: 0 }];
+			const balance = getInvestmentBalance(zeroQuantityInvestment, date, histories);
+			expect(balance).toBe(0);
+		});
+	});
 });
 
 describe('getClosePriceWithHistory', () => {

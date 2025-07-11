@@ -1,3 +1,5 @@
+const moment = require('moment-timezone');
+
 const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	const investments = [];
 	for (let i = 0; i < transactions.length; i++) {
@@ -91,14 +93,54 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	});
 };
 
-const getInvestmentBalance = (investments) => {
-	let balance = 0;
-	if (investments && investments.length > 0) {
-		balance = investments.map(i => (i.price || 0) * (i.quantity || 0))
-			.reduce((prev, curr) => prev + curr);
+const getInvestmentBalance = (investments, date, histories) => {
+	if (!investments || !investments.length) {
+		return 0;
 	}
 
-	return balance;
+	// Determine if historical data should be used. It's only used for past months.
+	const targetMonth = date ? moment(date).format('YYYY-MM') : null;
+	const useHistoricalData = targetMonth && histories && targetMonth !== moment().format('YYYY-MM');
+
+	// Pre-process histories into a Map for efficient O(1) lookups inside the loop.
+	// This avoids a O(N*M) complexity issue where N is investments and M is histories.
+	const historiesMap = useHistoricalData
+		? new Map(histories.map(h => [h.name, h.data]))
+		: null;
+
+	return investments.reduce((total, investment) => {
+		const { name, price = 0, quantity = 0 } = investment;
+
+		if (quantity === 0) {
+			return total;
+		}
+
+		let effectivePrice = price;
+
+		if (useHistoricalData) {
+			const investmentHistoryData = historiesMap.get(name);
+
+			if (investmentHistoryData) {
+				// Find the last relevant historical data point for the target month.
+				// Iterating backwards is more efficient as we can stop once we find the first match.
+				let historicalPrice = null;
+				for (let i = investmentHistoryData.length - 1; i >= 0; i--) {
+					const record = investmentHistoryData[i];
+					// Using substring is faster than creating a moment object in a loop.
+					if (record.date.substring(0, 7) === targetMonth) {
+						historicalPrice = record.close;
+						break; // Found the last entry for the month, no need to continue.
+					}
+				}
+
+				if (historicalPrice !== null) {
+					effectivePrice = historicalPrice;
+				}
+			}
+		}
+
+		return total + (effectivePrice * quantity);
+	}, 0);
 };
 
 const getClosePriceWithHistory = (investments, history) => {
