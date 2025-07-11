@@ -63,7 +63,7 @@ CustomTooltip.propTypes = {
 
 const MonthlyComparisonChart = ({ chartData }) => {
 	const isDarkMode = useDarkMode();
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 	const dataWithCurrency = useMemo(() => {
 		if (displayCurrency === 'USD') {
 			return chartData.map(item => ({

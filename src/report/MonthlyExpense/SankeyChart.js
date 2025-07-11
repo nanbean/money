@@ -7,7 +7,7 @@ import { toCurrencyFormat } from '../../utils/formatting';
 
 const SankeyChart = ({ data }) => {
 	const isDarkMode = useDarkMode();
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 
 	const { nodes, links } = useMemo(() => {
 		if (!data || data.length <= 1) {

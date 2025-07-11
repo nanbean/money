@@ -182,7 +182,7 @@ export function InvestmentTransactionForm ({
 					>
 						{
 							activityList.map(i => (
-								<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+								<MenuItem key={i} value={i}>{i}</MenuItem>
 							))
 						}
 					</Select>

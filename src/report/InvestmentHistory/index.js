@@ -78,7 +78,7 @@ function InvestmentHistory () {
 	const filteredInvestments = useSelector((state) => state.filteredInvestments);
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const historyList = useSelector((state) => state.historyList);
-	const { currency: displayCurrency, exchangeRate, investmentHistoryRange = 'monthly', investmentHistoryType = 'quantity' } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, investmentHistoryRange = 'monthly', investmentHistoryType = 'quantity' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
 
 	const allInvestments = useMemo(() => allInvestmentsPrice.filter(i => allAccountsTransactions.find(j => j.investment === i.name)), [allAccountsTransactions, allInvestmentsPrice]);

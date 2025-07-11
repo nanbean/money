@@ -84,7 +84,7 @@ const groupAndSummarizeAccounts = (accountList, displayCurrency, exchangeRate, s
 export default function AccountList () {
 	const accountList = useSelector((state) => state.accountList);
 	const [expandedRows, setExpandedRows] = useState(new Set());
-	const { currency: displayCurrency, exchangeRate, accountListSortBy = 'name' } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, accountListSortBy = 'name' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
 
 	const handleSortChange = (newSortBy) => {

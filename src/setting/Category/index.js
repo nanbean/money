@@ -21,12 +21,12 @@ import {
 } from '../../actions/couchdbSettingActions';
 
 export function Category () {
-	const categoryList = useSelector((state) => state.settings.categoryList);
+	const { categoryList = [] } = useSelector((state) => state.settings);
 	const [selectedRow, setSelectedRow] = useState(-1);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [dialogEdit, setDialogEdit] = useState(false);
 	const [newCategoryInput, setNewCategoryInput] = useState('');
-	const rows = useMemo(() => categoryList.map((i, index) => ({ id: index, category: i.key })), [categoryList]);
+	const rows = useMemo(() => categoryList.map((i, index) => ({ id: index, category: i })), [categoryList]);
 	const dispatch = useDispatch();
 
 	const onRowSelect = ({ index }) => {

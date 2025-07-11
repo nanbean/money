@@ -14,7 +14,7 @@ import { toCurrencyFormat } from '../../utils/formatting';
 function InvestmentPortfolio () {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccounts = accountList.filter(i => i.type === 'Invst' && !i.closed).map(j => j.name);
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
 	const allInvestments = useMemo(() => accountList.filter(i => filteredAccounts.find(j => j === i.name)).reduce((acc, item) => {
 		const investments = item.investments;

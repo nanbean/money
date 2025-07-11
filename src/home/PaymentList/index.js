@@ -36,8 +36,8 @@ const isPaidFromTransactions = (payment, allAccountsTransactions) => {
 
 export function PaymentList () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const paymentList = useSelector((state) => state.settings.paymentList);
-	const { exchangeRate, paymentListSortBy = 'date' } = useSelector((state) => state.settings.general);
+	const { paymentList = [] } = useSelector((state) => state.settings);
+	const { exchangeRate, paymentListSortBy = 'date' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
 
 	const handleSortChange = (newSortBy) => {

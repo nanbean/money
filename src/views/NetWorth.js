@@ -80,7 +80,7 @@ CustomTooltip.propTypes = {
 
 function NetWorth () {
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
-	const { currency: displayCurrency, exchangeRate, netWorthChartRange = 'monthly' } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, netWorthChartRange = 'monthly' } = useSelector((state) => state.settings);
 	const rangedNetWorthFlow = useMemo(() => netWorthFlow.filter(item => {
 		const currentDate = new Date();
 		const currentYear = currentDate.getFullYear();

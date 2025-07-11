@@ -10,7 +10,7 @@ import {
 
 export function ChartControls () {
 	const dispatch = useDispatch();
-	const { investmentHistoryRange = 'monthly', investmentHistoryType = 'quantity' } = useSelector((state) => state.settings.general);
+	const { investmentHistoryRange = 'monthly', investmentHistoryType = 'quantity' } = useSelector((state) => state.settings);
 
 	const handleTypeChange = (newType) => {
 		dispatch(updateGeneralAction('investmentHistoryType', newType));

@@ -64,7 +64,7 @@ CustomTooltip.propTypes = {
 
 function LifetimePlanner () {
 	const lifetimePlannerFlow = useSelector((state) => state.lifetimePlannerFlow);
-	const { currency: displayCurrency, exchangeRate, lifetimePlannerChartType = 'both' } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, lifetimePlannerChartType = 'both' } = useSelector((state) => state.settings);
 	const lifetimePlannerFlowWithCurrency = lifetimePlannerFlow.map(item => ({
 		...item,
 		amount: displayCurrency === 'USD' ? item.amount / exchangeRate:item.amount,

@@ -26,11 +26,11 @@ import { YEAR_LIST, MONTH_LIST } from '../../constants';
 const MonthlyExpense = () => {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const { exchangeRate } = useSelector((state) => state.settings.general);
+	const { exchangeRate, currency } = useSelector((state) => state.settings);
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
 	const [filters, setFilters] = useState([]);
 	const [view, setView] = useState('grid');
-	const usd = useSelector((state) => state.settings.general.currency === 'USD');
+	const usd = currency === 'USD';
 
 	const livingExpenseOnly = filters.includes('livingExpenseOnly');
 	const livingExpenseCardOnly = filters.includes('livingExpenseCardOnly');

@@ -45,8 +45,8 @@ export function Search () {
 	const allAccounts = accountList.filter(i => (i.type === 'CCard'|| i.type === 'Bank' || i.type === 'Cash') && !i.closed).map(j => j.name);
 	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
-	const categoryList = useSelector((state) => state.settings.categoryList);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
+	const { categoryList } = useSelector((state) => state.settings);
 	const [filteredTransactions, setFilteredTransactions] = useState([]);
 	const [searchParams, setSearchParams] = useSearchParams();
 	const keyword = searchParams.get('keyword') || '';
@@ -267,7 +267,7 @@ export function Search () {
 									>
 										{
 											categoryList.map(i => (
-												<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+												<MenuItem key={i} value={i}>{i}</MenuItem>
 											))
 										}
 									</Select>

@@ -1,13 +1,12 @@
+
 const { getSettings, getExchangeRate, getCategoryList, arrangeExchangeRate } = require('./settingService');
-const { settingsDB } = require('../db');
+const settingDB = require('../db/settingDB');
 const kisConnector = require('./kisConnector');
 
 // Mock dependencies
-jest.mock('../db', () => ({
-	settingsDB: {
-		list: jest.fn(),
-		insert: jest.fn()
-	}
+jest.mock('../db/settingDB', () => ({
+	getSettings: jest.fn(),
+	insertSetting: jest.fn()
 }));
 
 jest.mock('./kisConnector', () => ({
@@ -24,26 +23,24 @@ describe('settingService', () => {
 	describe('getSettings', () => {
 		test('should return all setting documents', async () => {
 			// Arrange
-			const mockSettings = {
-				rows: [
-					{ doc: { _id: 'general', exchangeRate: 1300 } },
-					{ doc: { _id: 'categoryList', data: ['Food', 'Transport'] } }
-				]
-			};
-			settingsDB.list.mockResolvedValue(mockSettings);
+			const mockSettings = [
+				{ _id: 'exchangeRate', value: 1300 },
+				{ _id: 'categoryList', value: ['Food', 'Transport'] }
+			];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 
 			// Act
 			const settings = await getSettings();
 
 			// Assert
-			expect(settingsDB.list).toHaveBeenCalledWith({ include_docs: true });
+			expect(settingDB.getSettings).toHaveBeenCalled();
 			expect(settings).toHaveLength(2);
-			expect(settings).toEqual(mockSettings.rows.map(row => row.doc));
+			expect(settings).toEqual(mockSettings);
 		});
 
 		test('should return an empty array if no settings exist', async () => {
 			// Arrange
-			settingsDB.list.mockResolvedValue({ rows: [] });
+			settingDB.getSettings.mockResolvedValue([]);
 
 			// Act
 			const settings = await getSettings();
@@ -54,12 +51,10 @@ describe('settingService', () => {
 	});
 
 	describe('getExchangeRate', () => {
-		test('should return the exchange rate from the general settings document', async () => {
+		test('should return the exchange rate from the settings', async () => {
 			// Arrange
-			const mockSettings = {
-				rows: [{ doc: { _id: 'general', exchangeRate: 1350.5 } }]
-			};
-			settingsDB.list.mockResolvedValue(mockSettings);
+			const mockSettings = [{ _id: 'exchangeRate', value: 1350.5 }];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 
 			// Act
 			const rate = await getExchangeRate();
@@ -68,26 +63,10 @@ describe('settingService', () => {
 			expect(rate).toBe(1350.5);
 		});
 
-		test('should return the default exchange rate (1000) if general settings document is missing', async () => {
+		test('should return the default exchange rate (1000) if exchangeRate setting is missing', async () => {
 			// Arrange
-			const mockSettings = {
-				rows: [{ doc: { _id: 'other', value: 'something' } }]
-			};
-			settingsDB.list.mockResolvedValue(mockSettings);
-
-			// Act
-			const rate = await getExchangeRate();
-
-			// Assert
-			expect(rate).toBe(1000);
-		});
-
-		test('should return the default exchange rate (1000) if exchangeRate property is missing', async () => {
-			// Arrange
-			const mockSettings = {
-				rows: [{ doc: { _id: 'general', someOtherProp: true } }]
-			};
-			settingsDB.list.mockResolvedValue(mockSettings);
+			const mockSettings = [{ _id: 'other', value: 'something' }];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 
 			// Act
 			const rate = await getExchangeRate();
@@ -98,13 +77,11 @@ describe('settingService', () => {
 	});
 
 	describe('getCategoryList', () => {
-		test('should return the category list data from the settings document', async () => {
+		test('should return the category list data from the settings', async () => {
 			// Arrange
 			const mockCategories = ['Groceries', 'Utilities', 'Entertainment'];
-			const mockSettings = {
-				rows: [{ doc: { _id: 'categoryList', data: mockCategories } }]
-			};
-			settingsDB.list.mockResolvedValue(mockSettings);
+			const mockSettings = [{ _id: 'categoryList', value: mockCategories }];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 
 			// Act
 			const categories = await getCategoryList();
@@ -113,26 +90,10 @@ describe('settingService', () => {
 			expect(categories).toEqual(mockCategories);
 		});
 
-		test('should return an empty array if categoryList document is missing', async () => {
+		test('should return an empty array if categoryList setting is missing', async () => {
 			// Arrange
-			const mockSettings = {
-				rows: [{ doc: { _id: 'general', exchangeRate: 1300 } }]
-			};
-			settingsDB.list.mockResolvedValue(mockSettings);
-
-			// Act
-			const categories = await getCategoryList();
-
-			// Assert
-			expect(categories).toEqual([]);
-		});
-
-		test('should return an empty array if data property is missing in categoryList document', async () => {
-			// Arrange
-			const mockSettings = {
-				rows: [{ doc: { _id: 'categoryList', name: 'Categories' } }] // No 'data' property
-			};
-			settingsDB.list.mockResolvedValue(mockSettings);
+			const mockSettings = [{ _id: 'exchangeRate', value: 1300 }];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 
 			// Act
 			const categories = await getCategoryList();
@@ -145,8 +106,11 @@ describe('settingService', () => {
 	describe('arrangeExchangeRate', () => {
 		test('should fetch and update the exchange rate when enabled', async () => {
 			// Arrange
-			const mockGeneralSetting = { _id: 'general', _rev: '1-abc', enableExchangeRateUpdate: true, exchangeRate: 1300 };
-			settingsDB.list.mockResolvedValue({ rows: [{ doc: mockGeneralSetting }] });
+			const mockSettings = [
+				{ _id: 'enableExchangeRateUpdate', value: true },
+				{ _id: 'exchangeRate', _rev: '1-abc', value: 1300 }
+			];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 			kisConnector.getKisToken.mockResolvedValue('fake-token');
 			kisConnector.getKisExchangeRate.mockResolvedValue(1355.7);
 
@@ -156,17 +120,21 @@ describe('settingService', () => {
 			// Assert
 			expect(kisConnector.getKisToken).toHaveBeenCalledTimes(1);
 			expect(kisConnector.getKisExchangeRate).toHaveBeenCalledWith('fake-token');
-			expect(settingsDB.insert).toHaveBeenCalledTimes(1);
-			expect(settingsDB.insert).toHaveBeenCalledWith({
-				...mockGeneralSetting,
-				exchangeRate: 1355.7 // The new rate
+			expect(settingDB.insertSetting).toHaveBeenCalledTimes(1);
+			expect(settingDB.insertSetting).toHaveBeenCalledWith({
+				_id: 'exchangeRate',
+				_rev: '1-abc',
+				value: 1355.7
 			});
 		});
 
 		test('should not update the exchange rate when disabled', async () => {
 			// Arrange
-			const mockGeneralSetting = { _id: 'general', enableExchangeRateUpdate: false, exchangeRate: 1300 };
-			settingsDB.list.mockResolvedValue({ rows: [{ doc: mockGeneralSetting }] });
+			const mockSettings = [
+				{ _id: 'enableExchangeRateUpdate', value: false },
+				{ _id: 'exchangeRate', value: 1300 }
+			];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 
 			// Act
 			await arrangeExchangeRate();
@@ -174,13 +142,16 @@ describe('settingService', () => {
 			// Assert
 			expect(kisConnector.getKisToken).not.toHaveBeenCalled();
 			expect(kisConnector.getKisExchangeRate).not.toHaveBeenCalled();
-			expect(settingsDB.insert).not.toHaveBeenCalled();
+			expect(settingDB.insertSetting).not.toHaveBeenCalled();
 		});
 
 		test('should not update if fetching the new exchange rate fails (returns null)', async () => {
 			// Arrange
-			const mockGeneralSetting = { _id: 'general', enableExchangeRateUpdate: true, exchangeRate: 1300 };
-			settingsDB.list.mockResolvedValue({ rows: [{ doc: mockGeneralSetting }] });
+			const mockSettings = [
+				{ _id: 'enableExchangeRateUpdate', value: true },
+				{ _id: 'exchangeRate', value: 1300 }
+			];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 			kisConnector.getKisToken.mockResolvedValue('fake-token');
 			kisConnector.getKisExchangeRate.mockResolvedValue(null); // KIS call failed
 
@@ -190,18 +161,18 @@ describe('settingService', () => {
 			// Assert
 			expect(kisConnector.getKisToken).toHaveBeenCalledTimes(1);
 			expect(kisConnector.getKisExchangeRate).toHaveBeenCalledWith('fake-token');
-			expect(settingsDB.insert).not.toHaveBeenCalled();
+			expect(settingDB.insertSetting).not.toHaveBeenCalled();
 		});
 
-		test('should handle missing general settings gracefully without crashing', async () => {
+		test('should handle missing enableExchangeRateUpdate setting gracefully', async () => {
 			// Arrange
-			settingsDB.list.mockResolvedValue({ rows: [] }); // No 'general' setting
+			const mockSettings = [{ _id: 'exchangeRate', value: 1300 }];
+			settingDB.getSettings.mockResolvedValue(mockSettings);
 
 			// Act & Assert
-			// With the bug fix, this should complete without throwing an error.
 			await expect(arrangeExchangeRate()).resolves.not.toThrow();
 			expect(kisConnector.getKisToken).not.toHaveBeenCalled();
-			expect(settingsDB.insert).not.toHaveBeenCalled();
+			expect(settingDB.insertSetting).not.toHaveBeenCalled();
 		});
 	});
 });

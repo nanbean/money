@@ -31,7 +31,7 @@ const updateTransactionsWithAccounts = (transactions, accounts) => {
 export function LatestTransactions () {
 	const accountList = useSelector((state) => state.accountList);
 	const latestTransactions = useSelector((state) => state.latestTransactions);
-	const { currency: displayCurrency, exchangeRate, latestTransactionsSortBy = 'date' } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate, latestTransactionsSortBy = 'date' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
 
 	const handleSortChange = (newSortBy) => {

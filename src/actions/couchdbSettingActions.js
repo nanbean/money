@@ -50,59 +50,49 @@ export const getSettingsAction = () => {
 
 export const updateGeneralAction = (key, value) => {
 	return async dispatch => {
-		const general = await settingsDB.get('general');
-		general[key] = value;
-		await settingsDB.put(general);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [general]
-		});
+		let settingDoc;
+		try {
+			settingDoc = await settingsDB.get(key);
+			settingDoc.value = value;
+		} catch (e) {
+			if (e.name === 'not_found') {
+				settingDoc = {
+					_id: key,
+					value
+				};
+			} else {
+				throw e;
+			}
+		}
+		await settingsDB.put(settingDoc);
+		dispatch(getSettingsAction());
 	};
 };
 
 export const addCategoryAction = (value) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
-		categoryList.data.push(value);
-		categoryList.data.sort();
+		categoryList.value.push(value);
+		categoryList.value.sort();
 		await settingsDB.put(categoryList);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [
-				categoryList
-			]
-		});
+		dispatch(getSettingsAction());
 	};
 };
 
 export const deleteCategoryAction = (index) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
-		categoryList.data.splice(index, 1);
+		categoryList.value.splice(index, 1);
 		await settingsDB.put(categoryList);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [
-				categoryList
-			]
-		});
+		dispatch(getSettingsAction());
 	};
 };
 
 export const updateCategoryAction = (index, value) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
-		categoryList.data[index] = value;
+		categoryList.value[index] = value;
 		await settingsDB.put(categoryList);
-
-		dispatch({
-			type: SET_SETTINGS,
-			payload: [
-				categoryList
-			]
-		});
+		dispatch(getSettingsAction());
 	};
 };

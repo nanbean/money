@@ -17,8 +17,6 @@ export function BankTransactionModal ({
 	accountId,
 	transactions
 }) {
-	const categoryList = useSelector((state) => state.settings.categoryList);
-	const dropPayeeList = useSelector((state) => state.dropPayeeList);
 	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
 	const isOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen);
 	const dispatch = useDispatch();
@@ -41,8 +39,6 @@ export function BankTransactionModal ({
 						account={account}
 						accountId={accountId}
 						transactions={transactions}
-						dropCategoryList={categoryList}
-						dropPayeeList={dropPayeeList}
 					/>
 				}
 			</DialogContent>

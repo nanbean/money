@@ -23,7 +23,11 @@ import {
 
 export function General () {
 	const messagingToken = useSelector((state) => state.messagingToken);
-	const { currency, enableExchangeRateUpdate, exchangeRate } = useSelector((state) => state.settings.general);
+	const {
+		currency,
+		enableExchangeRateUpdate,
+		exchangeRate
+	} = useSelector((state) => state.settings);
 	const [exchangeRateValue, setExchangeRateValue] = useState(exchangeRate);
 	const dispatch = useDispatch();
 
@@ -43,7 +47,6 @@ export function General () {
 	const handleExchangeRateKeyDown = (event) => {
 		if (event.key === 'Enter') {
 			// Save when Enter key is pressed
-			handleExchangeRateSend();
 			event.target.blur();
 		}
 	};

@@ -129,10 +129,10 @@ const getCategoryData = (transactions, displayCurrency, exchangeRate, accountLis
 
 export function WeeklyGraph () {
 	const weeklyTransactions = useSelector((state) => state.weeklyTransactions);
-	const weeklyGraphAccountSettings = useSelector((state) => state.settings.weeklyGraphAccount);
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const { weeklyGraphAccount : weeklyGraphAccountSettings } = useSelector((state) => state.settings);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 	const accountList = useSelector((state) => state.accountList);
-	const { weeklyGraphChartType = 'weekly' } = useSelector((state) => state.settings.general);
+	const { weeklyGraphChartType = 'weekly' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
 
 	const handleChartTypeChange = (newChartType) => {

@@ -25,7 +25,7 @@ function Amount ({
 	value
 }) {
 	const isDarkMode = useDarkMode();
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings.general);
+	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 
 	const displayValue = useMemo(() => {
 		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;

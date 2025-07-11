@@ -7,10 +7,10 @@ const getSettings = async () => {
 
 const getExchangeRate = async () => {
 	const settings = await getSettings();
-	const general = settings.find(i => i._id === 'general');
+	const exchangeRateSetting = settings.find(i => i._id === 'exchangeRate');
 
-	if (general && general.exchangeRate) {
-		return general.exchangeRate;
+	if (exchangeRateSetting && exchangeRateSetting.value) {
+		return exchangeRateSetting.value;
 	}
 
 	return 1000;
@@ -18,10 +18,10 @@ const getExchangeRate = async () => {
 
 const getCurrency = async () => {
 	const settings = await getSettings();
-	const general = settings.find(i => i._id === 'general');
+	const currencySetting = settings.find(i => i._id === 'currency');
 
-	if (general && general.currency) {
-		return general.currency;
+	if (currencySetting && currencySetting.value) {
+		return currencySetting.value;
 	}
 
 	return 'KRW';
@@ -31,8 +31,8 @@ const getCategoryList = async () => {
 	const settings = await getSettings();
 	const categoryList = settings.find(i => i._id === 'categoryList');
 
-	if (categoryList && categoryList.data) {
-		return categoryList.data;
+	if (categoryList && categoryList.value) {
+		return categoryList.value;
 	}
 
 	return [];
@@ -40,14 +40,15 @@ const getCategoryList = async () => {
 
 const arrangeExchangeRate = async () => {
 	const settings = await settingDB.getSettings();
-	const general = settings.find(i => i._id === 'general');
+	const enableExchangeRateUpdate = settings.find(i => i._id === 'enableExchangeRateUpdate');
+	const exchangeRateSetting = settings.find(i => i._id === 'exchangeRate');
 
-	if (general && general.enableExchangeRateUpdate) {
+	if (enableExchangeRateUpdate && enableExchangeRateUpdate.value) {
 		const accessToken = await getKisToken();
 		const kisExchangeRate = await getKisExchangeRate(accessToken);
 		if (kisExchangeRate) {
-			general.exchangeRate = kisExchangeRate;
-			await settingDB.insertSetting(general);
+			exchangeRateSetting.value = kisExchangeRate;
+			await settingDB.insertSetting(exchangeRateSetting);
 		}
 	}
 };

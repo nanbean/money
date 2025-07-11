@@ -33,10 +33,10 @@ import {
 export function BankTransactionForm ({
 	account,
 	accountId, 
-	dropCategoryList,
-	dropPayeeList,
 	transactions
 }) {
+	const { categoryList } = useSelector((state) => state.settings);
+	const dropPayeeList = useSelector((state) => state.dropPayeeList);
 	const form = useSelector((state) => state.ui.form.bankTransaction);
 	const dispatch = useDispatch();
 
@@ -208,8 +208,8 @@ export function BankTransactionForm ({
 						onChange={onChange(changeCategory)}
 					>
 						{
-							dropCategoryList.map(i => (
-								<MenuItem key={i.key} value={i.value}>{i.text}</MenuItem>
+							categoryList.map(i => (
+								<MenuItem key={i} value={i}>{i}</MenuItem>
 							))
 						}
 					</Select>
@@ -278,8 +278,6 @@ export function BankTransactionForm ({
 BankTransactionForm.propTypes = {
 	account: PropTypes.string,
 	accountId: PropTypes.string,
-	dropCategoryList: PropTypes.array,
-	dropPayeeList: PropTypes.array,
 	transactions: PropTypes.array
 };
 

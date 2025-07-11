@@ -20,7 +20,7 @@ import useReturnReport from './useReturnReport';
 
 export function RateOfReturn () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const { exchangeRate } = useSelector((state) => state.settings.general);
+	const { exchangeRate } = useSelector((state) => state.settings);
 	const accountList = useSelector((state) => state.accountList);
 	const investementTransactions = allAccountsTransactions.filter(i => i.accountId?.split(':')[1] === 'Invst');
 	const cashTransactions = allAccountsTransactions.filter(i => i.accountId?.split(':')[2]?.match(/_Cash/));

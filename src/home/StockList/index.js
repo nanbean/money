@@ -62,8 +62,7 @@ const getInvestmentsFromAccounts = (accounts) => {
 export function StockList () {
 	const accountList = useSelector((state) => state.accountList);
 	const rawStockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
-	const { exchangeRate } = useSelector((state) => state.settings.general);
-	const sortBy = useSelector((state) => state.settings.general.stockListSortBy || 'equity');
+	const { exchangeRate, stockListSortBy: sortBy = 'equity' } = useSelector((state) => state.settings);
 	const isDarkMode = useDarkMode();
 	const dispatch = useDispatch();
 

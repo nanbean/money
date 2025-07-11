@@ -16,7 +16,7 @@ export function AllPerformance () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
 	const filteredInvestments = useSelector((state) => state.filteredInvestments);
-	const { exchangeRate } = useSelector((state) => state.settings.general);
+	const { exchangeRate } = useSelector((state) => state.settings);
 
 	const allInvestmentsTransactions = allAccountsTransactions.filter(i => i.accountId && i.accountId.startsWith('account:Invst'));
 
