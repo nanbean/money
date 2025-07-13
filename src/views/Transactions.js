@@ -3,12 +3,10 @@ import { useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Paper from '@mui/material/Paper';
 
 import moment from 'moment';
 
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
+import Layout from '../components/Layout';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import SortMenuButton from '../components/SortMenuButton';
@@ -91,41 +89,31 @@ const Transactions = () => {
 	};
 
 	return (
-		<React.Fragment>
-			<TitleHeader title="Transactions" />
-			<Container>
-				<Paper
-					sx={{
-						height: 'calc(100vh - 128px)',
-						display: 'flex',
-						flexDirection: 'column'
-					}}
-				>
-					<Stack direction="row" justifyContent="flex-end" sx={{ m: 1 }}>
-						<SortMenuButton
-							value={selectedRange}
-							onChange={handleRangeChange}
-							options={dateRangeOptions}
-						/>
-						<AccountFilter
-							allAccounts={allBankAccounts}
-							filteredAccounts={filteredAccounts}
-							setfilteredAccounts={setFilteredAccounts}
-						/>
-					</Stack>
-					<Box sx={{ flex: 1, mb: 1, textAlign: 'center' }}>
-						<BankTransactions
-							showAccount
-							transactions={filteredTransactions}
-						/>
-					</Box>
-					<BankTransactionModal
-						isEdit={true}
-						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
-					/>
-				</Paper>
-			</Container>
-		</React.Fragment>
+		<Layout title="Transactions">
+			<Stack direction="row" justifyContent="flex-end" sx={{ m: 1 }}>
+				<SortMenuButton
+					value={selectedRange}
+					onChange={handleRangeChange}
+					options={dateRangeOptions}
+				/>
+				<AccountFilter
+					allAccounts={allBankAccounts}
+					filteredAccounts={filteredAccounts}
+					setfilteredAccounts={setFilteredAccounts}
+				/>
+			</Stack>
+			<Box sx={{ flex: 1, mb: 1, textAlign: 'center' }}>
+				<BankTransactions
+					showAccount
+					transactions={filteredTransactions}
+				/>
+			</Box>
+			<BankTransactionModal
+				isEdit={true}
+				transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
+			/>
+
+		</Layout>
 	);
 };
 

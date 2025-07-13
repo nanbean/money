@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, BrowserRouter, Outlet } from 'react-router-dom';
+import { Routes, Route, BrowserRouter } from 'react-router-dom';
 
 import { styled } from '@mui/material/styles';
 
@@ -33,16 +33,9 @@ const Content = styled('main')(({ theme }) => ({
 	backgroundColor: theme.palette.background.default
 }));
 
-const Toolbar = styled('div')(({ theme }) => ({
-	...theme.mixins.toolbar
-}));
 
-const Layout = () => (
-	<>
-		<Toolbar />
-		<Outlet />
-	</>
-);
+
+
 
 // eslint-disable-next-line react/display-name
 function RoutesMain () {
@@ -53,29 +46,23 @@ function RoutesMain () {
 				<SidebarMenu />
 				<Content>
 					<Routes>
-						<Route path="/" element={<Layout />}>
-							<Route path="/" element={<HomeMain />} />
-							{
-								BANK_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Bank />} />))
-							}
-							{
-								INVEST_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Investment />} />))
-							}
-							<Route path="/networth" element={<NetWorth />} />
-							<Route path="/lifetimeplanner" element={<LifetimePlanner />} />
-							<Route path="/performance/:investment" element={<Performance />} />
-							<Route path="/allperformance" element={<AllPerformance />} />
-							<Route path="/search" element={<Search />} />
-							<Route path="/transactions" element={<Transactions />} />
-						</Route>
-						<Route path="/report" element={<Layout />}>
-							<Route path="/report" element={<ReportMain />} />
-							<Route path="/report/:tab" element={<ReportMain />} />
-						</Route>
-						<Route path="/setting" element={<Layout />}>
-							<Route path="/setting" element={<SettingMain />} />
-							<Route path="/setting/:tab" element={<SettingMain />} />
-						</Route>
+						<Route path="/" element={<HomeMain />} />
+						{
+							BANK_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Bank />} />))
+						}
+						{
+							INVEST_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Investment />} />))
+						}
+						<Route path="/networth" element={<NetWorth />} />
+						<Route path="/lifetimeplanner" element={<LifetimePlanner />} />
+						<Route path="/performance/:investment" element={<Performance />} />
+						<Route path="/allperformance" element={<AllPerformance />} />
+						<Route path="/search" element={<Search />} />
+						<Route path="/transactions" element={<Transactions />} />
+						<Route path="/report" element={<ReportMain />} />
+						<Route path="/report/:tab" element={<ReportMain />} />
+						<Route path="/setting" element={<SettingMain />} />
+						<Route path="/setting/:tab" element={<SettingMain />} />
 						<Route exact path="/signin" element={<Signin />} />
 					</Routes>
 				</Content>

@@ -6,14 +6,12 @@ import { styled } from '@mui/material/styles';
 
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
 
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
+import Layout from '../components/Layout';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
@@ -66,60 +64,49 @@ export function Bank () {
 	};
 
 	return (
-		<React.Fragment>
-			<TitleHeader title={account} />
-			<Container>
-				<Paper
-					sx={{
-						height: 'calc(100vh - 128px)',
-						display: 'flex',
-						flexDirection: 'column'
-					}}
+		<Layout title={name}>
+			<Sticky>
+				<Button
+					fullWidth
+					variant="outlined"
+					color="primary"
+					onClick={onNewClick}
 				>
-					<Sticky>
-						<Button
-							fullWidth
-							variant="outlined"
-							color="primary"
-							onClick={onNewClick}
-						>
-							New
-							<AddIcon
-								sx={(theme) => ({
-									marginLeft: theme.spacing(1)
-								})}
-							/>
-						</Button>
-					</Sticky>
-					<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
-						<BankTransactions
-							account={account}
-							currency={currency}
-							transactions={accountTransactions}
-						/>
-					</Box>
-					<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
-						<Typography
-							variant="subtitle1"
-							gutterBottom
-							align="right"
-							sx={{ mt: 1, mb: 1 }}
-						>
-							{'Balance : '}
-						</Typography>
-						<Amount value={balance} size="large" negativeColor showSymbol showOriginal currency={currency}/>
-					</Stack>
-					<BankTransactionModal
-						EditForm={BankTransactionForm}
-						isOpen={isModalOpen}
-						isEdit={isEdit}
-						accountId={accountId}
-						account={account}
-						transactions={accountTransactions}
+					New
+					<AddIcon
+						sx={(theme) => ({
+							marginLeft: theme.spacing(1)
+						})}
 					/>
-				</Paper>
-			</Container>
-		</React.Fragment>
+				</Button>
+			</Sticky>
+			<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
+				<BankTransactions
+					account={account}
+					currency={currency}
+					transactions={accountTransactions}
+				/>
+			</Box>
+			<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+				<Typography
+					variant="subtitle1"
+					gutterBottom
+					align="right"
+					sx={{ mt: 1, mb: 1 }}
+				>
+					{'Balance : '}
+				</Typography>
+				<Amount value={balance} size="large" negativeColor showSymbol showOriginal currency={currency}/>
+			</Stack>
+			<BankTransactionModal
+				EditForm={BankTransactionForm}
+				isOpen={isModalOpen}
+				isEdit={isEdit}
+				accountId={accountId}
+				account={account}
+				transactions={accountTransactions}
+			/>
+		</Layout>
 	);
 }
 

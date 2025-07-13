@@ -4,11 +4,10 @@ import { useSelector } from 'react-redux';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
+import Layout from '../components/Layout';
 import Amount from '../components/Amount';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import InvestmentFilter from '../components/InvestmentFilter';
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
 
 import { getInvestmentPerformance } from '../utils/performance';
 
@@ -49,44 +48,40 @@ export function AllPerformance () {
 			: 0;
 
 		return (
-			<div>
-				<TitleHeader title="Performance" />
-				<Container>
-					<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 1 }}>
-						<Stack direction="row" alignItems="baseline" spacing={1}>
-							<Typography
-								variant="subtitle1"
-							>
-								{'Grand Total : '}
-							</Typography>
-							<Amount value={grandTotalPerformance} size="large" negativeColor showSymbol currency="KRW"/>
-						</Stack>
-						<InvestmentFilter
-							allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
-							filteredInvestments={filteredInvestments}
-						/>
+			<Layout showPaper={false} title="Performance">
+				<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ p: 1 }}>
+					<Stack direction="row" alignItems="baseline" spacing={1}>
+						<Typography
+							variant="subtitle1"
+						>
+							{'Grand Total : '}
+						</Typography>
+						<Amount value={grandTotalPerformance} size="large" negativeColor showSymbol currency="KRW"/>
 					</Stack>
-					{
-						filteredPerformance && filteredPerformance.map(i => {
-							return (
-								<InvestmentPerformance
-									key={i.investment}
-									investment={i.investment}
-									price={i.price}
-									currency={i.currency}
-									performance={i.performance}
-									symbol={i.symbol}
-								/>
-							);
-						})
-					}
-					
-				</Container>
-			</div>
+					<InvestmentFilter
+						allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
+						filteredInvestments={filteredInvestments}
+					/>
+				</Stack>
+				{
+					filteredPerformance && filteredPerformance.map(i => {
+						return (
+							<InvestmentPerformance
+								key={i.investment}
+								investment={i.investment}
+								price={i.price}
+								currency={i.currency}
+								performance={i.performance}
+								symbol={i.symbol}
+							/>
+						);
+					})
+				}
+			</Layout>
 		);
 	} else {
 		return (
-			<TitleHeader title="Performance" loading />
+			<Layout title="Performance" loading />
 		);
 	}
 }

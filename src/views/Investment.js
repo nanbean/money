@@ -8,15 +8,13 @@ import { CSVLink } from 'react-csv';
 import { styled } from '@mui/material/styles';
 
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import MoneyIcon from '@mui/icons-material/Money';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import AccountInvestments from './AccountInvestments';
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
+import Layout from '../components/Layout';
 import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
@@ -97,87 +95,82 @@ export function Investment () {
 	};
 
 	return (
-		<React.Fragment>
-			<TitleHeader title={account} />
-			<Container>
-				<Paper>
-					<Sticky>
-						<div style={{ display: 'inline-block', width: '35%' }}>
-							<Button
-								fullWidth
-								variant="outlined"
-								color="primary"
-								onClick={onNewClick}
-								sx={{ backdropFilter: 'blur(5px)' }}
-							>
-								New
-								<AddIcon
-									sx={(theme) => ({
-										marginLeft: theme.spacing(1)
-									})}
-								/>
-							</Button>
-						</div>
-						<div style={{ display: 'inline-block', width: '35%' }}>
-							<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
-								<Button
-									fullWidth
-									variant="outlined"
-									color="primary"
-									sx={{ backdropFilter: 'blur(5px)' }}
-								>
-									Cash
-									<MoneyIcon
-										sx={(theme) => ({
-											marginLeft: theme.spacing(1)
-										})}
-									/>
-								</Button>
-							</Link>
-						</div>
-						<div style={{ display: 'inline-block', width: '30%' }}>
-							<CSVLink
-								data={accountTransactions}
-								headers={csvHeaders}
-								filename="transactions.csv"
-								style={{ color: 'inherit', textDecoration: 'none' }}
-							>
-								<Button
-									fullWidth
-									variant="outlined"
-									color="primary"
-									sx={{ backdropFilter: 'blur(5px)' }}
-								>
-									CSV
-									<FileDownloadIcon
-										sx={(theme) => ({
-											marginLeft: theme.spacing(1)
-										})}
-									/>
-								</Button>
-							</CSVLink>
-						</div>
-					</Sticky>
-					<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
-						<InvestmentTransactions
-							transactions={accountTransactions}
-							currency={currency}
+		<Layout title={name}>
+			<Sticky>
+				<div style={{ display: 'inline-block', width: '35%' }}>
+					<Button
+						fullWidth
+						variant="outlined"
+						color="primary"
+						onClick={onNewClick}
+						sx={{ backdropFilter: 'blur(5px)' }}
+					>
+						New
+						<AddIcon
+							sx={(theme) => ({
+								marginLeft: theme.spacing(1)
+							})}
 						/>
-					</Box>
+					</Button>
+				</div>
+				<div style={{ display: 'inline-block', width: '35%' }}>
+					<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
+						<Button
+							fullWidth
+							variant="outlined"
+							color="primary"
+							sx={{ backdropFilter: 'blur(5px)' }}
+						>
+							Cash
+							<MoneyIcon
+								sx={(theme) => ({
+									marginLeft: theme.spacing(1)
+								})}
+							/>
+						</Button>
+					</Link>
+				</div>
+				<div style={{ display: 'inline-block', width: '30%' }}>
+					<CSVLink
+						data={accountTransactions}
+						headers={csvHeaders}
+						filename="transactions.csv"
+						style={{ color: 'inherit', textDecoration: 'none' }}
+					>
+						<Button
+							fullWidth
+							variant="outlined"
+							color="primary"
+							sx={{ backdropFilter: 'blur(5px)' }}
+						>
+							CSV
+							<FileDownloadIcon
+								sx={(theme) => ({
+									marginLeft: theme.spacing(1)
+								})}
+							/>
+						</Button>
+					</CSVLink>
+				</div>
+			</Sticky>
+			<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
+				<InvestmentTransactions
+					transactions={accountTransactions}
+					currency={currency}
+				/>
+			</Box>
 
-					<InvestmentTransactionModal
-						EditForm={InvestmentTransactionForm}
-						isOpen={isModalOpen}
-						isEdit={isEdit}
-						account={account}
-						accountId={accountId}
-						transactions={accountTransactions}
-						autocompleteInvestmentList={dropInvestmentList}
-					/>
-					<AccountInvestments currency={currency} />
-				</Paper>
-			</Container>
-		</React.Fragment>
+			<InvestmentTransactionModal
+				EditForm={InvestmentTransactionForm}
+				isOpen={isModalOpen}
+				isEdit={isEdit}
+				account={account}
+				accountId={accountId}
+				transactions={accountTransactions}
+				autocompleteInvestmentList={dropInvestmentList}
+			/>
+			<AccountInvestments currency={currency} />
+		</Layout>
 	);
 }
 

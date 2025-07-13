@@ -3,14 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import AppBar from '@mui/material/AppBar';
 
 import GeneralIcon from '@mui/icons-material/ManageAccounts';
 import NotificationLogIcon from '@mui/icons-material/Notes';
 import CategoryIcon from '@mui/icons-material/Folder';
 
-import TitleHeader from '../../components/TitleHeader';
-import Container from '../../components/Container';
+import Layout from '../../components/Layout';
 
 import General from '../General';
 import NotificationLog from '../NotificationLog';
@@ -18,16 +16,25 @@ import Category from '../Category';
 
 import useMobile from '../../hooks/useMobile';
 
-const TAB_ICON = {
-	'General': <GeneralIcon />,
-	'Category': <CategoryIcon />,
-	'Notification': <NotificationLogIcon />
-};
-
-const TAB_LIST = [
-	'general',
-	'category',
-	'notificationLog'
+const TABS = [
+	{
+		id: 'general',
+		label: 'General',
+		icon: <GeneralIcon />,
+		component: <General />
+	},
+	{
+		id: 'category',
+		label: 'Category',
+		icon: <CategoryIcon />,
+		component: <Category />
+	},
+	{
+		id: 'notificationLog',
+		label: 'Notification',
+		icon: <NotificationLogIcon />,
+		component: <NotificationLog />
+	}
 ];
 
 export function SettingMain () {
@@ -37,7 +44,7 @@ export function SettingMain () {
 	const isMobile = useMobile();
 
 	useEffect(() => {
-		const index = TAB_LIST.findIndex(i => i === tab);
+		const index = TABS.findIndex(t => t.id === tab);
 		if (index >= 0) {
 			setValue(index);
 		} else {
@@ -46,31 +53,19 @@ export function SettingMain () {
 	}, [tab]);
 
 	const handleChange = (event, val) => {
-		navigate(`/setting/${TAB_LIST[val]}`);
+		navigate(`/setting/${TABS[val].id}`);
 	};
 
 	return (
-		<React.Fragment>
-			<TitleHeader title="Setting" />
-			<Container>
-				<AppBar
-					position="static"
-					color="default"
-					sx={(theme) => ({
-						marginBottom: theme.spacing(1)
-					})}
-				>
-					<Tabs value={value} onChange={handleChange}>
-						<Tab label={isMobile ? TAB_ICON['General']:'General'} sx={ () => ({ minWidth: '75px' })} />
-						<Tab label={isMobile ? TAB_ICON['Category']:'Category'} sx={ () => ({ minWidth: '75px' })} />
-						<Tab label={isMobile ? TAB_ICON['Notification']:'Notification'} sx={ () => ({ minWidth: '75px' })} />
-					</Tabs>
-				</AppBar>
-				{value === 0 && <General />}
-				{value === 1 && <Category />}
-				{value === 2 && <NotificationLog />}
-			</Container>
-		</React.Fragment>
+		<Layout title="Setting">
+			<Tabs value={value} onChange={handleChange}>
+				{TABS.map(tabInfo => (
+					<Tab key={tabInfo.id} label={isMobile ? tabInfo.icon : tabInfo.label} sx={{ minWidth: '75px' }} />
+				))}
+			</Tabs>
+			{/* Render the component corresponding to the selected tab */}
+			{TABS[value] && TABS[value].component}
+		</Layout>
 	);
 }
 

@@ -70,8 +70,8 @@ export function General () {
 	};
 
 	return (
-		<List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-			<ListSubheader>Notifications</ListSubheader>
+		<List sx={{ width: '100%' }}>
+			<ListSubheader sx={{ bgcolor: 'transparent' }}>Notifications</ListSubheader>
 			<ListItem>
 				<ListItemText
 					id="push-notification-label"
@@ -90,7 +90,7 @@ export function General () {
 				</ListItemSecondaryAction>
 			</ListItem>
 			<Divider component="li" sx={{ my: 1 }} />
-			<ListSubheader>Currency</ListSubheader>
+			<ListSubheader sx={{ bgcolor: 'transparent' }}>Currency</ListSubheader>
 			<ListItem>
 				<ListItemText
 					id="currency-label"

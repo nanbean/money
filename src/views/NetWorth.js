@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
+
+import Layout from '../components/Layout';
 import SortMenuButton from '../components/SortMenuButton';
 import {
 	updateGeneralAction
@@ -115,21 +115,19 @@ function NetWorth () {
 
 	if (rangedNetWorthFlow.length > 0) {
 		return (
-			<div>
-				<TitleHeader title="Net Worth" />
-				<Container>
-					<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-						<SortMenuButton
-							value={netWorthChartRange}
-							onChange={handleRangeChange}
-							options={[
-								{ value: 'monthly', label: 'Monthly' },
-								{ value: 'yearly', label: 'Yearly' }
-							]}
-						/>
-					</Stack>
-					{
-						rangedNetWorthFlow.length > 1 &&
+			<Layout title="Net Worth">
+				<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+					<SortMenuButton
+						value={netWorthChartRange}
+						onChange={handleRangeChange}
+						options={[
+							{ value: 'monthly', label: 'Monthly' },
+							{ value: 'yearly', label: 'Yearly' }
+						]}
+					/>
+				</Stack>
+				{
+					rangedNetWorthFlow.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
 							<ComposedChart
 								data={rangedNetWorthFlow}
@@ -144,13 +142,12 @@ function NetWorth () {
 								<Line dataKey="netWorth" stroke="#82281b" strokeDasharray="5 5"/>
 							</ComposedChart>
 						</ResponsiveContainer>
-					}
-				</Container>
-			</div>
+				}
+			</Layout>
 		);
 	} else {
 		return (
-			<TitleHeader title="Net Worth" loading />
+			<Layout title="Net Worth" loading />
 		);
 	}
 }

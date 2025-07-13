@@ -73,15 +73,7 @@ export function Category () {
 	};
 
 	return (
-		<Box
-			sx={{
-				// JS로 높이를 계산하는 대신 CSS의 flexbox와 calc()를 사용해 레이아웃을 자동화합니다.
-				// 192px는 기존 코드의 `64 * 3`에 해당하며, 앱의 헤더 등 다른 UI 요소의 높이를 의미합니다.
-				height: 'calc(100vh - 192px)',
-				display: 'flex',
-				flexDirection: 'column'
-			}}
-		>
+		<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, mt: 1 }}>
 			<Button
 				fullWidth
 				variant="outlined"

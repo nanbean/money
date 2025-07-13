@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import Paper from '@mui/material/Paper';
 
-import TitleHeader from '../../components/TitleHeader';
 import Container from '../../components/Container';
 
 import { getNotificationsAction } from '../../actions/notificationActions';
@@ -19,7 +18,6 @@ export function NotificationLog () {
 
 	return (
 		<div>
-			<TitleHeader title="Notification Log" />
 			<Container>
 				{
 					notifications.map(i => {

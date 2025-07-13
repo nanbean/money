@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import TitleHeader from '../components/TitleHeader';
 import Container from '../components/Container';
+import Layout from '../components/Layout';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import Typography from '@mui/material/Typography';
 
@@ -28,30 +28,22 @@ export function Performance () {
 		return getInvestmentPerformance(investmentTransactions, investmentItem.price);
 	}, [investmentTransactions, investmentItem]);
 
-	if (!investmentItem) {
-		return (
-			<React.Fragment>
-				<TitleHeader title="Not Found" />
-				<Container>
-					<Typography>Investment "{investmentName}" could not be found.</Typography>
-				</Container>
-			</React.Fragment>
-		);
-	}
-
 	return (
-		<React.Fragment>
-			<TitleHeader title={investmentName} />
+		<Layout title={investmentItem ? investmentName : 'Not Found'}>
 			<Container>
-				<InvestmentPerformance
-					investment={investmentName}
-					price={investmentItem.price}
-					currency={investmentItem.currency}
-					performance={performance}
-					symbol={investmentItem.yahooSymbol}
-				/>
+				{investmentItem ? (
+					<InvestmentPerformance
+						investment={investmentName}
+						price={investmentItem.price}
+						currency={investmentItem.currency}
+						performance={performance}
+						symbol={investmentItem.yahooSymbol}
+					/>
+				) : (
+					<Typography>Investment "{investmentName}" could not be found.</Typography>
+				)}
 			</Container>
-		</React.Fragment>
+		</Layout>
 	);
 }
 

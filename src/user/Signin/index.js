@@ -2,10 +2,8 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { Navigate } from 'react-router-dom';
-
-import TitleHeader from '../../components/TitleHeader';
 import Container from '../../components/Container';
-
+import Layout from '../../components/Layout';
 import SigninForm from '../SigninForm';
 
 export function Signin () {
@@ -16,12 +14,11 @@ export function Signin () {
 	}
 
 	return (
-		<React.Fragment>
-			<TitleHeader title="Home" />
+		<Layout title="Signin">
 			<Container>
 				<SigninForm/>
 			</Container>
-		</React.Fragment>
+		</Layout>
 	);
 }
 

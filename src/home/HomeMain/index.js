@@ -4,14 +4,13 @@ import { useDispatch } from 'react-redux';
 import Masonry from '@mui/lab/Masonry';
 import Paper from '@mui/material/Paper';
 
+import Layout from '../../components/Layout';
+
 import LatestTransactions from '../LatestTransactions';
 import AccountList from '../AccountList';
 import WeeklyGraph from '../WeeklyGraph';
 import StockList from '../StockList';
 import PaymentList from '../PaymentList';
-
-import Container from '../../components/Container';
-import TitleHeader from '../../components/TitleHeader';
 
 import { getWeeklyTransactionsAction } from '../../actions/couchdbActions';
 
@@ -31,18 +30,15 @@ export function HomeMain () {
 	}, [dispatch]);
 
 	return (
-		<>
-			<TitleHeader title="Home" />
-			<Container>
-				<Masonry columns={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }}>
-					{panels.map(({ key, component: Component }) => (
-						<Paper key={key}>
-							<Component />
-						</Paper>
-					))}
-				</Masonry>
-			</Container>
-		</>
+		<Layout showPaper={false} title="Home">
+			<Masonry columns={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }}>
+				{panels.map(({ key, component: Component }) => (
+					<Paper key={key}>
+						<Component />
+					</Paper>
+				))}
+			</Masonry>
+		</Layout>
 	);
 }
 

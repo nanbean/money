@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -64,7 +65,7 @@ export function InvestmentPerformance ({
 	];
 
 	return (
-		<div>
+		<Paper sx={{ p: { xs: 0.5, sm: 1 }, mb: 1 }}>
 			<Stack
 				direction="row"
 				alignItems="center"
@@ -85,7 +86,7 @@ export function InvestmentPerformance ({
 			<NormalGrid
 				gridData={performanceData}
 			/>
-		</div>
+		</Paper>
 	);
 }
 

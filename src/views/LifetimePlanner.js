@@ -6,8 +6,7 @@ import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } 
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
+import Layout from '../components/Layout';
 import SortMenuButton from '../components/SortMenuButton';
 
 import {
@@ -83,22 +82,20 @@ function LifetimePlanner () {
 
 	if (lifetimePlannerFlowWithCurrency.length > 0) {
 		return (
-			<div>
-				<TitleHeader title="Lifetime Planner" />
-				<Container>
-					<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-						<SortMenuButton
-							value={lifetimePlannerChartType}
-							onChange={handleChartTypeChange}
-							options={[
-								{ value: 'both', label: 'Both' },
-								{ value: 'withInflation', label: 'With Inflation' },
-								{ value: 'withoutInflation', label: 'Without Inflation' }
-							]}
-						/>
-					</Stack>
-					{
-						lifetimePlannerFlowWithCurrency.length > 1 &&
+			<Layout title="Lifetime Planner">
+				<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+					<SortMenuButton
+						value={lifetimePlannerChartType}
+						onChange={handleChartTypeChange}
+						options={[
+							{ value: 'both', label: 'Both' },
+							{ value: 'withInflation', label: 'With Inflation' },
+							{ value: 'withoutInflation', label: 'Without Inflation' }
+						]}
+					/>
+				</Stack>
+				{
+					lifetimePlannerFlowWithCurrency.length > 1 &&
 						<ResponsiveContainer width="100%" height={400}>
 							<ComposedChart
 								data={lifetimePlannerFlowWithCurrency}
@@ -112,13 +109,12 @@ function LifetimePlanner () {
 								{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke="#b04333" strokeDasharray="5 5"/>}
 							</ComposedChart>
 						</ResponsiveContainer>
-					}
-				</Container>
-			</div>
+				}
+			</Layout>
 		);
 	} else {
 		return (
-			<TitleHeader title="Lifetime Planner" loading />
+			<Layout title="Lifetime Planner" loading />
 		);
 	}
 }

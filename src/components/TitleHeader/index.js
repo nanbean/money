@@ -17,18 +17,15 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { toggleSidebar } from '../../actions/uiActions';
 import { logoutAction } from '../../actions/authActions';
 
-const Sticky = styled('div')(({ theme }) => ({
+const LoadingBarContainer = styled('div')(({ theme }) => ({
 	width: '100%',
-	position: 'sticky',
+	position: 'fixed',
 	zIndex: theme.zIndex.drawer + 1,
 	[theme.breakpoints.down('sm')]: {
 		top: 56
 	},
 	[theme.breakpoints.up('sm')]: {
 		top: 64
-	},
-	[theme.breakpoints.up('md')]: {
-		marginBottom: 10
 	}
 }));
 
@@ -89,9 +86,9 @@ function TitleHeader ({
 			</AppBar>
 			{
 				(updateInvestmentPriceFetching || trascationsFetching || loading) &&
-				<Sticky>
+				<LoadingBarContainer>
 					<LinearProgress color="secondary"/>
-				</Sticky>
+				</LoadingBarContainer>
 			}
 		</React.Fragment>
 	);

@@ -59,13 +59,7 @@ const MonthlyExpense = () => {
 	];
 
 	return (
-		<Box
-			sx={{
-				height: 'calc(100vh - 192px)',
-				display: 'flex',
-				flexDirection: 'column'
-			}}
-		>
+		<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, mt: 1 }}>
 			<Stack direction="row" justifyContent="space-between" alignItems="center">
 				<FormControl variant="standard" sx={{ minWidth: 120 }}>
 					<Select

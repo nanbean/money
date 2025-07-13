@@ -7,7 +7,6 @@ import { styled } from '@mui/material/styles';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import FormControl from '@mui/material/FormControl';
 import Input from '@mui/material/Input';
@@ -18,14 +17,11 @@ import MenuItem from '@mui/material/MenuItem';
 
 import SearchIcon from '@mui/icons-material/Search';
 
+import Layout from '../components/Layout';
 import Amount from '../components/Amount';
-import TitleHeader from '../components/TitleHeader';
-import Container from '../components/Container';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import AccountFilter from '../components/AccountFilter';
-
-import useHeight from '../hooks/useHeight';
 
 const Sticky = styled('div')(({ theme }) => ({
 	width: '100%',
@@ -81,8 +77,6 @@ export function Search () {
 			return sum + amount;
 		}, 0);
 	}, [filteredTransactions, displayCurrency, exchangeRate, accountList]);
-
-	const transactionHeight = useHeight() - 64 - 64 - 64 - 130; // TODO: Optimize calculation
 
 	useEffect(() => {
 		updateFilteredTransactions(filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
@@ -211,139 +205,124 @@ export function Search () {
 	};
 
 	return (
-		<div>
-			<TitleHeader title="Search" />
-			<Container>
-				<Paper
+		<Layout title="Search">
+			<Sticky>
+				<Grid
+					container
+					spacing={1}
 					sx={(theme) => ({
-						[theme.breakpoints.up('lg')]: {
-							marginTop: theme.spacing(2)
-						},
-						[theme.breakpoints.down('sm')]: {
-							marginTop: 0
-						},
-						alignItems: 'center'
+						marginTop: theme.spacing(1),
+						marginBottom: theme.spacing(1)
 					})}
 				>
-					<Sticky>
-						<Grid
-							container
-							spacing={1}
-							sx={(theme) => ({
-								marginTop: theme.spacing(1),
-								marginBottom: theme.spacing(1)
-							})}
-						>
-							<Grid item xs={12}>
-								<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-									<AccountFilter
-										allAccounts={allAccounts}
-										filteredAccounts={filteredAccounts}
-										setfilteredAccounts={onFilteredAccountsChange}
-									/>
-								</Stack>
-							</Grid>
-							<Grid item xs={6}>
-								<FormControl required fullWidth>
-									<Input
-										id="search"
-										name="search"
-										autoComplete="search"
-										value={inputValue}
-										onChange={onInputValueChange}
-										startAdornment={
-											<InputAdornment position="start">
-												<SearchIcon />
-											</InputAdornment>
-										}
-									/>
-								</FormControl>
-							</Grid>
-							<Grid item xs={6}>
-								<FormControl variant="standard"	fullWidth>
-									<Select
-										value={category && `${category}` + (subcategory ? `:${subcategory}`:'')}
-										onChange={onCategoryChange}
-									>
-										{
-											categoryList.map(i => (
-												<MenuItem key={i} value={i}>{i}</MenuItem>
-											))
-										}
-									</Select>
-								</FormControl>
-							</Grid>
-							<Grid item xs={6}>
-								<FormControl fullWidth>
-									<Input
-										id="startDate"
-										type="date"
-										name="startDate"
-										autoComplete="off"
-										placeholder="Start Date"
-										value={startDate}
-										fullWidth
-										onChange={onStartDateChange}
-										startAdornment={
-											<InputAdornment position="start">
-												From
-											</InputAdornment>
-										}
-									/>
-								</FormControl>
-							</Grid>
-							<Grid item xs={6}>
-								<FormControl fullWidth>
-									<Input
-										id="endDate"
-										type="date"
-										name="endDate"
-										autoComplete="off"
-										placeholder="End Date"
-										value={endDate}
-										fullWidth
-										onChange={onEndDateChange}
-										startAdornment={
-											<InputAdornment position="start">
-												To
-											</InputAdornment>
-										}
-									/>
-								</FormControl>
-							</Grid>
-						</Grid>
-					</Sticky>
-					<Box sx={{ height: transactionHeight, textAlign: 'center' }}>
-						{
-							filteredTransactions.length > 0 &&
-							<BankTransactions
-								showAccount
-								transactions={filteredTransactions}
+					<Grid item xs={12}>
+						<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+							<AccountFilter
+								allAccounts={allAccounts}
+								filteredAccounts={filteredAccounts}
+								setfilteredAccounts={onFilteredAccountsChange}
 							/>
-						}
-					</Box>
-					<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
-						<Typography
-							variant="subtitle1"
-							color="inherit"
-							gutterBottom
-							align="right"
-							sx={(theme) => ({
-								marginTop: theme.spacing(1),
-								marginRight: theme.spacing(1)
-							})}
-						>
-							{'Sum : '}
-						</Typography>
-						<Amount value={balance} size="large" negativeColor showSymbol currency={displayCurrency}/>
-					</Stack>
-					<BankTransactionModal
-						isEdit={true}
-						transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
+						</Stack>
+					</Grid>
+					<Grid item xs={6}>
+						<FormControl required fullWidth>
+							<Input
+								id="search"
+								name="search"
+								autoComplete="search"
+								value={inputValue}
+								onChange={onInputValueChange}
+								startAdornment={
+									<InputAdornment position="start">
+										<SearchIcon />
+									</InputAdornment>
+								}
+							/>
+						</FormControl>
+					</Grid>
+					<Grid item xs={6}>
+						<FormControl variant="standard"	fullWidth>
+							<Select
+								value={category && `${category}` + (subcategory ? `:${subcategory}`:'')}
+								onChange={onCategoryChange}
+							>
+								{
+									categoryList.map(i => (
+										<MenuItem key={i} value={i}>{i}</MenuItem>
+									))
+								}
+							</Select>
+						</FormControl>
+					</Grid>
+					<Grid item xs={6}>
+						<FormControl fullWidth>
+							<Input
+								id="startDate"
+								type="date"
+								name="startDate"
+								autoComplete="off"
+								placeholder="Start Date"
+								value={startDate}
+								fullWidth
+								onChange={onStartDateChange}
+								startAdornment={
+									<InputAdornment position="start">
+										From
+									</InputAdornment>
+								}
+							/>
+						</FormControl>
+					</Grid>
+					<Grid item xs={6}>
+						<FormControl fullWidth>
+							<Input
+								id="endDate"
+								type="date"
+								name="endDate"
+								autoComplete="off"
+								placeholder="End Date"
+								value={endDate}
+								fullWidth
+								onChange={onEndDateChange}
+								startAdornment={
+									<InputAdornment position="start">
+										To
+									</InputAdornment>
+								}
+							/>
+						</FormControl>
+					</Grid>
+				</Grid>
+			</Sticky>
+			<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
+				{
+					filteredTransactions.length > 0 &&
+					<BankTransactions
+						showAccount
+						transactions={filteredTransactions}
 					/>
-				</Paper>
-			</Container>
-		</div>
+				}
+			</Box>
+			<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+				<Typography
+					variant="subtitle1"
+					color="inherit"
+					gutterBottom
+					align="right"
+					sx={(theme) => ({
+						marginTop: theme.spacing(1),
+						marginRight: theme.spacing(1)
+					})}
+				>
+					{'Sum : '}
+				</Typography>
+				<Amount value={balance} size="large" negativeColor showSymbol currency={displayCurrency}/>
+			</Stack>
+			<BankTransactionModal
+				isEdit={true}
+				transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
+			/>
+		</Layout>
 	);
 }
 
