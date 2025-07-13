@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import Container from '../components/Container';
 import Layout from '../components/Layout';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import Typography from '@mui/material/Typography';
@@ -29,20 +28,18 @@ export function Performance () {
 	}, [investmentTransactions, investmentItem]);
 
 	return (
-		<Layout title={investmentItem ? investmentName : 'Not Found'}>
-			<Container>
-				{investmentItem ? (
-					<InvestmentPerformance
-						investment={investmentName}
-						price={investmentItem.price}
-						currency={investmentItem.currency}
-						performance={performance}
-						symbol={investmentItem.yahooSymbol}
-					/>
-				) : (
-					<Typography>Investment "{investmentName}" could not be found.</Typography>
-				)}
-			</Container>
+		<Layout showPaper={false} title={investmentItem ? investmentName : 'Not Found'}>
+			{investmentItem ? (
+				<InvestmentPerformance
+					investment={investmentName}
+					price={investmentItem.price}
+					currency={investmentItem.currency}
+					performance={performance}
+					symbol={investmentItem.yahooSymbol}
+				/>
+			) : (
+				<Typography>Investment "{investmentName}" could not be found.</Typography>
+			)}
 		</Layout>
 	);
 }
