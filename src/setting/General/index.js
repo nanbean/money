@@ -26,7 +26,8 @@ export function General () {
 	const {
 		currency,
 		enableExchangeRateUpdate,
-		exchangeRate
+		exchangeRate,
+		themeMode = 'auto'
 	} = useSelector((state) => state.settings);
 	const [exchangeRateValue, setExchangeRateValue] = useState(exchangeRate);
 	const dispatch = useDispatch();
@@ -67,6 +68,12 @@ export function General () {
 
 	const handleEnabeExchangeRateUpdateChange = (event) => {
 		dispatch(updateGeneralAction('enableExchangeRateUpdate', event.target.checked));
+	};
+
+	const handleThemeModeChange = (event, newThemeMode) => {
+		if (newThemeMode !== null) { // Prevent unselecting
+			dispatch(updateGeneralAction('themeMode', newThemeMode));
+		}
 	};
 
 	return (
@@ -149,6 +156,34 @@ export function General () {
 					variant="outlined"
 					inputProps={{ 'aria-labelledby': 'exchange-rate-label' }}
 				/>
+			</ListItem>
+			<Divider component="li" sx={{ my: 1 }} />
+			<ListSubheader sx={{ bgcolor: 'transparent' }}>Theme</ListSubheader>
+			<ListItem>
+				<ListItemText
+					id="theme-mode-label"
+					primary="Theme Mode"
+					secondary="Select your preferred theme"
+				/>
+				<ListItemSecondaryAction>
+					<ToggleButtonGroup
+						size="small"
+						value={themeMode}
+						exclusive
+						onChange={handleThemeModeChange}
+						aria-labelledby="theme-mode-label"
+					>
+						<ToggleButton value="auto" aria-label="Auto theme">
+							Auto
+						</ToggleButton>
+						<ToggleButton value="light" aria-label="Light theme">
+							Light
+						</ToggleButton>
+						<ToggleButton value="dark" aria-label="Dark theme">
+							Dark
+						</ToggleButton>
+					</ToggleButtonGroup>
+				</ListItemSecondaryAction>
 			</ListItem>
 		</List>
 	);

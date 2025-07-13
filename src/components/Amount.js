@@ -3,8 +3,7 @@ import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import Typography from '@mui/material/Typography';
-
-import useDarkMode from '../hooks/useDarkMode';
+import { useTheme } from '@mui/material/styles';
 
 import { toCurrencyFormat, toCurrencyFormatWithSymbol } from '../utils/formatting';
 
@@ -24,7 +23,8 @@ function Amount ({
 	size = '',
 	value
 }) {
-	const isDarkMode = useDarkMode();
+	const theme = useTheme();
+	const isDarkMode = theme.palette.mode === 'dark';
 	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 
 	const displayValue = useMemo(() => {

@@ -5,8 +5,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, Tooltip } from 'recharts';
 
-import useDarkMode from '../../hooks/useDarkMode';
-
+import { useTheme } from '@mui/material/styles';
 import { toCurrencyFormat } from '../../utils/formatting';
 
 import {
@@ -62,7 +61,8 @@ CustomTooltip.propTypes = {
 };
 
 const MonthlyComparisonChart = ({ chartData }) => {
-	const isDarkMode = useDarkMode();
+	const theme = useTheme();
+	const isDarkMode = theme.palette.mode === 'dark';
 	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 	const dataWithCurrency = useMemo(() => {
 		if (displayCurrency === 'USD') {

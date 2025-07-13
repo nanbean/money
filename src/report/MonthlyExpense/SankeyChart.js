@@ -2,11 +2,12 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
 import ReactECharts from 'echarts-for-react';
-import useDarkMode from '../../hooks/useDarkMode';
+import { useTheme } from '@mui/material/styles';
 import { toCurrencyFormat } from '../../utils/formatting';
 
 const SankeyChart = ({ data }) => {
-	const isDarkMode = useDarkMode();
+	const theme = useTheme();
+	const isDarkMode = theme.palette.mode === 'dark';
 	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 
 	const { nodes, links } = useMemo(() => {
