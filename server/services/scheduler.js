@@ -1,6 +1,6 @@
 const CronJob = require('cron').CronJob;
 const calendar = require('../utils/calendar');
-const { arrangeHistorical } = require('./historyService');
+const { arrangeUSHistorical, arrangeKRHistorical } = require('./historyService');
 const { arrangeExchangeRate } = require('./settingService');
 const { arrangeKRInvestmemt, arrangeUSInvestmemt } = require('./investmentService');
 const { updateAccountList } = require('./accountService');
@@ -27,11 +27,24 @@ const updateInvestmentPrice = async () => {
 			 * at 03:00:00 AM.
 			 */
 		console.log('stock 00 33 05 monthly monthlyUpdateHistoricaljob started');
-		await arrangeHistorical();
+		await arrangeKRHistorical();
 	}, () => {
 		/* This function is executed when the job stops */
 		console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
 	}, true, 'Asia/Seoul');
+
+	new CronJob('00 33 05 1 * *', async () => {
+		/*
+			 * update historical automation.
+			 * Runs every 1st day of month, and write last day of previous month price
+			 * at 03:00:00 AM.
+			 */
+		console.log('stock 00 33 05 monthly monthlyUpdateHistoricaljob started');
+		await arrangeUSHistorical();
+	}, () => {
+		/* This function is executed when the job stops */
+		console.log('00 33 05 monthly monthlyUpdateHistoricaljob ended');
+	}, true, 'America/Los_Angeles');
 
 	new CronJob('30 30 15 * * 1-5', async () => {
 		/*
