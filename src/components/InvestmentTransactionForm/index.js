@@ -30,12 +30,12 @@ import {
 import './index.css';
 
 const activityList = [
-	{ key: 'Buy', value: 'Buy', text: 'Buy' },
-	{ key: 'Sell', value: 'Sell', text: 'Sell' },
-	{ key: 'Div', value: 'Div', text: 'Div' },
-	{ key: 'ShrsOut', value: 'ShrsOut', text: 'ShrsOut' },
-	{ key: 'ShrsIn', value: 'ShrsIn', text: 'ShrsIn' },
-	{ key: 'MiscExp', value: 'MiscExp', text: 'MiscExp' }
+	'Buy',
+	'Sell',
+	'Div',
+	'ShrsOut',
+	'ShrsIn',
+	'MiscExp'
 ];
 
 export function InvestmentTransactionForm ({
