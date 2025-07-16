@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { styled } from '@mui/material/styles';
 import { AutoSizer, Column, Table } from 'react-virtualized';
 
 import Stack from '@mui/material/Stack';
@@ -22,6 +23,19 @@ import {
 import { TYPE_ICON_MAP } from '../../constants';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
+
+const StyledTable = styled(Table)(({ theme }) => ({
+	'& .ReactVirtualized__Table__headerRow': {
+		borderBottom: `1px solid ${theme.palette.divider}` // 헤더에도 구분선 추가
+	},
+	'& .ReactVirtualized__Table__row': {
+		cursor: 'pointer',
+		borderBottom: `1px solid ${theme.palette.divider}`, // 각 행의 아래에 구분선 추가
+		'&:hover': {
+			backgroundColor: theme.palette.action.hover
+		}
+	}
+}));
 
 export function BankTransactions ({
 	account,
@@ -54,13 +68,11 @@ export function BankTransactions ({
 		transactions &&
 		<AutoSizer>
 			{({ height, width }) => (
-				<Table
-					headerClassName="header"
-					rowClassName="row"
+				<StyledTable
 					width={width}
 					height={height}
 					headerHeight={44}
-					rowHeight={!isWidthDownMd ? 38 : 60}
+					rowHeight={!isWidthDownMd ? 38 : 55}
 					scrollToIndex={transactions.length-1}
 					rowCount={transactions.length}
 					rowGetter={({ index }) => transactions[index]}
@@ -108,7 +120,7 @@ export function BankTransactions ({
 							dataKey="category"
 							width={width/4}
 							cellRenderer={({ cellData }) => (
-								<CategoryIcon category={cellData} fontsize={!isWidthDownMd ? 22 : 36} />
+								<CategoryIcon category={cellData} fontsize={!isWidthDownMd ? 22 : 30} />
 							)}
 							headerRenderer={({ label }) => (
 								<Typography variant="subtitle2" color="secondary">{label}</Typography>
@@ -155,7 +167,7 @@ export function BankTransactions ({
 							<Typography variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 					/>
-				</Table>
+				</StyledTable>
 			)}
 		</AutoSizer>
 	);

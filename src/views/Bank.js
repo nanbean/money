@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 import { styled } from '@mui/material/styles';
 
@@ -17,7 +17,9 @@ import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 import Amount from '../components/Amount';
 
-import { setAccountAction } from '../actions/accountActions';
+import { setAccountAction } from
+	'../actions/accountActions';
+
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
 
 const Sticky = styled('div')(({ theme }) => ({
@@ -32,8 +34,10 @@ const Sticky = styled('div')(({ theme }) => ({
 	}
 }));
 
-const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':')).replace(/%20/g, ' ')}`;
-const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
+const getAccountId = pathname =>
+	`account${decodeURI(pathname.replace(/\//g, ':')).replace(/%20/g, ' ')}`;
+const getAccountTransactions = (transactions, accountId) =>
+	transactions.filter(i => i.accountId === accountId);
 const getCurrencyByAccountId = (accountId, accountList) => {
 	const account = accountList.find(account => account._id === accountId);
 	return account ? account.currency : undefined;
@@ -42,13 +46,15 @@ const getCurrencyByAccountId = (accountId, accountList) => {
 export function Bank () {
 	const account = useSelector((state) => state.account);
 	const accountList = useSelector((state) => state.accountList);
-	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+	const allAccountsTransactions = useSelector(
+		(state) => state.allAccountsTransactions);
 	const isModalOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen,);
 	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
 
 	let { name } = useParams();
 	let { pathname } = useLocation();
 	const accountId = useMemo(() => getAccountId(pathname), [pathname]);
+
 	const accountTransactions = useMemo(() => getAccountTransactions(allAccountsTransactions, accountId), [allAccountsTransactions, accountId]);
 	const currency = useMemo(() => getCurrencyByAccountId(accountId, accountList), [accountId, accountList]);
 	const balance = accountTransactions.length > 0 && accountTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
@@ -87,14 +93,14 @@ export function Bank () {
 					transactions={accountTransactions}
 				/>
 			</Box>
-			<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
+			<Stack spacing={0.5} direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline', pt: 1 }}>
 				<Typography
 					variant="subtitle1"
 					gutterBottom
 					align="right"
 					sx={{ mt: 1, mb: 1 }}
 				>
-					{'Balance : '}
+					Balance :
 				</Typography>
 				<Amount value={balance} size="large" negativeColor showSymbol showOriginal currency={currency}/>
 			</Stack>
@@ -109,5 +115,6 @@ export function Bank () {
 		</Layout>
 	);
 }
+
 
 export default Bank;

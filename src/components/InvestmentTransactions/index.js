@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch } from 'react-redux';
 
+import { styled } from '@mui/material/styles';
 import { AutoSizer, Column, Table } from 'react-virtualized';
 
 import Typography from '@mui/material/Typography';
@@ -17,6 +18,19 @@ import {
 } from '../../actions/ui/form/bankTransaction';
 
 import 'react-virtualized/styles.css'; // only needs to be imported once
+
+const StyledTable = styled(Table)(({ theme }) => ({
+	'& .ReactVirtualized__Table__headerRow': {
+		borderBottom: `1px solid ${theme.palette.divider}` // 헤더에도 구분선 추가
+	},
+	'& .ReactVirtualized__Table__row': {
+		cursor: 'pointer',
+		borderBottom: `1px solid ${theme.palette.divider}`, // 각 행의 아래에 구분선 추가
+		'&:hover': {
+			backgroundColor: theme.palette.action.hover
+		}
+	}
+}));
 
 export function InvestmentTransactions ({
 	currency,
@@ -47,12 +61,11 @@ export function InvestmentTransactions ({
 		transactions &&
 		<AutoSizer>
 			{({ height, width }) => (
-				<Table
-					headerClassName="header"
+				<StyledTable
 					width={width}
 					height={height}
-					headerHeight={40}
-					rowHeight={!isWidthDownMd ? 30 : 50}
+					headerHeight={44}
+					rowHeight={!isWidthDownMd ? 38 : 55}
 					scrollToIndex={transactions.length-1}
 					rowCount={transactions.length}
 					rowGetter={({ index }) => transactions[index]}
@@ -63,6 +76,9 @@ export function InvestmentTransactions ({
 							label="Date"
 							dataKey="date"
 							width={isWidthDownMd ? width/5:width/6}
+							headerRenderer={({ label }) => (
+								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+							)}
 							cellRenderer={({ cellData }) => toDateFormat(cellData)}
 						/>
 					}
@@ -95,6 +111,9 @@ export function InvestmentTransactions ({
 								);
 							}
 
+						}}
+						headerRenderer={({ label }) => {
+							return <Typography variant="subtitle2" color="secondary">{label}</Typography>;
 						}
 						}
 					/>
@@ -102,6 +121,9 @@ export function InvestmentTransactions ({
 						label="Activity"
 						dataKey="activity"
 						width={isWidthDownMd ? width/5:width/10}
+						headerRenderer={({ label }) => (
+							<Typography variant="subtitle2" color="secondary">{label}</Typography>
+						)}
 					/>
 					{
 						!isWidthDownMd && <Column
@@ -109,6 +131,9 @@ export function InvestmentTransactions ({
 							dataKey="quantity"
 							width={width/10}
 							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} />}
+							headerRenderer={({ label }) => (
+								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+							)}
 						/>
 					}
 					{
@@ -117,6 +142,9 @@ export function InvestmentTransactions ({
 							dataKey="price"
 							width={width/9}
 							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />}
+							headerRenderer={({ label }) => (
+								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+							)}
 						/>
 					}
 					{
@@ -125,6 +153,9 @@ export function InvestmentTransactions ({
 							label="Commission"
 							dataKey="commission"
 							width={width/7}
+							headerRenderer={({ label }) => (
+								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+							)}
 							cellRenderer={({ cellData }) => cellData ? <Amount value={cellData} ignoreDisplayCurrency showColor={false} /> : ''}
 						/>
 					}
@@ -151,10 +182,13 @@ export function InvestmentTransactions ({
 								);
 							}
 
+						}}
+						headerRenderer={({ label }) => {
+							return <Typography variant="subtitle2" color="secondary">{label}</Typography>;
 						}
 						}
 					/>
-				</Table>
+				</StyledTable>
 			)}
 		</AutoSizer>
 	);
