@@ -19,6 +19,7 @@ import CheckroomIcon from '@mui/icons-material/Checkroom';
 import GolfCourseIcon from '@mui/icons-material/GolfCourse';
 import SmsIcon from '@mui/icons-material/Sms';
 import MoneyIcon from '@mui/icons-material/Money';
+import SyncAltIcon from '@mui/icons-material/SyncAlt';
 
 import {
 	ARCHITECTURE_CATEGORY,
@@ -48,6 +49,10 @@ export function getCategoryIcon (category, fontsize) {
 	
 	if (fontsize) {
 		sx.fontSize = fontsize;
+	}
+
+	if (category && category.startsWith('[')) {
+		return <SyncAltIcon sx={sx} />;
 	}
 
 	switch (category) {
