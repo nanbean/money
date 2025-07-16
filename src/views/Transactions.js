@@ -101,6 +101,11 @@ const Transactions = () => {
 		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
 	
 		transactions.forEach(transaction => {
+			// Exclude transfers between accounts from income/expense calculation
+			if (transaction.category && transaction.category.startsWith('[')) {
+				return;
+			}
+
 			let amount = transaction.amount;
 			const account = accountList.find(acc => acc._id === transaction.accountId);
 			const transactionCurrency = account?.currency || 'KRW';
