@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
 import moment from 'moment';
 
@@ -11,6 +12,7 @@ import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import SortMenuButton from '../components/SortMenuButton';
 import AccountFilter from '../components/AccountFilter';
+import Amount from '../components/Amount';
 
 const filterTransactions = ( transactions, startDate, endDate, filteredAccounts ) => {
 	const validTypes = ['Bank', 'CCard', 'Cash'];
@@ -88,19 +90,81 @@ const Transactions = () => {
 		}
 	};
 
+	const calculateIncomeExpense = (transactions, accountList, displayCurrency, exchangeRate) => {
+		let income = 0;
+		let expense = 0;
+
+		if (!transactions.length || !accountList.length || !displayCurrency || typeof exchangeRate === 'undefined') {
+			return { income: 0, expense: 0 };
+		}
+
+		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
+	
+		transactions.forEach(transaction => {
+			let amount = transaction.amount;
+			const account = accountList.find(acc => acc._id === transaction.accountId);
+			const transactionCurrency = account?.currency || 'KRW';
+
+			if (transactionCurrency !== displayCurrency) {
+				if (displayCurrency === 'KRW' && transactionCurrency === 'USD') {
+					amount *= validExchangeRate;
+				} else if (displayCurrency === 'USD' && transactionCurrency === 'KRW') {
+					amount /= validExchangeRate;
+				}
+			}
+
+			if (amount > 0) {
+				income += amount;
+			} else {
+				expense += amount;
+			}
+		});
+		return { income, expense };
+	};
+
+	const { currency: displayCurrency, exchangeRate } = useSelector(state => state.settings);
+
+	const { income, expense } = useMemo(() => {
+		return calculateIncomeExpense(filteredTransactions, accountList, displayCurrency, exchangeRate);
+	}, [filteredTransactions, accountList, displayCurrency, exchangeRate]);
+
+	const validTransactionsExist = useMemo(() => {
+		return allAccountsTransactions && allAccountsTransactions.length > 0;
+	}, [allAccountsTransactions]);
+
 	return (
 		<Layout title="Transactions">
-			<Stack direction="row" justifyContent="flex-end" sx={{ m: 1 }}>
-				<SortMenuButton
-					value={selectedRange}
-					onChange={handleRangeChange}
-					options={dateRangeOptions}
-				/>
-				<AccountFilter
-					allAccounts={allBankAccounts}
-					filteredAccounts={filteredAccounts}
-					setfilteredAccounts={setFilteredAccounts}
-				/>
+
+			<Stack direction="row" alignItems="center">
+				<Stack sx={{ ml: 1 }} direction="row" justifyContent="flex-start" alignItems="baseline">
+					{validTransactionsExist && (
+						<>
+							<Typography variant="subtitle1" sx={{ mr: 1 }}>
+								Income :
+							</Typography>
+							<Amount value={income} size="medium" showSymbol currency={displayCurrency} />
+							<Typography variant="subtitle1" sx={{ ml: 2, mr: 1 }}>
+								Expense :
+							</Typography>
+							<Amount value={expense} size="medium" negativeColor showSymbol currency={displayCurrency} />
+						</>
+					)}
+					{!validTransactionsExist && (
+						<Typography variant="subtitle1">No transactions available</Typography>
+					)}
+				</Stack>
+				<Stack sx={{ marginLeft: 'auto' }} direction="row" justifyContent="flex-end" alignItems="center">
+					<SortMenuButton
+						value={selectedRange}
+						onChange={handleRangeChange}
+						options={dateRangeOptions}
+					/>
+					<AccountFilter
+						allAccounts={allBankAccounts}
+						filteredAccounts={filteredAccounts}
+						setfilteredAccounts={setFilteredAccounts}
+					/>
+				</Stack>
 			</Stack>
 			<Box sx={{ flex: 1, mb: 1, textAlign: 'center' }}>
 				<BankTransactions
