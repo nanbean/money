@@ -1,25 +1,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
+import InvestmentTransactionForm from './InvestmentTransactionForm';
+
 import {
 	resetTransactionForm
-} from '../actions/ui/form/bankTransaction';
+} from '../actions/ui/form/investmentTransaction';
 
 export function InvestmentTransactionModal ({
 	account,
 	accountId,
-	autocompleteInvestmentList,
-	EditForm,
-	isEdit,
-	isOpen,
 	transactions
 }) {
 	const dispatch = useDispatch();
+	const isEdit = useSelector((state) => state.ui.form.investmentTransaction.isEdit);
+	const isOpen = useSelector((state) => state.ui.form.investmentTransaction.isModalOpen);
+	const autocompleteInvestmentList = useSelector((state) => state.dropInvestmentList);
 
 	const onClose = () => {
 		dispatch(resetTransactionForm());
@@ -33,7 +34,7 @@ export function InvestmentTransactionModal ({
 		>
 			<DialogTitle id="form-dialog-title">{isEdit ? 'Edit Transaction' : 'New Transaction'}</DialogTitle>
 			<DialogContent>
-				<EditForm
+				<InvestmentTransactionForm
 					account={account}
 					accountId={accountId}
 					transactions={transactions}
@@ -47,10 +48,6 @@ export function InvestmentTransactionModal ({
 InvestmentTransactionModal.propTypes = {
 	account: PropTypes.string.isRequired,
 	accountId: PropTypes.string.isRequired,
-	autocompleteInvestmentList: PropTypes.array,
-	EditForm: PropTypes.func,
-	isEdit: PropTypes.bool,
-	isOpen: PropTypes.bool,
 	transactions: PropTypes.array
 };
 

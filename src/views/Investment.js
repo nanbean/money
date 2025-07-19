@@ -17,7 +17,6 @@ import AccountInvestments from './AccountInvestments';
 import Layout from '../components/Layout';
 import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
-import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 
 import useWidth from '../hooks/useWidth';
 
@@ -56,9 +55,6 @@ export function Investment () {
 	const account = useSelector((state) => state.account);
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const dropInvestmentList = useSelector((state) => state.dropInvestmentList);
-	const isEdit = useSelector((state) => state.ui.form.investmentTransaction.isEdit);
-	const isModalOpen = useSelector((state) => state.ui.form.investmentTransaction.isModalOpen);
 
 	const { name } = useParams();
 	const { pathname } = useLocation();
@@ -143,13 +139,9 @@ export function Investment () {
 				</Box>
 			)}
 			<InvestmentTransactionModal
-				EditForm={InvestmentTransactionForm}
-				isOpen={isModalOpen}
-				isEdit={isEdit}
 				account={account}
 				accountId={accountId}
 				transactions={accountTransactions}
-				autocompleteInvestmentList={dropInvestmentList}
 			/>
 		</Layout>
 	);

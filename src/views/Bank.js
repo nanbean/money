@@ -14,7 +14,6 @@ import AddIcon from '@mui/icons-material/Add';
 import Layout from '../components/Layout';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
-import BankTransactionForm from '../components/BankTransactionForm';
 import Amount from '../components/Amount';
 
 import useWidth from '../hooks/useWidth';
@@ -38,8 +37,6 @@ export function Bank () {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector(
 		(state) => state.allAccountsTransactions);
-	const isModalOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen,);
-	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
 	const width = useWidth();
 	const isSmallScreen = width === 'xs' || width === 'sm';
 
@@ -114,9 +111,6 @@ export function Bank () {
 				</Box>
 			)}
 			<BankTransactionModal
-				EditForm={BankTransactionForm}
-				isOpen={isModalOpen}
-				isEdit={isEdit}
 				accountId={accountId}
 				account={account}
 				transactions={accountTransactions}
