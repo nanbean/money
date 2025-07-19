@@ -18,6 +18,9 @@ export const SHOPPING_COLOR = '#e5a54f';
 export const MEDICAL_COLOR = '#e55266';
 export const HOBBY_COLOR = '#65b362';
 export const ETC_COLOR = '#e0e0e0';
+export const BEAUTY_COLOR = '#2a9d8f';
+export const UTILITY_COLOR = '#708090';
+export const FINANCE_COLOR = '#4682B4';
 export const NO_COLOR = '#000000';
 
 export const ARCHITECTURE_CATEGORY = '건축';
@@ -45,10 +48,13 @@ export const FOOD_COLOR_CATEGORY = ['식비'];
 export const TRANSPORT_COLOR_CATEGORY = ['교통비'];
 export const CULTURAL_LIFE_COLOR_CATEGORY = ['문화생활', '경조사-선물'];
 export const EDUCATION_COLOR_CATEGORY = ['교육', '육아'];
-export const SHOPPING_COLOR_CATEGORY = ['생활용품비', '의류', '대출이자', '공과금', '미용', '보험', '수수료', '통신비', '회비'];
+export const SHOPPING_COLOR_CATEGORY = ['생활용품비'];
 export const MEDICAL_COLOR_CATEGORY = ['의료비'];
 export const HOBBY_COLOR_CATEGORY = ['취미-레저'];
 export const ETC_COLOR_CATEGORY = ['기타 지출', '실제지출아님'];
+export const BEAUTY_COLOR_CATEGORY = ['의류', '미용'];
+export const UTILITY_COLOR_CATEGORY = ['공과금', '수수료', '통신비', '회비'];
+export const FINANCE_COLOR_CATEGORY = ['대출이자', '보험'];
 
 export const START_YEAR = 2005;
 export const END_YEAR = parseInt(moment().format('YYYY'), 10);
