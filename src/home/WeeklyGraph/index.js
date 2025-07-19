@@ -1,10 +1,13 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+
+import { useTheme } from '@mui/material/styles';
 
 import {
 	ResponsiveContainer,
@@ -13,13 +16,15 @@ import {
 	XAxis,
 	YAxis,
 	Tooltip,
-	Cell
+	Cell,
+	CartesianGrid
 } from 'recharts';
 
 import SortMenuButton from '../../components/SortMenuButton';
 import { updateGeneralAction } from '../../actions/couchdbSettingActions';
 
 import { getCategoryColor } from '../../utils/categoryColor';
+import { toCurrencyFormat } from '../../utils/formatting';
 
 const week = [
 	'Day1',
@@ -127,11 +132,52 @@ const getCategoryData = (transactions, displayCurrency, exchangeRate, accountLis
 		.sort((a, b) => b.amount - a.amount);
 };
 
+const CustomTooltip = ({ active, payload, label, chartType, currency }) => {
+	if (active && payload && payload.length) {
+		return (
+			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, minWidth: 150, boxShadow: 3 }}>
+				<Typography variant="subtitle2" gutterBottom>{label}</Typography>
+				{chartType === 'weekly' ? (
+					<>
+						{payload.sort((a, b) => b.value - a.value).map(entry => (
+							<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+								<Stack direction="row" spacing={0.5} alignItems="center">
+									<Box sx={{ width: 10, height: 10, bgcolor: entry.fill, borderRadius: '2px' }} />
+									<Typography variant="caption">{entry.name}</Typography>
+								</Stack>
+								<Typography variant="caption">{toCurrencyFormat(entry.value, currency)}</Typography>
+							</Stack>
+						))}
+						<Typography variant="body2" sx={{ fontWeight: 'bold', mt: 1, textAlign: 'right' }}>
+							Total: {toCurrencyFormat(payload.reduce((sum, entry) => sum + entry.value, 0), currency)}
+						</Typography>
+					</>
+				) : (
+					<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+						<Typography variant="caption">Amount:</Typography>
+						<Typography variant="caption">{toCurrencyFormat(payload[0].value, currency)}</Typography>
+					</Stack>
+				)}
+			</Box>
+		);
+	}
+	return null;
+};
+
+CustomTooltip.propTypes = {
+	active: PropTypes.bool,
+	chartType: PropTypes.string,
+	currency: PropTypes.string,
+	label: PropTypes.string,
+	payload: PropTypes.array
+};
+
 export function WeeklyGraph () {
 	const weeklyTransactions = useSelector((state) => state.weeklyTransactions);
 	const { weeklyGraphAccount : weeklyGraphAccountSettings } = useSelector((state) => state.settings);
 	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 	const accountList = useSelector((state) => state.accountList);
+	const theme = useTheme();
 	const { weeklyGraphChartType = 'weekly' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
 
@@ -177,6 +223,16 @@ export function WeeklyGraph () {
 		return Object.keys(categoryTotals);
 	}, [weeklyGraphChartType, data]);
 
+	const yAxisTickFormatter = (value) => {
+		if (value >= 1000000) {
+			return `${value / 1000000}M`;
+		}
+		if (value >= 1000) {
+			return `${value / 1000}K`;
+		}
+		return value;
+	};
+
 	return (
 		<Box p={1}>
 			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ ml: 1 }}>
@@ -192,18 +248,44 @@ export function WeeklyGraph () {
 			</Stack>
 			<ResponsiveContainer width="99%" height={200}>
 				{weeklyGraphChartType === 'weekly' ? (
-					<BarChart data={data} margin={{ top: 0, right: 5, left: 20, bottom: 0 }}>
-						<XAxis dataKey="dayofWeek" tickLine={false} />
-						<YAxis domain={[0, 'dataMax']} axisLine={false} tickLine={false} />
-						<Tooltip />
-						{activeWeeklyCategories.map(i => <Bar key={i} dataKey={i} stackId="a" fill={getCategoryColor(i)} />)}
+					<BarChart data={data} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
+						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.divider} />
+						<XAxis
+							dataKey="dayofWeek"
+							tickLine={false}
+							axisLine={false}
+							tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
+						/>
+						<YAxis
+							domain={[0, 'dataMax']}
+							axisLine={false}
+							tickLine={false}
+							tickFormatter={yAxisTickFormatter}
+							tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
+							width={40}
+						/>
+						<Tooltip content={<CustomTooltip chartType={weeklyGraphChartType} />} />
+						{activeWeeklyCategories.map(i => <Bar key={i} dataKey={i} stackId="a" fill={getCategoryColor(i)} radius={[4, 4, 4, 4]} />)}
 					</BarChart>
 				) : (
-					<BarChart data={data} margin={{ top: 0, right: 5, left: 20, bottom: 0 }}>
-						<XAxis dataKey="category" tickLine={false} />
-						<YAxis domain={[0, 'dataMax']} axisLine={false} tickLine={false} />
-						<Tooltip />
-						<Bar dataKey="amount">
+					<BarChart layout="vertical" data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+						<CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={theme.palette.divider} />
+						<XAxis
+							type="number"
+							hide
+							axisLine={false}
+							tickLine={false}
+						/>
+						<YAxis
+							dataKey="category"
+							type="category"
+							axisLine={false}
+							tickLine={false}
+							tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
+							width={80}
+						/>
+						<Tooltip content={<CustomTooltip chartType={weeklyGraphChartType} />} />
+						<Bar dataKey="amount" radius={[0, 4, 4, 0]}>
 							{data.map((entry, index) => (
 								<Cell key={`cell-${index}`} fill={getCategoryColor(entry.category)} />
 							))}
