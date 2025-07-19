@@ -1,10 +1,20 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
-
-import NormalGrid from '../components/NormalGrid';
+import {
+	Paper,
+	Stack,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow
+} from '@mui/material';
 
 import { getAccountPerformance } from '../utils/performance';
+import Amount from '../components/Amount';
+import Quantity from '../components/Quantity';
 
 export function AccountInvestments ({ currency }) {
 	const account = useSelector((state) => state.account);
@@ -21,57 +31,75 @@ export function AccountInvestments ({ currency }) {
 	const totalBalance = (accountList.find(i => i.name === account) || {}).balance;
 	const cash = totalBalance - totalMarketValue;
 
-	const performanceData = [
-		[
-			{ type: 'label', value: 'Investment' },
-			{ type: 'label', value: 'Price' },
-			{ type: 'label', value: 'Quantity' },
-			{ type: 'label', value: 'Cost Basis' },
-			{ type: 'label', value: 'Market Value' },
-			{ type: 'label', value: 'Realized Gain/Loss' },
-			{ type: 'label', value: 'Return for Period' },
-			{ type: 'label', value: '%Port' }
-		],
-		...accountPerformance.filter(j => j.name).map(i => {
-			return [
-				{ value: i.name },
-				{ type: 'currency', currency, value: i.price },
-				{ value: i.quantity },
-				{ type: 'currency', currency, value: i.costBasis },
-				{ type: 'currency', currency, value: i.marketValue },
-				{ type: 'currency', currency, value: i.periodGain },
-				{ type: 'currency', currency, value: i.periodReturn },
-				{ value: `${(i.marketValue/totalMarketValue * 100).toFixed(2)}%` }
-			];
-		}),
-		[
-			{ type: 'label', value: 'Cash' },
-			{ type: 'label', value: '' },
-			{ type: 'label', value: '' },
-			{ type: 'label', value: '' },
-			{ type: 'currency', currency, value: cash },
-			{ type: 'label', value: '' },
-			{ type: 'label', value: '' },
-			{ type: 'label', value: '' }
-		],
-		[
-			{ type: 'label', value: '' },
-			{ type: 'label', value: '' },
-			{ type: 'label', value: '' },
-			{ type: 'currency', currency, value: totalCostBasis },
-			{ type: 'currency', currency, value: totalBalance },
-			{ type: 'currency', currency, value: totalPeriodGain },
-			{ type: 'currency', currency, value: totalPeriodReturn },
-			{ type: 'label', value: '' }
-		]
-	];
+
+	const investmentTable = (
+		<TableContainer component={Paper} elevation={2}>
+			<Table size="small">
+				<TableHead>
+					<TableRow>
+						<TableCell>Investment (%Port)</TableCell>
+						<TableCell align="right">Price / Qty</TableCell>
+						<TableCell align="right">Cost / Market</TableCell>
+						<TableCell align="right">G/L / Return</TableCell>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					{accountPerformance.filter(j => j.name).map(i => (
+						<TableRow key={i.name}>
+							<TableCell component="th" scope="row">
+								{i.name} ({`${(i.marketValue / totalMarketValue * 100).toFixed(2)}%`})
+							</TableCell>
+							<TableCell align="right">
+								<Stack>
+									<Amount value={i.price} currency={currency} showSymbol showOriginal />
+									<Quantity value={i.quantity}/>
+								</Stack>
+							</TableCell>
+							<TableCell align="right">
+								<Stack>
+									<Amount value={i.costBasis} currency={currency} showSymbol />
+									<Amount value={i.marketValue} currency={currency} showSymbol />
+								</Stack>
+							</TableCell>
+							<TableCell align="right">
+								<Stack>
+									<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
+									<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
+								</Stack>
+							</TableCell>
+						</TableRow>
+					))}
+					<TableRow>
+						<TableCell>Cash</TableCell>
+						<TableCell />
+						<TableCell align="right">
+							<Amount value={cash} currency={currency} showSymbol />
+						</TableCell>
+						<TableCell />
+					</TableRow>
+					<TableRow sx={{ '& > *': { borderTop: '2px solid rgba(224, 224, 224, 1)', fontWeight: 'bold' } }}>
+						<TableCell component="th" scope="row">Total</TableCell>
+						<TableCell />
+						<TableCell align="right">
+							<Stack>
+								<Amount value={totalCostBasis} currency={currency} showSymbol />
+								<Amount value={totalBalance} currency={currency} showSymbol />
+							</Stack>
+						</TableCell>
+						<TableCell align="right">
+							<Stack>
+								<Amount value={totalPeriodGain} currency={currency} showSymbol negativeColor />
+								<Amount value={totalPeriodReturn} currency={currency} showSymbol negativeColor />
+							</Stack>
+						</TableCell>
+					</TableRow>
+				</TableBody>
+			</Table>
+		</TableContainer>
+	);
 
 	return (
-		<div className="investments">
-			<NormalGrid
-				gridData={performanceData}
-			/>
-		</div>
+		investmentTable
 	);
 }
 

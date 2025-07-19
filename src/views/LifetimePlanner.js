@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
+
+import Box from '@mui/material/Box';
+import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
@@ -15,42 +18,21 @@ import {
 import { getLifetimeFlowAction } from '../actions/couchdbReportActions';
 import { toCurrencyFormat } from '../utils/formatting';
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, label }) => {
 	if (active && payload && payload.length) {
-		const amountData = payload.find(p => p.dataKey === 'amount');
-		const amountInflationData = payload.find(p => p.dataKey === 'amountInflation');
-
 		return (
-			<Stack
-				sx={(theme) => ({
-					padding: '5px',
-					border: '1px solid rgba(34,36,38,.1)',
-					borderRadius: '.28571429rem',
-					backgroundColor: theme.palette.secondary.main
-				})}
-			>
-				{amountData &&
-					<Typography
-						variant="body1"
-						gutterBottom
-						sx={() => ({
-							color: '#e48274'
-						})}
-					>
-						{`Amount(Inflation) : ${toCurrencyFormat(amountData.value)}`}
-					</Typography>
-				}
-				{amountInflationData &&
-					<Typography
-						variant="body1"
-						gutterBottom
-						sx={() => ({
-							color: '#b04333'
-						})}
-					>
-						{`Amount : ${toCurrencyFormat(amountInflationData.value)}`}
-					</Typography>}
-			</Stack>
+			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, minWidth: 150, boxShadow: 3 }}>
+				<Typography variant="subtitle2" gutterBottom>{label}</Typography>
+				{payload.sort((a, b) => b.value - a.value).map(entry => (
+					<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+						<Stack direction="row" spacing={0.5} alignItems="center">
+							<Box sx={{ width: 10, height: 10, bgcolor: entry.color, borderRadius: '2px' }} />
+							<Typography variant="caption">{entry.name}</Typography>
+						</Stack>
+						<Typography variant="caption">{toCurrencyFormat(entry.value)}</Typography>
+					</Stack>
+				))}
+			</Box>
 		);
 	}
 	return null;
@@ -58,10 +40,12 @@ const CustomTooltip = ({ active, payload }) => {
 
 CustomTooltip.propTypes = {
 	active: PropTypes.bool,
+	label: PropTypes.string,
 	payload: PropTypes.array
 };
 
 function LifetimePlanner () {
+	const theme = useTheme();
 	const lifetimePlannerFlow = useSelector((state) => state.lifetimePlannerFlow);
 	const { currency: displayCurrency, exchangeRate, lifetimePlannerChartType = 'both' } = useSelector((state) => state.settings);
 	const lifetimePlannerFlowWithCurrency = lifetimePlannerFlow.map(item => ({
@@ -101,12 +85,12 @@ function LifetimePlanner () {
 								data={lifetimePlannerFlowWithCurrency}
 								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 							>
-								<XAxis dataKey="year" />
+								<XAxis dataKey="year" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
 								<YAxis hide />
 								<Tooltip content={<CustomTooltip />} />
-								{(lifetimePlannerChartType === 'withInflation' || lifetimePlannerChartType === 'both') && <Bar dataKey="amount" name="Amount(Inflation)" fill="#e48274" />}
-								{lifetimePlannerChartType === 'withoutInflation' && <Bar dataKey="amountInflation" name="Amount" fill="#b04333" />}
-								{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke="#b04333" strokeDasharray="5 5"/>}
+								{(lifetimePlannerChartType === 'withInflation' || lifetimePlannerChartType === 'both') && <Bar dataKey="amount" name="Amount(Inflation)" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />}
+								{lifetimePlannerChartType === 'withoutInflation' && <Bar dataKey="amountInflation" name="Amount" fill={theme.palette.grey[500]} radius={[4, 4, 0, 0]} />}
+								{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke={theme.palette.grey[500]} strokeDasharray="5 5" />}
 							</ComposedChart>
 						</ResponsiveContainer>
 				}

@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import Paper from '@mui/material/Paper';
 
 import AddIcon from '@mui/icons-material/Add';
 
@@ -15,6 +16,8 @@ import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import BankTransactionForm from '../components/BankTransactionForm';
 import Amount from '../components/Amount';
+
+import useWidth from '../hooks/useWidth';
 
 import { setAccountAction } from
 	'../actions/accountActions';
@@ -37,6 +40,8 @@ export function Bank () {
 		(state) => state.allAccountsTransactions);
 	const isModalOpen = useSelector((state) => state.ui.form.bankTransaction.isModalOpen,);
 	const isEdit = useSelector((state) => state.ui.form.bankTransaction.isEdit);
+	const width = useWidth();
+	const isSmallScreen = width === 'xs' || width === 'sm';
 
 	let { name } = useParams();
 	let { pathname } = useLocation();
@@ -56,28 +61,58 @@ export function Bank () {
 		dispatch(openTransactionInModal());
 	};
 
+	const balanceSummary = (
+		<Chip
+			variant="outlined"
+			label={
+				<Typography variant="subtitle">
+					Balance: <Amount value={balance} size="small" showSymbol currency={currency} />
+				</Typography>
+			}
+		/>
+	);
+
+	const newControls = (
+		<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<AddIcon />}>
+			New
+		</Button>
+	);
+
 	return (
 		<Layout title={name}>
-			<Stack direction="row" alignItems="center" justifyContent="space-between">
-				<Chip
-					variant="outlined"
-					label={
-						<Typography variant="subtitle">
-							Balance: <Amount value={balance} size="small" showSymbol currency={currency} />
-						</Typography>
-					}
-				/>
-				<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<AddIcon />}>
-					New
-				</Button>
-			</Stack>
-			<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
-				<BankTransactions
-					account={account}
-					currency={currency}
-					transactions={accountTransactions}
-				/>
-			</Box>
+			{isSmallScreen ? (
+				<>
+					<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+						{balanceSummary}
+						{newControls}
+					</Stack>
+					<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
+						<BankTransactions
+							account={account}
+							currency={currency}
+							transactions={accountTransactions}
+						/>
+					</Box>
+				</>
+			) : (
+				<Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+					<Box sx={{ width: 240, flexShrink: 0 }}>
+						<Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+							<Stack direction="column" spacing={1}>
+								{newControls}
+								{balanceSummary}
+							</Stack>
+						</Paper>
+					</Box>
+					<Box sx={{ flex: 1 }}>
+						<BankTransactions
+							account={account}
+							currency={currency}
+							transactions={accountTransactions}
+						/>
+					</Box>
+				</Box>
+			)}
 			<BankTransactionModal
 				EditForm={BankTransactionForm}
 				isOpen={isModalOpen}

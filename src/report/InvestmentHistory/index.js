@@ -3,6 +3,10 @@ import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+
+import { useTheme } from '@mui/material/styles';
+
+import Box from '@mui/material/Box';
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
@@ -23,44 +27,23 @@ import {
 import { toCurrencyFormat } from '../../utils/formatting';
 
 const CustomTooltip = ({ active, payload, label }) => {
-	if (active) {
+	if (active && payload && payload.length) {
 		return (
-			<Stack
-				sx={(theme) => ({
-					padding: '5px',
-					border: '1px solid rgba(34,36,38,.1)',
-					borderRadius: '.28571429rem',
-					backgroundColor: theme.palette.secondary.main
-				})}
-			>
-				<Typography variant="subtitle1" gutterBottom>
-					{`${label.substring(0, 7)}`}
-				</Typography>
-				{
-					payload.map(i => (
-						<Stack key={i.dataKey} direction="row">
-							<Typography
-								variant="body1"
-								gutterBottom
-								sx={() => ({
-									color: stc(i.dataKey)
-								})}
-							>
-								{`${i.dataKey} `}
-							</Typography>
-							<Typography
-								variant="body1"
-								gutterBottom
-								sx={() => ({
-									color: stc(i.dataKey)
-								})}
-							>
-								{`: ${toCurrencyFormat(i.value)}`}
-							</Typography>
+			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, minWidth: 150, boxShadow: 3 }}>
+				<Typography variant="subtitle2" gutterBottom>{label}</Typography>
+				{payload
+					.filter(entry => entry.value > 0)
+					.sort((a, b) => b.value - a.value)
+					.map(entry => (
+						<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+							<Stack direction="row" spacing={0.5} alignItems="center">
+								<Box sx={{ width: 10, height: 10, bgcolor: entry.fill, borderRadius: '2px' }} />
+								<Typography variant="caption">{entry.name}</Typography>
+							</Stack>
+							<Typography variant="caption">{toCurrencyFormat(entry.value)}</Typography>
 						</Stack>
-					))
-				}
-			</Stack>
+					))}
+			</Box>
 		);
 	}
 	return null;
@@ -69,10 +52,11 @@ const CustomTooltip = ({ active, payload, label }) => {
 CustomTooltip.propTypes = {
 	active: PropTypes.bool,
 	label: PropTypes.string,
-	payload:  PropTypes.array
+	payload: PropTypes.array
 };
 
 function InvestmentHistory () {
+	const theme = useTheme();
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
 	const filteredInvestments = useSelector((state) => state.filteredInvestments);
@@ -165,12 +149,17 @@ function InvestmentHistory () {
 							data={investmentHistory}
 							margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 						>
-							<XAxis dataKey="date" />
+							<XAxis dataKey="date" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
 							<YAxis hide />
 							<Tooltip content={<CustomTooltip />} />
 							{
-								filteredInvestments.map(i => (
-									<Bar key={i} dataKey={i} stackId="a" fill={stc(i)} />
+								filteredInvestments.map((i, index) => (
+									<Bar
+										key={i}
+										dataKey={i}
+										stackId="a"
+										fill={stc(i)}
+										radius={[4, 4, 4, 4]} />
 								))
 							}
 						</BarChart>

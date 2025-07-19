@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
 
 import moment from 'moment';
 
@@ -14,6 +15,7 @@ import BankTransactionModal from '../components/BankTransactionModal';
 import SortMenuButton from '../components/SortMenuButton';
 import AccountFilter from '../components/AccountFilter';
 import Amount from '../components/Amount';
+
 import useWidth from '../hooks/useWidth';
 
 const filterTransactions = ( transactions, startDate, endDate, filteredAccounts ) => {
@@ -141,55 +143,76 @@ const Transactions = () => {
 		return allAccountsTransactions && allAccountsTransactions.length > 0;
 	}, [allAccountsTransactions]);
 
+	const incomeExpenseSummary = validTransactionsExist ? (
+		isSmallScreen ? (
+			<Chip
+				variant="outlined"
+				label={
+					<Typography variant="subtitle2" component="div">
+						<Amount value={income} size="small" showSymbol={false} currency={displayCurrency} />
+						{' / '}
+						<Amount value={expense} size="small" negativeColor showSymbol={false} currency={displayCurrency} />
+					</Typography>
+				}
+			/>
+		) : (
+			<Stack direction="column" spacing={1}>
+				<Chip
+					variant="outlined"
+					label={<Typography variant="subtitle2">Income: <Amount value={income} size="small" showSymbol currency={displayCurrency} /></Typography>}
+				/>
+				<Chip
+					variant="outlined"
+					label={<Typography variant="subtitle2">Expense: <Amount value={expense} size="small" negativeColor showSymbol currency={displayCurrency} /></Typography>}
+				/>
+			</Stack>
+		)
+	) : (
+		<Typography variant="subtitle1">No transactions available</Typography>
+	);
+
+	const filterControls = (
+		<Stack direction={isSmallScreen ? 'row' : 'column'} spacing={1} alignItems={isSmallScreen ? 'center' : 'stretch'}>
+			<SortMenuButton
+				value={selectedRange}
+				onChange={handleRangeChange}
+				options={dateRangeOptions}
+			/>
+			<AccountFilter
+				allAccounts={allBankAccounts}
+				filteredAccounts={filteredAccounts}
+				setfilteredAccounts={setFilteredAccounts}
+			/>
+		</Stack>
+	);
+
 	return (
 		<Layout title="Transactions">
-			<Stack direction="row" alignItems="center" justifyContent="space-between">
-				{validTransactionsExist ? (
-					isSmallScreen ? (
-						<Chip
-							variant="outlined"
-							label={
-								<Typography variant="subtitle2" component="div">
-									<Amount value={income} size="small" showSymbol={false} currency={displayCurrency} />
-									{' / '}
-									<Amount value={expense} size="small" negativeColor showSymbol={false} currency={displayCurrency} />
-								</Typography>
-							}
-						/>
-					) : (
-						<Stack direction="row" spacing={1}>
-							<Chip
-								variant="outlined"
-								label={<Typography variant="subtitle2">Income: <Amount value={income} size="small" showSymbol currency={displayCurrency} /></Typography>}
-							/>
-							<Chip
-								variant="outlined"
-								label={<Typography variant="subtitle2">Expense: <Amount value={expense} size="small" negativeColor showSymbol currency={displayCurrency} /></Typography>}
-							/>
-						</Stack>
-					)
-				) : (
-					<Typography variant="subtitle1">No transactions available</Typography>
-				)}
-				<Stack direction="row" alignItems="center" spacing={1}>
-					<SortMenuButton
-						value={selectedRange}
-						onChange={handleRangeChange}
-						options={dateRangeOptions}
-					/>
-					<AccountFilter
-						allAccounts={allBankAccounts}
-						filteredAccounts={filteredAccounts}
-						setfilteredAccounts={setFilteredAccounts}
-					/>
-				</Stack>
-			</Stack>
-			<Box sx={{ flex: 1, mb: 1, textAlign: 'center' }}>
-				<BankTransactions
-					showAccount
-					transactions={filteredTransactions}
-				/>
-			</Box>
+			{isSmallScreen ? (
+				<>
+					<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+						{incomeExpenseSummary}
+						{filterControls}
+					</Stack>
+					<Box sx={{ flex: 1, textAlign: 'center' }}>
+						<BankTransactions showAccount transactions={filteredTransactions} />
+					</Box>
+				</>
+			) : (
+				<Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+					<Box sx={{ width: 240, flexShrink: 0 }}>
+						<Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+							<Stack direction="column" spacing={1}>
+								{filterControls}
+								{incomeExpenseSummary}
+							</Stack>
+						</Paper>
+					</Box>
+					<Box sx={{ flex: 1 }}>
+						<BankTransactions showAccount transactions={filteredTransactions} />
+					</Box>
+				</Box>
+			)}
 			<BankTransactionModal
 				isEdit={true}
 				transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete

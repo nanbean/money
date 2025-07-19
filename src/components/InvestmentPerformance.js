@@ -1,13 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
+import {
+	Paper,
+	Stack,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+	Typography,
+	IconButton
+} from '@mui/material';
 
-import NormalGrid from '../components/NormalGrid';
 import TossIcon from './icons/TossIcon';
+import Amount from './Amount';
+import Quantity from './Quantity';
 
 export function InvestmentPerformance ({
 	investment,
@@ -29,41 +38,6 @@ export function InvestmentPerformance ({
 		}
 	};
 
-	const performanceData = [
-		[
-			{ type: 'label', value: 'Account' },
-			{ type: 'label', value: 'Cost Basis' },
-			{ type: 'label', value: 'Market Value' },
-			{ type: 'label', value: 'Realized Gain/Loss' },
-			{ type: 'label', value: 'Dividend' },
-			{ type: 'label', value: 'Return for Period' },
-			{ type: 'label', value: 'Price' },
-			{ type: 'label', value: 'Quantity' }
-		],
-		...performance.map(i => {
-			return [
-				{ value: i.account },
-				{ type: 'noColorCurrency', currency, value: i.costBasis },
-				{ type: 'noColorCurrency', currency, value: i.marketValue },
-				{ type: 'currency', currency, value: i.periodGain },
-				{ type: 'currency', currency, value: i.periodDiv },
-				{ type: 'currency', currency, value: i.periodReturn },
-				{ type: 'noColorCurrency', currency, value: price, showOriginal: true },
-				{ type: 'quantity', value: i.quantity }
-			];
-		}),
-		[
-			{ type: 'label', value: 'Total' },
-			{ type: 'noColorCurrency', currency, value: totalCostBasis },
-			{ type: 'noColorCurrency', currency, value: totalMarketValue },
-			{ type: 'currency', currency, value: totalGain },
-			{ type: 'currency', currency, value: totalDividend },
-			{ type: 'currency', currency, value: totalPerformance },
-			{ type: 'label', value: '' },
-			{ type: 'quantity', value: totalQuantity }
-		]
-	];
-
 	return (
 		<Paper sx={{ p: { xs: 0.5, sm: 1 }, mb: 1 }}>
 			<Stack
@@ -83,9 +57,70 @@ export function InvestmentPerformance ({
 					</IconButton>
 				)}
 			</Stack>
-			<NormalGrid
-				gridData={performanceData}
-			/>
+			<TableContainer>
+				<Table size="small">
+					<TableHead>
+						<TableRow>
+							<TableCell>Account</TableCell>
+							<TableCell align="right">Price / Qty</TableCell>
+							<TableCell align="right">Cost / Market</TableCell>
+							<TableCell align="right">G/L / Dividend</TableCell>
+							<TableCell align="right">Return</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{performance.map(i => (
+							<TableRow key={i.account}>
+								<TableCell component="th" scope="row">
+									{i.account}
+								</TableCell>
+								<TableCell align="right">
+									<Stack>
+										<Amount value={price} currency={currency} showSymbol showOriginal />
+										<Quantity value={i.quantity}/>
+									</Stack>
+								</TableCell>
+								<TableCell align="right">
+									<Stack>
+										<Amount value={i.costBasis} currency={currency} showSymbol />
+										<Amount value={i.marketValue} currency={currency} showSymbol />
+									</Stack>
+								</TableCell>
+								<TableCell align="right">
+									<Stack>
+										<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
+										<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />
+									</Stack>
+								</TableCell>
+								<TableCell align="right">
+									<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
+								</TableCell>
+							</TableRow>
+						))}
+						<TableRow sx={{ '& > *': { borderTop: '2px solid rgba(224, 224, 224, 1)', fontWeight: 'bold' } }}>
+							<TableCell component="th" scope="row">Total</TableCell>
+							<TableCell align="right">
+								<Typography variant="caption">{totalQuantity}</Typography>
+							</TableCell>
+							<TableCell align="right">
+								<Stack>
+									<Amount value={totalCostBasis} currency={currency} showSymbol />
+									<Amount value={totalMarketValue} currency={currency} showSymbol />
+								</Stack>
+							</TableCell>
+							<TableCell align="right">
+								<Stack>
+									<Amount value={totalGain} currency={currency} showSymbol negativeColor />
+									<Amount value={totalDividend} currency={currency} showSymbol negativeColor />
+								</Stack>
+							</TableCell>
+							<TableCell align="right">
+								<Amount value={totalPerformance} currency={currency} showSymbol negativeColor />
+							</TableCell>
+						</TableRow>
+					</TableBody>
+				</Table>
+			</TableContainer>
 		</Paper>
 	);
 }

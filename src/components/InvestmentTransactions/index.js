@@ -79,7 +79,9 @@ export function InvestmentTransactions ({
 							headerRenderer={({ label }) => (
 								<Typography variant="subtitle2" color="secondary">{label}</Typography>
 							)}
-							cellRenderer={({ cellData }) => toDateFormat(cellData)}
+							cellRenderer={({ cellData }) => (
+								<Typography variant="body2">{toDateFormat(cellData)}</Typography>
+							)}
 						/>
 					}
 					<Column
@@ -123,6 +125,9 @@ export function InvestmentTransactions ({
 						width={isSmallScreen ? width/5:width/10}
 						headerRenderer={({ label }) => (
 							<Typography variant="subtitle2" color="secondary">{label}</Typography>
+						)}
+						cellRenderer={({ cellData }) => (
+							<Typography variant="body2">{cellData}</Typography>
 						)}
 					/>
 					{

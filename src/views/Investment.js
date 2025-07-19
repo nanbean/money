@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import MoneyIcon from '@mui/icons-material/Money';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import Paper from '@mui/material/Paper';
 
 import AccountInvestments from './AccountInvestments';
 import Layout from '../components/Layout';
@@ -18,7 +19,7 @@ import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 import InvestmentTransactionForm from '../components/InvestmentTransactionForm';
 
-import useHeight from '../hooks/useHeight';
+import useWidth from '../hooks/useWidth';
 
 import { setAccountAction } from '../actions/accountActions';
 
@@ -44,8 +45,6 @@ const csvHeaders = [
 	{ label: 'Commission', key: 'commission' }
 ];
 
-const ROW_HEIGHT = 60;
-
 const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
 const getAccountTransactions = (transactions, accountId) => transactions.filter(i => i.accountId === accountId);
 const getCurrencyByAccountId = (accountId, accountList) => {
@@ -60,9 +59,6 @@ export function Investment () {
 	const dropInvestmentList = useSelector((state) => state.dropInvestmentList);
 	const isEdit = useSelector((state) => state.ui.form.investmentTransaction.isEdit);
 	const isModalOpen = useSelector((state) => state.ui.form.investmentTransaction.isModalOpen);
-	const accountInvestments = useSelector((state) => state.accountInvestments);
-	const performanceRowCount = accountInvestments.filter(i => i.quantity > 0).length + 3; // 3 : Header, Cash, Total
-	const transactionsHeight = useHeight() - ROW_HEIGHT * performanceRowCount - 64 - 64 - 56; // TODO: Optimize calculation
 
 	const { name } = useParams();
 	const { pathname } = useLocation();
@@ -71,6 +67,9 @@ export function Investment () {
 	const currency = useMemo(() => getCurrencyByAccountId(accountId, accountList), [accountId, accountList]);
 
 	const dispatch = useDispatch();
+
+	const width = useWidth();
+	const isSmallScreen = width === 'xs' || width === 'sm';
 
 	useEffect(() => {
 		dispatch(setAccountAction(name));
@@ -81,36 +80,68 @@ export function Investment () {
 		dispatch(openTransactionInModal());
 	};
 
+	const buttonControls = (
+		<Stack spacing={0.5} direction={isSmallScreen ? 'row' : 'column'} alignItems="stretch">
+			<Button fullWidth variant="outlined" color="primary" onClick={onNewClick} startIcon={<AddIcon />}>
+				New
+			</Button>
+			<Link to={`/Bank/${account}_Cash`} style={{ ...linkStyle, width: '100%' }}>
+				<Button fullWidth variant="outlined" color="primary" startIcon={<MoneyIcon />}>
+					Cash
+				</Button>
+			</Link>
+			<CSVLink
+				data={accountTransactions}
+				headers={csvHeaders}
+				filename="transactions.csv"
+				style={{ ...linkStyle, width: '100%' }}
+			>
+				<Button fullWidth variant="outlined" color="primary" startIcon={<FileDownloadIcon />}>
+					CSV
+				</Button>
+			</CSVLink>
+		</Stack>
+	);
+	
 	return (
 		<Layout title={name}>
-			<Stack spacing={0.5} direction="row" alignItems="center" justifyContent="flex-end">
-				<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<AddIcon />}>
-					New
-				</Button>
-				<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
-					<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<MoneyIcon />}>
-						Cash
-					</Button>
-				</Link>
-				<CSVLink
-					data={accountTransactions}
-					headers={csvHeaders}
-					filename="transactions.csv"
-					style={{ color: 'inherit', textDecoration: 'none' }}
-				>
-					<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<FileDownloadIcon />}>
-						CSV
-					</Button>
-				</CSVLink>
-			</Stack>
-			
-			<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
-				<InvestmentTransactions
-					transactions={accountTransactions}
-					currency={currency}
-				/>
-			</Box>
-
+			{isSmallScreen ? (
+				<Stack sx={{ height: '100%' }}>
+					<Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ mb: 1 }}>
+						{buttonControls}
+					</Stack>
+					<Box sx={{ flex: 1, overflow: 'hidden' }}>
+						<InvestmentTransactions
+							transactions={accountTransactions}
+							currency={currency}
+						/>
+					</Box>
+					<Box sx={{ flexShrink: 0, mt: 2 }}>
+						<AccountInvestments currency={currency} />
+					</Box>
+				</Stack>
+			) : (
+				<Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+					<Box sx={{ width: 240, flexShrink: 0 }}>
+						<Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+							<Stack direction="column" spacing={1}>
+								{buttonControls}
+							</Stack>
+						</Paper>
+					</Box>
+					<Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+						<Box sx={{ flex: 1, overflow: 'hidden' }}>
+							<InvestmentTransactions
+								transactions={accountTransactions}
+								currency={currency}
+							/>
+						</Box>
+						<Box sx={{ flexShrink: 0, mt: 2 }}>
+							<AccountInvestments currency={currency} />
+						</Box>
+					</Box>
+				</Box>
+			)}
 			<InvestmentTransactionModal
 				EditForm={InvestmentTransactionForm}
 				isOpen={isModalOpen}
@@ -120,7 +151,6 @@ export function Investment () {
 				transactions={accountTransactions}
 				autocompleteInvestmentList={dropInvestmentList}
 			/>
-			<AccountInvestments currency={currency} />
 		</Layout>
 	);
 }

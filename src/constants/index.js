@@ -72,7 +72,7 @@ export const TYPE_NAME_MAP = {
 	'Bank': 'Bank',
 	'CCard': 'Credit Card',
 	'Cash': 'Cash',
-	'Invst': 'Investement',
+	'Invst': 'Investment',
 	'Oth L': 'Loan',
 	'Oth A': 'Asset'
 };

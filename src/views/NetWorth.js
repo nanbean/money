@@ -2,6 +2,10 @@ import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip } from 'recharts';
+
+import { useTheme } from '@mui/material/styles';
+
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
@@ -17,56 +21,20 @@ import {
 import { toCurrencyFormat } from '../utils/formatting';
 
 const CustomTooltip = ({ active, payload, label }) => {
-	if (active) {
+	if (active && payload && payload.length) {
 		return (
-			<Stack
-				sx={(theme) => ({
-					padding: '5px',
-					border: '1px solid rgba(34,36,38,.1)',
-					borderRadius: '.28571429rem',
-					backgroundColor: theme.palette.secondary.main
-				})}
-			>
-				<Typography variant="subtitle1" gutterBottom>
-					{`${label.substring(0, 7)}`}
-				</Typography>
-				<Typography
-					variant="body1"
-					gutterBottom
-					sx={() => ({
-						color: '#82281b'
-					})}
-				>
-					{`Net Worth : ${toCurrencyFormat(payload[3].value)}`}
-				</Typography>
-				<Typography
-					variant="body1"
-					gutterBottom
-					sx={() => ({
-						color: '#e48274'
-					})}
-				>
-					{`Cash Asset : ${toCurrencyFormat(payload[2].value)}`}
-				</Typography>
-				<Typography
-					variant="body1"
-					gutterBottom
-					sx={() => ({
-						color: '#b5665b'
-					})}
-				>
-					{`Investement Asset : ${toCurrencyFormat(payload[1].value)}`}
-				</Typography>
-				<Typography
-					variant="body1"
-					gutterBottom
-					sx={() => ({
-						color: '#b04333'
-					})}
-				>
-					{`Real Estate : ${toCurrencyFormat(payload[0].value)}`}
-				</Typography>
-			</Stack>
+			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, minWidth: 150, boxShadow: 3 }}>
+				<Typography variant="subtitle2" gutterBottom>{label}</Typography>
+				{payload.sort((a, b) => b.value - a.value).map(entry => (
+					<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+						<Stack direction="row" spacing={0.5} alignItems="center">
+							<Box sx={{ width: 10, height: 10, bgcolor: entry.color, borderRadius: '2px' }} />
+							<Typography variant="caption">{entry.name}</Typography>
+						</Stack>
+						<Typography variant="caption">{toCurrencyFormat(entry.value)}</Typography>
+					</Stack>
+				))}
+			</Box>
 		);
 	}
 	return null;
@@ -79,6 +47,7 @@ CustomTooltip.propTypes = {
 };
 
 function NetWorth () {
+	const theme = useTheme();
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const { currency: displayCurrency, exchangeRate, netWorthChartRange = 'monthly' } = useSelector((state) => state.settings);
 	const rangedNetWorthFlow = useMemo(() => netWorthFlow.filter(item => {
@@ -133,13 +102,13 @@ function NetWorth () {
 								data={rangedNetWorthFlow}
 								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
 							>
-								<XAxis dataKey="date"/>
+								<XAxis dataKey="date" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
 								<YAxis hide/>
 								<Tooltip content={<CustomTooltip />} />
-								<Bar dataKey="assetNetWorth" stackId="a" fill="#b04333" />
-								<Bar dataKey="investmentsNetWorth" stackId="a" fill="#b5665b" />
-								<Bar dataKey="cashNetWorth" stackId="a" fill="#e48274" />
-								<Line dataKey="netWorth" stroke="#82281b" strokeDasharray="5 5"/>
+								<Bar dataKey="assetNetWorth" name="Real Estate" stackId="a" fill={theme.palette.success.main} radius={[4, 4, 4, 4]} />
+								<Bar dataKey="cashNetWorth" name="Cash Asset" stackId="a" fill={theme.palette.warning.main} radius={[4, 4, 4, 4]} />
+								<Bar dataKey="investmentsNetWorth" name="Investment Asset" stackId="a" fill={theme.palette.info.main} radius={[4, 4, 4, 4]} />
+								<Line dataKey="netWorth" name="Net Worth" stroke={theme.palette.text.primary} strokeDasharray="5 5"/>
 							</ComposedChart>
 						</ResponsiveContainer>
 				}
