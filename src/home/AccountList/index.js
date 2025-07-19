@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
@@ -13,6 +13,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import Amount from '../../components/Amount';
 import SortMenuButton from '../../components/SortMenuButton';
 import Summary from '../Summary';
+import useWidth from '../../hooks/useWidth';
 
 import {
 	updateGeneralAction
@@ -86,6 +87,8 @@ export default function AccountList () {
 	const [expandedRows, setExpandedRows] = useState(new Set());
 	const { currency: displayCurrency, exchangeRate, accountListSortBy = 'name' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
+	const width = useWidth();
+	const isSmallScreen = width === 'xs' || width === 'sm';
 
 	const handleSortChange = (newSortBy) => {
 		dispatch(updateGeneralAction('accountListSortBy', newSortBy));
@@ -97,6 +100,14 @@ export default function AccountList () {
 		// Always sort the groups by name, regardless of the sortBy state for inner items.
 		return Object.entries(grouped).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
 	}, [accountList, displayCurrency, exchangeRate, accountListSortBy]);
+
+	useEffect(() => {
+		if (isSmallScreen) {
+			setExpandedRows(new Set());
+		} else {
+			setExpandedRows(new Set(groupedAccounts.map(([type]) => type)));
+		}
+	}, [isSmallScreen, groupedAccounts]);
 
 	const handleRowToggle = (type) => {
 		const newExpandedRows = new Set(expandedRows);
