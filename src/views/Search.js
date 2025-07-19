@@ -11,6 +11,7 @@ import Grid from '@mui/material/Grid';
 import FormControl from '@mui/material/FormControl';
 import Input from '@mui/material/Input';
 import InputAdornment from '@mui/material/InputAdornment';
+import Chip from '@mui/material/Chip';
 
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -206,6 +207,21 @@ export function Search () {
 
 	return (
 		<Layout title="Search">
+			<Stack direction="row" alignItems="center" justifyContent="space-between">
+				<Chip
+					variant="outlined"
+					label={
+						<Typography variant="subtitle">
+							Sum: <Amount value={balance} size="small" negativeColor showSymbol currency={displayCurrency}/>
+						</Typography>
+					}
+				/>
+				<AccountFilter
+					allAccounts={allAccounts}
+					filteredAccounts={filteredAccounts}
+					setfilteredAccounts={onFilteredAccountsChange}
+				/>
+			</Stack>
 			<Sticky>
 				<Grid
 					container
@@ -215,15 +231,6 @@ export function Search () {
 						marginBottom: theme.spacing(1)
 					})}
 				>
-					<Grid item xs={12}>
-						<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-							<AccountFilter
-								allAccounts={allAccounts}
-								filteredAccounts={filteredAccounts}
-								setfilteredAccounts={onFilteredAccountsChange}
-							/>
-						</Stack>
-					</Grid>
 					<Grid item xs={6}>
 						<FormControl required fullWidth>
 							<Input
@@ -303,21 +310,6 @@ export function Search () {
 					/>
 				}
 			</Box>
-			<Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline' }}>
-				<Typography
-					variant="subtitle1"
-					color="inherit"
-					gutterBottom
-					align="right"
-					sx={(theme) => ({
-						marginTop: theme.spacing(1),
-						marginRight: theme.spacing(1)
-					})}
-				>
-					{'Sum : '}
-				</Typography>
-				<Amount value={balance} size="large" negativeColor showSymbol currency={displayCurrency}/>
-			</Stack>
 			<BankTransactionModal
 				isEdit={true}
 				transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete

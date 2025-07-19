@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
@@ -13,6 +14,7 @@ import BankTransactionModal from '../components/BankTransactionModal';
 import SortMenuButton from '../components/SortMenuButton';
 import AccountFilter from '../components/AccountFilter';
 import Amount from '../components/Amount';
+import useWidth from '../hooks/useWidth';
 
 const filterTransactions = ( transactions, startDate, endDate, filteredAccounts ) => {
 	const validTypes = ['Bank', 'CCard', 'Cash'];
@@ -41,6 +43,8 @@ const filterTransactions = ( transactions, startDate, endDate, filteredAccounts 
 const Transactions = () => {
 	const allAccountsTransactions = useSelector(state => state.allAccountsTransactions);
 	const accountList = useSelector(state => state.accountList);
+	const width = useWidth();
+	const isSmallScreen = width === 'xs' || width === 'sm';
 	const [dateRange, setDateRange] = useState(() => {
 		const end = moment();
 		const start = moment().subtract(1, 'months');
@@ -139,26 +143,35 @@ const Transactions = () => {
 
 	return (
 		<Layout title="Transactions">
-
-			<Stack direction="row" alignItems="center">
-				<Stack sx={{ ml: 1 }} direction="row" justifyContent="flex-start" alignItems="baseline">
-					{validTransactionsExist && (
-						<>
-							<Typography variant="subtitle1" sx={{ mr: 1 }}>
-								Income :
-							</Typography>
-							<Amount value={income} size="medium" showSymbol currency={displayCurrency} />
-							<Typography variant="subtitle1" sx={{ ml: 2, mr: 1 }}>
-								Expense :
-							</Typography>
-							<Amount value={expense} size="medium" negativeColor showSymbol currency={displayCurrency} />
-						</>
-					)}
-					{!validTransactionsExist && (
-						<Typography variant="subtitle1">No transactions available</Typography>
-					)}
-				</Stack>
-				<Stack sx={{ marginLeft: 'auto' }} direction="row" justifyContent="flex-end" alignItems="center">
+			<Stack direction="row" alignItems="center" justifyContent="space-between">
+				{validTransactionsExist ? (
+					isSmallScreen ? (
+						<Chip
+							variant="outlined"
+							label={
+								<Typography variant="subtitle2" component="div">
+									<Amount value={income} size="small" showSymbol={false} currency={displayCurrency} />
+									{' / '}
+									<Amount value={expense} size="small" negativeColor showSymbol={false} currency={displayCurrency} />
+								</Typography>
+							}
+						/>
+					) : (
+						<Stack direction="row" spacing={1}>
+							<Chip
+								variant="outlined"
+								label={<Typography variant="subtitle2">Income: <Amount value={income} size="small" showSymbol currency={displayCurrency} /></Typography>}
+							/>
+							<Chip
+								variant="outlined"
+								label={<Typography variant="subtitle2">Expense: <Amount value={expense} size="small" negativeColor showSymbol currency={displayCurrency} /></Typography>}
+							/>
+						</Stack>
+					)
+				) : (
+					<Typography variant="subtitle1">No transactions available</Typography>
+				)}
+				<Stack direction="row" alignItems="center" spacing={1}>
 					<SortMenuButton
 						value={selectedRange}
 						onChange={handleRangeChange}

@@ -7,7 +7,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Input from '@mui/material/Input';
 import FormControl from '@mui/material/FormControl';
-
+import Typography from '@mui/material/Typography';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -95,8 +95,8 @@ export function Category () {
 							rowClassName="row"
 							width={width}
 							height={height}
-							headerHeight={40}
-							rowHeight={40}
+							headerHeight={44}
+							rowHeight={38}
 							rowCount={rows.length}
 							rowGetter={({ index }) => rows[index]}
 							onRowClick={onRowSelect}
@@ -105,7 +105,7 @@ export function Category () {
 								label="Category"
 								dataKey="category"
 								width={width}
-								cellRenderer={({ cellData }) => cellData}
+								cellRenderer={({ cellData }) => (<Typography variant="body2">{cellData}</Typography>)}
 							/>
 						</Table>
 					)}

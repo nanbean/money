@@ -179,8 +179,8 @@ export function WeeklyGraph () {
 
 	return (
 		<Box p={1}>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, p: 1 }}>
-				<Typography variant="subtitle1">Weekly Graph</Typography>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ ml: 1 }}>
+				<Typography variant="button">Weekly Graph</Typography>
 				<SortMenuButton
 					value={weeklyGraphChartType}
 					onChange={handleChartTypeChange}

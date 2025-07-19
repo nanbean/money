@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -63,9 +64,9 @@ export function Dividend () {
 	];
 
 	return (
-		<div>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1 }}>
-				<FormControl variant="standard" sx={{ minWidth: 120 }}>
+		<Box sx={{ p: 1 }}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center">
+				<FormControl size="small" sx={{ minWidth: 150 }}>
 					<Select
 						value={year}
 						onChange={onYearChange}
@@ -90,7 +91,7 @@ export function Dividend () {
 			<NormalGrid
 				gridData={dividendGridata}
 			/>
-		</div>
+		</Box>
 	);
 }
 

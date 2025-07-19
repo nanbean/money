@@ -2,12 +2,11 @@ import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 
-import { styled } from '@mui/material/styles';
-
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
 
 import AddIcon from '@mui/icons-material/Add';
 
@@ -21,18 +20,6 @@ import { setAccountAction } from
 	'../actions/accountActions';
 
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
-
-const Sticky = styled('div')(({ theme }) => ({
-	width: '100%',
-	position: 'sticky',
-	zIndex: theme.zIndex.drawer + 1,
-	[theme.breakpoints.down('sm')]: {
-		top: 56
-	},
-	[theme.breakpoints.up('sm')]: {
-		top: 64
-	}
-}));
 
 const getAccountId = pathname =>
 	`account${decodeURI(pathname.replace(/\//g, ':')).replace(/%20/g, ' ')}`;
@@ -71,21 +58,19 @@ export function Bank () {
 
 	return (
 		<Layout title={name}>
-			<Sticky>
-				<Button
-					fullWidth
+			<Stack direction="row" alignItems="center" justifyContent="space-between">
+				<Chip
 					variant="outlined"
-					color="primary"
-					onClick={onNewClick}
-				>
+					label={
+						<Typography variant="subtitle">
+							Balance: <Amount value={balance} size="small" showSymbol currency={currency} />
+						</Typography>
+					}
+				/>
+				<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<AddIcon />}>
 					New
-					<AddIcon
-						sx={(theme) => ({
-							marginLeft: theme.spacing(1)
-						})}
-					/>
 				</Button>
-			</Sticky>
+			</Stack>
 			<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
 				<BankTransactions
 					account={account}
@@ -93,17 +78,6 @@ export function Bank () {
 					transactions={accountTransactions}
 				/>
 			</Box>
-			<Stack spacing={0.5} direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'baseline', pt: 1 }}>
-				<Typography
-					variant="subtitle1"
-					gutterBottom
-					align="right"
-					sx={{ mt: 1, mb: 1 }}
-				>
-					Balance :
-				</Typography>
-				<Amount value={balance} size="large" negativeColor showSymbol showOriginal currency={currency}/>
-			</Stack>
 			<BankTransactionModal
 				EditForm={BankTransactionForm}
 				isOpen={isModalOpen}

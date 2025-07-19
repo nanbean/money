@@ -5,8 +5,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 
 import { CSVLink } from 'react-csv';
 
-import { styled } from '@mui/material/styles';
-
+import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
@@ -34,18 +33,6 @@ const linkStyle = {
 	textDecoration: 'none',
 	color: 'inherit'
 };
-
-const Sticky = styled('div')(({ theme }) => ({
-	width: '100%',
-	position: 'sticky',
-	zIndex: theme.zIndex.drawer + 1,
-	[theme.breakpoints.down('sm')]: {
-		top: 56
-	},
-	[theme.breakpoints.up('sm')]: {
-		top: 64
-	}
-}));
 
 const csvHeaders = [
 	{ label: 'Date', key: 'date' },
@@ -96,63 +83,27 @@ export function Investment () {
 
 	return (
 		<Layout title={name}>
-			<Sticky>
-				<div style={{ display: 'inline-block', width: '35%' }}>
-					<Button
-						fullWidth
-						variant="outlined"
-						color="primary"
-						onClick={onNewClick}
-						sx={{ backdropFilter: 'blur(5px)' }}
-					>
-						New
-						<AddIcon
-							sx={(theme) => ({
-								marginLeft: theme.spacing(1)
-							})}
-						/>
+			<Stack spacing={0.5} direction="row" alignItems="center" justifyContent="flex-end">
+				<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<AddIcon />}>
+					New
+				</Button>
+				<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
+					<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<MoneyIcon />}>
+						Cash
 					</Button>
-				</div>
-				<div style={{ display: 'inline-block', width: '35%' }}>
-					<Link to={`/Bank/${account}_Cash`} style={linkStyle}>
-						<Button
-							fullWidth
-							variant="outlined"
-							color="primary"
-							sx={{ backdropFilter: 'blur(5px)' }}
-						>
-							Cash
-							<MoneyIcon
-								sx={(theme) => ({
-									marginLeft: theme.spacing(1)
-								})}
-							/>
-						</Button>
-					</Link>
-				</div>
-				<div style={{ display: 'inline-block', width: '30%' }}>
-					<CSVLink
-						data={accountTransactions}
-						headers={csvHeaders}
-						filename="transactions.csv"
-						style={{ color: 'inherit', textDecoration: 'none' }}
-					>
-						<Button
-							fullWidth
-							variant="outlined"
-							color="primary"
-							sx={{ backdropFilter: 'blur(5px)' }}
-						>
-							CSV
-							<FileDownloadIcon
-								sx={(theme) => ({
-									marginLeft: theme.spacing(1)
-								})}
-							/>
-						</Button>
-					</CSVLink>
-				</div>
-			</Sticky>
+				</Link>
+				<CSVLink
+					data={accountTransactions}
+					headers={csvHeaders}
+					filename="transactions.csv"
+					style={{ color: 'inherit', textDecoration: 'none' }}
+				>
+					<Button variant="outlined" color="primary" onClick={onNewClick} startIcon={<FileDownloadIcon />}>
+						CSV
+					</Button>
+				</CSVLink>
+			</Stack>
+			
 			<Box sx={{ height: transactionsHeight, textAlign: 'center' }}>
 				<InvestmentTransactions
 					transactions={accountTransactions}

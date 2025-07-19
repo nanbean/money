@@ -77,8 +77,8 @@ export function LatestTransactions () {
 
 	return (
 		<Box p={1}>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 1, pt: 1 }}>
-				<Typography variant="subtitle1">Latest Transactions</Typography>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ ml: 1 }}>
+				<Typography variant="button">Latest Transactions</Typography>
 				<SortMenuButton
 					value={latestTransactionsSortBy}
 					onChange={handleSortChange}

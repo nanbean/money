@@ -44,7 +44,7 @@ export function BankTransactions ({
 	transactions
 }) {
 	const width = useWidth();
-	const isWidthDownMd = width === 'xs' || width === 'sm';
+	const isSmallScreen = width === 'xs' || width === 'sm';
 
 	const dispatch = useDispatch();
 	const accountList = useSelector(state => state.accountList);
@@ -72,18 +72,18 @@ export function BankTransactions ({
 					width={width}
 					height={height}
 					headerHeight={44}
-					rowHeight={!isWidthDownMd ? 38 : 55}
+					rowHeight={!isSmallScreen ? 38 : 55}
 					scrollToIndex={transactions.length-1}
 					rowCount={transactions.length}
 					rowGetter={({ index }) => transactions[index]}
 					onRowClick={onRowSelect}
 				>
 					{
-						showAccount &&
+						!isSmallScreen && showAccount &&
 						<Column
 							label="Account"
 							dataKey="account"
-							width={width/4}
+							width={width/5}
 							cellDataGetter={({ rowData }) => ({ type: rowData.type, account: rowData.account })}
 							cellRenderer={({ cellData }) => {
 								const IconComponent = TYPE_ICON_MAP[cellData.type];
@@ -101,11 +101,11 @@ export function BankTransactions ({
 						/>
 					}
 					{
-						!isWidthDownMd &&
+						!isSmallScreen &&
 						<Column
 							label="Date"
 							dataKey="date"
-							width={width/4}
+							width={width/5}
 							cellRenderer={({ cellData }) => (
 								<Typography variant="body2">{toDateFormat(cellData)}</Typography>
 							)}
@@ -118,9 +118,9 @@ export function BankTransactions ({
 						<Column
 							label="Category"
 							dataKey="category"
-							width={width/4}
+							width={width/5}
 							cellRenderer={({ cellData }) => (
-								<CategoryIcon category={cellData} fontsize={!isWidthDownMd ? 22 : 30} />
+								<CategoryIcon category={cellData} fontsize={!isSmallScreen ? 22 : 30} />
 							)}
 							headerRenderer={({ label }) => (
 								<Typography variant="subtitle2" color="secondary">{label}</Typography>
@@ -130,17 +130,30 @@ export function BankTransactions ({
 					<Column
 						label="Payee"
 						dataKey="payee"
-						width={width/2}
-						cellDataGetter={({ rowData }) => ({ date: rowData.date, category: rowData.category, payee: rowData.payee, amount: rowData.amount })}
-						cellRenderer={({ cellData }) => (
-							<Payee value={cellData.payee} category={cellData.category} />
-						)}
+						width={width/5*3}
+						cellDataGetter={({ rowData }) => ({ type: rowData.type, account: rowData.account, date: rowData.date, category: rowData.category, payee: rowData.payee, amount: rowData.amount })}
+						cellRenderer={({ cellData }) => {
+							const IconComponent = TYPE_ICON_MAP[cellData.type];
+
+							return (
+								<Stack direction="column" alignItems="flex-start" spacing={0.5}>
+									<Payee value={cellData.payee} category={cellData.category} />
+									{							
+										isSmallScreen && showAccount &&		
+										<Stack direction="row" justifyContent="center" alignItems="center" spacing={0.5}>
+											{IconComponent && <IconComponent sx={{ fontSize: 12 }} />}
+											<Typography variant="body2">{cellData.account}</Typography>
+										</Stack>
+									}
+								</Stack>
+							);
+						}}
 						headerRenderer={({ label }) => (
 							<Typography variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 					/>
 					<Column
-						width={width/4}
+						width={width/5}
 						label="Amount"
 						dataKey="amount"
 						cellDataGetter={({ rowData }) => {
@@ -152,7 +165,7 @@ export function BankTransactions ({
 							return { date: rowData.date, amount: rowData.amount, currency: accountCurrency };
 						}}
 						cellRenderer={({ cellData }) => (
-							isWidthDownMd ? (
+							isSmallScreen ? (
 								<Stack spacing={0.5}>
 									<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={cellData.currency} style={{ fontWeight: 700, fontSize: 18, color: '#1976d2' }} />
 									<Typography variant="caption">

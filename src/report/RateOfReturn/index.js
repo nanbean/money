@@ -6,6 +6,7 @@ import _ from 'lodash';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
 
 import Amount from '../../components/Amount';
 
@@ -42,13 +43,7 @@ export function RateOfReturn () {
 	const { reportData, geometricMean, overallSummary } = useReturnReport(allInvestments, allAccountsTransactions, investementTransactions, cashTransactions, historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate);
 
 	return (
-		<Box
-			sx={{
-				height: 'calc(100vh - 192px)',
-				display: 'flex',
-				flexDirection: 'column'
-			}}
-		>
+		<Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 1 }}>
 			<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
 				<AccountFilter
 					allAccounts={allInvestmentAccounts}
@@ -59,27 +54,26 @@ export function RateOfReturn () {
 			{/* 전체 기간 요약 표 */}
 			{overallSummary && (
 				<Box sx={{ mt: 2, mb: 2 }}>
-					<Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', mb: 1 }}>
-						<tbody>
-							<tr>
-								<td style={{ padding: 4 }}><Typography variant="body2" sx={{ fontWeight: 'bold' }}>Final Value</Typography></td>
-								<td style={{ padding: 4 }}><Amount value={overallSummary.finalValue} showSymbol /></td>
-								<td style={{ padding: 4 }}><Typography variant="body2" sx={{ fontWeight: 'bold' }}>Final Cash</Typography></td>
-								<td style={{ padding: 4 }}><Amount value={overallSummary.finalCash} showSymbol /></td>
-							</tr>
-							<tr>
-								<td style={{ padding: 4 }}><Typography variant="body2" sx={{ fontWeight: 'bold' }}>Total Cash Flow</Typography></td>
-								<td style={{ padding: 4 }}><Amount value={overallSummary.totalCashFlow} showSymbol negativeColor /></td>
-								<td style={{ padding: 4 }}><Typography variant="body2" sx={{ fontWeight: 'bold' }}>Capital Gains</Typography></td>
-								<td style={{ padding: 4 }}><Amount value={overallSummary.capitalGains} showSymbol negativeColor /></td>
-							</tr>
-							<tr>
-								<td style={{ padding: 4 }}><Typography variant="body2" sx={{ fontWeight: 'bold' }}>Geometric Mean</Typography></td>
-								<td style={{ padding: 4 }}><Typography variant="body2">{`${((geometricMean - 1) * 100).toFixed(3)}%`}</Typography></td>
-								<td></td><td></td>
-							</tr>
-						</tbody>
-					</Box>
+					<Grid container sx={{ width: '100%', mb: 1 }}>
+						<Grid item xs={6}>
+							<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Final Value: <Amount value={overallSummary.finalValue} showSymbol /></Typography>
+						</Grid>
+						<Grid item xs={6}>
+							<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Final Cash: <Amount value={overallSummary.finalCash} showSymbol /></Typography>
+							
+						</Grid>
+						<Grid item xs={6}>
+							<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Total Cash Flow: <Amount value={overallSummary.totalCashFlow} showSymbol negativeColor /></Typography>
+							
+						</Grid>
+						<Grid item xs={6}>
+							<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Capital Gains: <Amount value={overallSummary.capitalGains} showSymbol negativeColor /></Typography>
+							
+						</Grid>
+						<Grid item xs={6}>
+							<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Geometric Mean: {`${((geometricMean - 1) * 100).toFixed(3)}%`}</Typography>
+						</Grid>
+					</Grid>
 				</Box>
 			)}
 			<Box sx={{ flex: 1, mt: 1 }}>

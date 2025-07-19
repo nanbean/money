@@ -59,9 +59,9 @@ const MonthlyExpense = () => {
 	];
 
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, mt: 1 }}>
+		<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, p: 1 }}>
 			<Stack direction="row" justifyContent="space-between" alignItems="center">
-				<FormControl variant="standard" sx={{ minWidth: 120 }}>
+				<FormControl size="small" sx={{ minWidth: 150 }}>
 					<Select
 						value={year}
 						onChange={onYearChange}

@@ -37,7 +37,7 @@ export function InvestmentTransactions ({
 	transactions
 }) {
 	const width = useWidth();
-	const isWidthDownMd = width === 'xs' || width === 'sm';
+	const isSmallScreen = width === 'xs' || width === 'sm';
 
 	const dispatch = useDispatch();
 
@@ -65,17 +65,17 @@ export function InvestmentTransactions ({
 					width={width}
 					height={height}
 					headerHeight={44}
-					rowHeight={!isWidthDownMd ? 38 : 55}
+					rowHeight={!isSmallScreen ? 38 : 55}
 					scrollToIndex={transactions.length-1}
 					rowCount={transactions.length}
 					rowGetter={({ index }) => transactions[index]}
 					onRowClick={onRowSelect}
 				>
 					{
-						!isWidthDownMd && <Column
+						!isSmallScreen && <Column
 							label="Date"
 							dataKey="date"
-							width={isWidthDownMd ? width/5:width/6}
+							width={isSmallScreen ? width/5:width/6}
 							headerRenderer={({ label }) => (
 								<Typography variant="subtitle2" color="secondary">{label}</Typography>
 							)}
@@ -85,10 +85,10 @@ export function InvestmentTransactions ({
 					<Column
 						label="Investment"
 						dataKey="investment"
-						width={isWidthDownMd ? width/5*2:width/3}
+						width={isSmallScreen ? width/5*2:width/3}
 						cellDataGetter={({ rowData }) => ({ date: rowData.date, investment: rowData.investment })}
 						cellRenderer={({ cellData }) => {
-							if (isWidthDownMd) {
+							if (isSmallScreen) {
 								return (
 									<React.Fragment>
 										<Typography
@@ -120,13 +120,13 @@ export function InvestmentTransactions ({
 					<Column
 						label="Activity"
 						dataKey="activity"
-						width={isWidthDownMd ? width/5:width/10}
+						width={isSmallScreen ? width/5:width/10}
 						headerRenderer={({ label }) => (
 							<Typography variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 					/>
 					{
-						!isWidthDownMd && <Column
+						!isSmallScreen && <Column
 							label="Quantity"
 							dataKey="quantity"
 							width={width/10}
@@ -137,7 +137,7 @@ export function InvestmentTransactions ({
 						/>
 					}
 					{
-						!isWidthDownMd && <Column
+						!isSmallScreen && <Column
 							label="Price"
 							dataKey="price"
 							width={width/9}
@@ -148,7 +148,7 @@ export function InvestmentTransactions ({
 						/>
 					}
 					{
-						!isWidthDownMd &&
+						!isSmallScreen &&
 						<Column
 							label="Commission"
 							dataKey="commission"
@@ -160,12 +160,12 @@ export function InvestmentTransactions ({
 						/>
 					}
 					<Column
-						width={isWidthDownMd ? width/5*2:width/6}
+						width={isSmallScreen ? width/5*2:width/6}
 						label="Amount"
 						dataKey="amount"
 						cellDataGetter={({ rowData }) => ({ activity: rowData.activity, quantity: rowData.quantity, price: rowData.price, amount: rowData.amount })}
 						cellRenderer={({ cellData }) => {
-							if (isWidthDownMd) {
+							if (isSmallScreen) {
 								return (
 									<React.Fragment>
 										<Amount value={cellData.amount} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />

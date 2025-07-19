@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import Chip from '@mui/material/Chip';
 
 import Layout from '../components/Layout';
 import Amount from '../components/Amount';
@@ -49,19 +50,17 @@ export function AllPerformance () {
 
 		return (
 			<Layout showPaper={false} title="Performance">
-				<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ p: 1 }}>
-					<Stack direction="row" alignItems="baseline" spacing={1}>
-						<Typography
-							variant="subtitle1"
-						>
-							{'Grand Total : '}
-						</Typography>
-						<Amount value={grandTotalPerformance} size="large" negativeColor showSymbol currency="KRW"/>
-					</Stack>
-					<InvestmentFilter
-						allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
-						filteredInvestments={filteredInvestments}
+				<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+					<Chip
+						variant="outlined"
+						label={<Typography variant="subtitle2">Grand Total: <Amount value={grandTotalPerformance} size="small" negativeColor showSymbol currency="KRW" /></Typography>}
 					/>
+					<Stack direction="row" alignItems="center" spacing={1}>
+						<InvestmentFilter
+							allInvestments={allInvestmentsPrice.filter(i => allInvestmentsTransactions.find(j => j.investment === i.name)).map(k => k.name).sort()}
+							filteredInvestments={filteredInvestments}
+						/>
+					</Stack>
 				</Stack>
 				{
 					filteredPerformance && filteredPerformance.map(i => {
