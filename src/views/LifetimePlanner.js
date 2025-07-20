@@ -88,9 +88,9 @@ function LifetimePlanner () {
 								<XAxis dataKey="year" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
 								<YAxis hide />
 								<Tooltip content={<CustomTooltip />} />
-								{(lifetimePlannerChartType === 'withInflation' || lifetimePlannerChartType === 'both') && <Bar dataKey="amount" name="Amount(Inflation)" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />}
-								{lifetimePlannerChartType === 'withoutInflation' && <Bar dataKey="amountInflation" name="Amount" fill={theme.palette.grey[500]} radius={[4, 4, 0, 0]} />}
-								{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke={theme.palette.grey[500]} strokeDasharray="5 5" />}
+								{(lifetimePlannerChartType === 'withInflation' || lifetimePlannerChartType === 'both') && <Bar dataKey="amount" name="Amount(Inflation)" fill={theme.palette.success.main} radius={[4, 4, 0, 0]} />}
+								{lifetimePlannerChartType === 'withoutInflation' && <Bar dataKey="amountInflation" name="Amount" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />}
+								{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke={theme.palette.primary.main} strokeDasharray="5 5" />}
 							</ComposedChart>
 						</ResponsiveContainer>
 				}
