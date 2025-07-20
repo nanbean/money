@@ -52,7 +52,6 @@ function TitleHeader ({
 	const accountList = useSelector((state) => state.accountList);
 	const accountType = useMemo(() => (pathname.split('/')[1] || ''), [pathname]);
 	const accountName = useMemo(() => decodeURIComponent(pathname.split('/')[2] || ''), [pathname]);
-	console.log('accountType', accountType, 'accountName', accountName);
 	const isCashAccount = accountName.match(/_Cash/i);
 
 	const bankAccountList = useMemo(() => {
