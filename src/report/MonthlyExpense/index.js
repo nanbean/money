@@ -93,7 +93,7 @@ const MonthlyExpense = () => {
 				</div>
 			</Stack>
 			<MonthlyComparisonChart chartData={chartData} />
-			<Box sx={{ flex: 1, mt: 1 }}>
+			<Box sx={{ flex: 1, mt: { xs: 0, md: 1 } }}>
 				{view === 'grid' && reportData.length > 1 && <ReportGrid reportData={reportData} supportSearch/>}
 				{view === 'sankey' && <SankeyChart data={sankeyData} />}
 			</Box>

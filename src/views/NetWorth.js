@@ -97,20 +97,22 @@ function NetWorth () {
 				</Stack>
 				{
 					rangedNetWorthFlow.length > 1 &&
-						<ResponsiveContainer width="100%" height={400}>
-							<ComposedChart
-								data={rangedNetWorthFlow}
-								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
-							>
-								<XAxis dataKey="date" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
-								<YAxis hide/>
-								<Tooltip content={<CustomTooltip />} />
-								<Bar dataKey="assetNetWorth" name="Real Estate" stackId="a" fill={theme.palette.success.main} radius={[4, 4, 4, 4]} />
-								<Bar dataKey="cashNetWorth" name="Cash Asset" stackId="a" fill={theme.palette.warning.main} radius={[4, 4, 4, 4]} />
-								<Bar dataKey="investmentsNetWorth" name="Investment Asset" stackId="a" fill={theme.palette.info.main} radius={[4, 4, 4, 4]} />
-								<Line dataKey="netWorth" name="Net Worth" stroke={theme.palette.text.primary} strokeDasharray="5 5"/>
-							</ComposedChart>
-						</ResponsiveContainer>
+						<Box sx={{ flex: 1, width: '100%', maxHeight: 400, mx: 'auto' }}>
+							<ResponsiveContainer width="100%" height="100%">
+								<ComposedChart
+									data={rangedNetWorthFlow}
+									margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
+								>
+									<XAxis dataKey="date" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
+									<YAxis hide/>
+									<Tooltip content={<CustomTooltip />} />
+									<Bar dataKey="assetNetWorth" name="Real Estate" stackId="a" fill={theme.palette.success.main} radius={[4, 4, 4, 4]} />
+									<Bar dataKey="cashNetWorth" name="Cash Asset" stackId="a" fill={theme.palette.warning.main} radius={[4, 4, 4, 4]} />
+									<Bar dataKey="investmentsNetWorth" name="Investment Asset" stackId="a" fill={theme.palette.info.main} radius={[4, 4, 4, 4]} />
+									<Line dataKey="netWorth" name="Net Worth" stroke={theme.palette.text.primary} strokeDasharray="5 5"/>
+								</ComposedChart>
+							</ResponsiveContainer>
+						</Box>
 				}
 			</Layout>
 		);

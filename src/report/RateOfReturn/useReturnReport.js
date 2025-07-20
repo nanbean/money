@@ -1,7 +1,3 @@
-import {
-	YEAR_LIST
-} from '../../constants';
-
 import { getBalance, getDepositWithdrawalSum, getInvestmentList, getInvestmentBalance } from '../../utils/netWorth';
 
 const findGeometricMean = (returns) => {
@@ -84,69 +80,33 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 	const capitalGains = finalValue - initialValue - totalCashFlow;
 
 	reportData = [
+		// Header Row
 		[
-			{
-				type: 'label',
-				value: 'Year'
-			},
-			...YEAR_LIST.map(i => ({
-				type: 'label',
-				value: i.key.toString()
-			}))
+			{ type: 'label', value: 'Year' },
+			{ type: 'label', value: 'Net Worth' },
+			{ type: 'label', value: 'Cash' },
+			{ type: 'label', value: 'Investment' },
+			{ type: 'label', value: 'Cash Flow' },
+			{ type: 'label', value: 'Rate of Return' }
+		],
+		// Data Rows
+		...data.map((item, index) => {
+			const year = item.date.substring(0, 4);
+			// The first year (index 0) has no return value.
+			// `returns` array has one less element than `data` array.
+			// returns[i] corresponds to data[i+1].
+			const returnRate = index > 0 ? returns[index - 1] : null;
+			const returnRateText = returnRate !== null ? `${(returnRate * 100).toFixed(3)}%` : '';
 
-		],
-		[
-			{
-				type: 'label',
-				value: 'Net Worth'
-			},
-			...data.map(i => ({
-				value: i.netWorth
-			}))
-		],
-		[
-			{
-				type: 'label',
-				value: 'Cash'
-			},
-			...data.map(i => ({
-				value: i.cashBalance
-			}))
-		],
-		[
-			{
-				type: 'label',
-				value: 'Investment'
-			},
-			...data.map(i => ({
-				value: i.investmentBalance
-			}))
-		],
-		[
-			{
-				type: 'label',
-				value: 'Deposit/Withdrawal'
-			},
-			...data.map(i => ({
-				value: i.depositWithdrawalSum
-			}))
-		],
-		[
-			{
-				cellColor: true,
-				type: 'label',
-				value: 'Rate of Return'
-			},
-			{
-				cellColor: true,
-				type: 'label',
-				value: ''
-			},
-			...returns.map(i => ({
-				cellColor: true,
-				value: ((i * 100).toFixed(3) + '%')
-			}))
-		]
+			return [
+				{ type: 'label', value: year },
+				{ type: 'currency', value: item.netWorth },
+				{ type: 'currency', value: item.cashBalance },
+				{ type: 'currency', value: item.investmentBalance },
+				{ type: 'currency', value: item.depositWithdrawalSum },
+				{ type: 'label', value: returnRateText }
+			];
+		})
 	];
 
 	return {

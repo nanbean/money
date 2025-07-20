@@ -57,8 +57,8 @@ const MonthlyComparisonChart = ({ chartData }) => {
 	}, [chartData, displayCurrency, exchangeRate]);
 
 	return (
-		<ResponsiveContainer width="100%" height={150}>
-			<ComposedChart data={dataWithCurrency} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+		<ResponsiveContainer width="100%" height="15%" minHeight={80} maxHeight={100}>
+			<ComposedChart data={dataWithCurrency} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
 				<XAxis dataKey="month" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
 				<Tooltip content={<CustomTooltip />} />
 				<Bar dataKey="income" fill={isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR} name="Income" radius={[4, 4, 0, 0]} />

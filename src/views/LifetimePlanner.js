@@ -80,19 +80,21 @@ function LifetimePlanner () {
 				</Stack>
 				{
 					lifetimePlannerFlowWithCurrency.length > 1 &&
-						<ResponsiveContainer width="100%" height={400}>
-							<ComposedChart
-								data={lifetimePlannerFlowWithCurrency}
-								margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
-							>
-								<XAxis dataKey="year" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
-								<YAxis hide />
-								<Tooltip content={<CustomTooltip />} />
-								{(lifetimePlannerChartType === 'withInflation' || lifetimePlannerChartType === 'both') && <Bar dataKey="amount" name="Amount(Inflation)" fill={theme.palette.success.main} radius={[4, 4, 0, 0]} />}
-								{lifetimePlannerChartType === 'withoutInflation' && <Bar dataKey="amountInflation" name="Amount" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />}
-								{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke={theme.palette.primary.main} strokeDasharray="5 5" />}
-							</ComposedChart>
-						</ResponsiveContainer>
+						<Box sx={{ flex: 1, width: '100%', maxHeight: 400, mx: 'auto' }}>
+							<ResponsiveContainer width="100%" height="100%">
+								<ComposedChart
+									data={lifetimePlannerFlowWithCurrency}
+									margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
+								>
+									<XAxis dataKey="year" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
+									<YAxis hide />
+									<Tooltip content={<CustomTooltip />} />
+									{(lifetimePlannerChartType === 'withInflation' || lifetimePlannerChartType === 'both') && <Bar dataKey="amount" name="Amount(Inflation)" fill={theme.palette.success.main} radius={[4, 4, 0, 0]} />}
+									{lifetimePlannerChartType === 'withoutInflation' && <Bar dataKey="amountInflation" name="Amount" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />}
+									{lifetimePlannerChartType === 'both' && <Line dataKey="amountInflation" name="Amount" stroke={theme.palette.primary.main} strokeDasharray="5 5" />}
+								</ComposedChart>
+							</ResponsiveContainer>
+						</Box>
 				}
 			</Layout>
 		);
