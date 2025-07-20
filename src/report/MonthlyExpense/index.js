@@ -30,6 +30,8 @@ const MonthlyExpense = () => {
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
 	const [filters, setFilters] = useState([]);
 	const [view, setView] = useState('grid');
+
+	const reportView = filters.includes('category') ? 'category' : 'subcategory';
 	const usd = currency === 'USD';
 
 	const livingExpenseOnly = filters.includes('livingExpenseOnly');
@@ -37,8 +39,8 @@ const MonthlyExpense = () => {
 	const boAOnly = filters.includes('boAOnly');
 
 	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
-	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate);
-	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate);
+	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate, reportView);
+	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView);
 	const reportData = useMonthlyExpense(incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year);
 	const { sankeyData } = useSankeyData(incomeReport, expenseReport, totalIncomeSum, totalExpenseSum);
 
@@ -53,6 +55,7 @@ const MonthlyExpense = () => {
 	};
 
 	const filterOptions = [
+		{ value: 'category', label: '카테고리별 보기' },
 		{ value: 'livingExpenseOnly', label: '생활비만 보기' },
 		{ value: 'livingExpenseCardOnly', label: '생활비카드만 보기' },
 		{ value: 'boAOnly', label: 'BoA Only' }

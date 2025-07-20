@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { MONTH_LIST } from '../../constants';
 
-const useIncomeReport = (accountList, incomeTransactions, year, usd, exchangeRate) => {
+const useIncomeReport = (accountList, incomeTransactions, year, usd, exchangeRate, reportView) => {
 	const startDate = moment(`${year}-01-01`).format('YYYY-MM-DD');
 	const endDate = moment(`${year}-12-31`).format('YYYY-MM-DD');
 	let incomeReport = [];
@@ -32,7 +32,12 @@ const useIncomeReport = (accountList, incomeTransactions, year, usd, exchangeRat
 	if (incomeTransactions.length > 0) {
 		const groupedIncomeData = _
 			.chain(incomeTransactions.filter(k => k.date >= startDate &&  k.date <= endDate))
-			.groupBy(x => x.subcategory ? `${x.category}:${x.subcategory}` : x.category)
+			.groupBy(x => {
+				if (reportView === 'category') {
+					return x.category;
+				}
+				return x.subcategory ? `${x.category}:${x.subcategory}` : x.category;
+			})
 			.value();
   
 		incomeReport = Object.keys(groupedIncomeData).map(key => {
