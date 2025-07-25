@@ -96,7 +96,7 @@ export function BankTransactions ({
 								);
 							}}
 							headerRenderer={({ label }) => (
-								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 						/>
 					}
@@ -107,10 +107,10 @@ export function BankTransactions ({
 							dataKey="date"
 							width={width/5}
 							cellRenderer={({ cellData }) => (
-								<Typography variant="body2">{toDateFormat(cellData)}</Typography>
+								<Typography align="center" variant="body2">{toDateFormat(cellData)}</Typography>
 							)}
 							headerRenderer={({ label }) => (
-								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 						/>
 					}
@@ -123,7 +123,7 @@ export function BankTransactions ({
 								<CategoryIcon category={cellData} fontsize={!isSmallScreen ? 22 : 30} />
 							)}
 							headerRenderer={({ label }) => (
-								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 						/>
 					}
@@ -149,7 +149,7 @@ export function BankTransactions ({
 							);
 						}}
 						headerRenderer={({ label }) => (
-							<Typography variant="subtitle2" color="secondary">{label}</Typography>
+							<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 					/>
 					<Column
@@ -177,7 +177,7 @@ export function BankTransactions ({
 							)
 						)}
 						headerRenderer={({ label }) => (
-							<Typography variant="subtitle2" color="secondary">{label}</Typography>
+							<Typography align="left" variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 					/>
 				</StyledTable>

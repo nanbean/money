@@ -77,10 +77,10 @@ export function InvestmentTransactions ({
 							dataKey="date"
 							width={isSmallScreen ? width/5:width/6}
 							headerRenderer={({ label }) => (
-								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 							cellRenderer={({ cellData }) => (
-								<Typography variant="body2">{toDateFormat(cellData)}</Typography>
+								<Typography align="center" variant="body2">{toDateFormat(cellData)}</Typography>
 							)}
 						/>
 					}
@@ -115,16 +115,15 @@ export function InvestmentTransactions ({
 
 						}}
 						headerRenderer={({ label }) => {
-							return <Typography variant="subtitle2" color="secondary">{label}</Typography>;
-						}
-						}
+							return <Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>;
+						}}
 					/>
 					<Column
 						label="Activity"
 						dataKey="activity"
 						width={isSmallScreen ? width/5:width/10}
 						headerRenderer={({ label }) => (
-							<Typography variant="subtitle2" color="secondary">{label}</Typography>
+							<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 						cellRenderer={({ cellData }) => (
 							<Typography variant="body2">{cellData}</Typography>
@@ -137,7 +136,7 @@ export function InvestmentTransactions ({
 							width={width/10}
 							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} />}
 							headerRenderer={({ label }) => (
-								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 						/>
 					}
@@ -148,7 +147,7 @@ export function InvestmentTransactions ({
 							width={width/9}
 							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />}
 							headerRenderer={({ label }) => (
-								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 						/>
 					}
@@ -159,7 +158,7 @@ export function InvestmentTransactions ({
 							dataKey="commission"
 							width={width/7}
 							headerRenderer={({ label }) => (
-								<Typography variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 							cellRenderer={({ cellData }) => cellData ? <Amount value={cellData} ignoreDisplayCurrency showColor={false} /> : ''}
 						/>
@@ -189,9 +188,8 @@ export function InvestmentTransactions ({
 
 						}}
 						headerRenderer={({ label }) => {
-							return <Typography variant="subtitle2" color="secondary">{label}</Typography>;
-						}
-						}
+							return <Typography align="left" variant="subtitle2" color="secondary">{label}</Typography>;
+						}}
 					/>
 				</StyledTable>
 			)}
