@@ -34,7 +34,7 @@ import {
 	INSURANCE_CATEGORY,
 	HOUSEHOLD_GOODS_CATEGORY,
 	TAX_CATEGORY,
-	COMISSION_CATEGORY,
+	COMMISSION_CATEGORY,
 	FOOD_CATEGORY,
 	NON_EXPENSE_CATEGORY,
 	CHILD_CARE_CATEGORY,
@@ -79,7 +79,7 @@ export function getCategoryIcon (category, fontsize) {
 		return <KitchenIcon sx={sx} />;
 	case TAX_CATEGORY:
 		return <AccountBalanceIcon sx={sx} />;
-	case COMISSION_CATEGORY:
+	case COMMISSION_CATEGORY:
 		return <AttachMoneyIcon sx={sx} />;
 	case FOOD_CATEGORY:
 		return <RestaurantIcon sx={sx} />;

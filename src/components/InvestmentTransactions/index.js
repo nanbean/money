@@ -119,7 +119,7 @@ export function InvestmentTransactions ({
 						}}
 					/>
 					<Column
-						label="Activity"
+						label="Act."
 						dataKey="activity"
 						width={isSmallScreen ? width/5:width/10}
 						headerRenderer={({ label }) => (
@@ -131,7 +131,7 @@ export function InvestmentTransactions ({
 					/>
 					{
 						!isSmallScreen && <Column
-							label="Quantity"
+							label="Qty."
 							dataKey="quantity"
 							width={width/10}
 							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} />}
@@ -154,7 +154,7 @@ export function InvestmentTransactions ({
 					{
 						!isSmallScreen &&
 						<Column
-							label="Commission"
+							label="Comm."
 							dataKey="commission"
 							width={width/7}
 							headerRenderer={({ label }) => (
