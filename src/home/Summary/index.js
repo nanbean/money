@@ -21,6 +21,7 @@ const quickAssetAccount = [
 const getSum = (accounts, exchangeRate) => accounts.map(i => i.currency === 'USD' ? i.balance * exchangeRate : i.balance).reduce((sum, i) => sum + i, 0);
 const getFinanceSum = (accounts, exchangeRate) => accounts.filter(i => i.type !== 'Oth A').map(i => i.currency === 'USD' ? i.balance * exchangeRate : i.balance).reduce((sum, i) => sum + i, 0);
 const getQuickAssetsSum = (accounts, exchangeRate) => accounts.filter(i => quickAssetAccount.find(j => j === i.name)).map(i => i.currency === 'USD' ? i.balance * exchangeRate : i.balance).reduce((sum, i) => sum + i, 0);
+const getLoanSum = (accounts, exchangeRate) => accounts.filter(i => i.type === 'Oth L').map(i => i.currency === 'USD' ? i.balance * exchangeRate : i.balance).reduce((sum, i) => sum + i, 0);
 
 export function Summary () {
 	const accountList = useSelector((state) => state.accountList);
@@ -30,6 +31,7 @@ export function Summary () {
 	const sum = useMemo(() => getSum(summaryAccountList, exchangeRate), [summaryAccountList, exchangeRate]);
 	const financeSum = useMemo(() => getFinanceSum(summaryAccountList, exchangeRate), [summaryAccountList, exchangeRate]);
 	const quickAssetsSum = useMemo(() => getQuickAssetsSum(summaryAccountList, exchangeRate), [summaryAccountList, exchangeRate]);
+	const loanSum = useMemo(() => getLoanSum(summaryAccountList, exchangeRate), [summaryAccountList, exchangeRate]);
 
 	const chartData = useMemo(() => {
 		const retirementAssets = quickAssetsSum;		
@@ -42,15 +44,15 @@ export function Summary () {
 			.reduce((sum, i) => sum + i, 0);
 
 		const otherFinancialAssets = financeSum - retirementAssets - investmentAssets;
-		const otherAssets = sum - financeSum;
+		const otherAssets = sum - financeSum + loanSum;
 
 		return [
-			{ name: 'Retirement Assets', value: retirementAssets },
-			{ name: 'Investment Assets', value: investmentAssets },
+			{ name: 'Retirement', value: retirementAssets },
+			{ name: 'Investment', value: investmentAssets },
 			{ name: 'Other Financial Assets', value: otherFinancialAssets },
-			{ name: 'Other Assets', value: otherAssets }
+			{ name: 'Assets', value: otherAssets }
 		].filter(d => d.value > 0);
-	}, [sum, financeSum, quickAssetsSum, summaryAccountList, exchangeRate]);
+	}, [sum, financeSum, quickAssetsSum, summaryAccountList, exchangeRate, loanSum]);
 
 	const COLORS = [theme.palette.primary.main, theme.palette.info.main, theme.palette.success.main, theme.palette.warning.main];
 
@@ -78,6 +80,7 @@ export function Summary () {
 							outerRadius={70}
 							innerRadius={50}
 							fill="#8884d8"
+							isAnimationActive={false}
 							dataKey="value"
 							paddingAngle={5}
 						>
@@ -103,7 +106,7 @@ export function Summary () {
 					}}
 				>
 					<Typography variant="caption" color="text.secondary">Net Worth</Typography>
-					<Amount value={Math.round(sum)} showSymbol />
+					<Amount value={Math.round(sum)} showSymbol size="small" />
 				</Box>
 			</Box>
 			<Stack spacing={1} sx={{ textAlign: 'left' }}>

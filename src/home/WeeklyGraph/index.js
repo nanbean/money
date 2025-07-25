@@ -265,7 +265,7 @@ export function WeeklyGraph () {
 							width={40}
 						/>
 						<Tooltip content={<CustomTooltip chartType={weeklyGraphChartType} />} />
-						{activeWeeklyCategories.map(i => <Bar key={i} dataKey={i} stackId="a" fill={getCategoryColor(i)} radius={[4, 4, 4, 4]} />)}
+						{activeWeeklyCategories.map(i => <Bar key={i} dataKey={i} stackId="a" fill={getCategoryColor(i)} radius={[4, 4, 4, 4]} isAnimationActive={false} />)}
 					</BarChart>
 				) : (
 					<BarChart layout="vertical" data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -285,7 +285,7 @@ export function WeeklyGraph () {
 							width={80}
 						/>
 						<Tooltip content={<CustomTooltip chartType={weeklyGraphChartType} />} />
-						<Bar dataKey="amount" radius={[0, 4, 4, 0]}>
+						<Bar dataKey="amount" radius={[0, 4, 4, 0]} isAnimationActive={false}>
 							{data.map((entry, index) => (
 								<Cell key={`cell-${index}`} fill={getCategoryColor(entry.category)} />
 							))}

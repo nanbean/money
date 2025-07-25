@@ -11,7 +11,7 @@ import Amount from '../Amount';
 import 'react-virtualized/styles.css';
 
 const ROW_HEIGHT = 45;
-const COLUMN_MIN_WIDTH = 84;
+const COLUMN_MIN_WIDTH = 94;
 
 const ReportCell = ({
 	cellColor = false,

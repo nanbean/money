@@ -120,12 +120,12 @@ export function StockList () {
 						alignItems="center"
 						sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}
 					>
-						<Box>
+						<Stack alignItems="flex-start">
 							<Typography variant="body2">{i.name}</Typography>
 							<Typography variant="caption" sx={{ color: 'grey.500' }}>
 								{i.quantity.toLocaleString()}
 							</Typography>
-						</Box>
+						</Stack>
 						<Stack alignItems="flex-end">
 							<Amount value={i.appraisedValue} showSymbol currency={i.currency}/>
 							<Stack direction="row" alignItems="baseline" spacing={0.5}>

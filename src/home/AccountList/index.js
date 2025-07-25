@@ -158,7 +158,7 @@ export default function AccountList () {
 								<Amount value={data.total} currency={displayCurrency} showSymbol/>
 							</Stack>
 							<Collapse in={isExpanded} timeout="auto" unmountOnExit>
-								<Box sx={{ pl: 4, py: 1 }}>
+								<Box sx={{ pl: 4, py: 0 }}>
 									{data.accounts.map(row => (
 										<Link key={row.name} to={`/${row.type}/${row.name}`} style={linkStyle}>
 											<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}>

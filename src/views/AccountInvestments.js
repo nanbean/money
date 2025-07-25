@@ -9,14 +9,23 @@ import {
 	TableCell,
 	TableContainer,
 	TableHead,
-	TableRow
+	TableRow,
+	Typography
 } from '@mui/material';
 
 import { getAccountPerformance } from '../utils/performance';
 import Amount from '../components/Amount';
 import Quantity from '../components/Quantity';
 
+import useDarkMode from '../hooks/useDarkMode';
+import {
+	POSITIVE_AMOUNT_DARK_COLOR,
+	POSITIVE_AMOUNT_LIGHT_COLOR,
+	NEGATIVE_AMOUNT_COLOR
+} from '../constants';
+
 export function AccountInvestments ({ currency }) {
+	const isDarkMode = useDarkMode();
 	const account = useSelector((state) => state.account);
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
@@ -37,22 +46,35 @@ export function AccountInvestments ({ currency }) {
 			<Table size="small">
 				<TableHead>
 					<TableRow>
-						<TableCell>Investment (%Port)</TableCell>
-						<TableCell align="right">Price / Qty</TableCell>
-						<TableCell align="right">Cost / Market</TableCell>
-						<TableCell align="right">G/L / Return</TableCell>
+						<TableCell>
+							<Typography variant="body2">Investment</Typography>
+							<Typography variant="body2">Price * Qty</Typography>
+							<Typography variant="body2">(%Port)</Typography>
+						</TableCell>
+						<TableCell align="right">
+							<Typography variant="body2">Cost</Typography>
+							<Typography variant="body2">Market</Typography>
+						</TableCell>
+						<TableCell align="right">
+							<Typography variant="body2">G/L</Typography>
+							<Typography variant="body2">Return</Typography>
+							<Typography variant="body2">(%)</Typography>
+						</TableCell>
 					</TableRow>
 				</TableHead>
 				<TableBody>
 					{accountPerformance.filter(j => j.name).map(i => (
 						<TableRow key={i.name}>
 							<TableCell component="th" scope="row">
-								{i.name} ({`${(i.marketValue / totalMarketValue * 100).toFixed(2)}%`})
-							</TableCell>
-							<TableCell align="right">
 								<Stack>
-									<Amount value={i.price} currency={currency} showSymbol showOriginal />
-									<Quantity value={i.quantity}/>
+									<Typography variant="body2">{i.name}</Typography>
+									<Stack direction="row" spacing={0.5} alignItems="center">
+										<Amount value={i.price} currency={currency} showSymbol showOriginal />
+										<Typography variant="body2">*</Typography>
+										<Quantity value={i.quantity}/>
+										
+									</Stack>
+									<Typography variant="body2">({`${(i.marketValue / totalMarketValue * 100).toFixed(2)}%`})</Typography>
 								</Stack>
 							</TableCell>
 							<TableCell align="right">
@@ -65,21 +87,24 @@ export function AccountInvestments ({ currency }) {
 								<Stack>
 									<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
 									<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
+									<Typography variant="caption" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+										({(i.costBasis !== 0 ? (i.periodReturn / i.costBasis * 100) : 0).toFixed(2)}%)
+									</Typography>
 								</Stack>
 							</TableCell>
 						</TableRow>
 					))}
 					<TableRow>
-						<TableCell>Cash</TableCell>
-						<TableCell />
+						<TableCell><Typography variant="body2">Cash</Typography></TableCell>
 						<TableCell align="right">
 							<Amount value={cash} currency={currency} showSymbol />
 						</TableCell>
 						<TableCell />
 					</TableRow>
 					<TableRow sx={{ '& > *': { borderTop: '2px solid rgba(224, 224, 224, 1)', fontWeight: 'bold' } }}>
-						<TableCell component="th" scope="row">Total</TableCell>
-						<TableCell />
+						<TableCell component="th" scope="row">
+							<Typography variant="body2">Total</Typography>
+						</TableCell>
 						<TableCell align="right">
 							<Stack>
 								<Amount value={totalCostBasis} currency={currency} showSymbol />
@@ -90,6 +115,9 @@ export function AccountInvestments ({ currency }) {
 							<Stack>
 								<Amount value={totalPeriodGain} currency={currency} showSymbol negativeColor />
 								<Amount value={totalPeriodReturn} currency={currency} showSymbol negativeColor />
+								<Typography variant="caption" sx={{ color: totalPeriodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+									({(totalCostBasis !== 0 ? (totalPeriodReturn / totalCostBasis * 100) : 0).toFixed(2)}%)
+								</Typography>
 							</Stack>
 						</TableCell>
 					</TableRow>

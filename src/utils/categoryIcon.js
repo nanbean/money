@@ -20,6 +20,7 @@ import GolfCourseIcon from '@mui/icons-material/GolfCourse';
 import SmsIcon from '@mui/icons-material/Sms';
 import MoneyIcon from '@mui/icons-material/Money';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 import {
 	ARCHITECTURE_CATEGORY,
@@ -79,7 +80,7 @@ export function getCategoryIcon (category, fontsize) {
 	case TAX_CATEGORY:
 		return <AccountBalanceIcon sx={sx} />;
 	case COMISSION_CATEGORY:
-		return <RestaurantIcon sx={sx} />;
+		return <AttachMoneyIcon sx={sx} />;
 	case FOOD_CATEGORY:
 		return <RestaurantIcon sx={sx} />;
 	case NON_EXPENSE_CATEGORY:
