@@ -63,7 +63,7 @@ export function Bank () {
 			variant="outlined"
 			label={
 				<Typography variant="subtitle">
-					Balance: <Amount value={balance} size="small" showSymbol currency={currency} />
+					Balance: <Amount value={balance} size="small" showSymbol showOriginal currency={currency} />
 				</Typography>
 			}
 		/>
@@ -93,7 +93,7 @@ export function Bank () {
 				</>
 			) : (
 				<Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
-					<Box sx={{ width: 240, flexShrink: 0 }}>
+					<Box sx={{ width: 250, flexShrink: 0 }}>
 						<Paper elevation={2} sx={{ p: 2, height: '100%' }}>
 							<Stack direction="column" spacing={1}>
 								{newControls}
