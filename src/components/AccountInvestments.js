@@ -16,6 +16,7 @@ import {
 import { getAccountPerformance } from '../utils/performance';
 import Amount from '../components/Amount';
 import Quantity from '../components/Quantity';
+import stringToColor from 'string-to-color';
 
 import useDarkMode from '../hooks/useDarkMode';
 import {
@@ -67,12 +68,11 @@ export function AccountInvestments ({ currency }) {
 						<TableRow key={i.name}>
 							<TableCell component="th" scope="row">
 								<Stack>
-									<Typography variant="body2">{i.name}</Typography>
+									<Typography variant="body2" sx={{ color: stringToColor(i.name), fontWeight: 'bold' }}>{i.name}</Typography>
 									<Stack direction="row" spacing={0.5} alignItems="center">
 										<Amount value={i.price} currency={currency} showSymbol showOriginal />
 										<Typography variant="body2">*</Typography>
 										<Quantity value={i.quantity}/>
-										
 									</Stack>
 									<Typography variant="body2">({`${(i.marketValue / totalMarketValue * 100).toFixed(2)}%`})</Typography>
 								</Stack>

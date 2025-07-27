@@ -13,10 +13,11 @@ import MoneyIcon from '@mui/icons-material/Money';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Paper from '@mui/material/Paper';
 
-import AccountInvestments from './AccountInvestments';
+import AccountInvestments from '../components/AccountInvestments';
 import Layout from '../components/Layout';
 import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
+import AssetAllocationChart from '../components/AssetAllocationChart';
 
 import useWidth from '../hooks/useWidth';
 
@@ -123,6 +124,9 @@ export function Investment () {
 							<Stack direction="column" spacing={1}>
 								{buttonControls}
 							</Stack>
+							<Box sx={{ mt: 2 }}>
+								<AssetAllocationChart />
+							</Box>
 						</Paper>
 					</Box>
 					<Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
