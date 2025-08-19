@@ -8,6 +8,9 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Paper from '@mui/material/Paper';
+import FormControl from '@mui/material/FormControl';
+import Input from '@mui/material/Input';
+import InputAdornment from '@mui/material/InputAdornment';
 
 import AddIcon from '@mui/icons-material/Add';
 
@@ -33,30 +36,39 @@ const getCurrencyByAccountId = (accountId, accountList) => {
 };
 
 export function Bank () {
-	const account = useSelector((state) => state.account);
-	const accountList = useSelector((state) => state.accountList);
-	const allAccountsTransactions = useSelector(
-		(state) => state.allAccountsTransactions);
-	const width = useWidth();
-	const isSmallScreen = width === 'xs' || width === 'sm';
+ 	const account = useSelector((state) => state.account);
+ 	const accountList = useSelector((state) => state.accountList);
+ 	const allAccountsTransactions = useSelector(
+ 		(state) => state.allAccountsTransactions);
+ 	const width = useWidth();
+ 	const isSmallScreen = width === 'xs' || width === 'sm';
 
-	let { name } = useParams();
-	let { pathname } = useLocation();
-	const accountId = useMemo(() => getAccountId(pathname), [pathname]);
+ 	let { name } = useParams();
+ 	let { pathname } = useLocation();
+ 	const accountId = useMemo(() => getAccountId(pathname), [pathname]);
 
-	const accountTransactions = useMemo(() => getAccountTransactions(allAccountsTransactions, accountId), [allAccountsTransactions, accountId]);
-	const currency = useMemo(() => getCurrencyByAccountId(accountId, accountList), [accountId, accountList]);
-	const balance = accountTransactions.length > 0 && accountTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
+ 	const [endDate, setEndDate] = React.useState('');
 
-	const dispatch = useDispatch();
+ 	const accountTransactions = useMemo(() => {
+ 		let tx = getAccountTransactions(allAccountsTransactions, accountId);
+ 		if (endDate) {
+ 			tx = tx.filter(i => i.date <= endDate);
+ 		}
+ 		return tx;
+ 	}, [allAccountsTransactions, accountId, endDate]);
 
-	useEffect(() => {
-		dispatch(setAccountAction(name));
-	}, [name, dispatch]);
+ 	const currency = useMemo(() => getCurrencyByAccountId(accountId, accountList), [accountId, accountList]);
+ 	const balance = accountTransactions.length > 0 && accountTransactions.map((i) => i.amount).reduce( (a, b) => a + b );
 
-	const onNewClick = () => {
-		dispatch(openTransactionInModal());
-	};
+ 	const dispatch = useDispatch();
+
+ 	useEffect(() => {
+ 		dispatch(setAccountAction(name));
+ 	}, [name, dispatch]);
+
+ 	const onNewClick = () => {
+ 		dispatch(openTransactionInModal());
+ 	};
 
 	const balanceSummary = (
 		<Chip
@@ -75,6 +87,24 @@ export function Bank () {
 		</Button>
 	);
 
+	const endDateControl = (
+		<FormControl fullWidth>
+			<Input
+				type="date"
+				name="endDate"
+				placeholder="End Date"
+				value={endDate}
+				fullWidth
+				onChange={e => setEndDate(e.target.value)}
+				startAdornment={
+					<InputAdornment position="start">
+						To
+					</InputAdornment>
+				}
+			/>
+		</FormControl>
+	);
+
 	return (
 		<Layout title={name}>
 			{isSmallScreen ? (
@@ -82,6 +112,7 @@ export function Bank () {
 					<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
 						{balanceSummary}
 						{newControls}
+						{endDateControl}
 					</Stack>
 					<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
 						<BankTransactions
@@ -98,6 +129,7 @@ export function Bank () {
 							<Stack direction="column" spacing={1}>
 								{newControls}
 								{balanceSummary}
+								{endDateControl}
 							</Stack>
 						</Paper>
 					</Box>

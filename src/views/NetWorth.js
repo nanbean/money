@@ -107,8 +107,8 @@ function NetWorth () {
 									<YAxis hide/>
 									<Tooltip content={<CustomTooltip />} />
 									<Bar dataKey="assetNetWorth" name="Real Estate" stackId="a" fill={theme.palette.success.main} radius={[4, 4, 4, 4]} />
-									<Bar dataKey="cashNetWorth" name="Cash Asset" stackId="a" fill={theme.palette.warning.main} radius={[4, 4, 4, 4]} />
 									<Bar dataKey="investmentsNetWorth" name="Investment Asset" stackId="a" fill={theme.palette.info.main} radius={[4, 4, 4, 4]} />
+									<Bar dataKey="cashNetWorth" name="Cash Asset" stackId="a" fill={theme.palette.warning.main} radius={[4, 4, 4, 4]} />
 									<Line dataKey="netWorth" name="Net Worth" stroke={theme.palette.text.primary} strokeDasharray="5 5"/>
 								</ComposedChart>
 							</ResponsiveContainer>
