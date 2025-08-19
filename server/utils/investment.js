@@ -134,7 +134,12 @@ const getInvestmentBalance = (investments, date, histories) => {
 				}
 
 				if (historicalPrice !== null) {
-					effectivePrice = historicalPrice;
+ 					if (typeof historicalPrice === 'number' && !isNaN(historicalPrice) && isFinite(historicalPrice)) {
+ 						effectivePrice = historicalPrice;
+ 					} else {
+ 						// Invalid historical price, fallback to current price or 0
+ 						effectivePrice = typeof price === 'number' && !isNaN(price) && isFinite(price) ? price : 0;
+ 					}
 				}
 			}
 		}
