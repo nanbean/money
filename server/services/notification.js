@@ -63,8 +63,13 @@ const findCategoryFromGemini = async (transaction) => {
 		history: []
 	});
 
-	const result = await chatSession.sendMessage(`What is the best expense category for ${transaction.payee}?`);
-	return result.response.text().replace(/\s+$/g, '');
+	try {
+		const result = await chatSession.sendMessage(`What is the best expense category for ${transaction.payee}?`);
+		return result.response.text().replace(/\s+$/g, '');
+	} catch (error) {
+		console.error('Error finding category from Gemini:', error);
+		return '분류없음';
+	}
 };
 
 const findCategoryByPayee = async (transactions, transaction) => {
