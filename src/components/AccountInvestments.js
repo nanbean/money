@@ -19,6 +19,8 @@ import Quantity from '../components/Quantity';
 import stringToColor from 'string-to-color';
 
 import useDarkMode from '../hooks/useDarkMode';
+import useWidth from '../hooks/useWidth';
+
 import {
 	POSITIVE_AMOUNT_DARK_COLOR,
 	POSITIVE_AMOUNT_LIGHT_COLOR,
@@ -27,6 +29,8 @@ import {
 
 export function AccountInvestments ({ currency }) {
 	const isDarkMode = useDarkMode();
+	const width = useWidth();
+	const isLargeScreen = width !== 'xs' && width !== 'sm' && width !== 'md';
 	const account = useSelector((state) => state.account);
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
@@ -48,19 +52,41 @@ export function AccountInvestments ({ currency }) {
 				<TableHead>
 					<TableRow>
 						<TableCell>
-							<Typography variant="body2">Investment</Typography>
+							<Typography variant="body2">Investment (%Port)</Typography>
 							<Typography variant="body2">Price * Qty</Typography>
-							<Typography variant="body2">(%Port)</Typography>
 						</TableCell>
-						<TableCell align="right">
-							<Typography variant="body2">Cost</Typography>
-							<Typography variant="body2">Market</Typography>
-						</TableCell>
-						<TableCell align="right">
-							<Typography variant="body2">G/L</Typography>
-							<Typography variant="body2">Return</Typography>
-							<Typography variant="body2">(%)</Typography>
-						</TableCell>
+						{isLargeScreen ? (
+							<>
+								<TableCell align="right">
+									<Typography variant="body2">Cost Basis</Typography>
+								</TableCell>
+								<TableCell align="right">
+									<Typography variant="body2">Market Value</Typography>
+								</TableCell>
+							</>
+
+						) : (
+							<TableCell align="right">
+								<Typography variant="body2">Cost Basis</Typography>
+								<Typography variant="body2">Market Value</Typography>
+							</TableCell>
+						)}
+						{isLargeScreen ? (
+							<>
+								<TableCell align="right">
+									<Typography variant="body2">Gain/Loss</Typography>
+								</TableCell>
+								<TableCell align="right">
+									<Typography variant="body2">Return (%)</Typography>
+								</TableCell>
+							</>
+
+						) : (
+							<TableCell align="right">
+								<Typography variant="body2">Gain/Loss</Typography>
+								<Typography variant="body2">Return (%)</Typography>
+							</TableCell>
+						)}
 					</TableRow>
 				</TableHead>
 				<TableBody>
@@ -68,58 +94,126 @@ export function AccountInvestments ({ currency }) {
 						<TableRow key={i.name}>
 							<TableCell component="th" scope="row">
 								<Stack>
-									<Typography variant="body2" sx={{ color: stringToColor(i.name), fontWeight: 'bold' }}>{i.name}</Typography>
+									<Typography variant="body2" sx={{ color: stringToColor(i.name), fontWeight: 'bold' }}>{i.name} ({`${(i.marketValue / totalMarketValue * 100).toFixed(2)}%`})</Typography>
 									<Stack direction="row" spacing={0.5} alignItems="center">
 										<Amount value={i.price} currency={currency} showSymbol showOriginal />
 										<Typography variant="body2">*</Typography>
 										<Quantity value={i.quantity}/>
 									</Stack>
-									<Typography variant="body2">({`${(i.marketValue / totalMarketValue * 100).toFixed(2)}%`})</Typography>
 								</Stack>
 							</TableCell>
-							<TableCell align="right">
-								<Stack>
-									<Amount value={i.costBasis} currency={currency} showSymbol />
-									<Amount value={i.marketValue} currency={currency} showSymbol />
-								</Stack>
-							</TableCell>
-							<TableCell align="right">
-								<Stack>
-									<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
-									<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
-									<Typography variant="caption" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-										({(i.costBasis !== 0 ? (i.periodReturn / i.costBasis * 100) : 0).toFixed(2)}%)
-									</Typography>
-								</Stack>
-							</TableCell>
+							{isLargeScreen ? (
+								<>
+									<TableCell align="right">
+										<Amount value={i.costBasis} currency={currency} showSymbol />
+											
+									</TableCell>
+									<TableCell align="right">
+										<Amount value={i.marketValue} currency={currency} showSymbol />
+									</TableCell>
+								</>
+							) : (
+								<TableCell align="right">
+									<Stack>
+										<Amount value={i.costBasis} currency={currency} showSymbol />
+										<Amount value={i.marketValue} currency={currency} showSymbol />
+									</Stack>
+								</TableCell>
+							)}
+							{isLargeScreen ? (
+								<>
+									<TableCell align="right">
+										<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
+									</TableCell>
+									<TableCell align="right">
+										<Stack direction="row" justifyContent={'flex-end'} spacing={0.7}>
+											<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
+											<Typography variant="caption" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+												({(i.costBasis !== 0 ? (i.periodReturn / i.costBasis * 100) : 0).toFixed(2)}%)
+											</Typography>
+										</Stack>
+									</TableCell>
+								</>
+							) : (
+								<TableCell align="right">
+									<Stack>
+										<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
+										<Stack direction="row" justifyContent={'flex-end'} spacing={0.7}>
+											<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
+											<Typography variant="caption" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+												({(i.costBasis !== 0 ? (i.periodReturn / i.costBasis * 100) : 0).toFixed(2)}%)
+											</Typography>
+										</Stack>
+									</Stack>
+								</TableCell>
+							)}
 						</TableRow>
 					))}
 					<TableRow>
 						<TableCell><Typography variant="body2">Cash</Typography></TableCell>
-						<TableCell align="right">
-							<Amount value={cash} currency={currency} showSymbol />
-						</TableCell>
+						{isLargeScreen ? (
+							<>
+								<TableCell align="right">
+								</TableCell>
+								<TableCell align="right">
+									<Amount value={cash} currency={currency} showSymbol />
+								</TableCell>
+							</>
+						) : (
+							<TableCell align="right">
+								<Amount value={cash} currency={currency} showSymbol />
+							</TableCell>
+						)}
 						<TableCell />
 					</TableRow>
 					<TableRow sx={{ '& > *': { borderTop: '2px solid rgba(224, 224, 224, 1)', fontWeight: 'bold' } }}>
 						<TableCell component="th" scope="row">
 							<Typography variant="body2">Total</Typography>
 						</TableCell>
-						<TableCell align="right">
-							<Stack>
-								<Amount value={totalCostBasis} currency={currency} showSymbol />
-								<Amount value={totalBalance} currency={currency} showSymbol />
-							</Stack>
-						</TableCell>
-						<TableCell align="right">
-							<Stack>
-								<Amount value={totalPeriodGain} currency={currency} showSymbol negativeColor />
-								<Amount value={totalPeriodReturn} currency={currency} showSymbol negativeColor />
-								<Typography variant="caption" sx={{ color: totalPeriodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-									({(totalCostBasis !== 0 ? (totalPeriodReturn / totalCostBasis * 100) : 0).toFixed(2)}%)
-								</Typography>
-							</Stack>
-						</TableCell>
+						{isLargeScreen ? (
+							<>
+								<TableCell align="right">
+									<Amount value={totalCostBasis} currency={currency} showSymbol />
+								</TableCell>
+								<TableCell align="right">
+									<Amount value={totalBalance} currency={currency} showSymbol />
+								</TableCell>
+							</>
+						) : (
+							<TableCell align="right">
+								<Stack>
+									<Amount value={totalCostBasis} currency={currency} showSymbol />
+									<Amount value={totalBalance} currency={currency} showSymbol />
+								</Stack>
+							</TableCell>
+						)}
+						{isLargeScreen ? (
+							<>
+								<TableCell align="right">
+									<Amount value={totalPeriodGain} currency={currency} showSymbol negativeColor />
+								</TableCell>
+								<TableCell align="right">
+									<Stack direction="row" justifyContent={'flex-end'} spacing={0.7}>
+										<Amount value={totalPeriodReturn} currency={currency} showSymbol negativeColor />
+										<Typography variant="caption" sx={{ color: totalPeriodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+											({(totalCostBasis !== 0 ? (totalPeriodReturn / totalCostBasis * 100) : 0).toFixed(2)}%)
+										</Typography>
+									</Stack>
+								</TableCell>
+							</>
+						) : (
+							<TableCell align="right">
+								<Stack>
+									<Amount value={totalPeriodGain} currency={currency} showSymbol negativeColor />
+									<Stack direction="row" justifyContent={'flex-end'} spacing={0.7}>
+										<Amount value={totalPeriodReturn} currency={currency} showSymbol negativeColor />
+										<Typography variant="caption" sx={{ color: totalPeriodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+											({(totalCostBasis !== 0 ? (totalPeriodReturn / totalCostBasis * 100) : 0).toFixed(2)}%)
+										</Typography>
+									</Stack>
+								</Stack>
+							</TableCell>
+						)}
 					</TableRow>
 				</TableBody>
 			</Table>
@@ -134,5 +228,4 @@ export function AccountInvestments ({ currency }) {
 AccountInvestments.propTypes = {
 	currency: PropTypes.string
 };
-
 export default AccountInvestments;

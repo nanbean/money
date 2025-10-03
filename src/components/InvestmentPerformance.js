@@ -89,28 +89,28 @@ export function InvestmentPerformance ({
 							)}
 							{isSmallScreen ? (
 								<TableCell align="right">
-									<Typography variant="body2">Cost</Typography>
-									<Typography variant="body2">Market</Typography>
+									<Typography variant="body2">Cost Basis</Typography>
+									<Typography variant="body2">Market Value</Typography>
 								</TableCell>
 							) : (
 								<>
 									<TableCell align="right">
-										<Typography variant="body2">Cost</Typography>
+										<Typography variant="body2">Cost Basis</Typography>
 									</TableCell>
 									<TableCell align="right">
-										<Typography variant="body2">Market</Typography>
+										<Typography variant="body2">Market Value</Typography>
 									</TableCell>
 								</>
 							)}
 							{isSmallScreen ? (
 								<TableCell align="right">
-									<Typography variant="body2">G/L</Typography>
+									<Typography variant="body2">Gain/Loss</Typography>
 									<Typography variant="body2">Div</Typography>
 								</TableCell>
 							) : (
 								<>
 									<TableCell align="right">
-										<Typography variant="body2">G/L</Typography>
+										<Typography variant="body2">Gain/Loss</Typography>
 									</TableCell>
 									<TableCell align="right">
 										<Typography variant="body2">Div</Typography>
