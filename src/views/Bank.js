@@ -109,10 +109,16 @@ export function Bank () {
 		<Layout title={name}>
 			{isSmallScreen ? (
 				<>
-					<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-						{balanceSummary}
-						{newControls}
-						{endDateControl}
+					<Stack direction="row" alignItems="center" justifyContent="space-between" spacing={0.5} sx={{ mb: 1 }}>
+						<Box sx={{ flexBasis: '50%' }}>
+							{balanceSummary}
+						</Box>
+						<Box sx={{ flexBasis: '30%' }}>
+							{endDateControl}
+						</Box>
+						<Box sx={{ flexBasis: '20%', textAlign: 'center' }}>
+							{newControls}
+						</Box>
 					</Stack>
 					<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
 						<BankTransactions
