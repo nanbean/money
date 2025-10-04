@@ -79,10 +79,10 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell>
+									<TableCell align="left">
 										<Typography variant="body2">Account</Typography>
 									</TableCell>
-									<TableCell>
+									<TableCell align="right">
 										<Typography variant="body2">Qty</Typography>
 									</TableCell>
 								</>
@@ -110,10 +110,7 @@ export function InvestmentPerformance ({
 							) : (
 								<>
 									<TableCell align="right">
-										<Typography variant="body2">Gain/Loss</Typography>
-									</TableCell>
-									<TableCell align="right">
-										<Typography variant="body2">Div</Typography>
+										<Typography variant="body2">Gain/Loss(Div)</Typography>
 									</TableCell>
 								</>
 							)}
@@ -135,10 +132,10 @@ export function InvestmentPerformance ({
 									</TableCell>
 								) : (
 									<>
-										<TableCell component="th" scope="row">
+										<TableCell align="left">
 											<Typography variant="body2">{i.account}</Typography>
 										</TableCell>
-										<TableCell component="th" scope="row">
+										<TableCell align="right">
 											<Quantity value={i.quantity}/>
 										</TableCell>
 									</>
@@ -170,10 +167,10 @@ export function InvestmentPerformance ({
 								) : (
 									<>
 										<TableCell align="right">
-											<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
-										</TableCell>
-										<TableCell align="right">
-											<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />
+											<Stack direction="row" justifyContent="flex-end">
+												<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
+												(<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />)
+											</Stack>
 										</TableCell>
 									</>
 								)}
@@ -195,10 +192,10 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell component="th" scope="row">
+									<TableCell align="left">
 										<Typography variant="body2">Total</Typography>
 									</TableCell>
-									<TableCell component="th" scope="row">
+									<TableCell align="right">
 										<Quantity value={totalQuantity}/>
 									</TableCell>
 								</>
@@ -230,10 +227,10 @@ export function InvestmentPerformance ({
 							) : (
 								<>
 									<TableCell align="right">
-										<Amount value={totalGain} currency={currency} showSymbol negativeColor />
-									</TableCell>
-									<TableCell align="right">
-										<Amount value={totalDividend} currency={currency} showSymbol negativeColor />
+										<Stack direction="row" justifyContent="flex-end">
+											<Amount value={totalGain} currency={currency} showSymbol negativeColor />
+											(<Amount value={totalDividend} currency={currency} showSymbol negativeColor />)
+										</Stack>
 									</TableCell>
 								</>
 							)}
