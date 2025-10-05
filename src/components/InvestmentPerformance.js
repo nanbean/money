@@ -27,6 +27,15 @@ import {
 	NEGATIVE_AMOUNT_COLOR
 } from '../constants';
 
+const COLUMN_WIDTHS = {
+	account: '16%', // 예시: Account 이름
+	qty: '12%',     // 예시: 수량 (Qty)
+	costBasis: '15%', // 예시: Cost Basis (가장 긴 금액을 고려)
+	marketValue: '15%', // 예시: Market Value
+	gainLossDiv: '21%', // 예시: Gain/Loss(Div) (가장 긴 금액 + 괄호 내용을 고려)
+	return: '21%'  // 예시: Return(%)
+};
+
 export function InvestmentPerformance ({
 	investment,
 	performance,
@@ -79,10 +88,10 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell align="left">
+									<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
 										<Typography variant="body2">Account</Typography>
 									</TableCell>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
 										<Typography variant="body2">Qty</Typography>
 									</TableCell>
 								</>
@@ -94,10 +103,10 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
 										<Typography variant="body2">Cost Basis</Typography>
 									</TableCell>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
 										<Typography variant="body2">Market Value</Typography>
 									</TableCell>
 								</>
@@ -109,12 +118,12 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
 										<Typography variant="body2">Gain/Loss(Div)</Typography>
 									</TableCell>
 								</>
 							)}
-							<TableCell align="right">
+							<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
 								<Stack direction={isSmallScreen ? 'column' : 'row'} justifyContent="flex-end">
 									<Typography variant="body2">Return</Typography>
 									<Typography variant="body2">(%)</Typography>
@@ -132,10 +141,10 @@ export function InvestmentPerformance ({
 									</TableCell>
 								) : (
 									<>
-										<TableCell align="left">
+										<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
 											<Typography variant="body2">{i.account}</Typography>
 										</TableCell>
-										<TableCell align="right">
+										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
 											<Quantity value={i.quantity}/>
 										</TableCell>
 									</>
@@ -149,10 +158,10 @@ export function InvestmentPerformance ({
 									</TableCell>
 								) : (
 									<>
-										<TableCell align="right">
+										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
 											<Amount value={i.costBasis} currency={currency} showSymbol />
 										</TableCell>								
-										<TableCell align="right">
+										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
 											<Amount value={i.marketValue} currency={currency} showSymbol />
 										</TableCell>
 									</>
@@ -166,7 +175,7 @@ export function InvestmentPerformance ({
 									</TableCell>
 								) : (
 									<>
-										<TableCell align="right">
+										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
 											<Stack direction="row" justifyContent="flex-end">
 												<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
 												(<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />)
@@ -174,7 +183,7 @@ export function InvestmentPerformance ({
 										</TableCell>
 									</>
 								)}
-								<TableCell align="right">
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
 									<Stack direction={isSmallScreen ? 'column' : 'row'} justifyContent="flex-end">
 										<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
 										<Typography variant="caption" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
@@ -192,10 +201,10 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell align="left">
+									<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
 										<Typography variant="body2">Total</Typography>
 									</TableCell>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
 										<Quantity value={totalQuantity}/>
 									</TableCell>
 								</>
@@ -209,10 +218,10 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
 										<Amount value={totalCostBasis} currency={currency} showSymbol />
 									</TableCell>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
 										<Amount value={totalMarketValue} currency={currency} showSymbol />
 									</TableCell>
 								</>
@@ -226,7 +235,7 @@ export function InvestmentPerformance ({
 								</TableCell>
 							) : (
 								<>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
 										<Stack direction="row" justifyContent="flex-end">
 											<Amount value={totalGain} currency={currency} showSymbol negativeColor />
 											(<Amount value={totalDividend} currency={currency} showSymbol negativeColor />)
@@ -234,7 +243,7 @@ export function InvestmentPerformance ({
 									</TableCell>
 								</>
 							)}
-							<TableCell align="right">
+							<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
 								<Stack direction={isSmallScreen ? 'column' : 'row'} justifyContent="flex-end">
 									<Amount value={totalPerformance} currency={currency} showSymbol negativeColor />
 									<Typography variant="caption" sx={{ color: totalPerformance > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
