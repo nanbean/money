@@ -29,7 +29,7 @@ describe('historyService', () => {
 			jest.clearAllMocks();
 			jest.useFakeTimers();
 			jest.setSystemTime(new Date(MOCK_TODAY));
-			// jest.spyOn(console, 'log').mockImplementation(() => {});
+			jest.spyOn(console, 'log').mockImplementation(() => {});
 		});
 
 		afterEach(() => {

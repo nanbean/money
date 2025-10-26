@@ -153,10 +153,11 @@ describe('reportService', () => {
 			// Arrange
 			const mockAccounts = [
 				{ type: 'Cash', name: 'Wallet', currency: 'KRW' },
+				{ type: 'Bank', name: 'MyBank', currency: 'USD' },
 				{ type: 'Invst', name: 'Broker', currency: 'USD' },
 				{ type: 'Oth L', name: 'Loan', currency: 'KRW' },
 				{ type: 'Oth A', name: 'RealEstate', currency: 'KRW' },
-				{ type: 'Cash', name: 'Broker_Cash', currency: 'USD' }
+				{ type: 'Bank', name: 'Broker_Cash', currency: 'USD' }
 			];
 			const date = '2023-10-31';
 			const mockTransactionsByAccount = {
@@ -164,13 +165,23 @@ describe('reportService', () => {
 					{ date: '2023-09-15', amount: 50000 }, // Previous month data
 					{ date: '2023-10-01', amount: 100000 }
 				],
-				'account:Invst:Broker': [{ date: '2023-10-02', activity: 'Buy', investment: 'AAPL', quantity: 10, price: 150, amount: 1500 }],
+				'account:Bank:MyBank': [
+					{ date: '2023-09-15', amount: 100 }, // Previous month data
+					{ date: '2023-10-01', amount: 200 }
+				],
+				'account:Invst:Broker': [
+					{ date: '2023-10-02', activity: 'Buy', investment: 'AAPL', quantity: 10, price: 150, amount: 1500 }
+				],
 				'account:Oth L:Loan': [
 					{ date: '2023-09-20', amount: -100000 }, // Previous month data
 					{ date: '2023-10-03', amount: -500000 }
 				],
-				'account:Oth A:RealEstate': [{ date: '2023-10-04', amount: 2000000 }],
-				'account:Cash:Broker_Cash': [{ date: '2023-10-05', amount: 2000 }]
+				'account:Oth A:RealEstate': [
+					{ date: '2023-10-04', amount: 2000000 }
+				],
+				'account:Bank:Broker_Cash': [
+					{ date: '2023-10-05', amount: 2000 }
+				]
 			};
 			const mockAllTransactions = Object.values(mockTransactionsByAccount).flat();
 			const mockAllInvestments = [{ name: 'AAPL', price: 170 }]; // Current price
@@ -181,6 +192,7 @@ describe('reportService', () => {
 			getInvestmentBalance.mockReturnValue(1700); // 10 shares * $170/share
 			getBalance.mockImplementation((name, transactions, invTransactions) => {
 				if (name === 'Wallet') return 150000; // 50000 + 100000
+				if (name === 'MyBank') return 300; // 50000 + 100000
 				if (name === 'Loan') return -600000; // -100000 + -500000
 				if (name === 'RealEstate') return 2000000;
 				if (name === 'Broker_Cash') return 500; // 2000 (deposit) - 1500 (buy)
@@ -191,8 +203,8 @@ describe('reportService', () => {
 			const result = await reportService.getNetWorth(mockAccounts, mockAllTransactions, mockTransactionsByAccount, mockAllInvestments, [], date);
 
 			// Assert
-			// 1. Cash (Wallet): 50,000 + 100,000 = 150,000 KRW
-			expect(result.cashNetWorth).toBe(150000);
+			// 1. Cash (Wallet + MyBank): 50,000 + 100,000 + (100 + 200) * 1300 = 540,000 KRW
+			expect(result.cashNetWorth).toBe(540000);
 			// 2. Investments (Broker + Broker_Cash in USD, converted to KRW)
 			//    - Stock value: $1700 * 1300 = 2,210,000 KRW
 			//    - Cash value: $500 * 1300 = 650,000 KRW
@@ -202,10 +214,10 @@ describe('reportService', () => {
 			expect(result.assetNetWorth).toBe(2000000);
 			// 4. Liabilities (Loan): -100,000 + -500,000 = -600,000 KRW
 			expect(result.loanNetWorth).toBe(-600000);
-			// 5. Total Net Worth: 150,000 + 2,860,000 + 2,000,000 - 600,000 = 4,410,000 KRW
-			expect(result.netWorth).toBe(4410000);
-			// 6. Movable Asset: 150,000 + 2,860,000 - 600,000 = 2,410,000 KRW
-			expect(result.movableAsset).toBe(2410000);
+			// 5. Total Net Worth: 540,000 + 2,860,000 + 2,000,000 - 600,000 = 4,800,000 KRW
+			expect(result.netWorth).toBe(4800000);
+			// 6. Movable Asset: 540,000 + 2,860,000 - 600,000 = 2,800,000 KRW
+			expect(result.movableAsset).toBe(2800000);
 			expect(result.netInvestments).toHaveLength(1);
 			expect(result.netInvestments[0].name).toBe('AAPL');
 		});
