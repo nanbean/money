@@ -56,28 +56,26 @@ const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, 
 	for (const account of allAccounts) {
 		const accountTransactions = transactionsByAccount[`account:${account.type}:${account.name}`] || [];
 		const transactions = accountTransactions.filter(i => i.date <= date);
-		if (transactions.length > 0) {
-			if (account.type === 'Invst') {
-				const investments = getInvestmentList(allInvestments, allTransactions, transactions);
-				const balance = getInvestmentBalance(investments, date, histories);
-				netInvestments = [...netInvestments, ...investments].filter(i => i.quantity > 0);
-				investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-			} else if (account.type === 'Oth A') {
-				const balance = getBalance(account.name, transactions);
-				assetNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-			} else if (account.type === 'Oth L') {
-				const balance = getBalance(account.name, transactions);
-				loanNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-			} else if (account.name.match(/_Cash/)) {
-				const invAccountId = `account:Invst:${account.name.split('_')[0]}`;
-				const invAllTransactions = transactionsByAccount[invAccountId] || [];
-				const invTransactions = invAllTransactions.filter(i => i.date <= date);
-				const balance = getBalance(account.name, transactions, invTransactions);
-				investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-			} else {
-				const balance = getBalance(account.name, transactions);
-				cashNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-			}
+		if (account.type === 'Invst') {
+			const investments = getInvestmentList(allInvestments, allTransactions, transactions);
+			const balance = getInvestmentBalance(investments, date, histories);
+			netInvestments = [...netInvestments, ...investments].filter(i => i.quantity > 0);
+			investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+		} else if (account.type === 'Oth A') {
+			const balance = getBalance(account.name, transactions);
+			assetNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+		} else if (account.type === 'Oth L') {
+			const balance = getBalance(account.name, transactions);
+			loanNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+		} else if (account.name.match(/_Cash/)) {
+			const invAccountId = `account:Invst:${account.name.split('_')[0]}`;
+			const invAllTransactions = transactionsByAccount[invAccountId] || [];
+			const invTransactions = invAllTransactions.filter(i => i.date <= date);
+			const balance = getBalance(account.name, transactions, invTransactions);
+			investmentsNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
+		} else {
+			const balance = getBalance(account.name, transactions);
+			cashNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 		}
 	}
 	
