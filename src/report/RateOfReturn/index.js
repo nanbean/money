@@ -9,6 +9,7 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import Amount from '../../components/Amount';
 
 import ReportGrid from '../../components/ReportGrid';
@@ -45,7 +46,25 @@ export function RateOfReturn () {
 		setFilteredAccounts(e);
 	};
 
-	const { reportData, geometricMean, overallSummary } = useReturnReport(allInvestments, allAccountsTransactions, investementTransactions, cashTransactions, historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate);
+	const { reportData, chartData, geometricMean, overallSummary } = useReturnReport(allInvestments, allAccountsTransactions, investementTransactions, cashTransactions, historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate);
+
+	const renderChart = () => (
+		<ResponsiveContainer width="100%" height={200}>
+			<LineChart data={chartData}>
+				<XAxis dataKey="date" tickFormatter={(tick) => tick.substring(0, 4)} />
+				<YAxis tickFormatter={(tick) => `${(tick * 100).toFixed(0)}%`} />
+				<Tooltip formatter={(value) => `${(value * 100).toFixed(2)}%`} />
+				<Line
+					type="monotone"
+					dataKey="cumulativeReturn"
+					name="Cumulative Return"
+					stroke="#8884d8"
+					strokeWidth={2}
+					dot={{ r: 4 }}
+					activeDot={{ r: 8 }} />
+			</LineChart>
+		</ResponsiveContainer>
+	);
 
 	return (
 		<>
@@ -96,6 +115,9 @@ export function RateOfReturn () {
 								</Grid>
 							</Box>
 						)}
+						<Box sx={{ mr: 2 }}>
+							{renderChart()}
+						</Box>
 						<Box sx={{ flex: 1, mt: 1 }}>
 							{reportData.length > 0 && <ReportGrid reportData={reportData} />}
 						</Box>
@@ -154,8 +176,14 @@ export function RateOfReturn () {
 							</Stack>
 						</Paper>
 					</Box>
-					<Box sx={{ flex: 1, mt: 1 }}>
-						{reportData.length > 0 && <ReportGrid reportData={reportData} />}
+					
+					<Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+						<Box sx={{ mr: 2 }}>
+							{renderChart()}
+						</Box>
+						<Box sx={{ flex: 1, mt: 1 }}>
+							{reportData.length > 0 && <ReportGrid reportData={reportData} />}
+						</Box>
 					</Box>
 				</Box>
 			)}

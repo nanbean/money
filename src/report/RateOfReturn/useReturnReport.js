@@ -62,12 +62,17 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 
 	const returns = [];
 
+	data[0].cumulativeReturn = 0;
+
 	for (let i = 1; i < data.length; i++) {
 		const currentValue = data[i].netWorth;
 		const currentDepositWithdrawalSum = data[i].depositWithdrawalSum;
 		const previousValue = data[i - 1].netWorth;
 		// apply average saving with 1/2 
 		const returnRate = ((currentValue - previousValue - currentDepositWithdrawalSum) / (previousValue + currentDepositWithdrawalSum / 2)); //previousValue === 0 ? 0:((currentValue - previousValue - currentDepositWithdrawalSum) / previousValue);
+		const currentReturn = Number.isNaN(returnRate) ? 0 : returnRate;
+		const prevCumulativeReturn = data[i - 1].cumulativeReturn || 0;
+		data[i].cumulativeReturn = (1 + prevCumulativeReturn) * (1 + currentReturn) - 1;
 		returns.push(Number.isNaN(returnRate) ? 0:returnRate);
 	}
 
@@ -111,6 +116,7 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 
 	return {
 		reportData,
+		chartData: data,
 		geometricMean,
 		overallSummary: {
 			finalValue,
