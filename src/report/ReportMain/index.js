@@ -9,6 +9,7 @@ import DividendIcon from '@mui/icons-material/Payments';
 import HistoryIcon from '@mui/icons-material/BarChart';
 import PortfolioIcon from '@mui/icons-material/PieChart';
 import RetrunIcon from '@mui/icons-material/Percent';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
 
 import Layout from '../../components/Layout';
 import MonthlyExpense from '../MonthlyExpense';
@@ -18,6 +19,7 @@ import InvestmentPortfolio from '../InvestmentPortfolio';
 import RateOfReturn from '../RateOfReturn';
 
 import useMobile from '../../hooks/useMobile';
+import AmexTracker from '../AmexTracker';
 
 const TABS = [
 	{
@@ -49,6 +51,12 @@ const TABS = [
 		label: 'Return',
 		icon: <RetrunIcon />,
 		component: <RateOfReturn />
+	},
+	{
+		id: 'amex',
+		label: 'Amex',
+		icon: <CreditCardIcon />,
+		component: <AmexTracker />
 	}
 ];
 
@@ -75,7 +83,7 @@ export function ReportMain () {
 		<Layout title="Report">
 			<Tabs value={value} onChange={handleChange}>
 				{TABS.map(tabInfo => (
-					<Tab key={tabInfo.id} label={isMobile ? tabInfo.icon : tabInfo.label} sx={{ minWidth: '75px' }} />
+					<Tab key={tabInfo.id} label={isMobile ? tabInfo.icon : tabInfo.label} sx={{ minWidth: '50px' }} />
 				))}
 			</Tabs>
 			{TABS[value] && TABS[value].component}
