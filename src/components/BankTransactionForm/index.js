@@ -66,6 +66,13 @@ export function BankTransactionForm ({
 		}
 	};
 
+	const handleAmountKeyDown = (event) => {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			handleCalculateAmount();
+		}
+	};
+
 	const onPayeeChange = handler => (event, value) => dispatch(handler(value));
 
 	const onPayeeSelect = handler => (event, value) => {
@@ -225,6 +232,7 @@ export function BankTransactionForm ({
 							fullWidth
 							value={form.amount}
 							onChange={onChange(changeAmount)}
+							onKeyDown={handleAmountKeyDown}
 						/>
 					</FormControl>
 					<Button
