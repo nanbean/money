@@ -52,22 +52,29 @@ export function BankTransactionForm ({
 
 	const onChange = handler => event => dispatch(handler(event.target.value));
 
+	const isAmountExpression = (value) => {
+		const hasOperator = /[+\-*/]/.test(value);
+		const numbersFound = value.match(/-?\d+(\.\d+)?/g);
+		const hasAtLeastTwoNumbers = numbersFound && numbersFound.length >= 2;
+		return hasOperator && hasAtLeastTwoNumbers;
+	};
+
 	const handleCalculateAmount = () => {
-		try {
-			const result = evaluate(form.amount);
-			if (typeof result === 'number' && !isNaN(result)) {
-				const roundedResult = parseFloat(result.toFixed(2));
-				dispatch(changeAmount(roundedResult));
-			} else {
-				console.warn('Calculation resulted in a non-numeric value or an error:', result);
+		if (isAmountExpression(form.amount)) {
+			try {
+				const result = evaluate(form.amount);
+				if (typeof result === 'number' && !isNaN(result)) {
+					const roundedResult = parseFloat(result.toFixed(2));
+					dispatch(changeAmount(roundedResult));
+				}
+			} catch (e) {
+				console.error('Invalid amount expression:', e);
 			}
-		} catch (e) {
-			console.error('Invalid amount expression:', e);
 		}
 	};
 
 	const handleAmountKeyDown = (event) => {
-		if (event.key === 'Enter') {
+		if (event.key === 'Enter' && isAmountExpression(form.amount)) {
 			event.preventDefault();
 			handleCalculateAmount();
 		}
