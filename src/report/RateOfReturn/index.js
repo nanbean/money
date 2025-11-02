@@ -48,12 +48,27 @@ export function RateOfReturn () {
 
 	const { reportData, chartData, geometricMean, overallSummary } = useReturnReport(allInvestments, allAccountsTransactions, investementTransactions, cashTransactions, historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate);
 
+	const CustomTooltip = ({ active, payload, label }) => {
+		if (active && payload && payload.length) {
+			return (
+				<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, minWidth: 150, boxShadow: 3 }}>
+					<Typography variant="subtitle2" gutterBottom>{label.substring(0, 4)}</Typography>
+					<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+						<Typography variant="caption">{payload[0].name}:</Typography>
+						<Typography variant="caption">{(payload[0].value * 100).toFixed(1)}%</Typography>
+					</Stack>
+				</Box>
+			);
+		}
+		return null;
+	};
+	
 	const renderChart = () => (
 		<ResponsiveContainer width="100%" height={200}>
 			<LineChart data={chartData}>
 				<XAxis dataKey="date" tickFormatter={(tick) => tick.substring(0, 4)} />
 				<YAxis tickFormatter={(tick) => `${(tick * 100).toFixed(0)}%`} />
-				<Tooltip formatter={(value) => `${(value * 100).toFixed(2)}%`} />
+				<Tooltip content={<CustomTooltip />} />
 				<Line
 					type="monotone"
 					dataKey="cumulativeReturn"
@@ -61,7 +76,8 @@ export function RateOfReturn () {
 					stroke="#8884d8"
 					strokeWidth={2}
 					dot={{ r: 4 }}
-					activeDot={{ r: 8 }} />
+					activeDot={{ r: 8 }}
+					isAnimationActive={false} />
 			</LineChart>
 		</ResponsiveContainer>
 	);
