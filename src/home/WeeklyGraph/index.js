@@ -262,7 +262,7 @@ export function WeeklyGraph () {
 							tickLine={false}
 							tickFormatter={yAxisTickFormatter}
 							tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
-							width={40}
+							width={50}
 						/>
 						<Tooltip content={<CustomTooltip chartType={weeklyGraphChartType} />} />
 						{activeWeeklyCategories.map(i => <Bar key={i} dataKey={i} stackId="a" fill={getCategoryColor(i)} radius={[4, 4, 4, 4]} isAnimationActive={false} />)}
