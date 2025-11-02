@@ -62,7 +62,7 @@ export function RateOfReturn () {
 		}
 		return null;
 	};
-	
+
 	const renderChart = () => (
 		<ResponsiveContainer width="100%" height={200}>
 			<LineChart data={chartData}>
@@ -76,8 +76,7 @@ export function RateOfReturn () {
 					stroke="#8884d8"
 					strokeWidth={2}
 					dot={{ r: 4 }}
-					activeDot={{ r: 8 }}
-					isAnimationActive={false} />
+					activeDot={{ r: 8 }} />
 			</LineChart>
 		</ResponsiveContainer>
 	);

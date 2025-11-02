@@ -136,7 +136,7 @@ export function BankTransactions ({
 							const IconComponent = TYPE_ICON_MAP[cellData.type];
 
 							return (
-								<Stack direction="column" alignItems="flex-start" spacing={0.5}>
+								<Stack direction="column" alignItems="center" spacing={0.5}>
 									<Payee value={cellData.payee} category={cellData.category} />
 									{							
 										isSmallScreen && showAccount &&		
@@ -166,18 +166,20 @@ export function BankTransactions ({
 						}}
 						cellRenderer={({ cellData }) => (
 							isSmallScreen ? (
-								<Stack spacing={0.5}>
+								<Stack spacing={0.5} alignItems="flex-end">
 									<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={cellData.currency} style={{ fontWeight: 700, fontSize: 18, color: '#1976d2' }} />
 									<Typography variant="caption">
 										{toDateFormat(cellData.date)}
 									</Typography>
 								</Stack>
 							) : (
-								<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={cellData.currency} style={{ fontWeight: 700, color: '#1976d2' }} />
+								<Stack alignItems="flex-end">
+									<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={cellData.currency} style={{ fontWeight: 700, color: '#1976d2' }} />
+								</Stack>
 							)
 						)}
 						headerRenderer={({ label }) => (
-							<Typography align="left" variant="subtitle2" color="secondary">{label}</Typography>
+							<Typography align="right" variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 					/>
 				</StyledTable>

@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { styled } from '@mui/material/styles';
 import { AutoSizer, Column, Table } from 'react-virtualized';
 
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import Amount from '../Amount';
@@ -92,7 +93,7 @@ export function InvestmentTransactions ({
 						cellRenderer={({ cellData }) => {
 							if (isSmallScreen) {
 								return (
-									<React.Fragment>
+									<Stack alignItems="center">
 										<Typography
 											variant="body2"
 										>
@@ -101,12 +102,13 @@ export function InvestmentTransactions ({
 										<Typography variant="caption" sx={{ color: 'grey.500' }}>
 											{toDateFormat(cellData.date)}
 										</Typography>
-									</React.Fragment>
+									</Stack>
 								);
 							} else {
 								return (
 									<Typography
 										variant="body2"
+										align="center"
 									>
 										{cellData.investment}
 									</Typography >
@@ -126,7 +128,7 @@ export function InvestmentTransactions ({
 							<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
 						)}
 						cellRenderer={({ cellData }) => (
-							<Typography variant="body2">{cellData}</Typography>
+							<Typography align="center" variant="body2">{cellData}</Typography>
 						)}
 					/>
 					{
@@ -134,9 +136,13 @@ export function InvestmentTransactions ({
 							label="Qty."
 							dataKey="quantity"
 							width={width/10}
-							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} />}
+							cellRenderer={({ cellData }) => (
+								<Stack alignItems="flex-end">
+									<Amount value={cellData} ignoreDisplayCurrency showColor={false} />
+								</Stack>
+							)}
 							headerRenderer={({ label }) => (
-								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="right" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 						/>
 					}
@@ -145,9 +151,13 @@ export function InvestmentTransactions ({
 							label="Price"
 							dataKey="price"
 							width={width/9}
-							cellRenderer={({ cellData }) => <Amount value={cellData} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />}
+							cellRenderer={({ cellData }) => (
+								<Stack alignItems="flex-end">
+									<Amount value={cellData} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />
+								</Stack>
+							)}
 							headerRenderer={({ label }) => (
-								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="right" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
 						/>
 					}
@@ -158,9 +168,13 @@ export function InvestmentTransactions ({
 							dataKey="commission"
 							width={width/7}
 							headerRenderer={({ label }) => (
-								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
+								<Typography align="right" variant="subtitle2" color="secondary">{label}</Typography>
 							)}
-							cellRenderer={({ cellData }) => cellData ? <Amount value={cellData} ignoreDisplayCurrency showColor={false} /> : ''}
+							cellRenderer={({ cellData }) => (
+								<Stack alignItems="flex-end">
+									<Amount value={cellData} ignoreDisplayCurrency showColor={false} />
+								</Stack>
+							)}
 						/>
 					}
 					<Column
@@ -171,25 +185,25 @@ export function InvestmentTransactions ({
 						cellRenderer={({ cellData }) => {
 							if (isSmallScreen) {
 								return (
-									<React.Fragment>
+									<Stack alignItems="flex-end">
 										<Amount value={cellData.amount} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />
 										{
 											(cellData.activity === 'Buy' || cellData.activity === 'Sell') && <Typography variant="caption" sx={{ color: 'grey.500' }}>
-												{`${toCurrencyFormatWithSymbol(cellData.price, currency)} * ${cellData.quantity}`}
+												{`${cellData.quantity} * ${toCurrencyFormatWithSymbol(cellData.price, currency)}`}
 											</Typography>
 										}
-									</React.Fragment>
+									</Stack>
 								);
 							} else {
 								return (
-									<Amount value={cellData.amount} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />
+									<Stack alignItems="flex-end">
+										<Amount value={cellData.amount} ignoreDisplayCurrency showColor={false} showSymbol currency={currency} />
+									</Stack>
 								);
 							}
 
 						}}
-						headerRenderer={({ label }) => {
-							return <Typography align="left" variant="subtitle2" color="secondary">{label}</Typography>;
-						}}
+						headerRenderer={({ label }) => <Typography align="right" variant="subtitle2" color="secondary">{label}</Typography>}
 					/>
 				</StyledTable>
 			)}
