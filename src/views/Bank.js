@@ -75,7 +75,7 @@ export function Bank () {
 			variant="outlined"
 			label={
 				<Typography variant="subtitle">
-					Balance: <Amount value={balance} size="small" showSymbol showOriginal currency={currency} />
+					<Amount value={balance} size="small" showSymbol showOriginal currency={currency} />
 				</Typography>
 			}
 		/>
