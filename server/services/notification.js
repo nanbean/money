@@ -204,7 +204,13 @@ const parsers = [
 		parser: (body) => {
 			const dollorMatch = body.text.replace(/,/g, '').match(/\$(\d+(?:\.\d+)?)/);
 			let transaction = {};
-			if (body.title !== 'Upcoming payment' && body.title && dollorMatch) {
+			const excludedTitles = [
+				'Upcoming payment',
+				'Your transfer is complete',
+				'Your withdrawal is complete',
+				'Your monthly interest deposits'
+			];
+			if (!excludedTitles.includes(body.title) && body.title && dollorMatch) {
 				transaction = {
 					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 					amount: dollorMatch[1] * -1,
