@@ -104,7 +104,7 @@ const formatNotification = (transaction) => {
 		return '';
 	}
 	const { amount, payee, category, subcategory } = transaction;
-	return `amount: ${amount},\npayee: ${payee},\n\ncategory: ${category}${subcategory ? `:${subcategory}` : ''}`;
+	return `amount: ${amount},\npayee: ${payee},\ncategory: ${category}${subcategory ? `:${subcategory}` : ''}`;
 };
 
 const parsers = [
