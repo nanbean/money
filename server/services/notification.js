@@ -208,6 +208,7 @@ const parsers = [
 				'Upcoming payment',
 				'Your transfer is complete',
 				'Your withdrawal is complete',
+				'Your monthly interest deposit',
 				'Your monthly interest deposits'
 			];
 			if (!excludedTitles.includes(body.title) && body.title && dollorMatch) {
