@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
@@ -25,12 +25,19 @@ export function Dividend () {
 		setYear(event.target.value);
 	};
 
-	const startDate = moment().year(year).startOf('year').format('YYYY-MM-DD');
-	const endDate = moment().year(year).endOf('year').format('YYYY-MM-DD');
-	const dividendTransactions = allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
-		.filter(i => i.date >= startDate && i.date <= endDate);
-	const allAccounts = Object.keys(_.groupBy(dividendTransactions, 'account')).map(account => account);
+	const dividendTransactions = useMemo(() => {
+		const startDate = moment().year(year).startOf('year').format('YYYY-MM-DD');
+		const endDate = moment().year(year).endOf('year').format('YYYY-MM-DD');
+		return allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
+			.filter(i => i.date >= startDate && i.date <= endDate);
+	}, [allAccountsTransactions, year]);
+
+	const allAccounts = useMemo(() => Object.keys(_.groupBy(dividendTransactions, 'account')).map(account => account), [dividendTransactions]);
 	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
+
+	useEffect(() => {
+		setFilteredAccounts(allAccounts);
+	}, [allAccounts, year]);
 
 	const onFilteredAccountsChange = (e) => {
 		setFilteredAccounts(e);
