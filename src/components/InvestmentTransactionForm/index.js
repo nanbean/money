@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -149,6 +149,36 @@ export function InvestmentTransactionForm ({
 		dispatch(resetTransactionForm());
 	};
 
+	const sortedAutocompleteInvestmentList = useMemo(() => {
+		const holdings = {};
+		if (transactions) {
+			transactions.forEach((transaction) => {
+				if (transaction.investment) {
+					if (!holdings[transaction.investment]) {
+						holdings[transaction.investment] = 0;
+					}
+					if (transaction.activity === 'Buy' || transaction.activity === 'ShrsIn') {
+						holdings[transaction.investment] += transaction.quantity;
+					} else if (transaction.activity === 'Sell' || transaction.activity === 'ShrsOut') {
+						holdings[transaction.investment] -= transaction.quantity;
+					}
+				}
+			});
+		}
+
+		return [...(autocompleteInvestmentList || [])].sort((a, b) => {
+			const aHeld = holdings[a.name] > 0;
+			const bHeld = holdings[b.name] > 0;
+
+			if (aHeld && !bHeld) {
+				return -1;
+			}
+			if (!aHeld && bHeld) {
+				return 1;
+			}
+			return a.name.localeCompare(b.name);
+		});
+	}, [autocompleteInvestmentList, transactions]);
 
 	return (
 		<div>
@@ -167,7 +197,7 @@ export function InvestmentTransactionForm ({
 				</FormControl>
 				<AutoComplete
 					value={form.investment}
-					items={autocompleteInvestmentList}
+					items={sortedAutocompleteInvestmentList}
 					placeholder="Investment"
 					onChange={onInvestmentChange(changeInvestment)}
 				/>
