@@ -23,7 +23,13 @@ const fetchWithRetry = async (url, options, retries = 3, delay = 1000) => {
 
 const isUsDayMarketTime = () => {
 	const now = moment().tz('America/New_York');
+	const day = now.day();
 	const hour = now.hour();
+
+	// The day market is closed from Friday at 4:00 AM until Sunday at 8:00 PM
+	if (day === 5 && hour >= 4) return false;
+	if (day === 6) return false;
+	if (day === 0 && hour < 20) return false;
 
 	// The day market trading hours for the U.S. stock market, 20:00 ~ 03:00
 	const isDayMarketTime = (hour >= 20) || (hour < 3);
