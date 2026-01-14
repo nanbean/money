@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -24,11 +25,21 @@ import SankeyChart from './SankeyChart';
 import { YEAR_LIST, MONTH_LIST } from '../../constants';
 
 const MonthlyExpense = () => {
+	const location = useLocation();
+	const navigate = useNavigate();
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const { exchangeRate, currency } = useSelector((state) => state.settings);
-	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
-	const [filters, setFilters] = useState([]);
+	const [year, setYear] = useState(() => {
+		const params = new URLSearchParams(location.search);
+		const y = parseInt(params.get('year'), 10);
+		return y || parseInt(moment().format('YYYY'), 10);
+	});
+	const [filters, setFilters] = useState(() => {
+		const params = new URLSearchParams(location.search);
+		const filtersParam = params.get('filters');
+		return filtersParam ? filtersParam.split(',') : [];
+	});
 	const [view, setView] = useState('grid');
 
 	const reportView = filters.includes('category') ? 'category' : 'subcategory';
@@ -51,7 +62,22 @@ const MonthlyExpense = () => {
 	}));
 
 	const onYearChange = event => {
-		setYear(event.target.value);
+		const val = event.target.value;
+		setYear(val);
+		const params = new URLSearchParams(location.search);
+		params.set('year', val);
+		navigate(`?${params.toString()}`, { replace: true });
+	};
+
+	const onFilterChange = (newFilters) => {
+		setFilters(newFilters);
+		const params = new URLSearchParams(location.search);
+		if (newFilters.length > 0) {
+			params.set('filters', newFilters.join(','));
+		} else {
+			params.delete('filters');
+		}
+		navigate(`?${params.toString()}`, { replace: true });
 	};
 
 	const filterOptions = [
@@ -90,7 +116,7 @@ const MonthlyExpense = () => {
 							filterName="Filters"
 							options={filterOptions}
 							selectedOptions={filters}
-							onSelectionChange={setFilters}
+							onSelectionChange={onFilterChange}
 						/>
 					</Stack>
 				</div>
