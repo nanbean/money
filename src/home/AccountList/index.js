@@ -163,7 +163,7 @@ export default function AccountList () {
 										<Link key={row.name} to={`/${row.type}/${row.name}`} style={linkStyle}>
 											<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}>
 												<Typography variant="body2" sx={{ pl: 3 }}>{row.name}</Typography>
-												<Amount value={row.balance} currency={row.currency} showSymbol/>
+												<Amount value={row.balance} currency={row.currency} showSymbol showOriginal/>
 											</Stack>
 										</Link>
 									))}

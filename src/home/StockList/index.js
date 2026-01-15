@@ -127,7 +127,7 @@ export function StockList () {
 							</Typography>
 						</Stack>
 						<Stack alignItems="flex-end">
-							<Amount value={i.appraisedValue} showSymbol currency={i.currency}/>
+							<Amount value={i.appraisedValue} showSymbol showOriginal currency={i.currency}/>
 							<Stack direction="row" alignItems="baseline" spacing={0.5}>
 								<Amount value={Math.round(i.profit)} size="small" negativeColor showSymbol currency={i.currency}/>
 								<Typography variant="caption" sx={{ color: i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
