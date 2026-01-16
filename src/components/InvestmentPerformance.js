@@ -77,184 +77,161 @@ export function InvestmentPerformance ({
 					</IconButton>
 				)}
 			</Stack>
-			<TableContainer>
-				<Table size="small">
-					<TableHead>
-						<TableRow>
-							{isSmallScreen ? (
-								<TableCell>
+			{isSmallScreen ? (
+				<Stack spacing={1}>
+					{performance.map(i => (
+						<Paper key={i.account} variant="outlined" sx={{ p: 1 }}>
+							<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+								<Stack spacing={0.5}>
+									<Typography variant="body1" sx={{ fontWeight: 'bold' }}>{i.account}</Typography>
+									<Amount value={i.marketValue} currency={currency} showSymbol size="large" />
+									<Stack direction="row" alignItems="center">
+										<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Buy:</Typography>
+										<Amount value={i.costBasis} currency={currency} showSymbol />
+										<Typography variant="body2" color="text.secondary" sx={{ mx: 0.5 }}>|</Typography>
+										<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Qty:</Typography>
+										<Quantity value={i.quantity}/>
+									</Stack>
+								</Stack>
+								<Stack spacing={0.5} alignItems="flex-end">
+									<Typography variant="body1" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+										{(i.costBasis !== 0 ? (i.periodReturn / i.costBasis * 100) : 0).toFixed(2)}%
+									</Typography>
+									<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
+									<Stack direction="row" alignItems="center">
+										<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Gain:</Typography>
+										<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
+									</Stack>
+									<Stack direction="row" alignItems="center">
+										<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Div:</Typography>
+										<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />
+									</Stack>									
+								</Stack>
+								
+							</Stack>
+						</Paper>
+					))}
+					<Paper variant="outlined" sx={{ p: 1, bgcolor: 'action.hover' }}>
+						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+							<Stack spacing={0.5}>
+								<Typography variant="body1" sx={{ fontWeight: 'bold' }}>Total</Typography>
+								<Amount value={totalMarketValue} currency={currency} showSymbol size="large" />
+								<Stack direction="row" alignItems="center">
+									<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Buy:</Typography>
+									<Amount value={totalCostBasis} currency={currency} showSymbol />
+									<Typography variant="body2" color="text.secondary" sx={{ mx: 0.5 }}>|</Typography>
+									<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Qty:</Typography>
+									<Quantity value={totalQuantity}/>
+								</Stack>
+							</Stack>
+							<Stack spacing={0.5} alignItems="flex-end">
+								<Typography variant="body1" sx={{ color: totalPerformance > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+									{(totalCostBasis !== 0 ? (totalPerformance / totalCostBasis * 100) : 0).toFixed(2)}%
+								</Typography>
+								<Amount value={totalPerformance} currency={currency} showSymbol negativeColor />
+								<Stack direction="row" alignItems="center">
+									<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Gain:</Typography>
+									<Amount value={totalGain} currency={currency} showSymbol negativeColor />
+								</Stack>
+								<Stack direction="row" alignItems="center">
+									<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>Div:</Typography>
+									<Amount value={totalDividend} currency={currency} showSymbol negativeColor />
+								</Stack>
+							</Stack>
+						</Stack>
+					</Paper>
+				</Stack>
+			) : (
+				<TableContainer>
+					<Table size="small">
+						<TableHead>
+							<TableRow>
+								<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
 									<Typography variant="body2">Account</Typography>
+								</TableCell>
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
 									<Typography variant="body2">Qty</Typography>
 								</TableCell>
-							) : (
-								<>
-									<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
-										<Typography variant="body2">Account</Typography>
-									</TableCell>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
-										<Typography variant="body2">Qty</Typography>
-									</TableCell>
-								</>
-							)}
-							{isSmallScreen ? (
-								<TableCell align="right">
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
 									<Typography variant="body2">Cost Basis</Typography>
+								</TableCell>
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
 									<Typography variant="body2">Market Value</Typography>
 								</TableCell>
-							) : (
-								<>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
-										<Typography variant="body2">Cost Basis</Typography>
-									</TableCell>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
-										<Typography variant="body2">Market Value</Typography>
-									</TableCell>
-								</>
-							)}
-							{isSmallScreen ? (
-								<TableCell align="right">
-									<Typography variant="body2">Gain/Loss</Typography>
-									<Typography variant="body2">Div</Typography>
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
+									<Typography variant="body2">Gain/Loss(Div)</Typography>
 								</TableCell>
-							) : (
-								<>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
-										<Typography variant="body2">Gain/Loss(Div)</Typography>
-									</TableCell>
-								</>
-							)}
-							<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
-								<Stack direction={isSmallScreen ? 'column' : 'row'} justifyContent="flex-end">
-									<Typography variant="body2">Return</Typography>
-									<Typography variant="body2">(%)</Typography>
-								</Stack>
-							</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						{performance.map(i => (
-							<TableRow key={i.account}>
-								{isSmallScreen ? (
-									<TableCell component="th" scope="row">
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
+									<Stack direction="row" justifyContent="flex-end">
+										<Typography variant="body2">Return</Typography>
+										<Typography variant="body2">(%)</Typography>
+									</Stack>
+								</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							{performance.map(i => (
+								<TableRow key={i.account}>
+									<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
 										<Typography variant="body2">{i.account}</Typography>
+									</TableCell>
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
 										<Quantity value={i.quantity}/>
 									</TableCell>
-								) : (
-									<>
-										<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
-											<Typography variant="body2">{i.account}</Typography>
-										</TableCell>
-										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
-											<Quantity value={i.quantity}/>
-										</TableCell>
-									</>
-								)}
-								{isSmallScreen ? (
-									<TableCell align="right">
-										<Stack>
-											<Amount value={i.costBasis} currency={currency} showSymbol />
-											<Amount value={i.marketValue} currency={currency} showSymbol />
-										</Stack>
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
+										<Amount value={i.costBasis} currency={currency} showSymbol />
+									</TableCell>								
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
+										<Amount value={i.marketValue} currency={currency} showSymbol />
 									</TableCell>
-								) : (
-									<>
-										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
-											<Amount value={i.costBasis} currency={currency} showSymbol />
-										</TableCell>								
-										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
-											<Amount value={i.marketValue} currency={currency} showSymbol />
-										</TableCell>
-									</>
-								)}
-								{isSmallScreen ? (
-									<TableCell align="right">
-										<Stack>
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
+										<Stack direction="row" justifyContent="flex-end">
 											<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
-											<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />
+											(<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />)
 										</Stack>
 									</TableCell>
-								) : (
-									<>
-										<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
-											<Stack direction="row" justifyContent="flex-end">
-												<Amount value={i.periodGain} currency={currency} showSymbol negativeColor />
-												(<Amount value={i.periodDiv} currency={currency} showSymbol negativeColor />)
-											</Stack>
-										</TableCell>
-									</>
-								)}
+									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
+										<Stack direction="row" justifyContent="flex-end">
+											<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
+											<Typography variant="caption" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+												({(i.costBasis !== 0 ? (i.periodReturn / i.costBasis * 100) : 0).toFixed(2)}%)
+											</Typography>
+										</Stack>
+									</TableCell>
+								</TableRow>
+							))}
+							<TableRow sx={{ '& > *': { borderTop: '2px solid rgba(224, 224, 224, 1)', fontWeight: 'bold' } }}>
+								<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
+									<Typography variant="body2">Total</Typography>
+								</TableCell>
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
+									<Quantity value={totalQuantity}/>
+								</TableCell>
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
+									<Amount value={totalCostBasis} currency={currency} showSymbol />
+								</TableCell>
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
+									<Amount value={totalMarketValue} currency={currency} showSymbol />
+								</TableCell>
+								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
+									<Stack direction="row" justifyContent="flex-end">
+										<Amount value={totalGain} currency={currency} showSymbol negativeColor />
+										(<Amount value={totalDividend} currency={currency} showSymbol negativeColor />)
+									</Stack>
+								</TableCell>
 								<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
-									<Stack direction={isSmallScreen ? 'column' : 'row'} justifyContent="flex-end">
-										<Amount value={i.periodReturn} currency={currency} showSymbol negativeColor />
-										<Typography variant="caption" sx={{ color: i.periodReturn > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-											({(i.costBasis !== 0 ? (i.periodReturn / i.costBasis * 100) : 0).toFixed(2)}%)
+									<Stack direction="row" justifyContent="flex-end">
+										<Amount value={totalPerformance} currency={currency} showSymbol negativeColor />
+										<Typography variant="caption" sx={{ color: totalPerformance > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+											({(totalCostBasis !== 0 ? (totalPerformance / totalCostBasis * 100) : 0).toFixed(2)}%)
 										</Typography>
 									</Stack>
 								</TableCell>
 							</TableRow>
-						))}
-						<TableRow sx={{ '& > *': { borderTop: '2px solid rgba(224, 224, 224, 1)', fontWeight: 'bold' } }}>
-							{isSmallScreen ? (
-								<TableCell component="th" scope="row">
-									<Typography variant="body2">Total</Typography>
-									<Quantity value={totalQuantity}/>
-								</TableCell>
-							) : (
-								<>
-									<TableCell align="left" sx={{ width: COLUMN_WIDTHS.account }}>
-										<Typography variant="body2">Total</Typography>
-									</TableCell>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.qty }}>
-										<Quantity value={totalQuantity}/>
-									</TableCell>
-								</>
-							)}
-							{isSmallScreen ? (
-								<TableCell align="right">
-									<Stack>
-										<Amount value={totalCostBasis} currency={currency} showSymbol />
-										<Amount value={totalMarketValue} currency={currency} showSymbol />
-									</Stack>
-								</TableCell>
-							) : (
-								<>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.costBasis }}>
-										<Amount value={totalCostBasis} currency={currency} showSymbol />
-									</TableCell>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.marketValue }}>
-										<Amount value={totalMarketValue} currency={currency} showSymbol />
-									</TableCell>
-								</>
-							)}
-							{isSmallScreen ? (
-								<TableCell align="right">
-									<Stack>
-										<Amount value={totalGain} currency={currency} showSymbol negativeColor />
-										<Amount value={totalDividend} currency={currency} showSymbol negativeColor />
-									</Stack>
-								</TableCell>
-							) : (
-								<>
-									<TableCell align="right" sx={{ width: COLUMN_WIDTHS.gainLossDiv }}>
-										<Stack direction="row" justifyContent="flex-end">
-											<Amount value={totalGain} currency={currency} showSymbol negativeColor />
-											(<Amount value={totalDividend} currency={currency} showSymbol negativeColor />)
-										</Stack>
-									</TableCell>
-								</>
-							)}
-							<TableCell align="right" sx={{ width: COLUMN_WIDTHS.return }}>
-								<Stack direction={isSmallScreen ? 'column' : 'row'} justifyContent="flex-end">
-									<Amount value={totalPerformance} currency={currency} showSymbol negativeColor />
-									<Typography variant="caption" sx={{ color: totalPerformance > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-										({(totalCostBasis !== 0 ? (totalPerformance / totalCostBasis * 100) : 0).toFixed(2)}%)
-									</Typography>
-								</Stack>
-							</TableCell>
-						</TableRow>
-					</TableBody>
-				</Table>
-			</TableContainer>
+						</TableBody>
+					</Table>
+				</TableContainer>
+			)}
 		</Paper>
 	);
 }
