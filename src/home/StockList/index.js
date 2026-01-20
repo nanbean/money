@@ -122,9 +122,20 @@ export function StockList () {
 					>
 						<Stack alignItems="flex-start">
 							<Typography variant="body2">{i.name}</Typography>
-							<Typography variant="caption" sx={{ color: 'grey.500' }}>
-								{i.quantity.toLocaleString()}
-							</Typography>
+							<Stack direction="row" alignItems="center" spacing={0.5}>
+								<Typography variant="caption" sx={{ color: 'grey.500' }}>
+									{i.quantity.toLocaleString()}
+								</Typography>
+								<Typography variant="caption" sx={{ color: 'grey.500' }}>*</Typography>
+								<Amount
+									value={i.appraisedValue / i.quantity}
+									size="small"
+									currency={i.currency}
+									showSymbol
+									ignoreDisplayCurrency
+									showColor={false}
+								/>
+							</Stack>
 						</Stack>
 						<Stack alignItems="flex-end">
 							<Amount value={i.appraisedValue} showSymbol showOriginal currency={i.currency}/>
