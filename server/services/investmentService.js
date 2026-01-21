@@ -18,10 +18,12 @@ const arrangeKRInvestmemt = async () => {
 		data: kospiResponse.data.map((i) => {
 			const foundResult = results.find(j => j.googleSymbol === i.googleSymbol);
 			const priceString = foundResult?.output?.stck_prpr;
+			const rateString = foundResult?.output?.prdy_ctrt;
 			if (priceString) {
 				return {
 					...i,
-					price: parseInt(priceString, 10)
+					price: parseInt(priceString, 10),
+					rate: parseFloat(rateString)
 				};
 			} else {
 				return i;
@@ -44,10 +46,12 @@ const arrangeUSInvestmemt = async () => {
 		data: usResponse.data.map((i) => {
 			const foundResult = results.find(j => j.googleSymbol === i.googleSymbol);
 			const priceString = foundResult?.output?.last;
+			const rateString = foundResult?.output?.rate;
 			if (priceString) {
 				return {
 					...i,
-					price: parseFloat(priceString)
+					price: parseFloat(priceString),
+					rate: parseFloat(rateString)
 				};
 			} else {
 				return i;

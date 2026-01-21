@@ -61,6 +61,7 @@ const getInvestmentsFromAccounts = (accounts) => {
 
 export function StockList () {
 	const accountList = useSelector((state) => state.accountList);
+	const allInvestments = useSelector((state) => state.allInvestments);
 	const rawStockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
 	const { exchangeRate, stockListSortBy: sortBy = 'equity' } = useSelector((state) => state.settings);
 	const isDarkMode = useDarkMode();
@@ -112,43 +113,53 @@ export function StockList () {
 					]}
 				/>
 			</Stack>
-			{stockList.map(i => (
-				<Link key={i.name} to={`/performance/${i.name}`} style={linkStyle}>
-					<Stack
-						direction="row"
-						justifyContent="space-between"
-						alignItems="center"
-						sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}
-					>
-						<Stack alignItems="flex-start">
-							<Typography variant="body2">{i.name}</Typography>
-							<Stack direction="row" alignItems="center" spacing={0.5}>
-								<Typography variant="caption" sx={{ color: 'grey.500' }}>
-									{i.quantity.toLocaleString()}
-								</Typography>
-								<Typography variant="caption" sx={{ color: 'grey.500' }}>*</Typography>
-								<Amount
-									value={i.appraisedValue / i.quantity}
-									size="small"
-									currency={i.currency}
-									showSymbol
-									ignoreDisplayCurrency
-									showColor={false}
-								/>
+			{stockList.map(i => {
+				const investment = allInvestments.find(j => j.name === i.name);
+				const rate = investment?.rate;
+
+				return (
+					<Link key={i.name} to={`/performance/${i.name}`} style={linkStyle}>
+						<Stack
+							direction="row"
+							justifyContent="space-between"
+							alignItems="center"
+							sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}
+						>
+							<Stack alignItems="flex-start">
+								<Typography variant="body2">{i.name}</Typography>
+								<Stack direction="row" alignItems="center" spacing={0.5}>
+									<Typography variant="caption" sx={{ color: 'grey.500' }}>
+										{i.quantity.toLocaleString()}
+									</Typography>
+									<Typography variant="caption" sx={{ color: 'grey.500' }}>*</Typography>
+									<Amount
+										value={i.appraisedValue / i.quantity}
+										size="small"
+										currency={i.currency}
+										showSymbol
+										ignoreDisplayCurrency
+										showColor={false}
+									/>
+									{rate && (
+										<Typography variant="caption" sx={{ color: rate > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+											({rate}%)
+										</Typography>
+									)}
+								</Stack>
+							</Stack>
+							<Stack alignItems="flex-end">
+								<Amount value={i.appraisedValue} showSymbol showOriginal currency={i.currency}/>
+								<Stack direction="row" alignItems="baseline" spacing={0.5}>
+									<Amount value={Math.round(i.profit)} size="small" negativeColor showSymbol currency={i.currency}/>
+									<Typography variant="caption" sx={{ color: i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+										({(i.return * 100).toFixed(2)}%)
+									</Typography>
+								</Stack>
 							</Stack>
 						</Stack>
-						<Stack alignItems="flex-end">
-							<Amount value={i.appraisedValue} showSymbol showOriginal currency={i.currency}/>
-							<Stack direction="row" alignItems="baseline" spacing={0.5}>
-								<Amount value={Math.round(i.profit)} size="small" negativeColor showSymbol currency={i.currency}/>
-								<Typography variant="caption" sx={{ color: i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-									({(i.return * 100).toFixed(2)}%)
-								</Typography>
-							</Stack>
-						</Stack>
-					</Stack>
-				</Link>
-			))}
+					</Link>
+				);
+			})}
 			<Divider sx={{ my: 1 }} />
 			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1 }}>
 				<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Subtotal</Typography>
