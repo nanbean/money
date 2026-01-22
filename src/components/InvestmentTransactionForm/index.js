@@ -48,7 +48,7 @@ export function InvestmentTransactionForm ({
 	const dispatch = useDispatch();
 
 	const quantityDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
-	const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
+	const priceDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp';
 	const commissionDisabled = !form.activity || form.activity === 'Div' || form.activity === 'MiscExp' || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
 	const amountDisabled = !form.activity || form.activity === 'ShrsOut' || form.activity === 'ShrsIn';
 
