@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
+import { useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -12,12 +16,40 @@ import _ from 'lodash';
 
 import NormalGrid from '../../components/NormalGrid';
 import AccountFilter from '../../components/AccountFilter';
+import { toCurrencyFormat } from '../../utils/formatting';
 
 import {
 	YEAR_LIST
 } from '../../constants';
 
+const CustomTooltip = ({ active, payload, label }) => {
+	if (active && payload && payload.length) {
+		return (
+			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, minWidth: 150, boxShadow: 3 }}>
+				<Typography variant="subtitle2" gutterBottom>{label}</Typography>
+				{payload.map(entry => (
+					<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+						<Stack direction="row" spacing={0.5} alignItems="center">
+							<Box sx={{ width: 10, height: 10, bgcolor: entry.color, borderRadius: '2px' }} />
+							<Typography variant="caption">{entry.name}</Typography>
+						</Stack>
+						<Typography variant="caption">{toCurrencyFormat(entry.value)}</Typography>
+					</Stack>
+				))}
+			</Box>
+		);
+	}
+	return null;
+};
+
+CustomTooltip.propTypes = {
+	active: PropTypes.bool,
+	label: PropTypes.string,
+	payload: PropTypes.array
+};
+
 export function Dividend () {
+	const theme = useTheme();
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const [year, setYear] = useState(parseInt(moment().format('YYYY'), 10));
 
@@ -28,9 +60,33 @@ export function Dividend () {
 	const dividendTransactions = useMemo(() => {
 		const startDate = moment().year(year).startOf('year').format('YYYY-MM-DD');
 		const endDate = moment().year(year).endOf('year').format('YYYY-MM-DD');
-		return allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
+		const transactions = allAccountsTransactions.filter(i => i.activity === 'Div' || i.activity === 'MiscExp')
 			.filter(i => i.date >= startDate && i.date <= endDate);
+
+		const accountsWithDiv = new Set(transactions.filter(t => t.activity === 'Div').map(t => t.account));
+		return transactions.filter(t => accountsWithDiv.has(t.account));
 	}, [allAccountsTransactions, year]);
+
+	const yearlyDividendData = useMemo(() => {
+		const dividends = allAccountsTransactions.filter(i => i.activity === 'Div');
+		const groupedByYear = _.groupBy(dividends, (i) => moment(i.date).format('YYYY'));
+		const years = Object.keys(groupedByYear).sort();
+
+		return years.map(year => {
+			const txs = groupedByYear[year];
+			const gross = txs.reduce((acc, curr) => acc + curr.amount, 0);
+			return {
+				year,
+				dividend: gross
+			};
+		});
+	}, [allAccountsTransactions]);
+
+	const onBarClick = (data) => {
+		if (data && data.activeLabel) {
+			setYear(parseInt(data.activeLabel, 10));
+		}
+	};
 
 	const allAccounts = useMemo(() => Object.keys(_.groupBy(dividendTransactions, 'account')).map(account => account), [dividendTransactions]);
 	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
@@ -72,6 +128,16 @@ export function Dividend () {
 
 	return (
 		<Box sx={{ p: 1 }}>
+			<Box sx={{ width: '100%', height: '150px', mb: 2 }}>
+				<ResponsiveContainer>
+					<BarChart data={yearlyDividendData} onClick={onBarClick}>
+						<XAxis dataKey="year" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
+						<YAxis hide />
+						<Tooltip content={<CustomTooltip />} />
+						<Bar dataKey="dividend" name="Dividend" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} cursor="pointer" />
+					</BarChart>
+				</ResponsiveContainer>
+			</Box>
 			<Stack direction="row" justifyContent="space-between" alignItems="center">
 				<FormControl size="small" sx={{ minWidth: 150 }}>
 					<Select
