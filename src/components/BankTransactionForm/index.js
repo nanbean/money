@@ -158,7 +158,20 @@ export function BankTransactionForm ({
 		};
 	
 		if (matchTransaction) {
-			transaction.amount = form.amount || matchTransaction.amount;
+			if (matchTransaction.division && matchTransaction.division.length > 0) {
+				setIsSplit(true);
+				setDivisions(matchTransaction.division.map(d => ({
+					category: d.subcategory ? `${d.category}:${d.subcategory}` : d.category,
+					amount: d.amount,
+					memo: d.description || ''
+				})));
+				transaction.amount = matchTransaction.amount;
+			} else {
+				setIsSplit(false);
+				setDivisions([]);
+				transaction.amount = form.amount || matchTransaction.amount;
+			}
+
 			if (matchTransaction.category && matchTransaction.subcategory) {
 				transaction.category = `${matchTransaction.category}:${matchTransaction.subcategory}`;
 			} else {
