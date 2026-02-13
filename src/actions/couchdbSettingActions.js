@@ -96,3 +96,39 @@ export const updateCategoryAction = (index, value) => {
 		dispatch(getSettingsAction());
 	};
 };
+
+export const addPaymentAction = (payment) => {
+	return async dispatch => {
+		let paymentListDoc;
+		try {
+			paymentListDoc = await settingsDB.get('paymentList');
+		} catch (e) {
+			if (e.name === 'not_found') {
+				paymentListDoc = { _id: 'paymentList', value: [] };
+			} else {
+				throw e;
+			}
+		}
+		paymentListDoc.value.push(payment);
+		await settingsDB.put(paymentListDoc);
+		dispatch(getSettingsAction());
+	};
+};
+
+export const editPaymentAction = (index, payment) => {
+	return async dispatch => {
+		const paymentListDoc = await settingsDB.get('paymentList');
+		paymentListDoc.value[index] = payment;
+		await settingsDB.put(paymentListDoc);
+		dispatch(getSettingsAction());
+	};
+};
+
+export const deletePaymentAction = (index) => {
+	return async dispatch => {
+		const paymentListDoc = await settingsDB.get('paymentList');
+		paymentListDoc.value.splice(index, 1);
+		await settingsDB.put(paymentListDoc);
+		dispatch(getSettingsAction());
+	};
+};

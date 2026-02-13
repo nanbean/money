@@ -8,6 +8,7 @@ import GeneralIcon from '@mui/icons-material/ManageAccounts';
 import NotificationLogIcon from '@mui/icons-material/Notes';
 import CategoryIcon from '@mui/icons-material/Folder';
 import AccountIcon from '@mui/icons-material/AccountBalanceWallet';
+import PaymentIcon from '@mui/icons-material/Payment';
 
 import Layout from '../../components/Layout';
 
@@ -15,6 +16,7 @@ import General from '../General';
 import NotificationLog from '../NotificationLog';
 import Category from '../Category';
 import Account from '../Account';
+import PaymentList from '../PaymentList';
 
 import useMobile from '../../hooks/useMobile';
 
@@ -36,6 +38,12 @@ const TABS = [
 		label: 'Category',
 		icon: <CategoryIcon />,
 		component: <Category />
+	},
+	{
+		id: 'paymentList',
+		label: 'Payment',
+		icon: <PaymentIcon />,
+		component: <PaymentList />
 	},
 	{
 		id: 'notificationLog',
