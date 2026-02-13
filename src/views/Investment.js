@@ -25,7 +25,7 @@ import { setAccountAction } from '../actions/accountActions';
 
 import {
 	getAccountInvestmentsAction
-} from '../actions/couchdbActions';
+} from '../actions/couchdbAccountActions';
 import {
 	openTransactionInModal
 } from '../actions/ui/form/investmentTransaction';

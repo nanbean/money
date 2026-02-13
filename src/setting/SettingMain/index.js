@@ -7,12 +7,14 @@ import Tab from '@mui/material/Tab';
 import GeneralIcon from '@mui/icons-material/ManageAccounts';
 import NotificationLogIcon from '@mui/icons-material/Notes';
 import CategoryIcon from '@mui/icons-material/Folder';
+import AccountIcon from '@mui/icons-material/AccountBalanceWallet';
 
 import Layout from '../../components/Layout';
 
 import General from '../General';
 import NotificationLog from '../NotificationLog';
 import Category from '../Category';
+import Account from '../Account';
 
 import useMobile from '../../hooks/useMobile';
 
@@ -22,6 +24,12 @@ const TABS = [
 		label: 'General',
 		icon: <GeneralIcon />,
 		component: <General />
+	},
+	{
+		id: 'account',
+		label: 'Account',
+		icon: <AccountIcon />,
+		component: <Account />
 	},
 	{
 		id: 'category',

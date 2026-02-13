@@ -9,11 +9,14 @@ import Routes from './routes';
 import { rehydrateAction } from './actions/rehydrateActions';
 import { getAuthAction } from './actions/authActions';
 import {
-	getAccountListAction,
 	getAllAccountsTransactionsAction,
 	getAllInvestmentsListAction,
 	getPayeeListAction
 } from './actions/couchdbActions';
+
+import {
+	getAccountListAction
+} from './actions/couchdbAccountActions';
 
 import {
 	getSettingsAction

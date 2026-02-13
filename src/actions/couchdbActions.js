@@ -17,15 +17,20 @@ import {
 	finalizeCouchdbSettingAction
 } from './couchdbSettingActions';
 
+import {
+	accountsDB,
+	getAllAccounts,
+	initCouchdbAccountAction,
+	finalizeCouchdbAccountAction
+} from './couchdbAccountActions';
+
 import { COUCHDB_URL } from '../constants';
 
 import {
 	SET_ADD_TRANSACTION_FETCHING,
-	SET_ACCOUNT_LIST,
 	SET_DELETE_TRANSACTION_FETCHING,
 	SET_EDIT_TRANSACTION_FETCHING,
 	SET_ALL_INVESTMENTS,
-	SET_ACCOUNT_INVESTMENTS,
 	SET_ALL_ACCOUNTS_TRANSACTIONS,
 	ADD_ALL_ACCOUNTS_TRANSACTIONS,
 	DELETE_ALL_ACCOUNTS_TRANSACTIONS,
@@ -40,25 +45,18 @@ import {
 PouchDB.plugin(pouchdbAuthentication);
 PouchDB.plugin(pouchdbFind);
 
-let accountsDB = new PouchDB('accounts');
 let transactionsDB = new PouchDB('transactions');
 let stocksDB = new PouchDB('stocks');
 let historiesDB = new PouchDB('histories');
 
-let accountsSync;
 let transactionsSync;
 let stocksSync;
 let historiesSync;
-
-const updateAllAccounts = async (dispatch) => {
-	dispatch(getAccountList());
-};
 
 const updateAllInvestments = async (dispatch) => {
 	dispatch(getAllInvestmentsList());
 };
 
-const updateAllAccountsDebounce = debounce(updateAllAccounts, 1000);
 const updateAllInvestmentsDebounce = debounce(updateAllInvestments, 1000);
 
 const getAllTransactions = async () => {
@@ -78,13 +76,6 @@ const getAllTransactions = async () => {
 	});
 
 	return allTransactions;
-};
-
-const getAllAccounts = async () => {
-	const accountsResponse = await accountsDB.allDocs({ include_docs: true }); // eslint-disable-line camelcase
-	const allAccounts = accountsResponse.rows.map(i => i.doc);
-
-	return allAccounts;
 };
 
 const getAllInvestments = async () => {
@@ -258,22 +249,6 @@ const updateAccount = async (accountId) => {
 
 export const initCouchdbAction = username => {
 	return async dispatch => {
-		let remoteAccountsDB = new PouchDB(`https://${COUCHDB_URL}/accounts_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		accountsSync = accountsDB.sync(remoteAccountsDB, { live: true, retry: true })
-			.on('change', function () {
-				updateAllAccountsDebounce(dispatch);
-				// handle change
-			}).on('paused', function () {
-				// replication paused (e.g. replication up to date, user went offline)
-			}).on('active', function () {
-				// replicate resumed (e.g. new changes replicating, user went back online)
-			}).on('denied', function () {
-				// a document failed to replicate (e.g. due to permissions)
-			}).on('complete', function () {
-				// handle complete
-			}).on('error', function () {
-				// handle error
-			});
 		let remoteTransactionsDB = new PouchDB(`https://${COUCHDB_URL}/transactions_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
 		transactionsSync = transactionsDB.sync(remoteTransactionsDB, { live: true, retry: true })
 			.on('change', function ({ change, deleted }) {
@@ -349,17 +324,18 @@ export const initCouchdbAction = username => {
 
 		dispatch(initCouchdbReportAction(username));
 		dispatch(initCouchdbSettingAction(username));
+		dispatch(initCouchdbAccountAction(username));
 	};
 };
 
 export const finalizeCouchdbAction = () => {
 	return async () => {
-		accountsSync && accountsSync.cancel();
 		transactionsSync && transactionsSync.cancel();
 		stocksSync && stocksSync.cancel();
 		historiesSync && historiesSync.cancel();
 		finalizeCouchdbReportAction();
 		finalizeCouchdbSettingAction();
+		finalizeCouchdbAccountAction();
 	};
 };
 
@@ -477,23 +453,6 @@ export const deleteTransactionAction = params => {
 	};
 };
 
-const getAccountList = () => {
-	return async dispatch => {
-		const accountList = await getAllAccounts();
-
-		dispatch({
-			type: SET_ACCOUNT_LIST,
-			payload: accountList
-		});
-	};
-};
-
-export const getAccountListAction = () => {
-	return async dispatch => {
-		dispatch(getAccountList());
-	};
-};
-
 const getWeeklyTransactions = async () => {
 	const transactionsResponse = await transactionsDB.allDocs({
 		include_docs: true, // eslint-disable-line camelcase
@@ -547,17 +506,6 @@ const getAllInvestmentsList = () => {
 export const getAllInvestmentsListAction = () => {
 	return async dispatch => {
 		dispatch(getAllInvestmentsList());
-	};
-};
-
-export const getAccountInvestmentsAction = (accountId) => {
-	return async dispatch => {
-		const account = await accountsDB.get(accountId);
-
-		dispatch({
-			type: SET_ACCOUNT_INVESTMENTS,
-			payload: account.investments
-		});
 	};
 };
 
