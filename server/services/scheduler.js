@@ -6,6 +6,7 @@ const { arrangeKRInvestmemt, arrangeUSInvestmemt } = require('./investmentServic
 const { updateAccountList } = require('./accountService');
 const { sendBalanceUpdateNotification } = require('./notificationService');
 const { updateLifeTimePlanner, updateNetWorth } = require('./reportService');
+const checkAndSendNotification = require('./paymentService');
 
 const updateInvestmentPrice = async () => {
 	await arrangeExchangeRate();
@@ -89,6 +90,14 @@ const updateInvestmentPrice = async () => {
 	}, () => {
 		/* This function is executed when the job stops */
 		console.log('30 00 13 daily dailyArrangeInvestmemtjob ended');
+	}, true, 'America/Los_Angeles');
+
+	new CronJob('00 00 09 * * *', async () => {
+		console.log('payment 00 00 09 daily checkAndSendNotification started');
+		await checkAndSendNotification();
+	}, () => {
+		/* This function is executed when the job stops */
+		console.log('00 00 09 daily checkAndSendNotification ended');
 	}, true, 'America/Los_Angeles');
 })();
 
