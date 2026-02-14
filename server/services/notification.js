@@ -126,7 +126,7 @@ const parsers = [
 					category: '교통비',
 					subcategory: '도로비&주차비'
 				}
-			}
+			};
 		}
 	},
 	{
@@ -453,7 +453,7 @@ exports.addTransaction = async function (body) {
 			transaction: categorizedTransaction
 		});
 
-		await messaging.sendNotification('👍 Transaction', formatNotification(categorizedTransaction), 'receipt');
+		await messaging.sendNotification('👍 Transaction', formatNotification(categorizedTransaction), 'receipt', 'transactions');
 		return true;
 	}
 

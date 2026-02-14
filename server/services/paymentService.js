@@ -28,7 +28,7 @@ const checkAndSendNotification = async () => {
 		if (item.day && today < item.day) {
 			return false;
 		}
-		return item.valid && !isPaid(item, transactions)
+		return item.valid && !isPaid(item, transactions);
 	});
 
 	if (unpaidItems.length > 0) {
