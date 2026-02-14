@@ -114,26 +114,32 @@ const parsers = [
 	},
 	{
 		matcher: (body) => body.packageName.match(/com\.ex\.plus_hipasscard/i),
-		parser: (body) => ({
-			account: 'KB체크카드',
-			transaction: {
-				date: moment().format('YYYY-MM-DD'),
-				amount: parseInt(body.text.replace(/,/g, '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g, ''), 10) * -1,
-				payee: '도로비',
-				category: '교통비',
-				subcategory: '도로비&주차비'
+		parser: (body) => {
+			const amountMatch = body.text.replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
+			return {
+				account: 'KB체크카드',
+				transaction: {
+					date: moment().format('YYYY-MM-DD'),
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
+					payee: '도로비',
+					category: '교통비',
+					subcategory: '도로비&주차비'
+				}
 			}
-		})
+		}
 	},
 	{
 		matcher: (body) => body.packageName.match(/com\.kbcard\.kbkookmincard/i),
 		parser: (body) => {
 			const items = body.text.split('\n');
+			const amountMatch = items[2] && items[2].replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
 			return {
 				account: 'KB카드',
 				transaction: {
 					date: items[3] && moment(items[3], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[2] && parseInt(items[2].replace(/,/g, '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g, ''), 10) * -1,
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
 					payee: items[4],
 					category: '분류없음'
 				}
@@ -144,11 +150,13 @@ const parsers = [
 		matcher: (body) => body.packageName.match(/com\.wooricard\.smartapp/i),
 		parser: (body) => {
 			const items = body.text.split('\n');
+			const amountMatch = items[0] && items[0].replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
 			return {
 				account: '급여계좌',
 				transaction: {
 					date: items[0] && moment(items[0].match(/\d{2}\.\d{2}/), 'MM.DD').format('YYYY-MM-DD'),
-					amount: items[0] && parseInt(items[0].replace(/,/g, '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g, ''), 10) * -1,
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
 					payee: items[1],
 					category: '분류없음'
 				}
@@ -189,15 +197,24 @@ const parsers = [
 	},
 	{
 		matcher: (body) => body.packageName.match(/com\.americanexpress\.android\.acctsvcs\.us/i),
-		parser: (body) => ({
-			account: 'BoA',
-			transaction: {
-				date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
-				amount: body.text.replace(/,/g, '').match(/-?\$[0-9]+[.]*[0-9]*/)[0].replace('$', '') * -1,
-				payee: body.text.match(/ at ([^;]+)/)[1].replace(/.$/, ''),
-				category: '분류없음'
+		parser: (body) => {
+			const amountMatch = body.text.replace(/,/g, '').match(/-?\$[0-9]+[.]*[0-9]*/);
+			const payeeMatch = body.text.match(/ at ([^;]+)/);
+
+			if (!amountMatch || !payeeMatch) {
+				return {};
 			}
-		})
+
+			return {
+				account: 'BoA',
+				transaction: {
+					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+					amount: parseFloat(amountMatch[0].replace('$', '')) * -1,
+					payee: payeeMatch[1].replace(/.$/, ''),
+					category: '분류없음'
+				}
+			};
+		}
 	},
 	{
 		matcher: (body) => body.packageName.match(/com\.robinhood\.money/i),
@@ -275,11 +292,13 @@ const parsers = [
 		matcher: (body) => body.text.match(/SC은행BC\(9528\)승인/g),
 		parser: (body) => {
 			const items = body.text.split('\n');
+			const amountMatch = items[3] && items[3].replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
 			return {
 				account: '급여계좌',
 				transaction: {
 					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[3] && parseInt(items[3].replace(/,/g, '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g, ''), 10) * -1,
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
 					payee: items[5],
 					category: '분류없음'
 				}
@@ -290,11 +309,13 @@ const parsers = [
 		matcher: (body) => body.text.match(/우리\(1912\)승인/g),
 		parser: (body) => {
 			const items = body.text.split('\n');
+			const amountMatch = items[3] && items[3].replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
 			return {
 				account: '급여계좌',
 				transaction: {
 					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[3] && parseInt(items[3].replace(/,/g, '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g, ''), 10) * -1,
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
 					payee: items[5],
 					category: '분류없음'
 				}
@@ -305,11 +326,13 @@ const parsers = [
 		matcher: (body) => body.text.match(/SC은행BC\(2314\)승인/g) || body.text.match(/SC제일BC\(2314\)승인/g),
 		parser: (body) => {
 			const items = body.text.split('\n');
+			const amountMatch = items[3] && items[3].replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
 			return {
 				account: '생활비카드',
 				transaction: {
 					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[3] && parseInt(items[3].replace(/,/g, '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g, ''), 10) * -1,
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
 					payee: items[5],
 					category: '분류없음'
 				}
@@ -320,11 +343,13 @@ const parsers = [
 		matcher: (body) => body.text.match(/현대카드 승인/g),
 		parser: (body) => {
 			const items = body.text.split('\n');
+			const amountMatch = items[3] && items[3].replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
 			return {
 				account: '생활비카드',
 				transaction: {
 					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
-					amount: items[3] && parseInt(items[3].replace(/,/g, '').match(/\d{1,10}원/)[0].replace(/[^0-9]/g, ''), 10) * -1,
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
 					payee: items[5],
 					category: '분류없음'
 				}
@@ -360,11 +385,13 @@ const parsers = [
 		matcher: (body) => body.text.match(/BofA/g),
 		parser: (body) => {
 			const items = body.text.split(', ');
+			const amountMatch = items[0] && items[0].replace(/,/g, '').match(/\$?[0-9]+(\.[0-9][0-9])?$/);
+			if (!amountMatch) return {};
 			return {
 				account: 'BoA',
 				transaction: {
 					date: items[3] && moment(items[3], 'MM/DD/YY').format('YYYY-MM-DD'),
-					amount: items[0] && parseFloat(items[0].replace(/,/g, '').match(/\$?[0-9]+(\.[0-9][0-9])?$/)[0].replace('$', '')) * -1,
+					amount: parseFloat(amountMatch[0].replace('$', '')) * -1,
 					payee: items[2],
 					category: '분류없음'
 				}
@@ -374,13 +401,17 @@ const parsers = [
 	{
 		matcher: (body) => body.text.match(/Chase Sapphire/g),
 		parser: (body) => {
-			const date = body.text.match(/(?<= on\s+).*?(?=\s+at)/gs);
+			const dateMatch = body.text.match(/(?<= on\s+).*?(?=\s+at)/gs);
+			const amountMatch = body.text.replace(/,/g, '').match(/-?\$[0-9]+[.]*[0-9]*/);
+			const payeeMatch = body.text.match(/(?<=with\s+).*?(?=\s+on)/gs);
+			if (!amountMatch || !payeeMatch) return {};
+
 			return {
 				account: 'BoA',
 				transaction: {
-					date: date ? moment(date, 'MMM DD, YYYY').format('YYYY-MM-DD') : moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
-					amount: body.text.replace(/,/g, '').match(/-?\$[0-9]+[.]*[0-9]*/)[0].replace('$', '') * -1,
-					payee: body.text.match(/(?<=with\s+).*?(?=\s+on)/gs)[0],
+					date: dateMatch ? moment(dateMatch, 'MMM DD, YYYY').format('YYYY-MM-DD') : moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+					amount: parseFloat(amountMatch[0].replace('$', '')) * -1,
+					payee: payeeMatch[0],
 					category: '분류없음'
 				}
 			};
