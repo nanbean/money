@@ -2,8 +2,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import { styled } from '@mui/material/styles';
-
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -23,19 +21,6 @@ import Amount from '../components/Amount';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import AccountFilter from '../components/AccountFilter';
-
-const Sticky = styled('div')(({ theme }) => ({
-	width: '100%',
-	position: 'sticky',
-	paddingLeft: theme.spacing(1),
-	paddingRight: theme.spacing(1),
-	[theme.breakpoints.up('lg')]: {
-		top: 62
-	},
-	[theme.breakpoints.down('sm')]: {
-		top: 56
-	}
-}));
 
 export function Search () {
 	const accountList = useSelector((state) => state.accountList);
@@ -222,85 +207,81 @@ export function Search () {
 					setfilteredAccounts={onFilteredAccountsChange}
 				/>
 			</Stack>
-			<Sticky>
-				<Grid
-					container
-					spacing={1}
-					sx={(theme) => ({
-						marginTop: theme.spacing(1),
-						marginBottom: theme.spacing(1)
-					})}
-				>
-					<Grid item xs={6}>
-						<FormControl required fullWidth>
-							<Input
-								id="search"
-								name="search"
-								autoComplete="search"
-								value={inputValue}
-								onChange={onInputValueChange}
-								startAdornment={
-									<InputAdornment position="start">
-										<SearchIcon />
-									</InputAdornment>
-								}
-							/>
-						</FormControl>
-					</Grid>
-					<Grid item xs={6}>
-						<FormControl variant="standard"	fullWidth>
-							<Select
-								value={category && `${category}` + (subcategory ? `:${subcategory}`:'')}
-								onChange={onCategoryChange}
-							>
-								{
-									categoryList.map(i => (
-										<MenuItem key={i} value={i}>{i}</MenuItem>
-									))
-								}
-							</Select>
-						</FormControl>
-					</Grid>
-					<Grid item xs={6}>
-						<FormControl fullWidth>
-							<Input
-								id="startDate"
-								type="date"
-								name="startDate"
-								autoComplete="off"
-								placeholder="Start Date"
-								value={startDate}
-								fullWidth
-								onChange={onStartDateChange}
-								startAdornment={
-									<InputAdornment position="start">
-										From
-									</InputAdornment>
-								}
-							/>
-						</FormControl>
-					</Grid>
-					<Grid item xs={6}>
-						<FormControl fullWidth>
-							<Input
-								id="endDate"
-								type="date"
-								name="endDate"
-								autoComplete="off"
-								placeholder="End Date"
-								value={endDate}
-								fullWidth
-								onChange={onEndDateChange}
-								startAdornment={
-									<InputAdornment position="start">
-										To
-									</InputAdornment>
-								}
-							/>
-						</FormControl>
-					</Grid>
+			<Grid
+				container
+				spacing={1}
+				sx={(theme) => ({
+					marginTop: theme.spacing(1),
+					marginBottom: theme.spacing(1)
+				})}
+			>
+				<Grid item xs={12} md={5}>
+					<FormControl variant="standard" required fullWidth>
+						<Input
+							id="search"
+							name="search"
+							autoComplete="search"
+							value={inputValue}
+							onChange={onInputValueChange}
+							startAdornment={
+								<InputAdornment position="start">
+									<SearchIcon />
+								</InputAdornment>
+							}
+						/>
+					</FormControl>
 				</Grid>
-			</Sticky>
+				<Grid item xs={12} md={3}>
+					<FormControl variant="standard"	fullWidth>
+						<Select
+							value={category && `${category}` + (subcategory ? `:${subcategory}`:'')}
+							onChange={onCategoryChange}
+						>
+							{
+								categoryList.map(i => (
+									<MenuItem key={i} value={i}>{i}</MenuItem>
+								))
+							}
+						</Select>
+					</FormControl>
+				</Grid>
+				<Grid item xs={6} md={2}>
+					<FormControl variant="standard" fullWidth>
+						<Input
+							id="startDate"
+							type="date"
+							name="startDate"
+							autoComplete="off"
+							placeholder="Start Date"
+							value={startDate}
+							onChange={onStartDateChange}
+							startAdornment={
+								<InputAdornment position="start">
+									From
+								</InputAdornment>
+							}
+						/>
+					</FormControl>
+				</Grid>
+				<Grid item xs={6} md={2}>
+					<FormControl variant="standard" fullWidth>
+						<Input
+							id="endDate"
+							type="date"
+							name="endDate"
+							autoComplete="off"
+							placeholder="End Date"
+							value={endDate}
+							onChange={onEndDateChange}
+							startAdornment={
+								<InputAdornment position="start">
+									To
+								</InputAdornment>
+							}
+						/>
+					</FormControl>
+				</Grid>
+			</Grid>
 			<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
 				{
 					filteredTransactions.length > 0 &&
