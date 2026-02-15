@@ -66,11 +66,25 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 		}
 	};
 
-	const sendPromises = tokens.map(token => {
+	const invalidTokens = [];
+	const settledPromises = await Promise.allSettled(tokens.map(token => {
 		const tokenMessage = { ...message, token };
-		return admin.messaging().send(tokenMessage);
-	});
+		return admin.messaging().send(tokenMessage)
+			.catch(error => {
+				if (error.code === 'messaging/registration-token-not-registered') {
+					invalidTokens.push(token);
+				} else {
+					console.error('Error sending notification to token:', token, error);
+				}
+				return Promise.reject(error);
+			});
+	}));
 
-	const results = await Promise.all(sendPromises);
-	return results;
+	if (invalidTokens.length > 0) {
+		const messaging = await readMessagingFile();
+		messaging.tokens = messaging.tokens.filter(t => !invalidTokens.includes(t));
+		await writeMessagingFile(messaging);
+	}
+
+	return settledPromises;
 };
