@@ -6,6 +6,7 @@ const { sendNotification } = require('./messaging');
 const isPaid = (payment, transactions) => {
 	const thisYearMonth = moment().format('YYYY-MM');
 	return transactions.some(t => {
+		if (!t.accountId) return false;
 		const accountName = t.accountId.split(':')[2];
 		if (payment.account === accountName && payment.payee === t.payee && payment.category === t.category) {
 			if (!payment.subcategory || payment.subcategory === t.subcategory) {

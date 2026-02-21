@@ -66,12 +66,18 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 		}
 	};
 
+	const INVALID_TOKEN_CODES = [
+		'messaging/registration-token-not-registered',
+		'messaging/invalid-registration-token',
+		'messaging/app-instance-not-registered'
+	];
+
 	const invalidTokens = [];
 	const settledPromises = await Promise.allSettled(tokens.map(token => {
 		const tokenMessage = { ...message, token };
 		return admin.messaging().send(tokenMessage)
 			.catch(error => {
-				if (error.code === 'messaging/registration-token-not-registered') {
+				if (INVALID_TOKEN_CODES.includes(error.code)) {
 					invalidTokens.push(token);
 				} else {
 					console.error('Error sending notification to token:', token, error);
@@ -84,6 +90,7 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 		const messaging = await readMessagingFile();
 		messaging.tokens = messaging.tokens.filter(t => !invalidTokens.includes(t));
 		await writeMessagingFile(messaging);
+		console.log(`Removed ${invalidTokens.length} invalid FCM token(s).`);
 	}
 
 	return settledPromises;
