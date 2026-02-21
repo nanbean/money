@@ -18,11 +18,8 @@
     "exceljs": "^4.4.0",
     "firebase": "^10.12.3",
     "firebase-admin": "^12.2.0",
-
     "google-spreadsheet": "^3.3.0",
     "googleapis": "^60.0.1",
-
-
     "koa": "^2.4.1",
     "koa-bodyparser": "^4.2.0",
     "koa-mount": "^3.0.0",
@@ -37,15 +34,12 @@
     "nano": "^8.0.1",
     "node-fetch": "^1.7.3",
     "node-persist": "^4.0.1",
-
-
     "pouchdb": "^9.0.0",
     "pouchdb-authentication": "^1.1.3",
     "pouchdb-find": "^9.0.0",
     "react": "18.3.1",
     "react-csv": "^2.2.2",
     "react-dom": "18.3.1",
-
     "react-redux": "^8.0.2",
     "react-router-dom": "^6.3.0",
     "react-scripts": "^5.0.1",
