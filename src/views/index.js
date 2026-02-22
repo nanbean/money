@@ -7,3 +7,4 @@ export { default as AllPerformance } from './AllPerformance';
 export { default as Search } from './Search';
 export { default as Transactions } from './Transactions';
 export { default as Investments } from './Investments';
+export { default as Spending } from './Spending';

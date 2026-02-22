@@ -11,6 +11,7 @@ import {
 	Bank,
 	Investment,
 	Investments,
+	Spending,
 	NetWorth,
 	LifetimePlanner,
 	Performance,
@@ -59,6 +60,7 @@ function RoutesMain () {
 						<Route path="/performance/:investment" element={<Performance />} />
 						<Route path="/allperformance" element={<AllPerformance />} />
 						<Route path="/investments" element={<Investments />} />
+						<Route path="/spending" element={<Spending />} />
 						<Route path="/search" element={<Search />} />
 						<Route path="/transactions" element={<Transactions />} />
 						<Route path="/report" element={<ReportMain />} />

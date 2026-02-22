@@ -70,7 +70,7 @@ export function Summary () {
 	return (
 		<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', py: 1, px: 2 }}>
 			<Box sx={{ width: 150, height: 150, position: 'relative' }}>
-				<ResponsiveContainer>
+				<ResponsiveContainer width={150} height={150}>
 					<PieChart>
 						<Pie
 							data={chartData}

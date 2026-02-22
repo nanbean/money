@@ -29,7 +29,7 @@ const MonthlyExpense = () => {
 	const navigate = useNavigate();
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const { exchangeRate, currency } = useSelector((state) => state.settings);
+	const { exchangeRate, currency, livingExpenseExempt = [] } = useSelector((state) => state.settings);
 	const [year, setYear] = useState(() => {
 		const params = new URLSearchParams(location.search);
 		const y = parseInt(params.get('year'), 10);
@@ -51,7 +51,7 @@ const MonthlyExpense = () => {
 
 	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
 	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate, reportView);
-	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView);
+	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView, livingExpenseExempt);
 	const reportData = useMonthlyExpense(incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year);
 	const { sankeyData } = useSankeyData(incomeReport, expenseReport, totalIncomeSum, totalExpenseSum);
 

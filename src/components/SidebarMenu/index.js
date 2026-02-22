@@ -11,6 +11,7 @@ import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -20,6 +21,7 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import PieChartIcon from '@mui/icons-material/PieChart';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import SearchIcon from '@mui/icons-material/Search';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -33,7 +35,9 @@ const drawerWidth = 240;
 
 const linkStyle = {
 	textDecoration: 'none',
-	color: 'inherit'
+	color: 'inherit',
+	display: 'flex',
+	width: '100%'
 };
 
 const routes = [
@@ -47,6 +51,11 @@ const routes = [
 		path: '/investments',
 		label: 'Investments',
 		icon: <PieChartIcon />
+	},
+	{
+		path: '/spending',
+		label: 'Spending',
+		icon: <ShoppingCartIcon />
 	},
 	{
 		path: '/transactions',
@@ -138,7 +147,7 @@ function SidebarMenu ()
 							}),
 							[theme.breakpoints.down('sm')]: {
 								width: theme.spacing(7)
-							}							
+							}
 						}
 					};
 				} else {
@@ -176,38 +185,39 @@ function SidebarMenu ()
 			<Divider />
 			<List>
 				{routes.map(item => (
-					<Link key={item.label} to={item.path} style={linkStyle}>
-						<ListItem
-							button
-							onClick={onClickHandler}
-							selected={item.path === location.pathname}
-						>
-							<ListItemIcon>{item.icon}</ListItemIcon>
-							<ListItemText primary={item.label} />
-						</ListItem>
-					</Link>
+					<ListItem key={item.label} disablePadding>
+						<Link to={item.path} style={linkStyle}>
+							<ListItemButton
+								onClick={onClickHandler}
+								selected={item.path === location.pathname}
+							>
+								<ListItemIcon>{item.icon}</ListItemIcon>
+								<ListItemText primary={item.label} />
+							</ListItemButton>
+						</Link>
+					</ListItem>
 				))}
 			</List>
 			<Divider />
 			<List>
-				<ListItem
-					button
-					onClick={onRefreshClickHandler}
-				>
-					<ListItemIcon><RefreshIcon /></ListItemIcon>
-					<ListItemText primary="Refresh" />
+				<ListItem disablePadding>
+					<ListItemButton onClick={onRefreshClickHandler}>
+						<ListItemIcon><RefreshIcon /></ListItemIcon>
+						<ListItemText primary="Refresh" />
+					</ListItemButton>
 				</ListItem>
 				{anotherRoutes.map(item => (
-					<Link key={item.label} to={item.path} style={linkStyle}>
-						<ListItem
-							button
-							onClick={onClickHandler}
-							selected={item.path === location.pathname}
-						>
-							<ListItemIcon>{item.icon}</ListItemIcon>
-							<ListItemText primary={item.label} />
-						</ListItem>
-					</Link>
+					<ListItem key={item.label} disablePadding>
+						<Link to={item.path} style={linkStyle}>
+							<ListItemButton
+								onClick={onClickHandler}
+								selected={item.path === location.pathname}
+							>
+								<ListItemIcon>{item.icon}</ListItemIcon>
+								<ListItemText primary={item.label} />
+							</ListItemButton>
+						</Link>
+					</ListItem>
 				))}
 			</List>
 		</Drawer>

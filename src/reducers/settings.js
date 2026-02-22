@@ -1,9 +1,20 @@
 import * as actions from '../actions/actionTypes';
 
+const DEFAULT_LIVING_EXPENSE_EXEMPT = [
+	'세금',
+	'대출이자',
+	'보험',
+	'실제지출아님',
+	'취미-레저:여행',
+	'교통비:차량구입비',
+	'건축'
+];
+
 const initialState = {
 	currency: 'KRW',
 	enableExchangeRateUpdate: true,
-	exchangeRate: 1300
+	exchangeRate: 1300,
+	livingExpenseExempt: DEFAULT_LIVING_EXPENSE_EXEMPT
 };
 
 export default function settings (state = initialState, action) {
@@ -14,7 +25,10 @@ export default function settings (state = initialState, action) {
 			return obj;
 		}, {});
 		if (general) {
-			return general;
+			return {
+				livingExpenseExempt: DEFAULT_LIVING_EXPENSE_EXEMPT,
+				...general
+			};
 		}
 		return state;
 	}

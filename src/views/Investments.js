@@ -89,9 +89,9 @@ const makeFormatYAxis = (currency) => (value) => {
 		if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
 		return `$${value.toLocaleString()}`;
 	}
-	if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억`;
-	if (value >= 10000000) return `${(value / 10000000).toFixed(0)}천만`;
-	if (value >= 1000000) return `${(value / 1000000).toFixed(0)}백만`;
+	if (value >= 100000000) return `${(value / 1000000000).toFixed(1)}B`;
+	if (value >= 10000000) return `${(value / 1000000).toFixed(0)}M`;
+	if (value >= 1000000) return `${(value / 1000).toFixed(0)}K`;
 	return value.toLocaleString();
 };
 
@@ -162,7 +162,7 @@ const AllocationBar = ({ segments, currency = 'KRW' }) => {
 						))}
 					</defs>
 
-					{/* 상단면 */}
+					{/* top face */}
 					{rects.map(r => (
 						<polygon
 							key={`top-${r.name}`}
@@ -173,7 +173,7 @@ const AllocationBar = ({ segments, currency = 'KRW' }) => {
 						/>
 					))}
 
-					{/* 전면 */}
+					{/* front face */}
 					{rects.map(r => (
 						<rect
 							key={`front-${r.name}`}
@@ -190,7 +190,7 @@ const AllocationBar = ({ segments, currency = 'KRW' }) => {
 						/>
 					))}
 
-					{/* 우측면 (마지막 세그먼트) */}
+					{/* right face (last segment) */}
 					{lastRect && (
 						<polygon
 							points={`
@@ -205,7 +205,7 @@ const AllocationBar = ({ segments, currency = 'KRW' }) => {
 						/>
 					)}
 
-					{/* hover 하이라이트 */}
+					{/* hover highlight */}
 					{hovered && (
 						<rect
 							x={hovered.seg.x}
@@ -218,7 +218,7 @@ const AllocationBar = ({ segments, currency = 'KRW' }) => {
 					)}
 				</svg>
 
-				{/* 툴팁 */}
+				{/* tooltip */}
 				{hovered && (
 					<Box sx={{
 						position: 'fixed',
@@ -459,7 +459,7 @@ export function Investments () {
 
 					{view === 'chart' ? (
 						<>
-							<Box sx={{ height: 300, width: '100%' }}>
+							<Box sx={{ height: 300, width: '100%', minWidth: 0, overflow: 'hidden' }}>
 								<ResponsiveContainer width="100%" height="100%">
 									<AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
 										<defs>
@@ -516,7 +516,7 @@ export function Investments () {
 						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
 							<Stack direction="row" spacing={0.5} alignItems="center">
 								<AutoAwesomeIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-								<Typography variant="caption" color="text.secondary">AI 포트폴리오 분석</Typography>
+								<Typography variant="caption" color="text.secondary">AI Portfolio Analysis</Typography>
 							</Stack>
 							<IconButton size="small" onClick={fetchAiComment} disabled={aiLoading}>
 								{aiLoading ? <CircularProgress size={16} /> : <RefreshIcon fontSize="small" />}
@@ -527,7 +527,7 @@ export function Investments () {
 							<>
 								<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
 									<Stack direction="row" spacing={0.5} alignItems="baseline">
-										<Typography variant="caption" color="text.secondary">과거 수익률 기반 예측</Typography>
+										<Typography variant="caption" color="text.secondary">Projection Based on Historical Returns</Typography>
 										<Typography variant="caption" sx={{ color: cagrData.cagr >= 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR, fontWeight: 'bold' }}>
 											CAGR {cagrData.cagr >= 0 ? '+' : ''}{(cagrData.cagr * 100).toFixed(1)}%
 										</Typography>
@@ -542,7 +542,7 @@ export function Investments () {
 									<TableBody>
 										{cagrData.projections.map(p => (
 											<TableRow key={p.years}>
-												<TableCell sx={{ py: 0.5, color: 'text.secondary', fontSize: '0.75rem', border: 'none' }}>{p.years}년 후</TableCell>
+												<TableCell sx={{ py: 0.5, color: 'text.secondary', fontSize: '0.75rem', border: 'none' }}>{p.years} yr</TableCell>
 												<TableCell align="right" sx={{ py: 0.5, fontWeight: 'bold', fontSize: '0.85rem', border: 'none' }}>
 													{toCurrencyFormatWithSymbol(p.value, currency)}
 												</TableCell>
@@ -558,10 +558,10 @@ export function Investments () {
 							<Typography variant="body2" sx={{ lineHeight: 1.6 }}>{aiComment}</Typography>
 						)}
 						{!aiComment && !aiLoading && (
-							<Typography variant="caption" color="text.disabled">새로고침 버튼을 눌러 AI 분석을 받아보세요.</Typography>
+							<Typography variant="caption" color="text.disabled">Click refresh to get AI analysis.</Typography>
 						)}
 						<Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 1 }}>
-							* 과거 수익률이 미래 성과를 보장하지 않습니다.
+							* Past performance does not guarantee future results.
 						</Typography>
 					</Box>
 
@@ -657,7 +657,11 @@ export function Investments () {
 		);
 	} else {
 		return (
-			<Layout title="Investments" loading />
+			<Layout title="Investments">
+				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+					<CircularProgress />
+				</Box>
+			</Layout>
 		);
 	}
 }

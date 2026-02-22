@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { MONTH_LIST } from '../../constants';
 
-const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView) => {
+const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView, livingExpenseExempt = []) => {
 	const startDate = moment(`${year}-01-01`).format('YYYY-MM-DD');
 	const endDate = moment(`${year}-12-31`).format('YYYY-MM-DD');
 	let expenseReport = [];
@@ -63,16 +63,7 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 		});
 
 		if (livingExpenseOnly) {
-			const exemptionCategory = [
-				'세금',
-				'대출이자',
-				'보험',
-				'실제지출아님',
-				'취미-레저:여행',
-				'교통비:차량구입비',
-				'건축'
-			];
-			expenseReport = expenseReport.filter(i => !exemptionCategory.find(j => i.category && i.category.startsWith(j)));
+			expenseReport = expenseReport.filter(i => !livingExpenseExempt.find(j => i.category && i.category.startsWith(j)));
 		}
 		if (expenseReport.length > 0) {
 			totalMonthExpenseSum = MONTH_LIST.map((m, index) => expenseReport.map(i => i.month[index]).reduce((a, b) => a + b));
