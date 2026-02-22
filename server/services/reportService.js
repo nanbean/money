@@ -78,7 +78,7 @@ const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, 
 			cashNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
 		}
 	}
-	
+
 	return {
 		netWorth: cashNetWorth + investmentsNetWorth + loanNetWorth + assetNetWorth,
 		cashNetWorth,
@@ -154,9 +154,46 @@ const updateNetWorth = async () => {
 	console.timeEnd('updateNetWorth');
 };
 
+const DAILY_RETENTION_DAYS = 90;
+
+const updateNetWorthDaily = async () => {
+	console.log('updateNetWorthDaily start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
+
+	const today = moment().tz('Asia/Seoul').format('YYYY-MM-DD');
+
+	const allAccounts = await accountDB.listAccounts();
+	const allTransactions = await transactionDB.getAllTransactions();
+	const kospiResponse = await stockDB.getStock('kospi');
+	const kosdaqResponse = await stockDB.getStock('kosdaq');
+	const usResponse = await stockDB.getStock('us');
+	const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
+	const transactionsByAccount = _.groupBy(allTransactions, 'accountId');
+	const histories = await historyDB.listHistories();
+
+	const { netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, movableAsset } =
+		await getNetWorth(allAccounts, allTransactions, transactionsByAccount, allInvestments, histories, today);
+
+	const oldDoc = await reportDB.getReport('netWorthDaily').catch(() => null);
+	const existingData = (oldDoc && oldDoc.data) ? oldDoc.data : [];
+
+	const cutoff = moment().subtract(DAILY_RETENTION_DAYS, 'days').format('YYYY-MM-DD');
+	const filtered = existingData.filter(i => i.date >= cutoff && i.date !== today);
+	filtered.push({ date: today, netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, movableAsset });
+	filtered.sort((a, b) => a.date.localeCompare(b.date));
+
+	const doc = { _id: 'netWorthDaily', date: new Date(), data: filtered };
+	if (oldDoc) {
+		doc._rev = oldDoc._rev;
+	}
+
+	await reportDB.insertReport(doc);
+	console.log('updateNetWorthDaily done');
+};
+
 module.exports = {
 	updateLifeTimePlanner,
 	getLifetimeFlowList,
 	getNetWorth,
-	updateNetWorth
+	updateNetWorth,
+	updateNetWorthDaily
 };

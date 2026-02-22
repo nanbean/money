@@ -4,6 +4,7 @@ const Router = require('koa-router');
 const messaging = require('../services/messaging');
 const notification = require('../services/notification');
 const couchdb = require('../db/couchdb');
+const aiService = require('../services/aiService');
 
 const api = new Router();
 const auth = require('./auth');
@@ -65,6 +66,17 @@ api.post('/unRegisterMessageToken', async (ctx) => {
 		ctx.body = { return: result };
 	} else {
 		ctx.body = { return: false };
+	}
+});
+
+api.post('/portfolioComment', async (ctx) => {
+	try {
+		const comment = await aiService.getPortfolioComment(ctx.request.body);
+		ctx.body = { comment };
+	} catch (err) {
+		console.error('portfolioComment error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
 	}
 });
 

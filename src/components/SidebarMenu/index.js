@@ -19,6 +19,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import PieChartIcon from '@mui/icons-material/PieChart';
 import SearchIcon from '@mui/icons-material/Search';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -41,6 +42,11 @@ const routes = [
 		exact: true,
 		label: 'Home',
 		icon: <HomeIcon />
+	},
+	{
+		path: '/investments',
+		label: 'Investments',
+		icon: <PieChartIcon />
 	},
 	{
 		path: '/transactions',

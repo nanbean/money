@@ -2,7 +2,8 @@ import PouchDB from 'pouchdb';
 
 import {
 	SET_LIFETIME_PLANNER_FLOW,
-	SET_NET_WORTH_FLOW
+	SET_NET_WORTH_FLOW,
+	SET_NET_WORTH_DAILY
 } from './actionTypes';
 
 import { COUCHDB_URL } from '../constants';
@@ -55,5 +56,20 @@ export const getNetWorthFlowAction = () => {
 			type: SET_NET_WORTH_FLOW,
 			payload: netWorth.data
 		});
+	};
+};
+
+export const getNetWorthDailyAction = () => {
+	return async dispatch => {
+		try {
+			const netWorthDaily = await reportsDB.get('netWorthDaily');
+
+			dispatch({
+				type: SET_NET_WORTH_DAILY,
+				payload: netWorthDaily.data
+			});
+		} catch (err) {
+			console.log('netWorthDaily not found:', err.message);
+		}
 	};
 };

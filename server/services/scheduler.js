@@ -5,7 +5,7 @@ const { arrangeExchangeRate } = require('./settingService');
 const { arrangeKRInvestmemt, arrangeUSInvestmemt } = require('./investmentService');
 const { updateAccountList } = require('./accountService');
 const { sendBalanceUpdateNotification } = require('./notificationService');
-const { updateLifeTimePlanner, updateNetWorth } = require('./reportService');
+const { updateLifeTimePlanner, updateNetWorth, updateNetWorthDaily } = require('./reportService');
 const checkAndSendNotification = require('./paymentService');
 
 const updateInvestmentPrice = async () => {
@@ -15,6 +15,7 @@ const updateInvestmentPrice = async () => {
 	await updateAccountList();
 	await updateLifeTimePlanner();
 	await updateNetWorth();
+	await updateNetWorthDaily();
 };
 
 (async () => {
@@ -62,6 +63,7 @@ const updateInvestmentPrice = async () => {
 			await sendBalanceUpdateNotification();
 			await updateLifeTimePlanner();
 			await updateNetWorth();
+			await updateNetWorthDaily();
 		} else {
 			console.log('holiday, dailyArrangeInvestmemtjob skip');
 		}
@@ -84,6 +86,7 @@ const updateInvestmentPrice = async () => {
 			await sendBalanceUpdateNotification();
 			await updateLifeTimePlanner();
 			await updateNetWorth();
+			await updateNetWorthDaily();
 		} else {
 			console.log('US holiday, dailyArrangeInvestmemtjob skip');
 		}

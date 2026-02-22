@@ -10,6 +10,7 @@ import SidebarMenu from './components/SidebarMenu';
 import {
 	Bank,
 	Investment,
+	Investments,
 	NetWorth,
 	LifetimePlanner,
 	Performance,
@@ -57,6 +58,7 @@ function RoutesMain () {
 						<Route path="/lifetimeplanner" element={<LifetimePlanner />} />
 						<Route path="/performance/:investment" element={<Performance />} />
 						<Route path="/allperformance" element={<AllPerformance />} />
+						<Route path="/investments" element={<Investments />} />
 						<Route path="/search" element={<Search />} />
 						<Route path="/transactions" element={<Transactions />} />
 						<Route path="/report" element={<ReportMain />} />

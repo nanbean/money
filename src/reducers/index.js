@@ -13,6 +13,7 @@ import filteredInvestments from './filteredInvestments';
 import updateInvestmentPriceFetching from './updateInvestmentPriceFetching';
 import lifetimePlannerFlow from './lifetimePlannerFlow';
 import netWorthFlow from './netWorthFlow';
+import netWorthDaily from './netWorthDaily';
 import allAccountsTransactions from './allAccountsTransactions';
 import messagingToken from './messagingToken';
 import notifications from './notifications';
@@ -43,6 +44,7 @@ const money = combineReducers({
 	updateInvestmentPriceFetching,
 	lifetimePlannerFlow,
 	netWorthFlow,
+	netWorthDaily,
 	allAccountsTransactions,
 	messagingToken,
 	notifications,
