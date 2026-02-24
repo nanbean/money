@@ -154,7 +154,7 @@ const updateNetWorth = async () => {
 	console.timeEnd('updateNetWorth');
 };
 
-const DAILY_RETENTION_DAYS = 90;
+const DAILY_RETENTION_DAYS = 93;
 
 const updateNetWorthDaily = async () => {
 	console.log('updateNetWorthDaily start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));

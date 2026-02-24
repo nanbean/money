@@ -48,6 +48,7 @@
     "redux": "^4.0.1",
     "redux-actions": "^2.6.5",
     "redux-thunk": "^2.3.0",
+    "snaptrade-typescript-sdk": "^9.0.166",
     "string-to-color": "^2.2.2",
     "uuid": "^3.3.2",
     "web-vitals": "^4.2.1"

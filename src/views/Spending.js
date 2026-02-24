@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
 	BarChart,
 	Bar,
+	LineChart,
+	Line,
 	XAxis,
 	YAxis,
 	Tooltip,
@@ -26,7 +28,10 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 
+import Collapse from '@mui/material/Collapse';
 import Paper from '@mui/material/Paper';
+
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import Layout from '../components/Layout';
 import Amount from '../components/Amount';
@@ -39,6 +44,8 @@ import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
 
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
 const EXPENSE_TYPES = ['Bank', 'CCard', 'Cash'];
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const INFLATION_RATE = 1.02;
 
 // Returns start month string (YYYY-MM) for the given range
 const getStartMonthStr = (range) => {
@@ -95,6 +102,33 @@ ChartTooltip.propTypes = {
 	payload: PropTypes.array
 };
 
+const AnnualTooltip = ({ active, payload, label, currency, currentYear }) => {
+	if (active && payload && payload.length) {
+		const lastYear = payload.find(p => p.dataKey === 'lastYear')?.value ?? 0;
+		const actual = payload.find(p => p.dataKey === 'actual')?.value;
+		const projected = payload.find(p => p.dataKey === 'projected')?.value;
+		const thisYear = actual ?? projected ?? 0;
+		return (
+			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, boxShadow: 3 }}>
+				<Typography variant="caption" color="text.secondary">{label} (Cumulative)</Typography>
+				<Typography variant="body2" color="text.disabled">{`${currentYear - 1}: ${toCurrencyFormatWithSymbol(lastYear, currency)}`}</Typography>
+				<Typography variant="body2" fontWeight="bold" color={projected != null && actual == null ? 'text.secondary' : 'text.primary'}>
+					{`${currentYear}${projected != null && actual == null ? ' (proj.)' : ''}: ${toCurrencyFormatWithSymbol(thisYear, currency)}`}
+				</Typography>
+			</Box>
+		);
+	}
+	return null;
+};
+
+AnnualTooltip.propTypes = {
+	active: PropTypes.bool,
+	currency: PropTypes.string,
+	currentYear: PropTypes.number,
+	label: PropTypes.string,
+	payload: PropTypes.array
+};
+
 function Spending () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const accountList = useSelector((state) => state.accountList);
@@ -104,6 +138,7 @@ function Spending () {
 	const dispatch = useDispatch();
 	const [range, setRange] = useState('3M');
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(true);
+	const [projectionExpanded, setProjectionExpanded] = useState(false);
 
 	// Uncategorized transactions (all time, Bank/CCard/Cash, expenses)
 	const uncategorizedTxs = useMemo(() => {
@@ -187,13 +222,12 @@ function Spending () {
 			.reduce((sum, tx) => sum + toDisplayAmount(tx), 0);
 	}, [allAccountsTransactions, isExpenseTx, toDisplayAmount, thisYearPrefix]);
 
-	const projectedAnnual = useMemo(() => {
+	const annualMonthlyData = useMemo(() => {
 		const today = new Date();
-		const month = today.getMonth(); // 0-indexed current month
+		const month = today.getMonth();
 		const dayOfMonth = today.getDate();
 		const daysInCurrentMonth = new Date(currentYear, month + 1, 0).getDate();
 
-		// Aggregate monthly spending for this year and last year
 		const thisYearMonthly = {};
 		const lastYearMonthly = {};
 		allAccountsTransactions.forEach(tx => {
@@ -206,25 +240,40 @@ function Spending () {
 			}
 		});
 
-		// Sum of completed months (Jan to previous month)
-		let completedThisYear = 0;
-		for (let m = 0; m < month; m++) {
-			completedThisYear += thisYearMonthly[m] || 0;
-		}
-
-		// Current month: extrapolate to end of month at current pace
-		const currentMonthActual = thisYearMonthly[month] || 0;
-		const currentMonthProjected = dayOfMonth > 0 ? (currentMonthActual / dayOfMonth) * daysInCurrentMonth : 0;
-
-		// Remaining months: last year same month × inflation rate (2%)
-		const INFLATION_RATE = 1.02;
-		let remainingProjected = 0;
-		for (let m = month + 1; m <= 11; m++) {
-			remainingProjected += (lastYearMonthly[m] || 0) * INFLATION_RATE;
-		}
-
-		return Math.round(completedThisYear + currentMonthProjected + remainingProjected);
+		return MONTH_LABELS.map((label, m) => {
+			const lastYear = Math.round(lastYearMonthly[m] || 0);
+			const actual = Math.round(thisYearMonthly[m] || 0);
+			let projected = 0;
+			if (m === month && dayOfMonth > 0) {
+				projected = Math.max(0, Math.round((actual / dayOfMonth) * daysInCurrentMonth) - actual);
+			} else if (m > month) {
+				projected = Math.round((lastYearMonthly[m] || 0) * INFLATION_RATE);
+			}
+			return { month: label, lastYear, actual, projected };
+		});
 	}, [allAccountsTransactions, isExpenseTx, toDisplayAmount, thisYearPrefix, lastYearPrefix, currentYear]);
+
+	const projectedAnnual = useMemo(() => {
+		return Math.round(annualMonthlyData.reduce((sum, d) => sum + d.actual + d.projected, 0));
+	}, [annualMonthlyData]);
+
+	const cumulativeAnnualData = useMemo(() => {
+		const currentMonth = new Date().getMonth();
+		let cumLastYear = 0;
+		let cumActual = 0;
+		let cumProjected = 0;
+		return annualMonthlyData.map((d, m) => {
+			cumLastYear += d.lastYear;
+			cumActual += d.actual;
+			cumProjected += d.actual + d.projected;
+			return {
+				month: d.month,
+				lastYear: Math.round(cumLastYear),
+				actual: m <= currentMonth ? Math.round(cumActual) : null,
+				projected: m >= currentMonth ? Math.round(cumProjected) : null
+			};
+		});
+	}, [annualMonthlyData]);
 
 	const annualChangeRate = lastYearTotal > 0
 		? Math.round((projectedAnnual - lastYearTotal) / lastYearTotal * 100)
@@ -373,7 +422,7 @@ function Spending () {
 					<Typography variant="caption" color="text.secondary">Spending</Typography>
 					<Stack direction="row" alignItems="center" spacing={1}>
 						<Chip
-							label="Living Expense Only"
+							label="Living Expense"
 							size="small"
 							onClick={() => setLivingExpenseOnly(v => !v)}
 							color={livingExpenseOnly ? 'primary' : 'default'}
@@ -386,7 +435,7 @@ function Spending () {
 							size="small"
 						>
 							{RANGES.map(r => (
-								<ToggleButton key={r} value={r} sx={{ px: 1.5 }}>{r}</ToggleButton>
+								<ToggleButton key={r} value={r} sx={{ px: 0.8, py: 0.25, fontSize: 12 }}>{r}</ToggleButton>
 							))}
 						</ToggleButtonGroup>
 					</Stack>
@@ -418,32 +467,78 @@ function Spending () {
 
 				{/* Annual projection vs last year */}
 				{annualChangeRate !== null && (
-					<Box sx={{ mb: 3, p: 1.5, borderRadius: 1, border: '1px solid', borderColor: annualChangeRate > 0 ? 'error.main' : 'success.main', bgcolor: 'background.paper' }}>
-						<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-							<Box>
-								<Stack direction="row" alignItems="center" spacing={0.75}>
-									<Typography variant="caption" color="text.secondary">{currentYear} Annual Projection</Typography>
-									<Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>· 2% inflation applied</Typography>
-								</Stack>
-								<Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.25 }}>
-									<Amount value={projectedAnnual} currency={currency} showSymbol size="large" showColor={false} />
-									<Chip
-										label={`${annualChangeRate > 0 ? '+' : ''}${annualChangeRate}% vs last year`}
-										size="small"
-										color={annualChangeRate > 0 ? 'error' : 'success'}
-										sx={{ height: 20, fontSize: 11 }}
+					<Box sx={{ mb: 3, borderRadius: 1, border: '1px solid', borderColor: annualChangeRate > (INFLATION_RATE - 1) * 100 ? 'error.main' : 'success.main', bgcolor: 'background.paper', overflow: 'hidden' }}>
+						<Box
+							onClick={() => setProjectionExpanded(v => !v)}
+							sx={{ p: 1.5, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+						>
+							<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+								<Box>
+									<Stack direction="row" alignItems="center" spacing={0.75}>
+										<Typography variant="caption" color="text.secondary">{currentYear} Annual Projection</Typography>
+										<Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>· 2% inflation applied</Typography>
+									</Stack>
+									<Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.25 }}>
+										<Amount value={projectedAnnual} currency={currency} showSymbol size="large" showColor={false} />
+										<Chip
+											label={`${annualChangeRate > 0 ? '+' : ''}${annualChangeRate}% vs last year`}
+											size="small"
+											color={annualChangeRate > (INFLATION_RATE - 1) * 100 ? 'error' : 'success'}
+											sx={{ height: 20, fontSize: 11 }}
+										/>
+									</Stack>
+									<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
+										<Typography variant="caption" color="text.disabled">YTD Actual</Typography>
+										<Amount value={Math.round(ytdTotal)} currency={currency} showSymbol size="small" showColor={false} />
+									</Stack>
+								</Box>
+								<Stack direction="column" alignItems="flex-end" spacing={0.5}>
+									<Box sx={{ textAlign: 'right' }}>
+										<Typography variant="caption" color="text.secondary">{currentYear - 1} Actual</Typography>
+										<Amount value={Math.round(lastYearTotal)} currency={currency} showSymbol size="large" showColor={false} />
+									</Box>
+									<ExpandMoreIcon
+										sx={{
+											fontSize: 18,
+											color: 'text.secondary',
+											transform: projectionExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+											transition: 'transform 0.2s'
+										}}
 									/>
 								</Stack>
-								<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
-									<Typography variant="caption" color="text.disabled">YTD Actual</Typography>
-									<Amount value={Math.round(ytdTotal)} currency={currency} showSymbol size="small" showColor={false} />
+							</Stack>
+						</Box>
+						<Collapse in={projectionExpanded}>
+							<Box sx={{ px: 1.5, pb: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+								<Stack direction="row" spacing={2} sx={{ mt: 1, mb: 0.5 }}>
+									<Stack direction="row" alignItems="center" spacing={0.5}>
+										<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'text.disabled' }} />
+										<Typography variant="caption" color="text.secondary">{currentYear - 1}</Typography>
+									</Stack>
+									<Stack direction="row" alignItems="center" spacing={0.5}>
+										<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: barColor }} />
+										<Typography variant="caption" color="text.secondary">{currentYear} Actual</Typography>
+									</Stack>
+									<Stack direction="row" alignItems="center" spacing={0.5}>
+										<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: barColor, opacity: 0.35 }} />
+										<Typography variant="caption" color="text.secondary">{currentYear} Projected</Typography>
+									</Stack>
 								</Stack>
+								<Box sx={{ height: 200, minWidth: 0 }}>
+									<ResponsiveContainer width="100%" height="100%">
+										<LineChart data={cumulativeAnnualData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+											<CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+											<XAxis dataKey="month" tick={{ fontSize: 10 }} />
+											<YAxis tickFormatter={formatYAxis} tick={{ fontSize: 10 }} width={56} />
+											<Tooltip content={<AnnualTooltip currency={currency} currentYear={currentYear} />} />
+											<Line dataKey="lastYear" stroke={theme.palette.text.disabled} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+											<Line dataKey="actual" stroke={barColor} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+											<Line dataKey="projected" stroke={barColor} strokeWidth={2} strokeDasharray="5 4" strokeOpacity={0.6} dot={false} isAnimationActive={false} connectNulls />
+										</LineChart>
+									</ResponsiveContainer>
+								</Box>
 							</Box>
-							<Box sx={{ textAlign: 'right' }}>
-								<Typography variant="caption" color="text.secondary">{currentYear - 1} Actual</Typography>
-								<Amount value={Math.round(lastYearTotal)} currency={currency} showSymbol size="large" showColor={false} />
-							</Box>
-						</Stack>
+						</Collapse>
 					</Box>
 				)}
 
