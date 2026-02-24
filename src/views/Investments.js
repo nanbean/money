@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -7,7 +7,11 @@ import stringToColor from 'string-to-color';
 import PropTypes from 'prop-types';
 import { useTheme } from '@mui/material/styles';
 import { lighten, darken } from '@mui/material/styles';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
@@ -23,6 +27,7 @@ import IconButton from '@mui/material/IconButton';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import CategoryIcon from '@mui/icons-material/Category';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import Layout from '../components/Layout';
@@ -285,6 +290,10 @@ export function Investments () {
 	const [aiComment, setAiComment] = useState(null);
 	const [aiLoading, setAiLoading] = useState(false);
 	const [cagrBase, setCagrBase] = useState(3);
+	const [rhExpanded, setRhExpanded] = useState(false);
+	const [rhData, setRhData] = useState(null);
+	const [rhLoading, setRhLoading] = useState(false);
+	const [rhError, setRhError] = useState(null);
 
 	useEffect(() => {
 		dispatch(getNetWorthFlowAction());
@@ -375,6 +384,32 @@ export function Investments () {
 	const totalReturn = totalPurchasedValue !== 0 ? (totalProfit / totalPurchasedValue * 100) : 0;
 
 	const handleSortChange = (newSortBy) => dispatch(updateGeneralAction('stockListSortBy', newSortBy));
+
+	const fetchRhPositions = useCallback(async () => {
+		setRhLoading(true);
+		setRhError(null);
+		try {
+			const res = await fetch('/api/robinhoodAccounts');
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const data = await res.json();
+			setRhData(data);
+		} catch (err) {
+			setRhError(err.message);
+		} finally {
+			setRhLoading(false);
+		}
+	}, []);
+
+	const handleRhExpand = (_, expanded) => {
+		setRhExpanded(expanded);
+		if (expanded && !rhData && !rhLoading) {
+			fetchRhPositions();
+		}
+	};
+
+	const rhAccounts = rhData?.accounts ?? [];
+	const rhAllPositions = rhAccounts.flatMap(a => a.positions ?? []);
+	const rhTotalMv = rhAllPositions.reduce((sum, p) => sum + Number(p.units ?? 0) * Number(p.price ?? 0), 0);
 
 	const fetchAiComment = async () => {
 		if (stockList.length === 0) return;
@@ -652,6 +687,148 @@ export function Investments () {
 							</TableBody>
 						</Table>
 					</Box>
+					<Divider />
+
+					<Accordion
+						expanded={rhExpanded}
+						onChange={handleRhExpand}
+						disableGutters
+						elevation={0}
+						sx={{ '&:before': { display: 'none' }, bgcolor: 'transparent' }}
+					>
+						<AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0 }}>
+							<Stack direction="row" spacing={1} alignItems="center">
+								<Typography variant="caption" color="text.secondary">Managed Accounts</Typography>
+								{rhData && (
+									<Chip label={rhAllPositions.length} size="small" sx={{ height: 16, fontSize: '0.65rem' }} />
+								)}
+								{rhData && rhTotalMv > 0 && (
+									<Typography variant="caption" color="text.secondary">
+										${rhTotalMv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+									</Typography>
+								)}
+							</Stack>
+						</AccordionSummary>
+						<AccordionDetails sx={{ px: 0 }}>
+							{rhLoading && (
+								<Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+									<CircularProgress size={24} />
+								</Box>
+							)}
+							{rhError && (
+								<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+									<Typography variant="caption" color="error">{rhError}</Typography>
+									<IconButton size="small" onClick={fetchRhPositions}>
+										<RefreshIcon fontSize="small" />
+									</IconButton>
+								</Stack>
+							)}
+							{rhData && !rhLoading && (
+								rhAccounts.length > 0 ? (
+									[...rhAccounts].sort((a, b) => String(a.number ?? '').localeCompare(String(b.number ?? ''))).map((account, ai) => {
+										const positions = account.positions ?? [];
+										const balances = account.balances ?? [];
+										const accountMv = positions.reduce((sum, p) => sum + Number(p.units ?? 0) * Number(p.price ?? 0), 0);
+										const accountPnl = positions.reduce((sum, p) => sum + Number(p.open_pnl ?? 0), 0);
+										const acPnlColor = accountPnl >= 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR;
+										const fmt = (v) => `$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+										return (
+											<Box key={account.id}>
+												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+													<Stack spacing={0}>
+														<Typography variant="caption" fontWeight="bold" color="text.primary">
+															{account.institution_name ?? account.name}
+														</Typography>
+														{account.number && (
+															<Typography variant="caption" color="text.disabled">{account.number}</Typography>
+														)}
+													</Stack>
+													<Stack alignItems="flex-end" spacing={0}>
+														<Typography variant="caption">{fmt(accountMv)}</Typography>
+														<Typography variant="caption" sx={{ color: acPnlColor }}>
+															{accountPnl >= 0 ? '+' : '-'}{fmt(accountPnl)}
+														</Typography>
+													</Stack>
+												</Stack>
+												{positions.length > 0 && (
+													<Table size="small">
+														<TableHead>
+															<TableRow>
+																<TableCell>Symbol</TableCell>
+																<TableCell align="right">Qty</TableCell>
+																<TableCell align="right">Market Value</TableCell>
+																<TableCell align="right">P&L</TableCell>
+															</TableRow>
+														</TableHead>
+														<TableBody>
+															{[...positions]
+																.sort((a, b) => (b.units * b.price) - (a.units * a.price))
+																.map((p, i) => {
+																	const ticker = p.symbol?.symbol?.symbol ?? '-';
+																	const description = p.symbol?.symbol?.description ?? '';
+																	const units = Number(p.units ?? 0);
+																	const price = Number(p.price ?? 0);
+																	const marketValue = units * price;
+																	const allocation = accountMv > 0 ? (marketValue / accountMv * 100) : 0;
+																	const pnl = Number(p.open_pnl ?? 0);
+																	const rowPnlColor = pnl >= 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR;
+																	return (
+																		<TableRow key={i} hover>
+																			<TableCell>
+																				<Typography variant="body2" fontWeight="bold">{ticker}</Typography>
+																				{description && (
+																					<Typography variant="caption" color="text.secondary" display="block">{description}</Typography>
+																				)}
+																			</TableCell>
+																			<TableCell align="right">
+																				<Typography variant="body2">{units % 1 === 0 ? units.toLocaleString() : units.toFixed(4)}</Typography>
+																			</TableCell>
+																			<TableCell align="right">
+																				<Typography variant="body2">{fmt(marketValue)}</Typography>
+																				<Typography variant="caption" color="text.secondary">{allocation.toFixed(1)}%</Typography>
+																			</TableCell>
+																			<TableCell align="right">
+																				<Typography variant="body2" sx={{ color: rowPnlColor }}>
+																					{pnl >= 0 ? '+' : '-'}{fmt(pnl)}
+																				</Typography>
+																			</TableCell>
+																		</TableRow>
+																	);
+																})}
+															<TableRow>
+																<TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>Total</TableCell>
+																<TableCell align="right" sx={{ fontWeight: 'bold' }}>{fmt(accountMv)}</TableCell>
+																<TableCell align="right">
+																	<Typography variant="body2" sx={{ color: acPnlColor, fontWeight: 'bold' }}>
+																		{accountPnl >= 0 ? '+' : '-'}{fmt(accountPnl)}
+																	</Typography>
+																</TableCell>
+															</TableRow>
+														</TableBody>
+													</Table>
+												)}
+												{balances.length > 0 && (
+													<Box sx={{ mt: 1 }}>
+														<Divider sx={{ mb: 0.5 }} />
+														{balances.map((b, i) => (
+															<Stack key={i} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.25 }}>
+																<Typography variant="caption" color="text.secondary">{b.currency?.code ?? b.currency ?? '-'} Cash</Typography>
+																<Typography variant="caption">${Number(b.cash ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+															</Stack>
+														))}
+													</Box>
+												)}
+												{ai < rhAccounts.length - 1 && <Divider sx={{ mt: 2, mb: 2 }} />}
+											</Box>
+										);
+									})
+								) : (
+									<Typography variant="caption" color="text.disabled">No accounts found.</Typography>
+								)
+							)}
+						</AccordionDetails>
+					</Accordion>
+
 				</Stack>
 			</Layout>
 		);

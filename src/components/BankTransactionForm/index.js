@@ -120,6 +120,11 @@ export function BankTransactionForm ({
 
 	const onChange = handler => event => dispatch(handler(event.target.value));
 
+	const handleAmountChange = (event) => {
+		const value = event.target.value.replace(/,/g, '');
+		dispatch(changeAmount(value));
+	};
+
 	const isAmountExpression = (value) => {
 		const hasOperator = /[+\-*/]/.test(value);
 		const numbersFound = value.match(/-?\d+(\.\d+)?/g);
@@ -409,7 +414,7 @@ export function BankTransactionForm ({
 									placeholder="Amount"
 									fullWidth
 									value={form.amount}
-									onChange={onChange(changeAmount)}
+									onChange={handleAmountChange}
 									onKeyDown={handleAmountKeyDown}
 								/>
 							</FormControl>

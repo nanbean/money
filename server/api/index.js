@@ -1,14 +1,21 @@
 const Router = require('koa-router');
 
-
 const messaging = require('../services/messaging');
 const notification = require('../services/notification');
 const couchdb = require('../db/couchdb');
 const aiService = require('../services/aiService');
+const snaptradeService = require('../services/snaptradeService');
+const requireAuth = require('../middleware/requireAuth');
 
 const api = new Router();
+
 const auth = require('./auth');
 const stock = require('./stock');
+
+api.use(async (ctx, next) => {
+	if (ctx.path.startsWith('/auth') || ctx.path.startsWith('/api/auth')) return next();
+	return requireAuth(ctx, next);
+});
 
 api.get('/updateInvestmentPrice', async (ctx) => {
 	await couchdb.updateInvestmentPrice();
@@ -75,6 +82,17 @@ api.post('/portfolioComment', async (ctx) => {
 		ctx.body = { comment };
 	} catch (err) {
 		console.error('portfolioComment error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.get('/robinhoodAccounts', async (ctx) => {
+	try {
+		const data = await snaptradeService.getAllAccountsData();
+		ctx.body = data;
+	} catch (err) {
+		console.error('robinhoodAccounts error:', err);
 		ctx.status = 500;
 		ctx.body = { error: err.message };
 	}

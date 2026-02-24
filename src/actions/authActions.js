@@ -32,6 +32,12 @@ export const getAuthAction = () => {
 
 export const loginAction = params => {
 	return async dispatch => {
+		await fetch('/api/auth/signin', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ username: params.username, password: params.password })
+		});
 		const response = await login(params.username, params.password);
 		dispatch(setUsername(response.name));
 		dispatch(initCouchdbAction(response.name));
@@ -40,6 +46,7 @@ export const loginAction = params => {
 
 export const logoutAction = () => {
 	return async dispatch => {
+		await fetch('/api/auth/signout', { method: 'POST', credentials: 'include' });
 		await logout();
 		dispatch(setUsername(''));
 		dispatch(finalizeCouchdbAction());
