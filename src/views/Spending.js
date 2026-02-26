@@ -29,8 +29,13 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 
 import Collapse from '@mui/material/Collapse';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 
+import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import Layout from '../components/Layout';
@@ -139,6 +144,7 @@ function Spending () {
 	const [range, setRange] = useState('3M');
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(true);
 	const [projectionExpanded, setProjectionExpanded] = useState(false);
+	const [txDialog, setTxDialog] = useState(null); // { mode: 'category'|'payee', key: string }
 
 	// Uncategorized transactions (all time, Bank/CCard/Cash, expenses)
 	const uncategorizedTxs = useMemo(() => {
@@ -153,6 +159,10 @@ function Spending () {
 			.sort((a, b) => b.date.localeCompare(a.date))
 			.slice(0, 30);
 	}, [allAccountsTransactions]);
+
+	const onCategoryBarClick = useCallback((data) => {
+		setTxDialog({ mode: 'category', key: data.category });
+	}, []);
 
 	const onUncategorizedClick = (localIdx, tx) => {
 		dispatch(openTransactionInModal({
@@ -313,6 +323,26 @@ function Spending () {
 			.sort((a, b) => b.total - a.total)
 			.slice(0, 10);
 	}, [spendingTransactions, toDisplayAmount]);
+
+	const dialogTxns = useMemo(() => {
+		if (!txDialog) return [];
+		if (txDialog.mode === 'category') {
+			return spendingTransactions
+				.filter(tx => (tx.category || '기타 지출').split(':')[0] === txDialog.key)
+				.sort((a, b) => b.date.localeCompare(a.date));
+		}
+		if (txDialog.mode === 'payee') {
+			return spendingTransactions
+				.filter(tx => (tx.payee || '(none)') === txDialog.key)
+				.sort((a, b) => b.date.localeCompare(a.date));
+		}
+		return [];
+	}, [spendingTransactions, txDialog]);
+
+	const dialogTopCat = useMemo(() => {
+		if (!txDialog || txDialog.mode !== 'payee' || !dialogTxns.length) return null;
+		return (dialogTxns[0].category || '기타 지출').split(':')[0];
+	}, [txDialog, dialogTxns]);
 
 	const topPayees = useMemo(() => {
 		const map = {};
@@ -568,7 +598,7 @@ function Spending () {
 							<XAxis type="number" tickFormatter={formatYAxis} tick={{ fontSize: 10 }} />
 							<YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={76} />
 							<Tooltip content={<ChartTooltip currency={currency} />} />
-							<Bar dataKey="total" radius={[0, 3, 3, 0]}>
+							<Bar dataKey="total" radius={[0, 3, 3, 0]} onClick={onCategoryBarClick} cursor="pointer">
 								{categoryData.map((entry) => (
 									<Cell key={entry.category} fill={getCategoryColor(entry.category) || barColor} />
 								))}
@@ -593,7 +623,7 @@ function Spending () {
 						{topPayees.map(({ payee, count, total, category }) => {
 							const catColor = getCategoryColor(category) || barColor;
 							return (
-								<TableRow key={payee} hover>
+								<TableRow key={payee} hover sx={{ cursor: 'pointer' }} onClick={() => setTxDialog({ mode: 'payee', key: payee })}>
 									<TableCell>
 										<Stack direction="row" alignItems="center" spacing={1}>
 											<Box sx={{ color: catColor, display: 'flex', flexShrink: 0 }}>{getCategoryIcon(category, 16)}</Box>
@@ -614,6 +644,80 @@ function Spending () {
 
 			</Box>
 			<BankTransactionModal transactions={uncategorizedTxs} />
+			{/* Category / Payee transactions dialog */}
+			<Dialog
+				open={!!txDialog}
+				onClose={() => setTxDialog(null)}
+				maxWidth="sm"
+				fullWidth
+			>
+				<DialogTitle sx={{ py: 1.5 }}>
+					<Stack direction="row" alignItems="center" justifyContent="space-between">
+						<Stack direction="row" alignItems="center" spacing={1}>
+							{txDialog?.mode === 'category' && (
+								<Box sx={{ color: getCategoryColor(txDialog.key) || barColor, display: 'flex' }}>
+									{getCategoryIcon(txDialog.key, 20)}
+								</Box>
+							)}
+							{txDialog?.mode === 'payee' && dialogTopCat && (
+								<Box sx={{ color: getCategoryColor(dialogTopCat) || barColor, display: 'flex' }}>
+									{getCategoryIcon(dialogTopCat, 20)}
+								</Box>
+							)}
+							<Typography variant="subtitle1" fontWeight="bold">{txDialog?.key}</Typography>
+							<Typography variant="body2" color="text.secondary">({dialogTxns.length})</Typography>
+						</Stack>
+						<Stack direction="row" alignItems="center" spacing={0.5}>
+							<Amount
+								value={Math.round(dialogTxns.reduce((s, tx) => s + toDisplayAmount(tx), 0))}
+								currency={currency}
+								showSymbol
+								showColor={false}
+							/>
+							<IconButton size="small" onClick={() => setTxDialog(null)}>
+								<CloseIcon fontSize="small" />
+							</IconButton>
+						</Stack>
+					</Stack>
+				</DialogTitle>
+				<DialogContent dividers sx={{ p: 0 }}>
+					{dialogTxns.map(tx => {
+						const type = tx.accountId ? tx.accountId.split(':')[1] : null;
+						const TypeIcon = TYPE_ICON_MAP[type];
+						const txCat = (tx.category || '기타 지출').split(':')[0];
+						return (
+							<Box
+								key={tx._id}
+								sx={{
+									display: 'flex',
+									alignItems: 'center',
+									px: 2,
+									py: 1,
+									borderBottom: '1px solid',
+									borderColor: 'divider',
+									'&:last-child': { borderBottom: 'none' }
+								}}
+							>
+								<Box sx={{ flex: 1, overflow: 'hidden' }}>
+									<Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+										{txDialog?.mode === 'payee' ? txCat : (tx.payee || '(none)')}
+									</Typography>
+									<Stack direction="row" alignItems="center" spacing={0.5}>
+										{TypeIcon && <TypeIcon sx={{ fontSize: 12, color: 'text.disabled' }} />}
+										<Typography variant="caption" color="text.disabled">
+											{tx.account || tx.accountId?.split(':')[2] || ''}
+										</Typography>
+									</Stack>
+								</Box>
+								<Stack alignItems="flex-end" spacing={0}>
+									<Amount value={tx.amount} currency={accountCurrencyMap[tx.accountId] || 'KRW'} showSymbol negativeColor />
+									<Typography variant="caption" color="text.disabled">{tx.date}</Typography>
+								</Stack>
+							</Box>
+						);
+					})}
+				</DialogContent>
+			</Dialog>
 		</Layout>
 	);
 }

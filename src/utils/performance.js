@@ -143,6 +143,46 @@ export function getAccountInvestmentPerformance (account, investment, price, inv
 	};
 }
 
+/**
+ * Chain-linked TWR using Modified Dietz per sub-period.
+ * Follows the same methodology as report/RateOfReturn/useReturnReport.js.
+ *
+ * @param {Array<{date: string, investmentsNetWorth: number}>} netWorthPoints - Ordered data points
+ * @param {Array} cashTxns - _Cash account transactions from allAccountsTransactions
+ * @param {Array} accountList - Account list from Redux store
+ * @param {number} exchangeRate - KRW/USD exchange rate
+ * @returns {number|null} Cumulative return as decimal, or null if insufficient data
+ */
+export function computeChainLinkedTwr (netWorthPoints, cashTxns, accountList, exchangeRate) {
+	if (!netWorthPoints || netWorthPoints.length < 2) return null;
+
+	let cumReturn = 0;
+	for (let i = 1; i < netWorthPoints.length; i++) {
+		const prev = netWorthPoints[i - 1];
+		const cur = netWorthPoints[i];
+		const V0 = prev.investmentsNetWorth;
+		if (!V0 || V0 === 0) continue;
+		const V1 = cur.investmentsNetWorth;
+
+		// Sum cash flows in sub-period, converting USD-denominated accounts to KRW
+		const CF = cashTxns
+			.filter(t => t.date > prev.date && t.date <= cur.date)
+			.reduce((sum, t) => {
+				const investAcct = accountList.find(a => a.name === t.account?.split('_')[0]);
+				const amt = investAcct?.currency === 'USD'
+					? (t.amount ?? 0) * (exchangeRate || 1)
+					: (t.amount ?? 0);
+				return sum + amt;
+			}, 0);
+
+		const r = (V1 - V0 - CF) / (V0 + CF / 2);
+		if (!Number.isFinite(r)) continue;
+		cumReturn = (1 + cumReturn) * (1 + r) - 1;
+	}
+
+	return cumReturn;
+}
+
 export function getAccountPerformance (account, accountInvestments, allInvestmentsTransactions, allInvestmentsPrice) {
 	if (account && accountInvestments.length > 0 && allInvestmentsTransactions.length > 0 && allInvestmentsPrice.length > 0) {
 		return accountInvestments.filter(i => i.quantity > 0).map(j => {

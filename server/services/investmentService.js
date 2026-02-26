@@ -10,7 +10,9 @@ const arrangeKRInvestmemt = async () => {
 	const investments = getInvestmentsFromAccounts(kospiResponse.data, allAccounts).filter(i => i.quantity > 0);
 	const accessToken = await getKisToken();
 	const promises = investments.map(i => getKisQuoteKorea(accessToken, i.googleSymbol));
-	const results = await Promise.all(promises);
+	const settled = await Promise.allSettled(promises);
+	const results = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
+	settled.filter(r => r.status === 'rejected').forEach(r => console.error('getKisQuoteKorea failed:', r.reason));
 
 	await stockDB.insertStock({
 		...kospiResponse,
@@ -38,7 +40,9 @@ const arrangeUSInvestmemt = async () => {
 	const investments  = getInvestmentsFromAccounts(usResponse.data, allAccounts).filter(i => i.quantity > 0);
 	const accessToken = await getKisToken();
 	const promises = investments.map(i => getKisQuoteUS(accessToken, i.googleSymbol));
-	const results = await Promise.all(promises);
+	const settled = await Promise.allSettled(promises);
+	const results = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
+	settled.filter(r => r.status === 'rejected').forEach(r => console.error('getKisQuoteUS failed:', r.reason));
 
 	await stockDB.insertStock({
 		...usResponse,

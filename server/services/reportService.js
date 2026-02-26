@@ -86,7 +86,8 @@ const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, 
 		loanNetWorth,
 		assetNetWorth,
 		netInvestments,
-		movableAsset: cashNetWorth + investmentsNetWorth + loanNetWorth
+		movableAsset: cashNetWorth + investmentsNetWorth + loanNetWorth,
+		exchangeRate
 	};
 };
 
@@ -170,7 +171,7 @@ const updateNetWorthDaily = async () => {
 	const transactionsByAccount = _.groupBy(allTransactions, 'accountId');
 	const histories = await historyDB.listHistories();
 
-	const { netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, movableAsset } =
+	const { netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, movableAsset, exchangeRate } =
 		await getNetWorth(allAccounts, allTransactions, transactionsByAccount, allInvestments, histories, today);
 
 	const oldDoc = await reportDB.getReport('netWorthDaily').catch(() => null);
@@ -178,7 +179,7 @@ const updateNetWorthDaily = async () => {
 
 	const cutoff = moment().subtract(DAILY_RETENTION_DAYS, 'days').format('YYYY-MM-DD');
 	const filtered = existingData.filter(i => i.date >= cutoff && i.date !== today);
-	filtered.push({ date: today, netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, movableAsset });
+	filtered.push({ date: today, netWorth, cashNetWorth, investmentsNetWorth, loanNetWorth, assetNetWorth, movableAsset, exchangeRate });
 	filtered.sort((a, b) => a.date.localeCompare(b.date));
 
 	const doc = { _id: 'netWorthDaily', date: new Date(), data: filtered };

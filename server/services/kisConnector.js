@@ -37,21 +37,23 @@ const isUsDayMarketTime = () => {
 	return isDayMarketTime;
 };
 
-async function getKisToken () {
-	const accessToken = await storage.getItem('access_token');
-	const accessTokenTokenExpired = await storage.getItem('access_token_token_expired');
+async function getKisToken (forceRefresh = false) {
+	if (!forceRefresh) {
+		const accessToken = await storage.getItem('access_token');
+		const accessTokenTokenExpired = await storage.getItem('access_token_token_expired');
 
-	if (accessToken) {
-		if (accessTokenTokenExpired) {
+		if (accessToken && accessTokenTokenExpired) {
 			const expireTime = moment(accessTokenTokenExpired, 'YYYY-MM-DD HH:mm:ss').tz('Asia/Seoul');
 			const now = moment().tz('Asia/Seoul');
 			if (now < expireTime) {
 				return accessToken;
-			} else {
 			}
 		}
-		
 	}
+
+	// Clear stale cache before requesting a new token
+	await storage.removeItem('access_token');
+	await storage.removeItem('access_token_token_expired');
 
 	const headers = {
 		'content-type': 'application/json; charset=utf-8'
@@ -61,7 +63,7 @@ async function getKisToken () {
 		appkey: process.env.KIS_APP_KEY,
 		appsecret: process.env.KIS_APP_SECRET
 	};
-	
+
 	const response = await fetchWithRetry(`${KIS_URL}/oauth2/tokenP`, {
 		method: 'POST',
 		headers,
@@ -74,56 +76,70 @@ async function getKisToken () {
 }
 
 async function getKisQuoteKorea (accessToken, googleSymbol) {
-	return new Promise(async (resolve, reject) => {
-		try {
-			const headers = {
-				'content-type': 'application/json; charset=utf-8',
-				authorization: `Bearer ${accessToken}`,
-				appkey: process.env.KIS_APP_KEY,
-				appsecret: process.env.KIS_APP_SECRET,
-				'tr_id': 'FHKST01010100'
-			};
-			const response = await fetchWithRetry(`${KIS_URL}/uapi/domestic-stock/v1/quotations/inquire-price?fid_cond_mrkt_div_code=J&fid_input_iscd=${googleSymbol.split(':')[1]}`, {
-				method: 'GET',
-				headers
-			});
-			const result = await response.json();
-			result.googleSymbol = googleSymbol;
-			resolve(result);
-		} catch (err) {
-			reject(err);
+	const doRequest = async (token) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${token}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'FHKST01010100'
+		};
+		const response = await fetchWithRetry(`${KIS_URL}/uapi/domestic-stock/v1/quotations/inquire-price?fid_cond_mrkt_div_code=J&fid_input_iscd=${googleSymbol.split(':')[1]}`, {
+			method: 'GET',
+			headers
+		});
+		const result = await response.json();
+		result.googleSymbol = googleSymbol;
+		return result;
+	};
+
+	try {
+		return await doRequest(accessToken);
+	} catch (err) {
+		if (err.message && err.message.includes('500')) {
+			console.warn(`getKisQuoteKorea 500 for ${googleSymbol}, refreshing token and retrying...`);
+			const freshToken = await getKisToken(true);
+			return await doRequest(freshToken);
 		}
-	});
+		throw err;
+	}
 }
 
 async function getKisQuoteUS (accessToken, googleSymbol) {
 	let EXCD = '';
 	if (googleSymbol.startsWith('NYSE:')) {
-		EXCD = isUsDayMarketTime() ? 'BAY':'NYS';
+		EXCD = isUsDayMarketTime() ? 'BAY' : 'NYS';
 	} else if (googleSymbol.startsWith('NASDAQ:')) {
-		EXCD = isUsDayMarketTime() ? 'BAQ':'NAS';
+		EXCD = isUsDayMarketTime() ? 'BAQ' : 'NAS';
 	}
 
-	return new Promise(async (resolve, reject) => {
-		try {
-			const headers = {
-				'content-type': 'application/json; charset=utf-8',
-				authorization: `Bearer ${accessToken}`,
-				appkey: process.env.KIS_APP_KEY,
-				appsecret: process.env.KIS_APP_SECRET,
-				'tr_id': 'HHDFS00000300'
-			};
-			const response = await fetchWithRetry(`${KIS_URL}/uapi/overseas-price/v1/quotations/price?AUTH=""&EXCD=${EXCD}&SYMB=${googleSymbol.split(':')[1]}`, {
-				method: 'GET',
-				headers
-			});
-			const result = await response.json();
-			result.googleSymbol = googleSymbol;
-			resolve(result);
-		} catch (err) {
-			reject(err);
+	const doRequest = async (token) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${token}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'HHDFS00000300'
+		};
+		const response = await fetchWithRetry(`${KIS_URL}/uapi/overseas-price/v1/quotations/price?AUTH=""&EXCD=${EXCD}&SYMB=${googleSymbol.split(':')[1]}`, {
+			method: 'GET',
+			headers
+		});
+		const result = await response.json();
+		result.googleSymbol = googleSymbol;
+		return result;
+	};
+
+	try {
+		return await doRequest(accessToken);
+	} catch (err) {
+		if (err.message && err.message.includes('500')) {
+			console.warn(`getKisQuoteUS 500 for ${googleSymbol}, refreshing token and retrying...`);
+			const freshToken = await getKisToken(true);
+			return await doRequest(freshToken);
 		}
-	});
+		throw err;
+	}
 }
 
 async function getKisExchangeRate (accessToken) {

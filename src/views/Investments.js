@@ -35,7 +35,7 @@ import Amount from '../components/Amount';
 import SortMenuButton from '../components/SortMenuButton';
 import { getNetWorthFlowAction, getNetWorthDailyAction } from '../actions/couchdbReportActions';
 import { updateGeneralAction } from '../actions/couchdbSettingActions';
-import { getInvestmentPerformance } from '../utils/performance';
+import { getInvestmentPerformance, computeChainLinkedTwr } from '../utils/performance';
 import { toCurrencyFormatWithSymbol } from '../utils/formatting';
 import {
 	POSITIVE_AMOUNT_DARK_COLOR,
@@ -333,6 +333,10 @@ export function Investments () {
 			.sort((a, b) => b.value - a.value);
 	}, [allAccountsTransactions, allInvestmentsPrice, exchangeRate, currency]);
 
+	const cashTxns = useMemo(() =>
+		allAccountsTransactions.filter(t => t.accountId?.split(':')[2]?.match(/_Cash/)),
+	[allAccountsTransactions]);
+
 	const cagrData = useMemo(() => {
 		if (netWorthFlow.length < 2) return null;
 		const current = netWorthFlow[netWorthFlow.length - 1];
@@ -346,9 +350,17 @@ export function Investments () {
 		const past = [...netWorthFlow].reverse().find(i => i.date.substring(0, 7) <= targetStr);
 		if (!past || past.investmentsNetWorth <= 0) return null;
 
-		const cagr = Math.pow(currentValue / past.investmentsNetWorth, 1 / cagrBase) - 1;
-		const displayCurrent = currency === 'USD' ? currentValue / exchangeRate : currentValue;
+		// Use chain-linked TWR over the cagrBase period instead of simple V_end/V_start
+		const filtered = netWorthFlow.filter(i => i.date >= past.date);
+		const twr = computeChainLinkedTwr(filtered, cashTxns, accountList, exchangeRate);
+		if (twr === null) return null;
 
+		// Annualize using actual elapsed time
+		const actualYears = (new Date(current.date) - new Date(past.date)) / (365.25 * 24 * 60 * 60 * 1000);
+		if (actualYears <= 0) return null;
+		const cagr = Math.pow(1 + twr, 1 / actualYears) - 1;
+
+		const displayCurrent = currency === 'USD' ? currentValue / exchangeRate : currentValue;
 		return {
 			cagr,
 			projections: [1, 3, 5, 10, 20].map(years => ({
@@ -356,7 +368,16 @@ export function Investments () {
 				value: Math.round(displayCurrent * Math.pow(1 + cagr, years))
 			}))
 		};
-	}, [netWorthFlow, cagrBase, currency, exchangeRate]);
+	}, [netWorthFlow, cagrBase, currency, exchangeRate, cashTxns, accountList]);
+
+	// Chain-linked TWR for the selected chart period
+	const periodTwr = useMemo(() => {
+		const startDateStr = getStartDateStr(range);
+		const useDaily = DAILY_RANGES.includes(range);
+		const source = useDaily ? netWorthDaily : netWorthFlow;
+		const filtered = source.filter(item => !startDateStr || item.date >= startDateStr);
+		return computeChainLinkedTwr(filtered, cashTxns, accountList, exchangeRate);
+	}, [netWorthFlow, netWorthDaily, range, cashTxns, accountList, exchangeRate]);
 
 	const rawStockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
 
@@ -442,7 +463,9 @@ export function Investments () {
 					projections: cagrData ? cagrData.projections.map(p => ({
 						years: p.years,
 						displayValue: toCurrencyFormatWithSymbol(p.value, currency)
-					})) : null
+					})) : null,
+					periodTwr: periodTwr !== null ? (periodTwr * 100).toFixed(2) : null,
+					periodRange: range
 				})
 			});
 			const data = await res.json();
@@ -473,9 +496,14 @@ export function Investments () {
 						<Stack spacing={0.5}>
 							<Typography variant="caption" color="text.secondary">Portfolio</Typography>
 							<Typography variant="h5" fontWeight="bold">{toCurrencyFormatWithSymbol(latestValue, currency)}</Typography>
-							<Typography variant="body2" sx={{ color: accentColor }}>
-								{isPositive ? '+' : ''}{toCurrencyFormatWithSymbol(change, currency)} ({isPositive ? '+' : ''}{changeRate.toFixed(2)}%)
-							</Typography>
+							<Stack direction="row" spacing={0.5} alignItems="center">
+								<Typography variant="body2" sx={{ color: accentColor }}>
+									{isPositive ? '+' : ''}{toCurrencyFormatWithSymbol(change, currency)} ({isPositive ? '+' : ''}{periodTwr !== null ? (periodTwr * 100).toFixed(2) : changeRate.toFixed(2)}%)
+								</Typography>
+								{periodTwr !== null && (
+									<Typography variant="caption" color="text.disabled">TWR</Typography>
+								)}
+							</Stack>
 						</Stack>
 						<ToggleButtonGroup
 							value={view}

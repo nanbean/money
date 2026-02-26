@@ -21,6 +21,7 @@ import SmsIcon from '@mui/icons-material/Sms';
 import MoneyIcon from '@mui/icons-material/Money';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 
 import {
 	ARCHITECTURE_CATEGORY,
@@ -42,7 +43,8 @@ import {
 	CLOTH_CATEGORY,
 	LEISURE_CATEGORY,
 	COMMUNICATION_CATEGORY,
-	FEE_CATEGORY
+	FEE_CATEGORY,
+	FILIAL_CATEGORY
 } from '../constants';
 
 export function getCategoryIcon (category, fontsize) {
@@ -97,6 +99,8 @@ export function getCategoryIcon (category, fontsize) {
 		return <SmsIcon sx={sx} />;
 	case FEE_CATEGORY:
 		return <MoneyIcon sx={sx} />;
+	case FILIAL_CATEGORY:
+		return <VolunteerActivismIcon sx={sx} />;
 	default:
 		return <MoreHorizIcon sx={sx} />;
 	}

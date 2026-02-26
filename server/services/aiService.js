@@ -4,7 +4,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const getPortfolioComment = async (portfolioData) => {
-	const { holdings, totalAppraisedValue, totalReturn, currency, cagrBase, cagr, projections } = portfolioData;
+	const { holdings, totalAppraisedValue, totalReturn, currency, cagrBase, cagr, projections, periodTwr, periodRange } = portfolioData;
 
 	const model = genAI.getGenerativeModel({
 		model: 'gemini-2.5-flash',
@@ -24,10 +24,14 @@ const getPortfolioComment = async (portfolioData) => {
 ${projText}`;
 	}
 
+	const periodTwrText = periodTwr !== null
+		? `\n최근 ${periodRange} 구간 수익률 (TWR, 현금유입 조정): ${periodTwr > 0 ? '+' : ''}${periodTwr}%`
+		: '';
+
 	const prompt = `다음은 현재 투자 포트폴리오 현황입니다.
 
 총 평가금액: ${totalAppraisedValue}
-전체 수익률: ${totalReturn > 0 ? '+' : ''}${totalReturn}%
+전체 수익률: ${totalReturn > 0 ? '+' : ''}${totalReturn}%${periodTwrText}
 표시 통화: ${currency}
 
 종목별 현황:
