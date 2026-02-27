@@ -58,7 +58,7 @@ const linkStyle = { textDecoration: 'none', color: 'inherit' };
 const getInvestmentsFromAccounts = (accounts) => {
 	if (!accounts) return [];
 	const accountInvestments = accounts.flatMap(account =>
-		account.investments.map(investment => ({
+		(account.investments || []).map(investment => ({
 			name: investment.name,
 			currency: account.currency,
 			quantity: investment.quantity,

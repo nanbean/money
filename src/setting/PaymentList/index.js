@@ -213,7 +213,7 @@ export default function PaymentList () {
 								label="Account"
 								required
 							>
-								{accountList.filter(a => !a.closed && (a.type === 'Bank' || a.type === 'CCard' || a.type === 'Cash')).map(a => (
+								{accountList.filter(a => !a.closed && (a.type === 'Bank' || a.type === 'CCard' || a.type === 'Cash' || a.type === 'Oth L')).map(a => (
 									<MenuItem key={a._id} value={a._id}>{a.name}</MenuItem>
 								))}
 							</Select>

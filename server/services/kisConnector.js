@@ -143,26 +143,33 @@ async function getKisQuoteUS (accessToken, googleSymbol) {
 }
 
 async function getKisExchangeRate (accessToken) {
-	return new Promise(async (resolve, reject) => {
-		try {
-			const headers = {
-				'content-type': 'application/json; charset=utf-8',
-				authorization: `Bearer ${accessToken}`,
-				appkey: process.env.KIS_APP_KEY,
-				appsecret: process.env.KIS_APP_SECRET,
-				'tr_id': 'CTRP6504R'
-			};
-			const response = await fetchWithRetry(`${KIS_URL}/uapi/overseas-stock/v1/trading/inquire-present-balance?CANO=${process.env.KIS_ACCOUNT_NO}&ACNT_PRDT_CD=01&NATN_CD=000&WCRC_FRCR_DVSN_CD=01&TR_MKET_CD=00&INQR_DVSN_CD=00`, {
-				method: 'GET',
-				headers
-			});
-			const result = await response.json();
-			const rateString = result?.output2?.[0]?.frst_bltn_exrt;
-			resolve(parseFloat(rateString));
-		} catch (err) {
-			reject(err);
+	const doRequest = async (token) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${token}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'CTRP6504R'
+		};
+		const response = await fetchWithRetry(`${KIS_URL}/uapi/overseas-stock/v1/trading/inquire-present-balance?CANO=${process.env.KIS_ACCOUNT_NO}&ACNT_PRDT_CD=01&NATN_CD=000&WCRC_FRCR_DVSN_CD=01&TR_MKET_CD=00&INQR_DVSN_CD=00`, {
+			method: 'GET',
+			headers
+		});
+		const result = await response.json();
+		const rateString = result?.output2?.[0]?.frst_bltn_exrt;
+		return parseFloat(rateString);
+	};
+
+	try {
+		return await doRequest(accessToken);
+	} catch (err) {
+		if (err.message && err.message.includes('500')) {
+			console.warn('getKisExchangeRate 500, refreshing token and retrying...');
+			const freshToken = await getKisToken(true);
+			return await doRequest(freshToken);
 		}
-	});
+		throw err;
+	}
 }
 
 exports.getKisToken = getKisToken;

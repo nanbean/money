@@ -664,7 +664,7 @@ function Spending () {
 									{getCategoryIcon(dialogTopCat, 20)}
 								</Box>
 							)}
-							<Typography variant="subtitle1" fontWeight="bold">{txDialog?.key}</Typography>
+							<Typography variant="subtitle1" fontWeight="bold">{txDialog?.mode === 'payee' ? (dialogTopCat || txDialog?.key) : txDialog?.key}</Typography>
 							<Typography variant="body2" color="text.secondary">({dialogTxns.length})</Typography>
 						</Stack>
 						<Stack direction="row" alignItems="center" spacing={0.5}>
@@ -684,7 +684,6 @@ function Spending () {
 					{dialogTxns.map(tx => {
 						const type = tx.accountId ? tx.accountId.split(':')[1] : null;
 						const TypeIcon = TYPE_ICON_MAP[type];
-						const txCat = (tx.category || '기타 지출').split(':')[0];
 						return (
 							<Box
 								key={tx._id}
@@ -700,7 +699,7 @@ function Spending () {
 							>
 								<Box sx={{ flex: 1, overflow: 'hidden' }}>
 									<Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-										{txDialog?.mode === 'payee' ? txCat : (tx.payee || '(none)')}
+										{tx.payee || '(none)'}
 									</Typography>
 									<Stack direction="row" alignItems="center" spacing={0.5}>
 										{TypeIcon && <TypeIcon sx={{ fontSize: 12, color: 'text.disabled' }} />}
