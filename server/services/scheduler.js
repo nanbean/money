@@ -7,6 +7,8 @@ const { updateAccountList } = require('./accountService');
 const { sendBalanceUpdateNotification } = require('./notificationService');
 const { updateLifeTimePlanner, updateNetWorth, updateNetWorthDaily } = require('./reportService');
 const checkAndSendNotification = require('./paymentService');
+const { updateUSStockList } = require('./usStockListService');
+const { updateKRStockList } = require('./krStockListService');
 
 const updateInvestmentPrice = async () => {
 	await arrangeExchangeRate();
@@ -102,6 +104,30 @@ const updateInvestmentPrice = async () => {
 		/* This function is executed when the job stops */
 		console.log('00 00 09 daily checkAndSendNotification ended');
 	}, true, 'America/Los_Angeles');
+
+	new CronJob('00 00 04 1 * *', async () => {
+		/*
+			 * US stock list update automation.
+			 * Runs every 1st day of month at 04:00 AM (America/Los_Angeles).
+			 */
+		console.log('usStockList 00 00 04 monthly updateUSStockList started');
+		await updateUSStockList();
+		console.log('usStockList 00 00 04 monthly updateUSStockList ended');
+	}, () => {
+		console.log('usStockList monthly job ended');
+	}, true, 'America/Los_Angeles');
+
+	new CronJob('00 00 04 1 * *', async () => {
+		/*
+			 * KR stock list update automation.
+			 * Runs every 1st day of month at 04:00 AM (Asia/Seoul).
+			 */
+		console.log('krStockList 00 00 04 monthly updateKRStockList started');
+		await updateKRStockList();
+		console.log('krStockList 00 00 04 monthly updateKRStockList ended');
+	}, () => {
+		console.log('krStockList monthly job ended');
+	}, true, 'Asia/Seoul');
 })();
 
 module.exports = {

@@ -111,6 +111,8 @@ async function getKisQuoteUS (accessToken, googleSymbol) {
 		EXCD = isUsDayMarketTime() ? 'BAY' : 'NYS';
 	} else if (googleSymbol.startsWith('NASDAQ:')) {
 		EXCD = isUsDayMarketTime() ? 'BAQ' : 'NAS';
+	} else if (googleSymbol.startsWith('NYSEARCA:')) {
+		EXCD = isUsDayMarketTime() ? 'BAA' : 'AMS';
 	}
 
 	const doRequest = async (token) => {

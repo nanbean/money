@@ -5,6 +5,8 @@ const notification = require('../services/notification');
 const couchdb = require('../db/couchdb');
 const aiService = require('../services/aiService');
 const snaptradeService = require('../services/snaptradeService');
+const { updateUSStockList } = require('../services/usStockListService');
+const { updateKRStockList } = require('../services/krStockListService');
 const requireAuth = require('../middleware/requireAuth');
 
 const api = new Router();
@@ -21,6 +23,28 @@ api.get('/updateInvestmentPrice', async (ctx) => {
 	await couchdb.updateInvestmentPrice();
 
 	ctx.body = { return: true };
+});
+
+api.get('/updateUSStockList', async (ctx) => {
+	try {
+		const count = await updateUSStockList();
+		ctx.body = { return: true, count };
+	} catch (err) {
+		console.error('updateUSStockList error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.get('/updateKRStockList', async (ctx) => {
+	try {
+		const count = await updateKRStockList();
+		ctx.body = { return: true, count };
+	} catch (err) {
+		console.error('updateKRStockList error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
 });
 
 api.post('/addTransactionWithNotification', async (ctx) => {
