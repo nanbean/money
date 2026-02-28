@@ -1,10 +1,12 @@
 const fetch = require('node-fetch');
 const config = require('../config');
 
+const API_KEY_ALLOWED_PATHS = ['/api/addTransactionWithNotification'];
+
 const requireAuth = async (ctx, next) => {
-	// API 키 인증 (외부 모바일 앱 등)
+	// API 키 인증 (외부 모바일 앱 등) - 허용된 경로만
 	const apiKey = ctx.headers['x-api-key'];
-	if (apiKey && config.apiKey && apiKey === config.apiKey) {
+	if (apiKey && config.apiKey && apiKey === config.apiKey && API_KEY_ALLOWED_PATHS.includes(ctx.path)) {
 		return await next();
 	}
 
