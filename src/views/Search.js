@@ -38,6 +38,9 @@ export function Search () {
 	const startDate = searchParams.get('startDate') || '';
 	const endDate = searchParams.get('endDate') || '';
 
+	const hasFilters = !!(keyword || category || subcategory || startDate || endDate);
+	const dateRangeInvalid = !!(startDate && endDate && startDate > endDate);
+
 	const balance = useMemo(() => {
 		if (filteredTransactions.length === 0 || !displayCurrency || typeof exchangeRate === 'undefined') {
 			return 0;
@@ -103,6 +106,8 @@ export function Search () {
 			filteredTransactions = filteredTransactions.filter(i => (i.payee && i.payee.match(new RegExp(keyword, 'i'))) || (i.memo && i.memo.match(new RegExp(keyword, 'i'))));
 
 			setFilteredTransactions(filteredTransactions);
+		} else {
+			setFilteredTransactions([]);
 		}
 	};
 
@@ -190,14 +195,37 @@ export function Search () {
 		setSearchParams(params);
 	};
 
+	const clearCategoryFilter = () => {
+		const params = {};
+		if (keyword) params.keyword = keyword;
+		if (startDate) params.startDate = startDate;
+		if (endDate) params.endDate = endDate;
+		setSearchParams(params);
+	};
+
+	const clearDateFilter = () => {
+		const params = {};
+		if (keyword) params.keyword = keyword;
+		if (category) params.category = category;
+		if (subcategory) params.subcategory = subcategory;
+		setSearchParams(params);
+	};
+
+	const categoryFilterLabel = subcategory ? `${category}:${subcategory}` : category;
+	const dateFilterLabel = startDate && endDate
+		? `${startDate} ~ ${endDate}`
+		: startDate
+			? `${startDate} ~`
+			: `~ ${endDate}`;
+
 	return (
 		<Layout title="Search">
 			<Stack direction="row" alignItems="center" justifyContent="space-between">
 				<Chip
 					variant="outlined"
 					label={
-						<Typography variant="subtitle">
-							Sum: <Amount value={balance} size="small" negativeColor showSymbol currency={displayCurrency}/>
+						<Typography variant="subtitle2">
+							{filteredTransactions.length}건 · <Amount value={balance} size="small" negativeColor showSymbol currency={displayCurrency}/>
 						</Typography>
 					}
 				/>
@@ -220,7 +248,7 @@ export function Search () {
 						<Input
 							id="search"
 							name="search"
-							autoComplete="search"
+							autoComplete="off"
 							value={inputValue}
 							onChange={onInputValueChange}
 							startAdornment={
@@ -232,11 +260,13 @@ export function Search () {
 					</FormControl>
 				</Grid>
 				<Grid item xs={12} md={3}>
-					<FormControl variant="standard"	fullWidth>
+					<FormControl variant="standard" fullWidth>
 						<Select
 							value={category && `${category}` + (subcategory ? `:${subcategory}`:'')}
 							onChange={onCategoryChange}
+							displayEmpty
 						>
+							<MenuItem value=""><em>전체</em></MenuItem>
 							{
 								categoryList.map(i => (
 									<MenuItem key={i} value={i}>{i}</MenuItem>
@@ -252,9 +282,9 @@ export function Search () {
 							type="date"
 							name="startDate"
 							autoComplete="off"
-							placeholder="Start Date"
 							value={startDate}
 							onChange={onStartDateChange}
+							error={dateRangeInvalid}
 							startAdornment={
 								<InputAdornment position="start">
 									From
@@ -270,9 +300,9 @@ export function Search () {
 							type="date"
 							name="endDate"
 							autoComplete="off"
-							placeholder="End Date"
 							value={endDate}
 							onChange={onEndDateChange}
+							error={dateRangeInvalid}
 							startAdornment={
 								<InputAdornment position="start">
 									To
@@ -282,13 +312,49 @@ export function Search () {
 					</FormControl>
 				</Grid>
 			</Grid>
+			{
+				dateRangeInvalid &&
+					<Typography variant="caption" color="error" sx={{ mb: 1, display: 'block' }}>
+						시작일이 종료일보다 늦습니다.
+					</Typography>
+			}
+			{
+				(category || startDate || endDate) &&
+					<Stack direction="row" sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}>
+						{
+							category &&
+								<Chip
+									label={categoryFilterLabel}
+									size="small"
+									onDelete={clearCategoryFilter}
+								/>
+						}
+						{
+							(startDate || endDate) &&
+								<Chip
+									label={dateFilterLabel}
+									size="small"
+									onDelete={clearDateFilter}
+								/>
+						}
+					</Stack>
+			}
 			<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
 				{
-					filteredTransactions.length > 0 &&
-					<BankTransactions
-						showAccount
-						transactions={filteredTransactions}
-					/>
+					filteredTransactions.length > 0 ? (
+						<BankTransactions
+							showAccount
+							transactions={filteredTransactions}
+						/>
+					) : hasFilters ? (
+						<Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
+							검색 결과가 없습니다.
+						</Typography>
+					) : (
+						<Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
+							검색어 또는 필터를 입력하세요.
+						</Typography>
+					)
 				}
 			</Box>
 			<BankTransactionModal
