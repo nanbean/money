@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { evaluate } from 'mathjs';
 
 import FormControl from '@mui/material/FormControl';
-import Box from '@mui/material/Box';
 import Input from '@mui/material/Input';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -16,7 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 
-import _ from 'lodash';
+import { findLastIndex } from 'lodash';
 
 import AutoComplete from '../AutoComplete';
 
@@ -153,10 +152,10 @@ export function BankTransactionForm ({
 		}
 	};
 
-	const onPayeeChange = handler => (event, value) => dispatch(handler(value));
+	const onPayeeChange = handler => (_, value) => dispatch(handler(value));
 
-	const onPayeeSelect = handler => (event, value) => {
-		const matchIndex = _.findLastIndex(transactions, i => i.payee === value.name);
+	const onPayeeSelect = handler => (_, value) => {
+		const matchIndex = findLastIndex(transactions, i => i.payee === value.name);
 		const matchTransaction = matchIndex >= 0 && transactions[matchIndex];
 		const transaction = {
 			payee: value.name
@@ -316,17 +315,14 @@ export function BankTransactionForm ({
 	};
 
 	return (
-		<div>
-			<form
-				onSubmit={handleSubmit}
-			>
+		<form onSubmit={handleSubmit}>
+			<Stack spacing={1.5}>
 				<FormControl required fullWidth>
 					<Input
 						id="date"
 						type="date"
 						name="date"
 						autoComplete="off"
-						placeholder="Date"
 						value={form.date}
 						fullWidth
 						onChange={onChange(changeDate)}
@@ -342,15 +338,14 @@ export function BankTransactionForm ({
 					/>
 				</FormControl>
 				{isSplit ? (
-					<Stack spacing={1} sx={{ mt: 1, mb: 1 }}>
+					<Stack spacing={1}>
 						{divisions.map((division, index) => (
 							<Stack key={index} direction="row" spacing={1} alignItems="center">
-								<FormControl fullWidth variant="standard">
+								<FormControl fullWidth variant="standard" sx={{ flex: 2 }}>
 									<Select
 										value={division.category}
 										onChange={(e) => onDivisionChange(index, 'category', e.target.value)}
 										displayEmpty
-										inputProps={{ 'aria-label': 'Without label' }}
 									>
 										<MenuItem value="" disabled>
 											<em>Category</em>
@@ -360,7 +355,7 @@ export function BankTransactionForm ({
 										))}
 									</Select>
 								</FormControl>
-								<FormControl fullWidth>
+								<FormControl sx={{ flex: 1 }}>
 									<Input
 										type="number"
 										placeholder="Amount"
@@ -368,26 +363,30 @@ export function BankTransactionForm ({
 										onChange={(e) => onDivisionChange(index, 'amount', e.target.value)}
 									/>
 								</FormControl>
-								<FormControl fullWidth>
+								<FormControl sx={{ flex: 1.5 }}>
 									<Input
 										placeholder="Memo"
 										value={division.memo}
 										onChange={(e) => onDivisionChange(index, 'memo', e.target.value)}
 									/>
 								</FormControl>
-								<IconButton onClick={() => onRemoveSplit(index)} size="small">
-									<DeleteIcon />
+								<IconButton onClick={() => onRemoveSplit(index)} size="small" color="error">
+									<DeleteIcon fontSize="small" />
 								</IconButton>
 							</Stack>
 						))}
-						<Button startIcon={<AddIcon />} onClick={onAddSplit}>
-							Add Split
-						</Button>
 						<Stack direction="row" justifyContent="space-between" alignItems="center">
-							<Typography variant="subtitle1">Total: {totalAmount}</Typography>
-							<Button startIcon={<CallSplitIcon />} onClick={onToggleSplit} color="secondary">
-								Unsplit
+							<Button size="small" startIcon={<AddIcon />} onClick={onAddSplit}>
+								Add Split
 							</Button>
+							<Stack direction="row" spacing={1} alignItems="center">
+								<Typography variant="body2" color="text.secondary">
+									Total: {totalAmount}
+								</Typography>
+								<IconButton size="small" onClick={onToggleSplit} color="primary">
+									<CallSplitIcon fontSize="small" />
+								</IconButton>
+							</Stack>
 						</Stack>
 					</Stack>
 				) : (
@@ -397,15 +396,13 @@ export function BankTransactionForm ({
 								value={form.category}
 								onChange={onChange(changeCategory)}
 							>
-								{
-									categoryList.map(i => (
-										<MenuItem key={i} value={i}>{i}</MenuItem>
-									))
-								}
+								{categoryList.map(i => (
+									<MenuItem key={i} value={i}>{i}</MenuItem>
+								))}
 							</Select>
 						</FormControl>
-						<Box display="flex" alignItems="center" width="100%">
-							<FormControl required sx={{ flexGrow: 1, mr: 1 }}>
+						<Stack direction="row" spacing={1} alignItems="flex-end">
+							<FormControl required sx={{ flexGrow: 1 }}>
 								<Input
 									id="amount"
 									type="text"
@@ -418,18 +415,18 @@ export function BankTransactionForm ({
 									onKeyDown={handleAmountKeyDown}
 								/>
 							</FormControl>
-							<Button
-								variant="contained"
-								color="secondary"
+							<IconButton
+								size="small"
 								onClick={handleCalculateAmount}
-								sx={{ width: 30, height: 30, minWidth: 0, mr: 1 }}
+								color="secondary"
+								sx={{ mb: '2px' }}
 							>
-								=
-							</Button>
-							<IconButton onClick={onToggleSplit} color="primary">
-								<CallSplitIcon />
+								<Typography variant="body2" fontWeight="bold">=</Typography>
 							</IconButton>
-						</Box>
+							<IconButton size="small" onClick={onToggleSplit} color="primary" sx={{ mb: '2px' }}>
+								<CallSplitIcon fontSize="small" />
+							</IconButton>
+						</Stack>
 						<FormControl fullWidth>
 							<Input
 								id="memo"
@@ -441,33 +438,37 @@ export function BankTransactionForm ({
 						</FormControl>
 					</>
 				)}
-				<Button
-					type="submit"
-					fullWidth
-					variant="contained"
-					color="primary"
-					sx={(theme) => ({
-						marginTop: theme.spacing(1)
-					})}
-				>
-					{form.isEdit ? 'Edit' : 'Add'}
-				</Button>
-				{
-					form.isEdit &&
+				{form.isEdit ? (
+					<Stack direction="row" spacing={1}>
 						<Button
+							type="submit"
 							fullWidth
 							variant="contained"
-							color="secondary"
-							sx={(theme) => ({
-								marginTop: theme.spacing(1)
-							})}
+							color="primary"
+						>
+							Edit
+						</Button>
+						<Button
+							fullWidth
+							variant="outlined"
+							color="error"
 							onClick={onDeleteButton(deleteTransactionAction)}
 						>
 							Delete
 						</Button>
-				}
-			</form>
-		</div>
+					</Stack>
+				) : (
+					<Button
+						type="submit"
+						fullWidth
+						variant="contained"
+						color="primary"
+					>
+						Add
+					</Button>
+				)}
+			</Stack>
+		</form>
 	);
 }
 

@@ -32,7 +32,7 @@ export function AllPerformance () {
 				investment: i.name,
 				price: i.price,
 				currency: i.currency,
-				symbol: i.yahooSymbol,
+				symbol: i.googleSymbol,
 				performance: performance,
 				totalPerformance: totalPerformance,
 				totalQuantity: totalQuantity

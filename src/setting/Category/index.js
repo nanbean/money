@@ -99,14 +99,10 @@ export function Category () {
 					fullWidth
 					variant="outlined"
 					color="primary"
+					startIcon={<AddIcon />}
 					onClick={handleAdd}
 				>
 					Add
-					<AddIcon
-						sx={(theme) => ({
-							marginLeft: theme.spacing(1)
-						})}
-					/>
 				</Button>
 				<ToggleButtonGroup
 					value={exemptView}
@@ -160,11 +156,8 @@ export function Category () {
 					)}
 				</AutoSizer>
 			</Box>
-			<Dialog
-				open={dialogOpen}
-				onClose={handleClose}
-			>
-				<DialogTitle id="form-dialog-title">{dialogEdit ? 'Edit':'Add'}</DialogTitle>
+			<Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="xs">
+				<DialogTitle>{dialogEdit ? 'Edit' : 'Add'}</DialogTitle>
 				<DialogContent>
 					<form onSubmit={handleNewCategorySubmit}>
 						<FormControl required fullWidth>
@@ -176,45 +169,20 @@ export function Category () {
 								onChange={handleNewCategoryInputChange}
 							/>
 						</FormControl>
-						{
-							!dialogEdit && <Button
-								type="submit"
-								fullWidth
-								variant="contained"
-								color="primary"
-								sx={(theme) => ({
-									marginTop: theme.spacing(1)
-								})}
-							>
+						{dialogEdit ? (
+							<Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+								<Button type="submit" fullWidth variant="contained" color="primary">
+									Edit
+								</Button>
+								<Button fullWidth variant="outlined" color="error" onClick={handleDelete}>
+									Delete
+								</Button>
+							</Stack>
+						) : (
+							<Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 1 }}>
 								Add
 							</Button>
-						}
-						{
-							dialogEdit && <Button
-								type="submit"
-								fullWidth
-								variant="contained"
-								color="primary"
-								sx={(theme) => ({
-									marginTop: theme.spacing(1)
-								})}
-							>
-								Edit
-							</Button>
-						}
-						{
-							dialogEdit && <Button
-								fullWidth
-								variant="contained"
-								color="primary"
-								sx={(theme) => ({
-									marginTop: theme.spacing(1)
-								})}
-								onClick={handleDelete}
-							>
-								Delete
-							</Button>
-						}
+						)}
 					</form>
 				</DialogContent>
 			</Dialog>

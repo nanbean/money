@@ -14,6 +14,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Stack from '@mui/material/Stack';
 
 import AddIcon from '@mui/icons-material/Add';
 
@@ -113,10 +114,10 @@ export default function Account () {
 				fullWidth
 				variant="outlined"
 				color="primary"
+				startIcon={<AddIcon />}
 				onClick={() => handleOpen()}
 			>
 				Add
-				<AddIcon sx={(theme) => ({ marginLeft: theme.spacing(1) })} />
 			</Button>
 			<Box sx={{ flex: 1, mt: 1 }}>
 				<AutoSizer>
@@ -220,24 +221,18 @@ export default function Account () {
 							}
 							label="Closed"
 						/>
-						<Button
-							type="submit"
-							fullWidth
-							variant="contained"
-							color="primary"
-							sx={(theme) => ({ marginTop: theme.spacing(2) })}
-						>
-							{isEdit ? 'Edit' : 'Add'}
-						</Button>
-						{isEdit && (
-							<Button
-								fullWidth
-								variant="contained"
-								color="primary"
-								sx={(theme) => ({ marginTop: theme.spacing(1) })}
-								onClick={handleDelete}
-							>
-								Delete
+						{isEdit ? (
+							<Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+								<Button type="submit" fullWidth variant="contained" color="primary">
+									Edit
+								</Button>
+								<Button fullWidth variant="outlined" color="error" onClick={handleDelete}>
+									Delete
+								</Button>
+							</Stack>
+						) : (
+							<Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>
+								Add
 							</Button>
 						)}
 					</form>

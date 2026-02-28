@@ -58,7 +58,6 @@ const parseOverseasMst = async (buffer) => {
 		stocks.push({
 			name: symbol,
 			googleSymbol: `${exchange}:${symbol}`,
-			yahooSymbol: symbol,
 			currency: 'USD'
 		});
 	}

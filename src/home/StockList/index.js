@@ -133,7 +133,7 @@ export function StockList () {
 									</Typography>
 									<Typography variant="caption" sx={{ color: 'grey.500' }}>*</Typography>
 									<Amount
-										value={i.appraisedValue / i.quantity}
+										value={investment?.price}
 										size="small"
 										currency={i.currency}
 										showSymbol

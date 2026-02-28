@@ -4,10 +4,20 @@ const config = require('../config');
 const API_KEY_ALLOWED_PATHS = ['/api/addTransactionWithNotification'];
 
 const requireAuth = async (ctx, next) => {
-	// API 키 인증 (외부 모바일 앱 등) - 허용된 경로만
 	const apiKey = ctx.headers['x-api-key'];
-	if (apiKey && config.apiKey && apiKey === config.apiKey && API_KEY_ALLOWED_PATHS.includes(ctx.path)) {
-		return await next();
+	const isAllowedPath = API_KEY_ALLOWED_PATHS.includes(ctx.path);
+
+	if (isAllowedPath) {
+		const ip = ctx.headers['x-forwarded-for'] || ctx.ip;
+		console.log(`[requireAuth] ${ctx.path} called from ${ip} | x-api-key: ${apiKey || 'missing'}`);
+
+		if (apiKey && config.apiKey && apiKey === config.apiKey) {
+			console.log(`[requireAuth] ${ctx.path} authenticated via API key`);
+			return await next();
+		}
+		if (apiKey) {
+			console.log(`[requireAuth] ${ctx.path} rejected - invalid API key`);
+		}
 	}
 
 	const authSession = ctx.cookies.get('AuthSession');

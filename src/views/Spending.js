@@ -50,7 +50,7 @@ import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
 const EXPENSE_TYPES = ['Bank', 'CCard', 'Cash'];
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const INFLATION_RATE = 1.02;
+const INFLATION_RATE = 1.025;
 
 // Returns start month string (YYYY-MM) for the given range
 const getStartMonthStr = (range) => {
@@ -506,7 +506,7 @@ function Spending () {
 								<Box>
 									<Stack direction="row" alignItems="center" spacing={0.75}>
 										<Typography variant="caption" color="text.secondary">{currentYear} Annual Projection</Typography>
-										<Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>· 2% inflation applied</Typography>
+										<Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>· 2.5% inflation applied</Typography>
 									</Stack>
 									<Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.25 }}>
 										<Amount value={projectedAnnual} currency={currency} showSymbol size="large" showColor={false} />

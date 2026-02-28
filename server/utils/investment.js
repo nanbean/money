@@ -150,7 +150,7 @@ const getInvestmentBalance = (investments, date, histories) => {
 
 const getClosePriceWithHistory = (investments, history) => {
 	if (investments && history) {
-		const investment = investments.find(j => j._id === history._id.replace('history', 'investment'));
+		const investment = investments.find(j => j.name === history.name);
 		if (investment) {
 			return investment.price;
 		}
@@ -162,8 +162,8 @@ const getSymbolWithName = (investments, name) => {
 	if (investments && name) {
 		const investment = investments && investments.find(i => i.name === name);
 
-		if (investment && investment.yahooSymbol) {
-			return investment.yahooSymbol.substr(0, 6);
+		if (investment && investment.googleSymbol) {
+			return investment.googleSymbol.split(':')[1] || '';
 		}
 	}
 

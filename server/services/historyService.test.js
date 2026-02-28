@@ -46,8 +46,8 @@ describe('historyService', () => {
 			});
 			stocksDB.get.mockResolvedValue({
 				data: [
-					{ _id: 'investment:AAPL', name: 'AAPL', price: 170, yahooSymbol: 'AAPL' },
-					{ _id: 'investment:GOOG', name: 'GOOG', price: 2800, yahooSymbol: 'GOOG' }
+					{ name: 'AAPL', price: 170, googleSymbol: 'NASDAQ:AAPL' },
+					{ name: 'GOOG', price: 2800, googleSymbol: 'NASDAQ:GOOG' }
 				]
 			});
 			historyDB.listHistories.mockResolvedValue([
@@ -99,7 +99,7 @@ describe('historyService', () => {
 			});
 			stocksDB.get.mockResolvedValue({
 				data: [
-					{ _id: 'investment:AAPL', name: 'AAPL', price: 170, yahooSymbol: 'AAPL' }
+					{ name: 'AAPL', price: 170, googleSymbol: 'NASDAQ:AAPL' }
 				]
 			});
 			historyDB.listHistories.mockResolvedValue([
@@ -130,7 +130,7 @@ describe('historyService', () => {
 				rows: [{ doc: { accountId: 'account:Invst:Broker', investment: 'AAPL' } }]
 			});
 			stocksDB.get.mockResolvedValue({
-				data: [{ _id: 'investment:AAPL', name: 'AAPL', price: 170, yahooSymbol: 'AAPL' }]
+				data: [{ name: 'AAPL', price: 170, googleSymbol: 'NASDAQ:AAPL' }]
 			});
 			historyDB.listHistories.mockResolvedValue([
 				{ _id: 'history:AAPL', name: 'AAPL', data: [{ date: MOCK_YESTERDAY_ISO, close: 170 }] }

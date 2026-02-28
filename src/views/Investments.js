@@ -289,7 +289,7 @@ export function Investments () {
 	const [view, setView] = useState('chart');
 	const [aiComment, setAiComment] = useState(null);
 	const [aiLoading, setAiLoading] = useState(false);
-	const [cagrBase, setCagrBase] = useState(3);
+	const [cagrBase, setCagrBase] = useState(10);
 	const [rhExpanded, setRhExpanded] = useState(false);
 	const [rhData, setRhData] = useState(null);
 	const [rhLoading, setRhLoading] = useState(false);
@@ -498,7 +498,7 @@ export function Investments () {
 							<Typography variant="h5" fontWeight="bold">{toCurrencyFormatWithSymbol(latestValue, currency)}</Typography>
 							<Stack direction="row" spacing={0.5} alignItems="center">
 								<Typography variant="body2" sx={{ color: accentColor }}>
-									{isPositive ? '+' : ''}{toCurrencyFormatWithSymbol(change, currency)} ({isPositive ? '+' : ''}{periodTwr !== null ? (periodTwr * 100).toFixed(2) : changeRate.toFixed(2)}%)
+									{isPositive ? '+' : ''}{toCurrencyFormatWithSymbol(change, currency)} ({periodTwr !== null ? (periodTwr >= 0 ? '+' : '') : (isPositive ? '+' : '')}{periodTwr !== null ? (periodTwr * 100).toFixed(2) : changeRate.toFixed(2)}%)
 								</Typography>
 								{periodTwr !== null && (
 									<Typography variant="caption" color="text.disabled">TWR</Typography>

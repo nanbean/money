@@ -14,6 +14,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Stack from '@mui/material/Stack';
 
 import AddIcon from '@mui/icons-material/Add';
 
@@ -140,10 +141,10 @@ export default function PaymentList () {
 				fullWidth
 				variant="outlined"
 				color="primary"
+				startIcon={<AddIcon />}
 				onClick={() => handleOpen()}
 			>
 				Add
-				<AddIcon sx={(theme) => ({ marginLeft: theme.spacing(1) })} />
 			</Button>
 			<Box sx={{ flex: 1, mt: 1 }}>
 				<AutoSizer>
@@ -218,29 +219,31 @@ export default function PaymentList () {
 								))}
 							</Select>
 						</FormControl>
-						<TextField
-							margin="dense"
-							name="amount"
-							label="Amount"
-							type="number"
-							fullWidth
-							variant="standard"
-							value={formData.amount}
-							onChange={handleChange}
-							required
-						/>
-						<TextField
-							margin="dense"
-							name="day"
-							label="Day"
-							type="number"
-							fullWidth
-							variant="standard"
-							value={formData.day}
-							onChange={handleChange}
-							required
-							inputProps={{ min: 1, max: 31 }}
-						/>
+						<Stack direction="row" spacing={1}>
+							<TextField
+								margin="dense"
+								name="amount"
+								label="Amount"
+								type="number"
+								fullWidth
+								variant="standard"
+								value={formData.amount}
+								onChange={handleChange}
+								required
+							/>
+							<TextField
+								margin="dense"
+								name="day"
+								label="Day"
+								type="number"
+								variant="standard"
+								value={formData.day}
+								onChange={handleChange}
+								required
+								inputProps={{ min: 1, max: 31 }}
+								sx={{ width: 80 }}
+							/>
+						</Stack>
 						<FormControl fullWidth margin="dense" variant="standard">
 							<InputLabel>Category</InputLabel>
 							<Select
@@ -273,24 +276,18 @@ export default function PaymentList () {
 							}
 							label="Valid"
 						/>
-						<Button
-							type="submit"
-							fullWidth
-							variant="contained"
-							color="primary"
-							sx={(theme) => ({ marginTop: theme.spacing(2) })}
-						>
-							{editIndex >= 0 ? 'Edit' : 'Add'}
-						</Button>
-						{editIndex >= 0 && (
-							<Button
-								fullWidth
-								variant="contained"
-								color="secondary"
-								sx={(theme) => ({ marginTop: theme.spacing(1) })}
-								onClick={handleDelete}
-							>
-								Delete
+						{editIndex >= 0 ? (
+							<Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+								<Button type="submit" fullWidth variant="contained" color="primary">
+									Edit
+								</Button>
+								<Button fullWidth variant="outlined" color="error" onClick={handleDelete}>
+									Delete
+								</Button>
+							</Stack>
+						) : (
+							<Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>
+								Add
 							</Button>
 						)}
 					</form>

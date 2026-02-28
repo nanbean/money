@@ -43,10 +43,8 @@ const parseKoreanMst = async (buffer, part2Length) => {
 		if (!/^\d{6}$/.test(shortCode)) continue;
 
 		stocks.push({
-			_id: `investment:${shortCode}`,
 			name: koreanName,
-			googleSymbol: `KRX:${shortCode}`,
-			yahooSymbol: `${shortCode}.KS`
+			googleSymbol: `KRX:${shortCode}`
 		});
 	}
 

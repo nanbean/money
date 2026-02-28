@@ -52,7 +52,7 @@ export function InvestmentPerformance ({
 	const totalDividend = performance.length > 0 ? performance.map(l => l.periodDiv).reduce((a, b) => a + b) : 0;
 	const totalCostBasis = performance.length > 0 ? performance.map(m => m.costBasis).reduce((a, b) => a + b) : 0;
 	const totalMarketValue = performance.length > 0 ? performance.map(l => l.marketValue).reduce((a, b) => a + b) : 0;
-	const tossSymbol = symbol ? symbol.split('.')[0] : '';
+	const tossSymbol = symbol ? (symbol.split(':')[1] || symbol) : '';
 	const handleTossClick = () => {
 		if (tossSymbol) {
 			window.open(`https://tossinvest.com/stocks/${tossSymbol}`, '_blank', 'noopener,noreferrer');

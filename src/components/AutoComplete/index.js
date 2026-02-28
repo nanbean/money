@@ -10,13 +10,11 @@ export function AutoComplete ({
 	placeholder,
 	value
 }) {
-	const defaultValue = value && items.length > 0 && items.find(i => i.name === value);
-
 	return (
 		<Autocomplete
 			options={items}
-			getOptionLabel={(option) => option.name}
-			defaultValue={defaultValue}
+			getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+			inputValue={value || ''}
 			onInputChange={onInputChange}
 			onChange={onChange}
 			renderInput={(params) => <TextField {...params} variant="standard" placeholder={placeholder} />}

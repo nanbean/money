@@ -20,6 +20,14 @@ const api = require('./api');
 const PORT = process.env.PORT || 3004;
 const indexHtml = fs.readFileSync(path.resolve(__dirname, '../build/index.html'), { encoding: 'utf8' });
 
+// service-worker.js는 항상 최신 버전을 받도록 캐시 금지
+app.use(async (ctx, next) => {
+	await next();
+	if (ctx.path === '/service-worker.js') {
+		ctx.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+	}
+});
+
 app.use(serve(path.resolve(__dirname, '../build/')));
 
 app.use(bodyParser());

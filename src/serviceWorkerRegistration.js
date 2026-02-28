@@ -91,6 +91,16 @@ function registerValidSW(swUrl, config) {
           }
         };
       };
+
+      // Check for updates every hour (mimics iOS PWA behavior on Chrome)
+      setInterval(() => registration.update(), 60 * 60 * 1000);
+
+      // Check for updates when the tab becomes visible again
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          registration.update();
+        }
+      });
     })
     .catch((error) => {
       console.error('Error during service worker registration:', error);

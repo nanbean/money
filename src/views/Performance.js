@@ -35,7 +35,7 @@ export function Performance () {
 					price={investmentItem.price}
 					currency={investmentItem.currency}
 					performance={performance}
-					symbol={investmentItem.yahooSymbol}
+					symbol={investmentItem.googleSymbol}
 				/>
 			) : (
 				<Typography>Investment "{investmentName}" could not be found.</Typography>

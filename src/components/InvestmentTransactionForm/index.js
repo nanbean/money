@@ -7,6 +7,7 @@ import Input from '@mui/material/Input';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 
 import AutoComplete from '../AutoComplete';
 
@@ -26,8 +27,6 @@ import {
 	changeCommission,
 	changeAmount
 } from '../../actions/ui/form/investmentTransaction';
-
-import './index.css';
 
 const activityList = [
 	'Buy',
@@ -64,7 +63,8 @@ export function InvestmentTransactionForm ({
 
 	const onChange = handler => event => dispatch(handler(event.target.value));
 
-	const onInvestmentChange = handler => (event, value) => dispatch(handler(value.name));
+	const onInvestmentChange = handler => (_, value) => dispatch(handler(value.name));
+	const onInvestmentInputChange = handler => (_, value) => dispatch(handler(value));
 
 	const onAddButton = () => {
 		const data = {};
@@ -181,16 +181,13 @@ export function InvestmentTransactionForm ({
 	}, [autocompleteInvestmentList, transactions]);
 
 	return (
-		<div>
-			<form
-				onSubmit={handleSubmit}
-			>
+		<form onSubmit={handleSubmit}>
+			<Stack spacing={1.5}>
 				<FormControl required fullWidth>
 					<Input
 						id="date"
 						type="date"
 						name="date"
-						placeholder="Date"
 						value={form.date}
 						onChange={onChange(changeDate)}
 					/>
@@ -200,94 +197,88 @@ export function InvestmentTransactionForm ({
 					items={sortedAutocompleteInvestmentList}
 					placeholder="Investment"
 					onChange={onInvestmentChange(changeInvestment)}
+					onInputChange={onInvestmentInputChange(changeInvestment)}
 				/>
 				<FormControl required fullWidth variant="standard">
 					<Select
 						value={form.activity}
 						onChange={onChange(changeActivity)}
-						inputProps={{
-							name: 'activity',
-							id: 'activity-select'
-						}}
+						inputProps={{ name: 'activity', id: 'activity-select' }}
 					>
-						{
-							activityList.map(i => (
-								<MenuItem key={i} value={i}>{i}</MenuItem>
-							))
-						}
+						{activityList.map(i => (
+							<MenuItem key={i} value={i}>{i}</MenuItem>
+						))}
 					</Select>
 				</FormControl>
-				<FormControl fullWidth>
-					<Input
-						id="quantity"
-						type="number"
-						name="quantity"
-						placeholder="Quantity"
-						value={form.quantity}
-						disabled={quantityDisabled}
-						onChange={onChange(changeQuantity)}
-					/>
-				</FormControl>
-				<FormControl fullWidth>
-					<Input
-						id="price"
-						type="number"
-						name="price"
-						placeholder="Price"
-						value={form.price}
-						disabled={priceDisabled}
-						onChange={onChange(changePrice)}
-					/>
-				</FormControl>
-				<FormControl fullWidth>
-					<Input
-						id="commission"
-						type="number"
-						name="commission"
-						placeholder="Commission"
-						value={form.commission}
-						disabled={commissionDisabled}
-						onChange={onChange(changeCommission)}
-					/>
-				</FormControl>
-				<FormControl required fullWidth>
-					<Input
-						id="amount"
-						type="number"
-						name="amount"
-						placeholder="Amount"
-						value={form.amount}
-						disabled={amountDisabled}
-						onChange={onChange(changeAmount)}
-					/>
-				</FormControl>
-				<Button
-					type="submit"
-					fullWidth
-					variant="contained"
-					color="primary"
-					sx={(theme) => ({
-						marginTop: theme.spacing(1)
-					})}
-				>
-					{form.isEdit ? 'Edit' : 'Add'}
-				</Button>
-				{
-					form.isEdit &&
+				<Stack direction="row" spacing={1}>
+					<FormControl fullWidth>
+						<Input
+							id="quantity"
+							type="number"
+							name="quantity"
+							placeholder="Quantity"
+							value={form.quantity}
+							disabled={quantityDisabled}
+							onChange={onChange(changeQuantity)}
+						/>
+					</FormControl>
+					<FormControl fullWidth>
+						<Input
+							id="price"
+							type="number"
+							name="price"
+							placeholder="Price"
+							value={form.price}
+							disabled={priceDisabled}
+							onChange={onChange(changePrice)}
+						/>
+					</FormControl>
+				</Stack>
+				<Stack direction="row" spacing={1}>
+					<FormControl fullWidth>
+						<Input
+							id="commission"
+							type="number"
+							name="commission"
+							placeholder="Commission"
+							value={form.commission}
+							disabled={commissionDisabled}
+							onChange={onChange(changeCommission)}
+						/>
+					</FormControl>
+					<FormControl required fullWidth>
+						<Input
+							id="amount"
+							type="number"
+							name="amount"
+							placeholder="Amount"
+							value={form.amount}
+							disabled={amountDisabled}
+							onChange={onChange(changeAmount)}
+						/>
+					</FormControl>
+				</Stack>
+				{form.isEdit ? (
+					<Stack direction="row" spacing={1}>
+						<Button type="submit" fullWidth variant="contained" color="primary">
+							Edit
+						</Button>
 						<Button
 							fullWidth
-							variant="contained"
-							color="secondary"
-							sx={(theme) => ({
-								marginTop: theme.spacing(1)
-							})}
+							variant="outlined"
+							color="error"
 							onClick={onDeleteButton(deleteTransactionAction)}
 						>
 							Delete
 						</Button>
-				}
-			</form>
-		</div>
+					</Stack>
+				) : (
+					<Button type="submit" fullWidth variant="contained" color="primary">
+						Add
+					</Button>
+				)}
+			</Stack>
+		</form>
 	);
 }
 

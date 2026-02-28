@@ -54,6 +54,7 @@ api.post('/addTransactionWithNotification', async (ctx) => {
 	ctx.body = { return: result };
 });
 
+
 api.post('/testNotification', async (ctx) => {
 	const body = ctx.request.body;
 	await messaging.sendNotification(body.title, body.body, 'graph');

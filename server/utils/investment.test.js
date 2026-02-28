@@ -284,13 +284,13 @@ describe('getInvestmentBalance', () => {
 
 describe('getClosePriceWithHistory', () => {
 	const investments = [
-		{ _id: 'investment:AAPL', name: 'Apple Inc.', price: 170.50 },
-		{ _id: 'investment:GOOG', name: 'Alphabet Inc.', price: 2800.75 },
-		{ _id: 'investment:TSLA', name: 'Tesla Inc.', price: 750.25 }
+		{ name: 'Apple Inc.', price: 170.50 },
+		{ name: 'Alphabet Inc.', price: 2800.75 },
+		{ name: 'Tesla Inc.', price: 750.25 }
 	];
 
 	test('should return 0 if investments is null or undefined', () => {
-		const history = { _id: 'history:AAPL' };
+		const history = { _id: 'history:AAPL', name: 'Apple Inc.' };
 		expect(getClosePriceWithHistory(null, history)).toBe(0);
 		expect(getClosePriceWithHistory(undefined, history)).toBe(0);
 	});
@@ -301,38 +301,38 @@ describe('getClosePriceWithHistory', () => {
 	});
 
 	test('should return 0 if no matching investment is found', () => {
-		const history = { _id: 'history:MSFT' }; // MSFT is not in investments list
+		const history = { _id: 'history:MSFT', name: 'Microsoft Corp.' }; // MSFT is not in investments list
 		expect(getClosePriceWithHistory(investments, history)).toBe(0);
 	});
 
 	test('should return the correct price for a matching investment', () => {
-		const history = { _id: 'history:AAPL' };
+		const history = { _id: 'history:AAPL', name: 'Apple Inc.' };
 		expect(getClosePriceWithHistory(investments, history)).toBe(170.50);
 	});
 
-	test('should handle different history _id formats correctly', () => {
-		const history1 = { _id: 'history:GOOG' };
+	test('should handle different history name formats correctly', () => {
+		const history1 = { _id: 'history:GOOG', name: 'Alphabet Inc.' };
 		expect(getClosePriceWithHistory(investments, history1)).toBe(2800.75);
 
-		const history2 = { _id: 'history:TSLA' };
+		const history2 = { _id: 'history:TSLA', name: 'Tesla Inc.' };
 		expect(getClosePriceWithHistory(investments, history2)).toBe(750.25);
 	});
 });
 
 describe('getSymbolWithName', () => {
 	const investments = [
-		{ name: 'Apple Inc.', yahooSymbol: 'AAPL.OQ' }, // Symbol longer than 6 chars
-		{ name: 'Alphabet Inc.', yahooSymbol: 'GOOGL' }, // Symbol shorter than 6 chars
-		{ name: 'Samsung Electronics', yahooSymbol: '005930.KS' },
-		{ name: 'Microsoft Corp.', price: 250 } // No yahooSymbol property
+		{ name: 'Apple Inc.', googleSymbol: 'NASDAQ:AAPL' },
+		{ name: 'Alphabet Inc.', googleSymbol: 'NASDAQ:GOOGL' },
+		{ name: 'Samsung Electronics', googleSymbol: 'KRX:005930' },
+		{ name: 'Microsoft Corp.', price: 250 } // No googleSymbol property
 	];
 
-	test('should return the first 6 characters of the yahooSymbol for a matching investment', () => {
-		expect(getSymbolWithName(investments, 'Apple Inc.')).toBe('AAPL.O');
+	test('should return the ticker part of googleSymbol for a matching investment', () => {
+		expect(getSymbolWithName(investments, 'Apple Inc.')).toBe('AAPL');
 		expect(getSymbolWithName(investments, 'Samsung Electronics')).toBe('005930');
 	});
 
-	test('should return the full yahooSymbol if it is shorter than 6 characters', () => {
+	test('should return the ticker part of googleSymbol', () => {
 		expect(getSymbolWithName(investments, 'Alphabet Inc.')).toBe('GOOGL');
 	});
 
@@ -340,7 +340,7 @@ describe('getSymbolWithName', () => {
 		expect(getSymbolWithName(investments, 'NonExistent Corp.')).toBe('');
 	});
 
-	test('should return an empty string if the matching investment has no yahooSymbol', () => {
+	test('should return an empty string if the matching investment has no googleSymbol', () => {
 		expect(getSymbolWithName(investments, 'Microsoft Corp.')).toBe('');
 	});
 
@@ -356,8 +356,8 @@ describe('getGoogleSymbolWithName', () => {
 	const investments = [
 		{ name: 'Apple Inc.', googleSymbol: 'NASDAQ:AAPL' },
 		{ name: 'Alphabet Inc.', googleSymbol: 'NASDAQ:GOOGL' },
-		{ name: 'LG전자', googleSymbol: 'KRX:066570', yahooSymbol: '066570.KS' },
-		{ name: 'Samsung Electronics', yahooSymbol: '005930.KS' }, // No googleSymbol
+		{ name: 'LG전자', googleSymbol: 'KRX:066570' },
+		{ name: 'Samsung Electronics' }, // No googleSymbol
 		{ name: 'Microsoft Corp.', price: 250 } // No googleSymbol property
 	];
 
@@ -384,9 +384,9 @@ describe('getGoogleSymbolWithName', () => {
 
 describe('getInvestmentsFromTransactions', () => {
 	const mockMasterInvestments = [
-		{ name: 'Apple', yahooSymbol: 'AAPL.OQ' },
-		{ name: 'Google', yahooSymbol: 'GOOGL' },
-		{ name: 'Microsoft' } // No yahooSymbol
+		{ name: 'Apple', googleSymbol: 'NASDAQ:AAPL' },
+		{ name: 'Google', googleSymbol: 'NASDAQ:GOOGL' },
+		{ name: 'Microsoft' } // No googleSymbol
 	];
 
 	test('should extract and format investment transactions correctly', () => {
@@ -401,7 +401,7 @@ describe('getInvestmentsFromTransactions', () => {
 
 		expect(result).toHaveLength(3);
 		expect(result).toEqual(expect.arrayContaining([
-			{ _id: 'history:AAPL.O', name: 'Apple' },
+			{ _id: 'history:AAPL', name: 'Apple' },
 			{ _id: 'history:GOOGL', name: 'Google' }
 		]));
 		// Check for the duplicate
@@ -417,7 +417,7 @@ describe('getInvestmentsFromTransactions', () => {
 		expect(result).toEqual([]);
 	});
 
-	test('should handle transactions for investments without a yahooSymbol', () => {
+	test('should handle transactions for investments without a googleSymbol', () => {
 		const mockTransactions = [
 			{ accountId: 'account:Invst:Broker1', investment: 'Microsoft' }
 		];
@@ -436,7 +436,7 @@ describe('getInvestmentsFromAccounts', () => {
 	const mockMasterInvestments = [
 		{ name: 'Apple', googleSymbol: 'NASDAQ:AAPL' },
 		{ name: 'Google', googleSymbol: 'NASDAQ:GOOGL' },
-		{ name: 'Tesla', yahooSymbol: 'TSLA' } // No googleSymbol
+		{ name: 'Tesla' } // No googleSymbol
 	];
 
 	test('should correctly aggregate investments from multiple accounts', () => {
