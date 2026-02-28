@@ -2,6 +2,12 @@ const fetch = require('node-fetch');
 const config = require('../config');
 
 const requireAuth = async (ctx, next) => {
+	// API 키 인증 (외부 모바일 앱 등)
+	const apiKey = ctx.headers['x-api-key'];
+	if (apiKey && config.apiKey && apiKey === config.apiKey) {
+		return await next();
+	}
+
 	const authSession = ctx.cookies.get('AuthSession');
 
 	if (!authSession) {

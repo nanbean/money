@@ -7,6 +7,7 @@ const config = {
 	calendarPrimaryEmail: process.env.REACT_APP_CALENDAR_PRIMARY_EMAIL,
 	reaitimeApiRul: process.env.REACT_APP_REALTIME_API_URL,
 	googleSpreadsheetDocId: process.env.REACT_APP_GOOGLE_SPREADSHEET_DOC_ID,
+	apiKey: process.env.REACT_APP_API_KEY,
 	key
 };
 
