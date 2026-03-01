@@ -93,7 +93,7 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 	});
 };
 
-const getInvestmentBalance = (investments, date, histories) => {
+const getInvestmentBalance = (investments, date, histories, prebuiltHistoriesMap) => {
 	if (!investments || !investments.length) {
 		return 0;
 	}
@@ -102,10 +102,10 @@ const getInvestmentBalance = (investments, date, histories) => {
 	const targetMonth = date ? moment(date).format('YYYY-MM') : null;
 	const useHistoricalData = targetMonth && histories && targetMonth !== moment().format('YYYY-MM');
 
-	// Pre-process histories into a Map for efficient O(1) lookups inside the loop.
-	// This avoids a O(N*M) complexity issue where N is investments and M is histories.
+	// Use a pre-built Map if provided (avoids rebuilding on every call when looping over many dates).
+	// Otherwise build it here as a fallback.
 	const historiesMap = useHistoricalData
-		? new Map(histories.map(h => [h.name, h.data]))
+		? (prebuiltHistoriesMap || new Map(histories.map(h => [h.name, h.data])))
 		: null;
 
 	return investments.reduce((total, investment) => {
