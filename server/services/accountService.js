@@ -10,13 +10,15 @@ const updateAccountList = async () => {
 	console.log('updateAccountList start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 
 	try {
-		const accountsResponse = await accountsDB.list({ include_docs: true });
+		const [accountsResponse, allTransactions, kospiResponse, kosdaqResponse, usResponse] = await Promise.all([
+			accountsDB.list({ include_docs: true }),
+			transactionDB.getAllTransactions(),
+			stocksDB.get('kospi'),
+			stocksDB.get('kosdaq'),
+			stocksDB.get('us')
+		]);
 		const allAccounts = accountsResponse.rows.map(i => i.doc);
-		const allTransactions = await transactionDB.getAllTransactions();
 		const transactionsByAccount = _.groupBy(allTransactions, 'accountId');
-		const kospiResponse = await stocksDB.get('kospi');
-		const kosdaqResponse = await stocksDB.get('kosdaq');
-		const usResponse = await stocksDB.get('us');
 		const allInvestments = [...kospiResponse.data, ...kosdaqResponse.data, ...usResponse.data];
 
 		for (let i = 0; i < allAccounts.length; i++) {

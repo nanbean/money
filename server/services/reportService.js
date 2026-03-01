@@ -14,15 +14,10 @@ const { getAllAccounts } = require('./accountService');
 const updateLifeTimePlanner = async () => {
 	console.time('updateLifeTimePlanner');
 	console.log('updateLifeTimePlanner start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
-	let oldLifeTimePlanner;
-
-	try {
-		oldLifeTimePlanner = await reportDB.getReport('lifetimeplanner');
-	} catch (err) {
-		console.log(err);
-	}
-
-	const accounts = await getAllAccounts();
+	const [oldLifeTimePlanner, accounts] = await Promise.all([
+		reportDB.getReport('lifetimeplanner').catch(err => { console.log(err); return null; }),
+		getAllAccounts()
+	]);
 	const data = await spreadSheet.getLifetimeFlowList(accounts);
 	const transaction = {
 		_id: 'lifetimeplanner',

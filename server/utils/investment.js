@@ -70,8 +70,9 @@ const getInvestmentList = (allInvestments, allTransactions, transactions) => {
 		}
 	}
 
+	const allInvestmentsMap = new Map(allInvestments.map(inv => [inv.name, inv]));
 	return investments.map(i => {
-		const investment = allInvestments.find(j => j.name === i.name);
+		const investment = allInvestmentsMap.get(i.name);
 
 		if (investment) {
 			// update current price
