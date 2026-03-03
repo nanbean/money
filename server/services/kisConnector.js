@@ -174,7 +174,117 @@ async function getKisExchangeRate (accessToken) {
 	}
 }
 
+// Get US stock daily prices (GUBN=0): last ~30 days
+// Response output2[]: { xymd(YYYYMMDD), open, high, low, clos }
+async function getKisDailyPriceUS (accessToken, googleSymbol) {
+	let EXCD = '';
+	if (googleSymbol.startsWith('NYSE:')) EXCD = 'NYS';
+	else if (googleSymbol.startsWith('NASDAQ:')) EXCD = 'NAS';
+	else if (googleSymbol.startsWith('NYSEARCA:')) EXCD = 'AMS';
+	else return null;
+
+	const symb = googleSymbol.split(':')[1];
+
+	const doRequest = async (token) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${token}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'HHDFS76240000'
+		};
+		const response = await fetchWithRetry(
+			`${KIS_URL}/uapi/overseas-price/v1/quotations/dailyprice?AUTH=&EXCD=${EXCD}&SYMB=${symb}&GUBN=0&BYMD=&MODP=0`,
+			{ method: 'GET', headers }
+		);
+		return await response.json();
+	};
+
+	try {
+		return await doRequest(accessToken);
+	} catch (err) {
+		if (err.message && err.message.includes('500')) {
+			const freshToken = await getKisToken(true);
+			return await doRequest(freshToken);
+		}
+		throw err;
+	}
+}
+
+// Get US stock weekly candlestick (GUBN=1): open/high/low/close for current week
+// Response output2[0] = current week: { xymd, open, high, low, clos }
+async function getKisWeeklyPriceUS (accessToken, googleSymbol) {
+	let EXCD = '';
+	if (googleSymbol.startsWith('NYSE:')) EXCD = 'NYS';
+	else if (googleSymbol.startsWith('NASDAQ:')) EXCD = 'NAS';
+	else if (googleSymbol.startsWith('NYSEARCA:')) EXCD = 'AMS';
+	else return null;
+
+	const symb = googleSymbol.split(':')[1];
+
+	const doRequest = async (token) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${token}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'HHDFS76240000'
+		};
+		const response = await fetchWithRetry(
+			`${KIS_URL}/uapi/overseas-price/v1/quotations/dailyprice?AUTH=&EXCD=${EXCD}&SYMB=${symb}&GUBN=1&BYMD=&MODP=0`,
+			{ method: 'GET', headers }
+		);
+		return await response.json();
+	};
+
+	try {
+		return await doRequest(accessToken);
+	} catch (err) {
+		if (err.message && err.message.includes('500')) {
+			const freshToken = await getKisToken(true);
+			return await doRequest(freshToken);
+		}
+		throw err;
+	}
+}
+
+// Get KR stock daily prices for the past 7 days
+// Response output2 sorted newest-first: { stck_bsop_date, stck_oprc, stck_hgpr, stck_lwpr, stck_clpr }
+async function getKisWeeklyPriceKorea (accessToken, googleSymbol) {
+	const symbol = googleSymbol.split(':')[1];
+	const endDate = moment().tz('Asia/Seoul').format('YYYYMMDD');
+	const startDate = moment().tz('Asia/Seoul').subtract(7, 'days').format('YYYYMMDD');
+
+	const doRequest = async (token) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${token}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'FHKST03010100'
+		};
+		const response = await fetchWithRetry(
+			`${KIS_URL}/uapi/domestic-stock/v1/quotations/inquire-daily-price?FID_COND_MRKT_DIV_CODE=J&FID_INPUT_ISCD=${symbol}&FID_INPUT_DATE_1=${startDate}&FID_INPUT_DATE_2=${endDate}&FID_PERIOD_DIV_CODE=D&FID_ORG_ADJ_PRC=0`,
+			{ method: 'GET', headers }
+		);
+		return await response.json();
+	};
+
+	try {
+		return await doRequest(accessToken);
+	} catch (err) {
+		if (err.message && err.message.includes('500')) {
+			const freshToken = await getKisToken(true);
+			return await doRequest(freshToken);
+		}
+		throw err;
+	}
+}
+
 exports.getKisToken = getKisToken;
 exports.getKisQuoteKorea = getKisQuoteKorea;
 exports.getKisQuoteUS = getKisQuoteUS;
 exports.getKisExchangeRate = getKisExchangeRate;
+exports.getKisDailyPriceUS = getKisDailyPriceUS;
+exports.getKisWeeklyPriceUS = getKisWeeklyPriceUS;
+exports.getKisWeeklyPriceKorea = getKisWeeklyPriceKorea;

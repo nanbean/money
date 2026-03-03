@@ -112,6 +112,18 @@ api.post('/portfolioComment', async (ctx) => {
 	}
 });
 
+api.get('/weeklyRecap', async (ctx) => {
+	try {
+		const dry = ctx.request.query.dry === 'true';
+		const result = await aiService.getWeeklyRecap({ dry });
+		ctx.body = dry ? { prompt: result } : { comment: result };
+	} catch (err) {
+		console.error('weeklyRecap error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
 api.get('/robinhoodAccounts', async (ctx) => {
 	try {
 		const data = await snaptradeService.getAllAccountsData();

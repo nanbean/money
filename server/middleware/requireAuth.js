@@ -8,15 +8,8 @@ const requireAuth = async (ctx, next) => {
 	const isAllowedPath = API_KEY_ALLOWED_PATHS.includes(ctx.path);
 
 	if (isAllowedPath) {
-		const ip = ctx.headers['x-forwarded-for'] || ctx.ip;
-		console.log(`[requireAuth] ${ctx.path} called from ${ip} | x-api-key: ${apiKey || 'missing'}`);
-
 		if (apiKey && config.apiKey && apiKey === config.apiKey) {
-			console.log(`[requireAuth] ${ctx.path} authenticated via API key`);
 			return await next();
-		}
-		if (apiKey) {
-			console.log(`[requireAuth] ${ctx.path} rejected - invalid API key`);
 		}
 	}
 

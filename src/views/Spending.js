@@ -255,7 +255,10 @@ function Spending () {
 			const actual = Math.round(thisYearMonthly[m] || 0);
 			let projected = 0;
 			if (m === month && dayOfMonth > 0) {
-				projected = Math.max(0, Math.round((actual / dayOfMonth) * daysInCurrentMonth) - actual);
+				const weight = dayOfMonth / daysInCurrentMonth;
+				const currentPace = (actual / dayOfMonth) * daysInCurrentMonth;
+				const historical = (lastYearMonthly[m] || 0) * INFLATION_RATE;
+				projected = Math.max(0, Math.round(weight * currentPace + (1 - weight) * historical) - actual);
 			} else if (m > month) {
 				projected = Math.round((lastYearMonthly[m] || 0) * INFLATION_RATE);
 			}
@@ -305,12 +308,15 @@ function Spending () {
 			.map(([month, total]) => {
 				const actual = Math.round(total);
 				if (month === currentMonthStr && dayOfMonth < daysInCurrentMonth) {
-					const projected = Math.round(total / dayOfMonth * daysInCurrentMonth) - actual;
+					const weight = dayOfMonth / daysInCurrentMonth;
+					const currentPace = total / dayOfMonth * daysInCurrentMonth;
+					const historical = (annualMonthlyData[today.getMonth()]?.lastYear || 0) * INFLATION_RATE;
+					const projected = Math.max(0, Math.round(weight * currentPace + (1 - weight) * historical) - actual);
 					return { month, actual, projected };
 				}
 				return { month, actual, projected: 0 };
 			});
-	}, [spendingTransactions, toDisplayAmount, currentYear]);
+	}, [spendingTransactions, toDisplayAmount, currentYear, annualMonthlyData]);
 
 	const categoryData = useMemo(() => {
 		const map = {};

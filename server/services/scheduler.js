@@ -9,6 +9,7 @@ const { updateLifeTimePlanner, updateNetWorth, updateNetWorthDaily } = require('
 const checkAndSendNotification = require('./paymentService');
 const { updateUSStockList } = require('./usStockListService');
 const { updateKRStockList } = require('./krStockListService');
+const { getWeeklyRecap } = require('./aiService');
 
 const updateInvestmentPrice = async () => {
 	await arrangeExchangeRate();
@@ -128,6 +129,17 @@ const updateInvestmentPrice = async () => {
 	}, () => {
 		console.log('krStockList monthly job ended');
 	}, true, 'Asia/Seoul');
+
+	new CronJob('00 00 21 * * 0', async () => {
+		/*
+			 * Weekly recap AI analysis pre-generation.
+			 * Runs every Sunday at 21:00 KST (Asia/Seoul).
+			 * Pre-caches the AI analysis so it's ready when user opens the app.
+			 */
+		console.log('weeklyRecap Sunday 21:00 KST started');
+		await getWeeklyRecap().catch(err => console.error('weeklyRecap scheduled job error:', err));
+		console.log('weeklyRecap Sunday 21:00 KST ended');
+	}, null, true, 'Asia/Seoul');
 })();
 
 module.exports = {

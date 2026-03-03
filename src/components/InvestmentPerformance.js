@@ -27,6 +27,26 @@ import {
 	NEGATIVE_AMOUNT_COLOR
 } from '../constants';
 
+const Sparkline = ({ data, positive }) => {
+	if (!data || data.length < 2) return null;
+	const prices = data.map(d => d.price);
+	const min = Math.min(...prices);
+	const max = Math.max(...prices);
+	const range = max - min || 1;
+	const W = 64, H = 24;
+	const points = prices.map((p, i) => {
+		const x = (i / (prices.length - 1)) * W;
+		const y = H - ((p - min) / range) * H;
+		return `${x.toFixed(1)},${y.toFixed(1)}`;
+	}).join(' ');
+	const color = positive ? '#4caf50' : '#f44336';
+	return (
+		<svg width={W} height={H} style={{ display: 'block' }}>
+			<polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+		</svg>
+	);
+};
+
 const COLUMN_WIDTHS = {
 	account: '16%', // 예시: Account 이름
 	qty: '12%',     // 예시: 수량 (Qty)
@@ -41,7 +61,8 @@ export function InvestmentPerformance ({
 	performance,
 	symbol,
 	price,
-	currency
+	currency,
+	weeklyPrices
 }) {
 	const isDarkMode = useDarkMode();
 	const width = useWidth();
@@ -70,6 +91,7 @@ export function InvestmentPerformance ({
 				})}
 			>
 				<Typography variant="subtitle1">{investment}</Typography>
+				<Sparkline data={weeklyPrices} positive={totalPerformance >= 0} />
 				<Amount value={price} currency={currency} showSymbol showOriginal size="large" />
 				{tossSymbol && (
 					<IconButton onClick={handleTossClick} size="small" aria-label="open in toss">

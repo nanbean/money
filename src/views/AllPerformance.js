@@ -35,7 +35,8 @@ export function AllPerformance () {
 				symbol: i.googleSymbol,
 				performance: performance,
 				totalPerformance: totalPerformance,
-				totalQuantity: totalQuantity
+				totalQuantity: totalQuantity,
+				weeklyPrices: i.weeklyPrices
 			};
 		});
 
@@ -72,6 +73,7 @@ export function AllPerformance () {
 								currency={i.currency}
 								performance={i.performance}
 								symbol={i.symbol}
+								weeklyPrices={i.weeklyPrices}
 							/>
 						);
 					})
