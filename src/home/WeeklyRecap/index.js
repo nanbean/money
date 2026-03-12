@@ -15,6 +15,10 @@ import CloseIcon from '@mui/icons-material/Close';
 
 export const getISOWeekKey = () => {
 	const now = new Date();
+	// 월요일 오전(WeeklyRecap 표시 구간)에는 전주 키 사용 (토/일과 동일한 주로 맞춤)
+	if (now.getDay() === 1 && now.getHours() < 9) {
+		now.setDate(now.getDate() - 2);
+	}
 	const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 	const day = date.getUTCDay() || 7;
 	date.setUTCDate(date.getUTCDate() + 4 - day);

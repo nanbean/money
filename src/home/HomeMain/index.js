@@ -23,8 +23,11 @@ const basePanels = [
 	{ key: 'paymentList', component: PaymentList }
 ];
 
-const dayOfWeek = new Date().getDay(); // 0=Sunday, 1=Monday
-const showWeeklyRecapDay = dayOfWeek === 0 || dayOfWeek === 1;
+const now = new Date();
+const dayOfWeek = now.getDay();
+const hour = now.getHours();
+// 미국 금요일 장 마감(KST 토요일 아침) 이후 ~ 한국 월요일 장 시작(KST 09:00) 이전
+const showWeeklyRecapDay = dayOfWeek === 6 || dayOfWeek === 0 || (dayOfWeek === 1 && hour < 9);
 
 export function HomeMain () {
 	const dispatch = useDispatch();

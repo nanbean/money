@@ -55,18 +55,23 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 	const todayMoment = moment().tz('Asia/Seoul');
 	const dayOfWeek = todayMoment.day(); // 0=Sun, 1=Mon
 
-	// Week range: always covers last Mon ~ last Sun
+	// Week range: always covers last Mon ~ last Sun (or Fri for Sat)
+	// Saturday: last Monday (5 days ago) ~ today
 	// Sunday: last Monday (6 days ago) ~ today
 	// Monday: last Monday (7 days ago) ~ yesterday (Sunday)
-	const daysToLastMonday = dayOfWeek === 0 ? 6 : 7;
+	const daysToLastMonday = dayOfWeek === 0 ? 6 : dayOfWeek === 6 ? 5 : 7;
 	const weekStartMoment = todayMoment.clone().subtract(daysToLastMonday, 'days');
 	const weekEndMoment = dayOfWeek === 1 ? todayMoment.clone().subtract(1, 'days') : todayMoment;
 
 	const today = weekEndMoment.format('YYYY-MM-DD');
 	const weekAgo = weekStartMoment.format('YYYY-MM-DD');
 
-	// Cache key: ISO year + week number + version (bump to invalidate stale caches)
-	const cacheId = `weeklyRecap_${todayMoment.format('GGGG-WW')}`;
+	// Cache key: Sat/Sun/Mon-morning 모두 동일한 주 키 사용 (지난 주 기준)
+	// Monday는 이미 새 ISO 주 시작이므로 전날(일요일) 기준으로 맞춤
+	const cacheReferenceMoment = dayOfWeek === 1
+		? todayMoment.clone().subtract(2, 'days')
+		: todayMoment;
+	const cacheId = `weeklyRecap_${cacheReferenceMoment.format('GGGG-WW')}`;
 	const cached = await reportDB.getReport(cacheId).catch(() => null);
 	if (cached && cached.comment) {
 		console.log(`weeklyRecap: returning cached result for ${cacheId}`);

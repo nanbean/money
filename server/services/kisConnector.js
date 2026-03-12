@@ -3,8 +3,12 @@ const moment = require('moment-timezone');
 
 const KIS_URL = 'https://openapi.koreainvestment.com:9443';
 
-const storage = localdb.create({ ttl: true, logging: true });
+const storage = localdb.create({ ttl: true, logging: false });
 storage.init();
+
+const isNetworkError = (err) => {
+	return err.code === 'ECONNRESET' || err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND';
+};
 
 const fetchWithRetry = async (url, options, retries = 3, delay = 1000) => {
 	for (let i = 0; i < retries; i++) {
@@ -16,7 +20,7 @@ const fetchWithRetry = async (url, options, retries = 3, delay = 1000) => {
 			return response;
 		} catch (err) {
 			if (i === retries - 1) throw err;
-			await new Promise(res => setTimeout(res, delay));
+			await new Promise(res => setTimeout(res, delay * (i + 1)));
 		}
 	}
 };
@@ -37,6 +41,8 @@ const isUsDayMarketTime = () => {
 	return isDayMarketTime;
 };
 
+let _tokenRefreshPromise = null;
+
 async function getKisToken (forceRefresh = false) {
 	if (!forceRefresh) {
 		const accessToken = await storage.getItem('access_token');
@@ -51,28 +57,39 @@ async function getKisToken (forceRefresh = false) {
 		}
 	}
 
-	// Clear stale cache before requesting a new token
-	await storage.removeItem('access_token');
-	await storage.removeItem('access_token_token_expired');
+	// If already refreshing, reuse the existing promise to avoid concurrent refreshes
+	if (_tokenRefreshPromise) {
+		return await _tokenRefreshPromise;
+	}
 
-	const headers = {
-		'content-type': 'application/json; charset=utf-8'
-	};
-	const body = {
-		'grant_type': 'client_credentials',
-		appkey: process.env.KIS_APP_KEY,
-		appsecret: process.env.KIS_APP_SECRET
-	};
+	_tokenRefreshPromise = (async () => {
+		// Clear stale cache before requesting a new token
+		await storage.removeItem('access_token');
+		await storage.removeItem('access_token_token_expired');
 
-	const response = await fetchWithRetry(`${KIS_URL}/oauth2/tokenP`, {
-		method: 'POST',
-		headers,
-		body: JSON.stringify(body)
+		const headers = {
+			'content-type': 'application/json; charset=utf-8'
+		};
+		const body = {
+			'grant_type': 'client_credentials',
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET
+		};
+
+		const response = await fetchWithRetry(`${KIS_URL}/oauth2/tokenP`, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(body)
+		});
+		const result = await response.json();
+		result.access_token && await storage.setItem('access_token', result.access_token);
+		result.access_token_token_expired && await storage.setItem('access_token_token_expired', result.access_token_token_expired);
+		return result.access_token;
+	})().finally(() => {
+		_tokenRefreshPromise = null;
 	});
-	const result = await response.json();
-	result.access_token && await storage.setItem('access_token', result.access_token);
-	result.access_token_token_expired && await storage.setItem('access_token_token_expired', result.access_token_token_expired);
-	return result.access_token;
+
+	return await _tokenRefreshPromise;
 }
 
 async function getKisQuoteKorea (accessToken, googleSymbol) {
@@ -96,8 +113,8 @@ async function getKisQuoteKorea (accessToken, googleSymbol) {
 	try {
 		return await doRequest(accessToken);
 	} catch (err) {
-		if (err.message && err.message.includes('500')) {
-			console.warn(`getKisQuoteKorea 500 for ${googleSymbol}, refreshing token and retrying...`);
+		if ((err.message && err.message.includes('500')) || isNetworkError(err)) {
+			console.warn(`getKisQuoteKorea error for ${googleSymbol}, refreshing token and retrying...`);
 			const freshToken = await getKisToken(true);
 			return await doRequest(freshToken);
 		}
@@ -135,8 +152,8 @@ async function getKisQuoteUS (accessToken, googleSymbol) {
 	try {
 		return await doRequest(accessToken);
 	} catch (err) {
-		if (err.message && err.message.includes('500')) {
-			console.warn(`getKisQuoteUS 500 for ${googleSymbol}, refreshing token and retrying...`);
+		if ((err.message && err.message.includes('500')) || isNetworkError(err)) {
+			console.warn(`getKisQuoteUS error for ${googleSymbol}, refreshing token and retrying...`);
 			const freshToken = await getKisToken(true);
 			return await doRequest(freshToken);
 		}
@@ -165,8 +182,8 @@ async function getKisExchangeRate (accessToken) {
 	try {
 		return await doRequest(accessToken);
 	} catch (err) {
-		if (err.message && err.message.includes('500')) {
-			console.warn('getKisExchangeRate 500, refreshing token and retrying...');
+		if ((err.message && err.message.includes('500')) || isNetworkError(err)) {
+			console.warn('getKisExchangeRate error, refreshing token and retrying...');
 			const freshToken = await getKisToken(true);
 			return await doRequest(freshToken);
 		}
@@ -203,7 +220,7 @@ async function getKisDailyPriceUS (accessToken, googleSymbol) {
 	try {
 		return await doRequest(accessToken);
 	} catch (err) {
-		if (err.message && err.message.includes('500')) {
+		if ((err.message && err.message.includes('500')) || isNetworkError(err)) {
 			const freshToken = await getKisToken(true);
 			return await doRequest(freshToken);
 		}
@@ -240,7 +257,7 @@ async function getKisWeeklyPriceUS (accessToken, googleSymbol) {
 	try {
 		return await doRequest(accessToken);
 	} catch (err) {
-		if (err.message && err.message.includes('500')) {
+		if ((err.message && err.message.includes('500')) || isNetworkError(err)) {
 			const freshToken = await getKisToken(true);
 			return await doRequest(freshToken);
 		}
@@ -273,7 +290,7 @@ async function getKisWeeklyPriceKorea (accessToken, googleSymbol) {
 	try {
 		return await doRequest(accessToken);
 	} catch (err) {
-		if (err.message && err.message.includes('500')) {
+		if ((err.message && err.message.includes('500')) || isNetworkError(err)) {
 			const freshToken = await getKisToken(true);
 			return await doRequest(freshToken);
 		}

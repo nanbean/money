@@ -36,7 +36,7 @@ export function Performance () {
 					currency={investmentItem.currency}
 					performance={performance}
 					symbol={investmentItem.googleSymbol}
-				weeklyPrices={investmentItem.weeklyPrices}
+					weeklyPrices={investmentItem.weeklyPrices}
 				/>
 			) : (
 				<Typography>Investment "{investmentName}" could not be found.</Typography>
