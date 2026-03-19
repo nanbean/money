@@ -6,7 +6,8 @@ const { getInvestmentList, getInvestmentBalance } = require('../utils/investment
 const { getBalance } = require('../utils/account');
 
 const updateAccountList = async () => {
-	console.time('updateAccountList');
+	const label = `updateAccountList:${Date.now()}`;
+	console.time(label);
 	console.log('updateAccountList start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 
 	try {
@@ -49,7 +50,7 @@ const updateAccountList = async () => {
 		console.log(err);
 	}
 	console.log('updateAccountList done');
-	console.timeEnd('updateAccountList');
+	console.timeEnd(label);
 };
 
 const getAllAccounts = async () => {
