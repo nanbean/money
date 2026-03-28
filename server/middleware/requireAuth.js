@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const config = require('../config');
 
-const API_KEY_ALLOWED_PATHS = ['/api/addTransactionWithNotification'];
+const API_KEY_ALLOWED_PATHS = ['/api/addTransactionWithNotification', '/api/testNotification'];
 
 const requireAuth = async (ctx, next) => {
 	const apiKey = ctx.headers['x-api-key'];
