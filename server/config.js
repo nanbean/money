@@ -1,7 +1,7 @@
 const key = require('./nanbean-435f267e8481.json');
 
 const config = {
-	couchDBUrl: process.env.REACT_APP_COUCHDB_URL,
+	couchDBUrl: process.env.SERVER_COUCHDB_URL || process.env.REACT_APP_COUCHDB_URL,
 	couchDBAdminId: process.env.REACT_APP_COUCHDB_ADMIN_ID,
 	couchDBAdminPassword: process.env.REACT_APP_COUCHDB_ADMIN_PW,
 	calendarPrimaryEmail: process.env.REACT_APP_CALENDAR_PRIMARY_EMAIL,
