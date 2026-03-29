@@ -44,7 +44,7 @@ import {
 	LEISURE_CATEGORY,
 	COMMUNICATION_CATEGORY,
 	FEE_CATEGORY,
-	FILIAL_CATEGORY
+	FAMILY_CATEGORY
 } from '../constants';
 
 export function getCategoryIcon (category, fontsize) {
@@ -99,7 +99,7 @@ export function getCategoryIcon (category, fontsize) {
 		return <SmsIcon sx={sx} />;
 	case FEE_CATEGORY:
 		return <MoneyIcon sx={sx} />;
-	case FILIAL_CATEGORY:
+	case FAMILY_CATEGORY:
 		return <VolunteerActivismIcon sx={sx} />;
 	default:
 		return <MoreHorizIcon sx={sx} />;
