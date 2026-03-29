@@ -36,6 +36,7 @@ import {
 	DELETE_ALL_ACCOUNTS_TRANSACTIONS,
 	EDIT_ALL_ACCOUNTS_TRANSACTIONS,
 	ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS,
+	RESET_ALL_ACCOUNTS_TRANSACTIONS,
 	SET_HISTORY_LIST,
 	SET_PAYEE_LIST,
 	SET_WEEKLY_TRANSACTIONS,
@@ -52,12 +53,19 @@ let historiesDB = new PouchDB('histories');
 let transactionsSync;
 let stocksSync;
 let historiesSync;
+let currentUsername = null;
 
 const updateAllInvestments = async (dispatch) => {
 	dispatch(getAllInvestmentsList());
 };
 
 const updateAllInvestmentsDebounce = debounce(updateAllInvestments, 1000);
+
+const normalizeTransaction = (doc) => ({
+	...doc,
+	type: doc.accountId ? doc.accountId.split(':')[1] : undefined,
+	account: doc.accountId ? doc.accountId.split(':')[2] : undefined
+});
 
 const getAllTransactions = async () => {
 	const transactionsResponse = await transactionsDB.allDocs({
@@ -247,80 +255,108 @@ const updateAccount = async (accountId) => {
 	}
 };
 
+const startLiveTransactionsSync = (dispatch, remoteTransactionsDB) => {
+	transactionsSync = transactionsDB.sync(remoteTransactionsDB, { live: true, retry: true })
+		.on('change', function ({ change }) {
+			for (let i = 0; i < change.docs.length; i++) {
+				const doc = change.docs[i];
+				if (doc._deleted) {
+					dispatch({
+						type: DELETE_ALL_ACCOUNTS_TRANSACTIONS,
+						payload: doc._id
+					});
+				} else if (doc.accountId) {
+					dispatch({
+						type: ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS,
+						payload: normalizeTransaction(doc)
+					});
+				}
+			}
+		}).on('paused', function () {
+			dispatch(setTranscationsFetchingAction(false));
+		}).on('active', function () {
+		}).on('denied', function () {
+		}).on('error', function () {
+		});
+};
+
 export const initCouchdbAction = username => {
 	return async dispatch => {
-		let remoteTransactionsDB = new PouchDB(`https://${COUCHDB_URL}/transactions_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		transactionsSync = transactionsDB.sync(remoteTransactionsDB, { live: true, retry: true })
-			.on('change', function ({ change, deleted }) {
-				// updateAllTransactionsDebounce(dispatch);
-				// handle change
-				if (deleted) {
-					// console.log(change);
-					for (let i = 0; i < change.docs.length; i++) {
-						dispatch({
-							type: DELETE_ALL_ACCOUNTS_TRANSACTIONS,
-							payload: change.docs[i]._id
-						});
-					}
-				} else {
-					// console.log(change);
-					for (let i = 0; i < change.docs.length; i++) {
-						dispatch({
-							type: ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS,
-							payload: {
-								...change.docs[i],
-								type: change.docs[i].accountId.split(':')[1],
-								account: change.docs[i].accountId.split(':')[2]
-							}
-						});
-					}
-				}
-			}).on('paused', function () {
-				// updateAllTransactionsDebounce();
-				// replication paused (e.g. replication up to date, user went offline)
+		// destroy local DBs if switching to a different account (prevents cross-account data leak)
+		if (currentUsername !== null && currentUsername !== username) {
+			await transactionsDB.destroy();
+			await historiesDB.destroy();
+			transactionsDB = new PouchDB('transactions');
+			historiesDB = new PouchDB('histories');
+		}
+		currentUsername = username;
+
+		// Phase 1: bulk replication (batch_size 500 for fewer HTTP round trips)
+		const remoteTransactionsDB = new PouchDB(`https://${COUCHDB_URL}/transactions_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		transactionsDB.replicate.from(remoteTransactionsDB, {
+			batch_size: 500,
+			batches_limit: 10
+		}).on('complete', async function () {
+			try {
+				const result = await transactionsDB.allDocs({
+					include_docs: true, // eslint-disable-line camelcase
+					startkey: moment().subtract(30, 'years').format('YYYY-MM-DD'),
+					endkey: `${moment().add(1, 'years').format('YYYY-MM-DD')}\ufff0`
+				});
+				const docs = result.rows.map(r => normalizeTransaction(r.doc)).sort((a, b) => {
+					if (a.date > b.date) return 1;
+					if (a.date < b.date) return -1;
+					return 0;
+				});
+				dispatch({ type: RESET_ALL_ACCOUNTS_TRANSACTIONS, payload: docs });
+
+				// Phase 2: live sync for incremental updates only
+				startLiveTransactionsSync(dispatch, remoteTransactionsDB);
+			} catch (e) {
+				// allDocs failed — still clear the loading state
+			} finally {
 				dispatch(setTranscationsFetchingAction(false));
-			}).on('active', function () {
-				// replicate resumed (e.g. new changes replicating, user went back online)
-			}).on('denied', function () {
-				// a document failed to replicate (e.g. due to permissions)
-			}).on('complete', function () {
-				// handle complete
-				// console.log('complete');
-			}).on('error', function () {
-				// handle error
-			});
-		let remoteStocksDB = new PouchDB(`https://${COUCHDB_URL}/stocks`, { skip_setup: true }); // eslint-disable-line camelcase
-		stocksSync = stocksDB.sync(remoteStocksDB, { live: true, retry: true })
-			.on('change', function () {
-				updateAllInvestmentsDebounce(dispatch);
-				// handle change
-			}).on('paused', function () {
-				// updateAllInvestmentsDebounce();
-				// replication paused (e.g. replication up to date, user went offline)
-			}).on('active', function () {
-				// replicate resumed (e.g. new changes replicating, user went back online)
-			}).on('denied', function () {
-				// a document failed to replicate (e.g. due to permissions)
-			}).on('complete', function () {
-				// handle complete
-			}).on('error', function () {
-				// handle error
-			});
-		let remoteHistoriesDB = new PouchDB(`https://${COUCHDB_URL}/histories_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
-		historiesSync = historiesDB.sync(remoteHistoriesDB, {})
-			.on('change', function () {
-				// handle change
-			}).on('paused', function () {
-				// replication paused (e.g. replication up to date, user went offline)
-			}).on('active', function () {
-				// replicate resumed (e.g. new changes replicating, user went back online)
-			}).on('denied', function () {
-				// a document failed to replicate (e.g. due to permissions)
-			}).on('complete', function () {
-				// handle complete
-			}).on('error', function () {
-				// handle error
-			});
+			}
+		}).on('denied', function () {
+			dispatch(setTranscationsFetchingAction(false));
+		}).on('error', function () {
+			dispatch(setTranscationsFetchingAction(false));
+		});
+
+		// stocks: bulk replication then live sync
+		const remoteStocksDB = new PouchDB(`https://${COUCHDB_URL}/stocks`, { skip_setup: true }); // eslint-disable-line camelcase
+		stocksDB.replicate.from(remoteStocksDB, {
+			batch_size: 500,
+			batches_limit: 2
+		}).on('complete', function () {
+			updateAllInvestmentsDebounce(dispatch);
+			// Phase 2: live sync for stock price updates
+			stocksSync = stocksDB.sync(remoteStocksDB, { live: true, retry: true })
+				.on('change', function () {
+					updateAllInvestmentsDebounce(dispatch);
+				}).on('denied', function () {
+				}).on('error', function () {
+				});
+		}).on('denied', function () {
+		}).on('error', function () {
+		});
+
+		// histories: one-shot replication only (no live sync needed)
+		const remoteHistoriesDB = new PouchDB(`https://${COUCHDB_URL}/histories_${username}`, { skip_setup: true }); // eslint-disable-line camelcase
+		historiesSync = historiesDB.replicate.from(remoteHistoriesDB, {
+			batch_size: 500,
+			batches_limit: 2
+		}).on('complete', async function () {
+			try {
+				const result = await historiesDB.allDocs({ include_docs: true }); // eslint-disable-line camelcase
+				const docs = result.rows.map(r => r.doc).filter(d => d && !d._id.startsWith('_'));
+				dispatch({ type: SET_HISTORY_LIST, payload: docs });
+			} catch (e) {
+				// allDocs failed — history list remains empty
+			}
+		}).on('denied', function () {
+		}).on('error', function () {
+		});
 
 		dispatch(initCouchdbReportAction(username));
 		dispatch(initCouchdbSettingAction(username));
@@ -333,6 +369,7 @@ export const finalizeCouchdbAction = () => {
 		transactionsSync && transactionsSync.cancel();
 		stocksSync && stocksSync.cancel();
 		historiesSync && historiesSync.cancel();
+		currentUsername = null;
 		finalizeCouchdbReportAction();
 		finalizeCouchdbSettingAction();
 		finalizeCouchdbAccountAction();
@@ -359,11 +396,7 @@ export const addTransactionAction = param => {
 			dispatch(setAddTransactionFetchingAction(true));
 			dispatch({
 				type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
-				payload: {
-					...transaction,
-					type: transaction.accountId.split(':')[1],
-					account: transaction.accountId.split(':')[2]
-				}
+				payload: normalizeTransaction(transaction)
 			});
 			await transactionsDB.put(transaction);
 
@@ -382,11 +415,7 @@ export const addTransactionAction = param => {
 
 				dispatch({
 					type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
-					payload: {
-						...doubleEntryTransaction,
-						type: doubleEntryTransaction.accountId.split(':')[1],
-						account: doubleEntryTransaction.accountId.split(':')[2]
-					}
+					payload: normalizeTransaction(doubleEntryTransaction)
 				});
 				await transactionsDB.put(doubleEntryTransaction);
 				await updateAccount(doubleEntryTransaction.accountId);
@@ -470,7 +499,7 @@ export const getWeeklyTransactionsAction = () => {
 
 		dispatch({
 			type: SET_WEEKLY_TRANSACTIONS,
-			payload: allTransactions.map(i => ({ ...i, type: i.accountId.split(':')[1], account: i.accountId.split(':')[2] }))
+			payload: allTransactions.map(normalizeTransaction)
 		});
 	};
 };
@@ -481,7 +510,7 @@ const getAllAccountsTransactions = () => {
 
 		dispatch({
 			type: SET_ALL_ACCOUNTS_TRANSACTIONS,
-			payload: allTransactions.map(i => ({ ...i, type: i.accountId.split(':')[1], account: i.accountId.split(':')[2] }))
+			payload: allTransactions.map(normalizeTransaction)
 		});
 	};
 };

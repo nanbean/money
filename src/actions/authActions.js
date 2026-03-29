@@ -49,6 +49,6 @@ export const logoutAction = () => {
 		await fetch('/api/auth/signout', { method: 'POST', credentials: 'include' });
 		await logout();
 		dispatch(setUsername(''));
-		dispatch(finalizeCouchdbAction());
+		await dispatch(finalizeCouchdbAction());
 	};
 };

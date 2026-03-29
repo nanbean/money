@@ -4,6 +4,8 @@ const initialState = [];
 
 export default function allAccountsTransactions (state = initialState, action) {
 	switch (action.type) {
+	case actions.RESET_ALL_ACCOUNTS_TRANSACTIONS:
+		return action.payload;
 	case actions.SET_ALL_ACCOUNTS_TRANSACTIONS:
 		if (action.payload) {
 			return action.payload;
