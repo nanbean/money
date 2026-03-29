@@ -14,7 +14,8 @@ const initialState = {
 	currency: 'KRW',
 	enableExchangeRateUpdate: true,
 	exchangeRate: 1300,
-	livingExpenseExempt: DEFAULT_LIVING_EXPENSE_EXEMPT
+	livingExpenseExempt: DEFAULT_LIVING_EXPENSE_EXEMPT,
+	categoryList: []
 };
 
 export default function settings (state = initialState, action) {
