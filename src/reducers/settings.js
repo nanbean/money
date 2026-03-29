@@ -28,6 +28,7 @@ export default function settings (state = initialState, action) {
 		if (general) {
 			return {
 				livingExpenseExempt: DEFAULT_LIVING_EXPENSE_EXEMPT,
+				categoryList: [],
 				...general
 			};
 		}

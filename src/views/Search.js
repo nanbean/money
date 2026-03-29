@@ -268,7 +268,7 @@ export function Search () {
 						>
 							<MenuItem value=""><em>전체</em></MenuItem>
 							{
-								categoryList.map(i => (
+								(categoryList || []).map(i => (
 									<MenuItem key={i} value={i}>{i}</MenuItem>
 								))
 							}
