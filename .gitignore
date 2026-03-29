@@ -33,3 +33,4 @@ yarn-error.log*
 .vscode/launch.json
 server/tools/transaction_bulk_edit.js
 /transactions
+.gstack/
