@@ -9,6 +9,10 @@ const container = document.getElementById('root');
 const root = createRoot(container);
 const store = configureStore();
 
+if (process.env.NODE_ENV === 'development') {
+	window.__store = store;
+}
+
 root.render(
 	<Provider store={store}>
 		<App />

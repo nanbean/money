@@ -13,6 +13,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import Amount from '../../components/Amount';
 import SortMenuButton from '../../components/SortMenuButton';
 import Summary from '../Summary';
+import NetWorthMilestone from '../NetWorthMilestone';
 import useWidth from '../../hooks/useWidth';
 
 import {
@@ -133,6 +134,7 @@ export default function AccountList () {
 				/>
 			</Stack>
 			<Summary />
+			<NetWorthMilestone />
 			<Box>
 				{groupedAccounts.map(([type, data]) => {
 					const IconComponent = TYPE_ICON_MAP[type];

@@ -12,11 +12,13 @@ import WeeklyGraph from '../WeeklyGraph';
 import StockList from '../StockList';
 import PaymentList from '../PaymentList';
 import WeeklyRecap, { getISOWeekKey, DISMISS_KEY } from '../WeeklyRecap';
+import FinancialHealthScore from '../FinancialHealthScore';
 
 import { getWeeklyTransactionsAction } from '../../actions/couchdbActions';
 
 const basePanels = [
 	{ key: 'accounts', component: AccountList },
+	{ key: 'financialHealthScore', component: FinancialHealthScore },
 	{ key: 'stockList', component: StockList },
 	{ key: 'weeklyGraph', component: WeeklyGraph },
 	{ key: 'latestTransactions', component: LatestTransactions },

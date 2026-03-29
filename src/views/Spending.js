@@ -40,6 +40,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import Layout from '../components/Layout';
 import Amount from '../components/Amount';
+import SpendingHeatmap from '../components/SpendingHeatmap';
 import BankTransactionModal from '../components/BankTransactionModal';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
 import { getCategoryColor } from '../utils/categoryColor';
@@ -404,7 +405,6 @@ function Spending () {
 	return (
 		<Layout showPaper={false} title="Spending">
 			<Box sx={{ p: { xs: 1, sm: 2 } }}>
-
 				{/* Transaction Review */}
 				{uncategorizedTxs.length > 0 && (
 					<Paper
@@ -647,6 +647,16 @@ function Spending () {
 						})}
 					</TableBody>
 				</Table>
+
+				<Divider sx={{ mb: 2 }} />
+
+				{/* Spending Heatmap */}
+				<Typography variant="caption" color="text.secondary">지출 패턴 (최근 13주)</Typography>
+				<Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
+					<Box sx={{ width: 360 }}>
+						<SpendingHeatmap />
+					</Box>
+				</Box>
 
 			</Box>
 			<BankTransactionModal transactions={uncategorizedTxs} />
