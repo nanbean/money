@@ -1,16 +1,13 @@
 const dotenv = require('dotenv');
+const path = require('path');
 
-if (process.env.NODE_ENV == 'production') {
-	dotenv.config({ path: '.env.production' });
-} else if (process.env.NODE_ENV == 'development') {
-	dotenv.config({ path: '.env.development' });
-}
+const envFile = process.env.NODE_ENV === 'development' ? '.env.development' : '.env.production';
+dotenv.config({ path: path.resolve(__dirname, '..', envFile) });
 
 const Koa = require('koa');
 const Router = require('koa-router');
 const bodyParser = require('koa-bodyparser');
 const serve = require('koa-static');
-const path = require('path');
 const fs = require('fs');
 const app = new Koa();
 const router = new Router();

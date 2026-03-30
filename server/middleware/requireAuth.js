@@ -44,13 +44,14 @@ const requireAuth = async (ctx, next) => {
 				overwrite: true
 			});
 		}
-
-		await next();
 	} catch (err) {
 		console.error('requireAuth error:', err);
 		ctx.status = 401;
 		ctx.body = { error: 'Unauthorized' };
+		return;
 	}
+
+	await next();
 };
 
 module.exports = requireAuth;
