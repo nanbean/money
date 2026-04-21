@@ -5,6 +5,7 @@ import moment from 'moment';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
+import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
@@ -102,6 +103,7 @@ const pct = (n) => `${(n * 100).toFixed(1)}%`;
 export default function FinancialHealthScore () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const accountList = useSelector((state) => state.accountList);
+	const transactionsFetching = useSelector((state) => state.trascationsFetching);
 	const { currency, exchangeRate, livingExpenseExempt = [] } = useSelector((state) => state.settings);
 
 	const sym = currency === 'USD' ? '$' : '₩';
@@ -126,14 +128,13 @@ export default function FinancialHealthScore () {
 
 	// 실제 수치 계산 — 각 지표의 근거 숫자를 표시하기 위해
 	const details = useMemo(() => {
-		const monthStart = moment().startOf('month').format('YYYY-MM-DD');
-		const today = moment().format('YYYY-MM-DD');
 		const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 
-		// 저축률
-		const thisMonthTxns = allAccountsTransactions.filter(t => t.date >= monthStart && t.date <= today);
-		const income = thisMonthTxns.filter(t => t.amount > 0 && !isInternalTransfer(t)).reduce((s, t) => s + t.amount, 0);
-		const expense = thisMonthTxns
+		// 저축률 — 최근 3개월 완성된 달 기준
+		const lastMonthEnd = moment().subtract(1, 'months').endOf('month').format('YYYY-MM-DD');
+		const pastTxns = allAccountsTransactions.filter(t => t.date >= threeMonthsAgo && t.date <= lastMonthEnd);
+		const income = pastTxns.filter(t => t.amount > 0 && !isInternalTransfer(t)).reduce((s, t) => s + t.amount, 0);
+		const expense = pastTxns
 			.filter(t => t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e)))
 			.reduce((s, t) => s + Math.abs(t.amount), 0);
 		const savingsRate = income > 0 ? (income - expense) / income : 0;
@@ -187,8 +188,8 @@ export default function FinancialHealthScore () {
 			score: savingsScore,
 			max: 25,
 			detail: details.income > 0
-				? `수입 ${sym}${fmt(details.income)} · 지출 ${sym}${fmt(details.expense)} → 저축률 ${pct(details.savingsRate)}`
-				: '이번 달 수입 데이터 없음'
+				? `최근 3개월 수입 ${sym}${fmt(details.income)} · 지출 ${sym}${fmt(details.expense)} → 저축률 ${pct(details.savingsRate)}`
+				: '최근 3개월 수입 데이터 없음'
 		},
 		{
 			label: '📈 투자비중',
@@ -212,7 +213,15 @@ export default function FinancialHealthScore () {
 		}
 	];
 
-	if (accountList.length === 0) return null;
+	if (accountList.length === 0 || transactionsFetching) return (
+		<Box p={1}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ ml: 1, mb: 1 }}>
+				<Typography variant="button">Financial Health</Typography>
+			</Stack>
+			<Skeleton variant="rounded" height={120} sx={{ mx: 2, mb: 1 }} />
+			{[0, 1, 2, 3].map(i => <Skeleton key={i} variant="rounded" height={28} sx={{ mx: 2, mb: 0.5 }} />)}
+		</Box>
+	);
 
 	return (
 		<Box p={1}>

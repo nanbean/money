@@ -51,12 +51,15 @@ export function HomeMain () {
 	return (
 		<Layout showPaper={false} title="Home">
 			<Masonry columns={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }}>
+				<Paper key="accounts">
+					<AccountList />
+				</Paper>
 				{showWeeklyRecap && (
 					<Paper key="weeklyRecap">
 						<WeeklyRecap onDismiss={handleDismissWeeklyRecap} />
 					</Paper>
 				)}
-				{basePanels.map(({ key, component: Component }) => (
+				{basePanels.filter(({ key }) => key !== 'accounts').map(({ key, component: Component }) => (
 					<Paper key={key}>
 						<Component />
 					</Paper>

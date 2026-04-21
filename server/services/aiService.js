@@ -66,16 +66,16 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 	const today = weekEndMoment.format('YYYY-MM-DD');
 	const weekAgo = weekStartMoment.format('YYYY-MM-DD');
 
-	// Cache key: Sat/Sun/Mon-morning 모두 동일한 주 키 사용 (지난 주 기준)
+	// Week key: Sat/Sun/Mon-morning 모두 동일한 주 키 사용 (지난 주 기준)
 	// Monday는 이미 새 ISO 주 시작이므로 전날(일요일) 기준으로 맞춤
 	const cacheReferenceMoment = dayOfWeek === 1
 		? todayMoment.clone().subtract(2, 'days')
 		: todayMoment;
-	const cacheId = `weeklyRecap_${cacheReferenceMoment.format('GGGG-WW')}`;
-	const cached = await reportDB.getReport(cacheId).catch(() => null);
-	if (cached && cached.comment) {
-		console.log(`weeklyRecap: returning cached result for ${cacheId}`);
-		return cached.comment;
+	const weekKey = cacheReferenceMoment.format('GGGG-WW');
+	const recapDoc = await reportDB.getReport('weeklyRecap').catch(() => null);
+	if (recapDoc?.weekKey === weekKey && recapDoc?.comment) {
+		console.log(`weeklyRecap: returning cached result for ${weekKey}`);
+		return recapDoc.comment;
 	}
 
 	const [netWorthDailyDoc, allTransactions, allAccounts, kospiRes, kosdaqRes, usRes, exchangeRate] = await Promise.all([
@@ -95,15 +95,23 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 		return currency === 'USD' ? amount * exchangeRate : amount;
 	};
 
-	// Net worth daily trend (last 7 days)
+	// Net worth daily trend (Mon ~ today)
 	const netWorthDailyData = (netWorthDailyDoc?.data || []).filter(d => d.date >= weekAgo);
-	const netWorthStart = netWorthDailyData.length > 0 ? netWorthDailyData[0].netWorth : 0;
+
+	// Start baseline: last entry on or before last Sat/Sun (day before this week's Monday)
+	const netWorthBaselineDate = weekStartMoment.clone().subtract(1, 'days').format('YYYY-MM-DD');
+	const netWorthBaselineEntry = (netWorthDailyDoc?.data || [])
+		.filter(d => d.date <= netWorthBaselineDate)
+		.sort((a, b) => b.date.localeCompare(a.date))[0] || null;
+	const fallbackEntry = netWorthDailyData[0] || null;
+
+	const netWorthStart = (netWorthBaselineEntry || fallbackEntry)?.netWorth ?? 0;
 	const netWorthEnd = netWorthDailyData.length > 0 ? netWorthDailyData[netWorthDailyData.length - 1].netWorth : 0;
 	const netWorthChange = netWorthEnd - netWorthStart;
 	const cashChange = netWorthDailyData.length > 0
-		? netWorthDailyData[netWorthDailyData.length - 1].cashNetWorth - netWorthDailyData[0].cashNetWorth : 0;
+		? netWorthDailyData[netWorthDailyData.length - 1].cashNetWorth - ((netWorthBaselineEntry || fallbackEntry)?.cashNetWorth ?? 0) : 0;
 	const investmentChange = netWorthDailyData.length > 0
-		? netWorthDailyData[netWorthDailyData.length - 1].investmentsNetWorth - netWorthDailyData[0].investmentsNetWorth : 0;
+		? netWorthDailyData[netWorthDailyData.length - 1].investmentsNetWorth - ((netWorthBaselineEntry || fallbackEntry)?.investmentsNetWorth ?? 0) : 0;
 
 	// Weekly transactions (exclude investment buy/sell and account transfers)
 	const weeklyTransactions = allTransactions
@@ -193,7 +201,7 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 
 	const model = genAI.getGenerativeModel({
 		model: 'gemini-2.5-flash',
-		systemInstruction: '당신은 개인 자산관리 분석 전문가입니다. 주간 자산 변동을 분석합니다. 마크다운 헤더(##) 대신 이모지와 줄바꿈으로 섹션을 구분하고, 한국어로 작성합니다. 전체 분석은 1000자 이내로 작성하세요.'
+		systemInstruction: '당신은 개인 자산관리 분석 전문가입니다. 주간 자산 변동을 분석합니다. 마크다운 형식(## 헤더, **굵게** 등)을 사용하고, 한국어로 작성합니다. 전체 분석은 2000자 이내로 작성하세요.'
 	});
 
 	const formatKRW = (v) => {
@@ -217,14 +225,17 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 		if (h.weekStart !== null) parts.push(`주초 ${h.weekStart}`);
 		if (h.weekEnd !== null) parts.push(`주말 ${h.weekEnd}`);
 		if (h.weekHigh !== null) parts.push(`주중최고 ${h.weekHigh}`);
-		if (h.todayRate !== null) parts.push(`당일 ${sign(h.todayRate)}${h.todayRate}%`);
+		if (h.weekStart && h.weekEnd) {
+			const weekRate = ((h.weekEnd - h.weekStart) / h.weekStart * 100).toFixed(2);
+			parts.push(`주간 ${sign(parseFloat(weekRate))}${weekRate}%`);
+		}
 		return `  ${parts.join(' | ')}`;
 	}).join('\n');
 
 	const pctChange = netWorthStart !== 0
 		? `${sign(netWorthChange)}${(netWorthChange / Math.abs(netWorthStart) * 100).toFixed(2)}%` : 'N/A';
 
-	const prompt = `다음은 ${weekAgo} ~ ${today} 주간 자산 현황입니다.
+	const prompt = `다음은 ${weekAgo} ~ ${today} 주간 자산 현황입니다. (순자산 비교 기준: ${netWorthBaselineDate} 종가)
 
 순자산: ${formatKRW(netWorthStart)} → ${formatKRW(netWorthEnd)} (${sign(netWorthChange)}${formatKRW(netWorthChange)}, ${pctChange})
 현금성 변동: ${sign(cashChange)}${formatKRW(cashChange)}
@@ -236,7 +247,7 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 일별 순자산 추이:
 ${trendText || '  (데이터 없음)'}
 
-보유 투자 종목 (수량 | 주초가 | 주말가 | 주중최고가 | 당일등락률):
+보유 투자 종목 (수량 | 주초가 | 주말가 | 주중최고가 | 주간등락률):
 ${holdingsText || '  (보유 종목 없음)'}
 
 주요 거래 내역:
@@ -253,10 +264,12 @@ ${txText || '  (거래 없음)'}
 	const result = await model.generateContent(prompt);
 	const comment = result.response.text().trim();
 
-	// Save to DB for caching (one AI call per ISO week)
-	const doc = { _id: cacheId, comment, date: new Date() };
-	if (cached) doc._rev = cached._rev;
-	await reportDB.insertReport(doc).catch(err => console.error('weeklyRecap cache save error:', err));
+	// Save to single weeklyRecap doc (이번 주 데이터만 유지, 개발 환경에서는 저장 생략)
+	if (process.env.NODE_ENV !== 'development') {
+		const doc = { _id: 'weeklyRecap', weekKey, comment, createdAt: new Date() };
+		if (recapDoc?._rev) doc._rev = recapDoc._rev;
+		await reportDB.insertReport(doc).catch(err => console.error('weeklyRecap cache save error:', err));
+	}
 
 	return comment;
 };

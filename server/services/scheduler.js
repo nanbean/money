@@ -11,14 +11,22 @@ const { updateUSStockList } = require('./usStockListService');
 const { updateKRStockList } = require('./krStockListService');
 const { getWeeklyRecap } = require('./aiService');
 
+const safeRun = async (name, fn) => {
+	try {
+		await fn();
+	} catch (err) {
+		console.error(`[scheduler] ${name} failed:`, err.message);
+	}
+};
+
 const updateInvestmentPrice = async () => {
-	await arrangeExchangeRate();
-	await arrangeKRInvestmemt();
-	await arrangeUSInvestmemt();
-	await updateAccountList();
-	await updateLifeTimePlanner();
-	await updateNetWorth();
-	await updateNetWorthDaily();
+	await safeRun('arrangeExchangeRate', arrangeExchangeRate);
+	await safeRun('arrangeKRInvestmemt', arrangeKRInvestmemt);
+	await safeRun('arrangeUSInvestmemt', arrangeUSInvestmemt);
+	await safeRun('updateAccountList', updateAccountList);
+	await safeRun('updateLifeTimePlanner', updateLifeTimePlanner);
+	await safeRun('updateNetWorth', updateNetWorth);
+	await safeRun('updateNetWorthDaily', updateNetWorthDaily);
 };
 
 (async () => {
@@ -59,14 +67,14 @@ const updateInvestmentPrice = async () => {
 			 */
 		console.log('couchdb 30 30 15 daily dailyArrangeInvestmemtjob started');
 		if (!calendar.isHoliday()) {
-			await arrangeExchangeRate();
-			await arrangeKRInvestmemt();
-			await arrangeUSInvestmemt();
-			await updateAccountList();
-			await sendBalanceUpdateNotification();
-			await updateLifeTimePlanner();
-			await updateNetWorth();
-			await updateNetWorthDaily();
+			await safeRun('arrangeExchangeRate', arrangeExchangeRate);
+			await safeRun('arrangeKRInvestmemt', arrangeKRInvestmemt);
+			await safeRun('arrangeUSInvestmemt', arrangeUSInvestmemt);
+			await safeRun('updateAccountList', updateAccountList);
+			await safeRun('sendBalanceUpdateNotification', sendBalanceUpdateNotification);
+			await safeRun('updateLifeTimePlanner', updateLifeTimePlanner);
+			await safeRun('updateNetWorth', updateNetWorth);
+			await safeRun('updateNetWorthDaily', updateNetWorthDaily);
 		} else {
 			console.log('holiday, dailyArrangeInvestmemtjob skip');
 		}
@@ -83,13 +91,13 @@ const updateInvestmentPrice = async () => {
 			 */
 		console.log('couchdb 30 00 13 daily dailyArrangeInvestmemtjob started');
 		if (!calendar.isUsHoliday()) {
-			await arrangeExchangeRate();
-			await arrangeUSInvestmemt();
-			await updateAccountList();
-			await sendBalanceUpdateNotification();
-			await updateLifeTimePlanner();
-			await updateNetWorth();
-			await updateNetWorthDaily();
+			await safeRun('arrangeExchangeRate', arrangeExchangeRate);
+			await safeRun('arrangeUSInvestmemt', arrangeUSInvestmemt);
+			await safeRun('updateAccountList', updateAccountList);
+			await safeRun('sendBalanceUpdateNotification', sendBalanceUpdateNotification);
+			await safeRun('updateLifeTimePlanner', updateLifeTimePlanner);
+			await safeRun('updateNetWorth', updateNetWorth);
+			await safeRun('updateNetWorthDaily', updateNetWorthDaily);
 		} else {
 			console.log('US holiday, dailyArrangeInvestmemtjob skip');
 		}
@@ -100,7 +108,7 @@ const updateInvestmentPrice = async () => {
 
 	new CronJob('00 00 09 * * *', async () => {
 		console.log('payment 00 00 09 daily checkAndSendNotification started');
-		await checkAndSendNotification();
+		await safeRun('checkAndSendNotification', checkAndSendNotification);
 	}, () => {
 		/* This function is executed when the job stops */
 		console.log('00 00 09 daily checkAndSendNotification ended');

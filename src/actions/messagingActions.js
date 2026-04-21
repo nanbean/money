@@ -15,6 +15,7 @@ export const getTokenFailure = () => ({
 	payload: ''
 });
 
+
 export const requestPermissionAction = () => {
 	return async dispatch => {
 		const permission = await Notification.requestPermission();
@@ -54,6 +55,43 @@ export const deleteTokenFailure = () => ({
 	type: SET_MESSAGING_TOKEN,
 	payload: ''
 });
+
+export const autoRefreshTokenAction = () => {
+	return async dispatch => {
+		const savedToken = window.localStorage.getItem('messagingToken');
+		if (!savedToken) {
+			return;
+		}
+
+		const permission = Notification.permission;
+		if (permission !== 'granted') {
+			return;
+		}
+
+		try {
+			const currentToken = await getToken(messaging, {
+				vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY
+			});
+
+			if (!currentToken || currentToken === savedToken) {
+				return;
+			}
+
+			await fetch('/api/registerMessageToken', {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json, text/plain, */*',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ messagingToken: currentToken, oldToken: savedToken })
+			});
+
+			dispatch(getTokenSuccess(currentToken));
+		} catch (error) {
+			console.error('autoRefreshToken error:', error);
+		}
+	};
+};
 
 export const removePermissionAction = (messagingToken) => {
 	return async dispatch => {

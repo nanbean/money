@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -108,13 +109,16 @@ export function WeeklyRecap ({ onDismiss }) {
 						</Typography>
 					)}
 					{!loading && recap && (
-						<Typography
-							variant="body2"
-							component="pre"
-							sx={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', m: 0, lineHeight: 1.8 }}
-						>
-							{recap}
-						</Typography>
+						<Box sx={{
+							'& h1, & h2, & h3': { mt: 2, mb: 0.5, fontWeight: 'bold', fontSize: '1rem' },
+							'& p': { mt: 0, mb: 1, lineHeight: 1.8, fontSize: '0.875rem' },
+							'& ul, & ol': { pl: 2.5, mb: 1 },
+							'& li': { mb: 0.5, fontSize: '0.875rem', lineHeight: 1.8 },
+							'& strong': { fontWeight: 'bold' },
+							'& hr': { my: 1.5, borderColor: 'divider' }
+						}}>
+							<ReactMarkdown>{recap.replace(/(?<=\S)\*\*(?=[가-힣ㄱ-ㅎㅏ-ㅣ])/g, '** ')}</ReactMarkdown>
+						</Box>
 					)}
 				</DialogContent>
 			</Dialog>

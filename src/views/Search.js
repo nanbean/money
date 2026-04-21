@@ -41,31 +41,30 @@ export function Search () {
 	const hasFilters = !!(keyword || category || subcategory || startDate || endDate);
 	const dateRangeInvalid = !!(startDate && endDate && startDate > endDate);
 
-	const balance = useMemo(() => {
-		if (filteredTransactions.length === 0 || !displayCurrency || typeof exchangeRate === 'undefined') {
-			return 0;
+	const { balanceKRW, balanceUSD } = useMemo(() => {
+		if (filteredTransactions.length === 0 || typeof exchangeRate === 'undefined') {
+			return { balanceKRW: 0, balanceUSD: 0 };
 		}
 		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
 
-		return filteredTransactions.reduce((sum, transaction) => {
-			let amount = transaction.amount;
-			const accountDetails = accountList.find(acc => acc._id === transaction.accountId);
-			const transactionOriginalCurrency = accountDetails && accountDetails.currency ? accountDetails.currency : 'KRW';
+		let totalKRW = 0;
+		let totalUSD = 0;
 
-			if (transactionOriginalCurrency !== displayCurrency) {
-				if (displayCurrency === 'KRW') { // Display in KRW
-					if (transactionOriginalCurrency === 'USD') { // Transaction is USD
-						amount *= validExchangeRate;
-					}
-				} else if (displayCurrency === 'USD') { // Display in USD
-					if (transactionOriginalCurrency === 'KRW') { // Transaction is KRW
-						amount /= validExchangeRate;
-					}
-				}
+		filteredTransactions.forEach(transaction => {
+			const accountDetails = accountList.find(acc => acc._id === transaction.accountId);
+			const transactionCurrency = accountDetails?.currency || 'KRW';
+
+			if (transactionCurrency === 'KRW') {
+				totalKRW += transaction.amount;
+				totalUSD += transaction.amount / validExchangeRate;
+			} else {
+				totalKRW += transaction.amount * validExchangeRate;
+				totalUSD += transaction.amount;
 			}
-			return sum + amount;
-		}, 0);
-	}, [filteredTransactions, displayCurrency, exchangeRate, accountList]);
+		});
+
+		return { balanceKRW: totalKRW, balanceUSD: totalUSD };
+	}, [filteredTransactions, exchangeRate, accountList]);
 
 	useEffect(() => {
 		updateFilteredTransactions(filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
@@ -225,7 +224,14 @@ export function Search () {
 					variant="outlined"
 					label={
 						<Typography variant="subtitle2">
-							{filteredTransactions.length}건 · <Amount value={balance} size="small" negativeColor showSymbol currency={displayCurrency}/>
+							{filteredTransactions.length}건 · <Amount
+								value={displayCurrency === 'KRW' ? balanceUSD : balanceKRW}
+								currency={displayCurrency === 'KRW' ? 'USD' : 'KRW'}
+								size="small"
+								negativeColor
+								showSymbol
+								showOriginal
+							/>
 						</Typography>
 					}
 				/>

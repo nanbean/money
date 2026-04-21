@@ -81,6 +81,9 @@ api.post('/registerMessageToken', async (ctx) => {
 	const body = ctx.request.body;
 
 	if (body && body.messagingToken) {
+		if (body.oldToken) {
+			await messaging.removeToken(body.oldToken);
+		}
 		const result = await messaging.addToken(body.messagingToken);
 
 		ctx.body = { return: result };

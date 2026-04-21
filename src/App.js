@@ -22,6 +22,10 @@ import {
 	getSettingsAction
 } from './actions/couchdbSettingActions';
 
+import {
+	autoRefreshTokenAction
+} from './actions/messagingActions';
+
 import useDarkMode from './hooks/useDarkMode';
 
 import theme from './theme';
@@ -41,6 +45,7 @@ function App () {
 		dispatch(getAuthAction());
 		dispatch(getAccountListAction());
 		dispatch(getSettingsAction());
+		dispatch(autoRefreshTokenAction());
 	}, [dispatch]);
 
 	useEffect(() => {

@@ -11,19 +11,20 @@ export const toDisplay = (acc, exchangeRate, currency) => {
 // [계좌명] 형식의 category는 내부 이체
 export const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 
-// 1. 저축률 — 이번 달(당월 1일~오늘) 지출 기반 (25점 만점)
+// 1. 저축률 — 최근 3개월(완성된 달 기준) 평균 저축률 (25점 만점)
+//    당월은 부분 데이터이므로 제외하고, 직전 3개월 합산으로 계산
 //    amount > 0 = 수입, amount < 0 = 지출
 //    livingExpenseExempt 포함 카테고리는 지출에서 제외
 export const calcSavingsScore = (transactions, livingExpenseExempt) => {
-	const monthStart = moment().startOf('month').format('YYYY-MM-DD');
-	const today = moment().format('YYYY-MM-DD');
-	const thisMonthTxns = transactions.filter(t =>
-		t.date >= monthStart && t.date <= today
+	const threeMonthsStart = moment().subtract(3, 'months').startOf('month').format('YYYY-MM-DD');
+	const lastMonthEnd = moment().subtract(1, 'months').endOf('month').format('YYYY-MM-DD');
+	const pastTxns = transactions.filter(t =>
+		t.date >= threeMonthsStart && t.date <= lastMonthEnd
 	);
-	const income = thisMonthTxns
+	const income = pastTxns
 		.filter(t => t.amount > 0 && !isInternalTransfer(t))
 		.reduce((sum, t) => sum + t.amount, 0);
-	const expense = thisMonthTxns
+	const expense = pastTxns
 		.filter(t => t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e)))
 		.reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
