@@ -4,6 +4,8 @@ const { getAllTransactions } = require('./transactionService');
 const { sendNotification } = require('./messaging');
 
 const isPaid = (payment, transactions) => {
+	const interval = payment.interval || 1;
+	const startYearMonth = moment().subtract(interval - 1, 'months').format('YYYY-MM');
 	const thisYearMonth = moment().format('YYYY-MM');
 	return transactions.some(t => {
 		if (!t.accountId) return false;
@@ -11,7 +13,7 @@ const isPaid = (payment, transactions) => {
 		if (payment.account === accountName && payment.payee === t.payee && payment.category === t.category) {
 			if (!payment.subcategory || payment.subcategory === t.subcategory) {
 				const paidYearMonth = moment(t.date).format('YYYY-MM');
-				if (thisYearMonth === paidYearMonth) {
+				if (paidYearMonth >= startYearMonth && paidYearMonth <= thisYearMonth) {
 					return true;
 				}
 			}

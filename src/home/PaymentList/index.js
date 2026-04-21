@@ -19,13 +19,15 @@ import {
 const isPaidFromTransactions = (payment, allAccountsTransactions) => {
 	if (!allAccountsTransactions.length) return true;
 
+	const interval = payment.interval || 1;
+	const startYearMonth = moment().subtract(interval - 1, 'months').format('YYYY-MM');
 	const thisYearMonth = moment().format('YYYY-MM');
 
 	return allAccountsTransactions.find(i => {
 		if (payment.account === i.account && payment.payee === i.payee && payment.category === i.category) {
 			if (!payment.subcategory || payment.subcategory === i.subcategory) {
 				const paidYearMonth = moment(i.date).format('YYYY-MM');
-				if (thisYearMonth === paidYearMonth) {
+				if (paidYearMonth >= startYearMonth && paidYearMonth <= thisYearMonth) {
 					return true;
 				}
 			}

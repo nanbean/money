@@ -38,6 +38,7 @@ export default function PaymentList () {
 		amount: 0,
 		currency: 'KRW',
 		day: 1,
+		interval: 1,
 		category: '',
 		subcategory: '',
 		memo: '',
@@ -70,6 +71,7 @@ export default function PaymentList () {
 				amount: 0,
 				currency: 'KRW',
 				day: 1,
+				interval: 1,
 				category: '',
 				subcategory: '',
 				memo: '',
@@ -117,7 +119,8 @@ export default function PaymentList () {
 		const data = {
 			...formData,
 			amount: Number(formData.amount),
-			day: Number(formData.day)
+			day: Number(formData.day),
+			interval: Number(formData.interval) || 1
 		};
 
 		if (editIndex >= 0) {
@@ -167,22 +170,28 @@ export default function PaymentList () {
 							<Column
 								label="Payee"
 								dataKey="payee"
-								width={width * 0.4}
+								width={width * 0.35}
 							/>
 							<Column
 								label="Account"
 								dataKey="accountName"
-								width={width * 0.3}
+								width={width * 0.28}
 							/>
 							<Column
 								label="Amount"
 								dataKey="amount"
-								width={width * 0.2}
+								width={width * 0.18}
 							/>
 							<Column
 								label="Day"
 								dataKey="day"
+								width={width * 0.09}
+							/>
+							<Column
+								label="Int"
+								dataKey="interval"
 								width={width * 0.1}
+								cellRenderer={({ cellData }) => cellData && cellData > 1 ? `x${cellData}` : ''}
 							/>
 						</Table>
 					)}
@@ -241,6 +250,17 @@ export default function PaymentList () {
 								onChange={handleChange}
 								required
 								inputProps={{ min: 1, max: 31 }}
+								sx={{ width: 80 }}
+							/>
+							<TextField
+								margin="dense"
+								name="interval"
+								label="Interval"
+								type="number"
+								variant="standard"
+								value={formData.interval ?? 1}
+								onChange={handleChange}
+								inputProps={{ min: 1, max: 12 }}
 								sx={{ width: 80 }}
 							/>
 						</Stack>
