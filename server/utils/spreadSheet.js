@@ -44,12 +44,14 @@ exports.getLifetimeFlowList = async (accounts) => {
 
 	// 인덱스 계산
 	const getIndex = (searchValue) => aColumn.findIndex(i => i === searchValue);
-	const expenseStartIndex = getIndex('지출') + 2;
-	const expenseEndIndex = getIndex('자산');
-	const netAssetIndex = expenseEndIndex + 1;
+	const assetItemStartIndex = getIndex('지출') + 2;
+	const assetItemEndIndex = getIndex('자산');
+	const netAssetIndex = assetItemEndIndex + 1;
 	const netAssetInflationIndex = netAssetIndex + 1;
 	const withdrawStartIndex = getIndex('연금인출') + 1;
 	const withdrawEndIndex = getIndex('수입');
+	const expenseStartIndex = getIndex('수입') + 1;
+	const expenseEndIndex = getIndex('지출') - 1;
 	const reminderIndex = getIndex('수입-지출') + 1;
 	const savingStartIndex = netAssetInflationIndex + 1;
 	const savingEndIndex = reminderIndex - 1;
@@ -77,9 +79,11 @@ exports.getLifetimeFlowList = async (accounts) => {
 		houseSaving: getIndex('장마저축') + 1
 	};
 
-	// 필요한 범위를 개별적으로 로드
+	// 필요한 범위를 개별적으로 로드 (B1: 연도 헤더 메모 포함)
 	await firstSheet.loadCells([
+		`B1:${colIndex[colIndex.length - 1]}1`,
 		`B${expenseStartIndex}:${colIndex[colIndex.length - 1]}${expenseEndIndex}`,
+		`B${assetItemStartIndex}:${colIndex[colIndex.length - 1]}${assetItemEndIndex}`,
 		`B${netAssetIndex}:${colIndex[colIndex.length - 1]}${netAssetInflationIndex}`,
 		`B${withdrawStartIndex}:${colIndex[colIndex.length - 1]}${withdrawEndIndex}`,
 		`B${savingStartIndex}:${colIndex[colIndex.length - 1]}${savingEndIndex}`,
@@ -137,6 +141,54 @@ exports.getLifetimeFlowList = async (accounts) => {
 	processAccount('IRP오은미', 'Invst', returnCells.irpOEM, indices.irpOEMSaving, indices.irpOEMExpense);
 	processAccount('오은미연금저축', 'Invst', returnCells.oemPensionSaving, indices.oemPensionSaving, indices.oemPensionSavingExpense);
 
+	// 이벤트 및 netFlow 수집 (saveUpdatedCells 전, 로드된 셀에서 읽기)
+	const events = [];
+
+	const scanSection = (startRow, endRow, type) => {
+		let found = 0;
+		for (let row = startRow; row <= endRow; row++) {
+			const rowLabel = aColumn[row - 1] || '';
+			for (let j = 0; j < colIndex.length; j++) {
+				try {
+					const cell = firstSheet.getCellByA1(`${colIndex[j]}${row}`);
+					if (cell && cell.note) {
+						events.push({ year: yearList[j], label: cell.note, type, row: rowLabel });
+						found++;
+					}
+				} catch (e) { /* 셀 접근 실패 무시 */ }
+			}
+		}
+		console.log(`[events] ${type} section (rows ${startRow}-${endRow}): ${found} notes found`);
+	};
+
+	// 연도 헤더(row 1) 메모 → type: 'year'
+	for (let j = 0; j < colIndex.length; j++) {
+		try {
+			const cell = firstSheet.getCellByA1(`${colIndex[j]}1`);
+			if (cell && cell.note) {
+				events.push({ year: yearList[j], label: cell.note, type: 'year' });
+			}
+		} catch (e) { /* 무시 */ }
+	}
+	console.log(`[events] year row: ${events.length} notes found`);
+
+	// 실제 지출 항목 영역 메모 (수입 ~ 지출 사이) → type: 'expense'
+	scanSection(expenseStartIndex, expenseEndIndex, 'expense');
+
+	// 자산 항목 영역 메모 (지출 ~ 자산 사이) → type: 'expense'
+	scanSection(assetItemStartIndex, assetItemEndIndex, 'expense');
+
+	// 저축 영역 메모 → type: 'income' (savingStartIndex ~ savingEndIndex)
+	scanSection(savingStartIndex, savingEndIndex, 'income');
+
+	// 수입(연금인출) 영역 메모 → type: 'income' (endIndex 포함, <= 사용)
+	scanSection(withdrawStartIndex, withdrawEndIndex, 'income');
+
+	console.log(`[events] total ${events.length} events`);
+
+	// 수입-지출(netFlow) 추출
+	const netFlowList = colIndex.map(col => firstSheet.getCellByA1(`${col}${reminderIndex}`).value);
+
 	// 한 번에 모든 셀 저장
 	await firstSheet.saveUpdatedCells();
 
@@ -150,12 +202,13 @@ exports.getLifetimeFlowList = async (accounts) => {
 		resultData.push({
 			year,
 			amount: flowInflationList[i],
-			amountInflation: flowList[i]
+			amountInflation: flowList[i],
+			netFlow: netFlowList[i] || 0
 		});
 	});
 
 	console.log('Last: ', flowList[colIndex.length - 1]);
 	console.log('cells updated');
 
-	return resultData;
+	return { data: resultData, events };
 };

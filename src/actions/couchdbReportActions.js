@@ -43,7 +43,10 @@ export const getLifetimeFlowAction = () => {
 
 		dispatch({
 			type: SET_LIFETIME_PLANNER_FLOW,
-			payload: lifetimeplanner.data
+			payload: {
+				data: lifetimeplanner.data || [],
+				events: lifetimeplanner.events || []
+			}
 		});
 	};
 };

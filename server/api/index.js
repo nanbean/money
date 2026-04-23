@@ -7,6 +7,7 @@ const aiService = require('../services/aiService');
 const snaptradeService = require('../services/snaptradeService');
 const { updateUSStockList } = require('../services/usStockListService');
 const { updateKRStockList } = require('../services/krStockListService');
+const { updateLifeTimePlanner } = require('../services/reportService');
 const requireAuth = require('../middleware/requireAuth');
 
 const api = new Router();
@@ -22,6 +23,11 @@ api.use(async (ctx, next) => {
 api.get('/updateInvestmentPrice', async (ctx) => {
 	await couchdb.updateInvestmentPrice();
 
+	ctx.body = { return: true };
+});
+
+api.get('/updateLifeTimePlanner', async (ctx) => {
+	updateLifeTimePlanner().catch(err => console.error('updateLifeTimePlanner error:', err));
 	ctx.body = { return: true };
 });
 

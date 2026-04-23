@@ -18,11 +18,26 @@ const updateLifeTimePlanner = async () => {
 		reportDB.getReport('lifetimeplanner').catch(err => { console.log(err); return null; }),
 		getAllAccounts()
 	]);
-	const data = await spreadSheet.getLifetimeFlowList(accounts);
+	const { data, events } = await spreadSheet.getLifetimeFlowList(accounts);
+
+	// 변경 감지: 데이터/이벤트가 달라진 경우만 CouchDB 업데이트
+	const dataChanged = !oldLifeTimePlanner?.data ||
+		oldLifeTimePlanner.data[0]?.amount !== data[0]?.amount ||
+		oldLifeTimePlanner.data[0]?.netFlow !== data[0]?.netFlow ||
+		oldLifeTimePlanner.data[data.length - 1]?.amount !== data[data.length - 1]?.amount;
+	const eventsChanged = JSON.stringify(oldLifeTimePlanner?.events) !== JSON.stringify(events);
+
+	if (!dataChanged && !eventsChanged) {
+		console.log('updateLifeTimePlanner: no changes detected, skipping');
+		console.timeEnd('updateLifeTimePlanner');
+		return;
+	}
+
 	const transaction = {
 		_id: 'lifetimeplanner',
 		date: new Date(),
-		data
+		data,
+		events
 	};
 
 	if (oldLifeTimePlanner) {
