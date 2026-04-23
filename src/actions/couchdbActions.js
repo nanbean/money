@@ -250,6 +250,12 @@ const updateAccount = async (accountId) => {
 			balance = getBalance(account.name, allTransactions, allTransactions.filter(i => i.accountId === accountId));
 		}
 		await accountsDB.put({ ...account, investments, balance });
+
+		// If this is a _Cash account, cascade update to the parent Invst account
+		if (account.name.match(/_Cash$/i)) {
+			const invstName = account.name.replace(/_Cash$/i, '');
+			await updateAccount(`account:Invst:${invstName}`);
+		}
 	} catch (err) {
 		console.log(err); // eslint-disable-line no-console
 	}
