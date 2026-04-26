@@ -63,6 +63,7 @@ const arrangeUSInvestmemt = async () => {
 			const rateString = foundResult?.output?.rate;
 			if (priceString) {
 				const price = parseFloat(priceString);
+				if (isNaN(price)) return i;
 				return {
 					...i,
 					price,
