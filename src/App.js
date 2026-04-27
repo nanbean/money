@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import CssBaseline from '@mui/material/CssBaseline';
@@ -35,8 +35,7 @@ import './App.css';
 function App () {
 	const accountList = useSelector((state) => state.accountList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const { themeMode = 'auto' } = useSelector((state) => state.settings);
-	const prefersDarkMode = useDarkMode();
+	const isDarkMode = useDarkMode();
 
 	const dispatch = useDispatch();
 
@@ -55,17 +54,6 @@ function App () {
 			dispatch(getPayeeListAction());
 		}
 	}, [accountList, allAccountsTransactions, dispatch]);
-
-	const isDarkMode = useMemo(() => {
-		if (themeMode === 'light') {
-			return false;
-		}
-		if (themeMode === 'dark') {
-			return true;
-		}
-		// 'auto' or default
-		return prefersDarkMode;
-	}, [themeMode, prefersDarkMode]);
 
 	return (
 		<ThemeProvider theme={theme({ prefersDarkMode: isDarkMode })}>

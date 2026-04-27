@@ -2,26 +2,17 @@ import React, { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
-import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import Amount from '../../components/Amount';
 import SortMenuButton from '../../components/SortMenuButton';
 import { updateGeneralAction } from '../../actions/couchdbSettingActions';
 
-import useDarkMode from '../../hooks/useDarkMode';
-import {
-	POSITIVE_AMOUNT_DARK_COLOR,
-	POSITIVE_AMOUNT_LIGHT_COLOR,
-	NEGATIVE_AMOUNT_COLOR
-} from '../../constants';
+import useT from '../../hooks/useT';
+import { sDisplay, sMono, fmtCurrency, fmtPrice, fmtQty } from '../../utils/designTokens';
 
-const linkStyle = {
-	textDecoration: 'none',
-	color: 'inherit'
-};
+const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
 
 const getInvestmentsFromAccounts = (accounts) => {
 	if (!accounts) return [];
@@ -60,12 +51,14 @@ const getInvestmentsFromAccounts = (accounts) => {
 };
 
 export function StockList () {
+	const T = useT();
+
 	const accountList = useSelector((state) => state.accountList);
 	const allInvestments = useSelector((state) => state.allInvestments);
-	const rawStockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
-	const { exchangeRate, stockListSortBy: sortBy = 'equity' } = useSelector((state) => state.settings);
-	const isDarkMode = useDarkMode();
+	const { exchangeRate, currency = 'KRW', stockListSortBy: sortBy = 'equity' } = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
+
+	const rawStockList = useMemo(() => getInvestmentsFromAccounts(accountList), [accountList]);
 
 	const handleSortChange = (newSortBy) => {
 		dispatch(updateGeneralAction('stockListSortBy', newSortBy));
@@ -77,7 +70,6 @@ export function StockList () {
 			const value = item[key];
 			return item.currency === 'USD' ? value * exchangeRate : value;
 		};
-
 		switch (sortBy) {
 		case 'quantity':
 			return list.sort((a, b) => b.quantity - a.quantity);
@@ -90,18 +82,24 @@ export function StockList () {
 		}
 	}, [rawStockList, sortBy, exchangeRate]);
 
-	const { totalProfit, totalPurchasedValue, totalAppraisedValue } = stockList.reduce((totals, investment) => {
-		totals.totalProfit += investment.currency === 'USD' ? investment.profit * exchangeRate:investment.profit;
-		totals.totalPurchasedValue += investment.currency === 'USD' ? investment.purchasedValue * exchangeRate:investment.purchasedValue;
-		totals.totalAppraisedValue += investment.currency === 'USD' ? investment.appraisedValue * exchangeRate:investment.appraisedValue;
+	const { totalProfit, totalPurchasedValue, totalAppraisedValue } = stockList.reduce((totals, inv) => {
+		const fx = inv.currency === 'USD' ? exchangeRate : 1;
+		totals.totalProfit += inv.profit * fx;
+		totals.totalPurchasedValue += inv.purchasedValue * fx;
+		totals.totalAppraisedValue += inv.appraisedValue * fx;
 		return totals;
 	}, { totalProfit: 0, totalPurchasedValue: 0, totalAppraisedValue: 0 });
 	const totalReturn = totalPurchasedValue !== 0 ? (totalProfit / totalPurchasedValue * 100) : 0;
 
+	const headerSummaryColor = totalProfit >= 0 ? T.pos : T.neg;
+
 	return (
-		<Box p={1}>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ ml: 1 }}>
-				<Typography variant="button">Stock List</Typography>
+		<Box>
+			<Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={1} sx={{ marginBottom: 1.5 }}>
+				<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
+					Stock list
+					<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 보유 종목</Box>
+				</Typography>
 				<SortMenuButton
 					value={sortBy}
 					onChange={handleSortChange}
@@ -113,66 +111,100 @@ export function StockList () {
 					]}
 				/>
 			</Stack>
-			{stockList.map(i => {
+
+			{stockList.length === 0 && (
+				<Box sx={{ padding: 3, textAlign: 'center' }}>
+					<Typography sx={{ fontSize: 13, color: T.ink2 }}>No holdings</Typography>
+				</Box>
+			)}
+
+			{stockList.map((i, idx) => {
 				const investment = allInvestments.find(j => j.name === i.name);
 				const rate = investment?.rate;
+				const profitColor = i.profit >= 0 ? T.pos : T.neg;
+				const rateColor = rate > 0 ? T.pos : rate < 0 ? T.neg : T.ink2;
 
 				return (
 					<Link key={i.name} to={`/performance/${i.name}`} style={linkStyle}>
-						<Stack
-							direction="row"
-							justifyContent="space-between"
-							alignItems="center"
-							sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}
-						>
-							<Stack alignItems="flex-start">
-								<Typography variant="body2">{i.name}</Typography>
-								<Stack direction="row" alignItems="center" spacing={0.5}>
-									<Typography variant="caption" sx={{ color: 'grey.500' }}>
-										{i.quantity.toLocaleString()}
+						<Box sx={{
+							display: 'grid',
+							gridTemplateColumns: '1fr auto',
+							gap: 1.5,
+							alignItems: 'center',
+							padding: '10px 4px',
+							borderTop: idx === 0 ? 'none' : `1px solid ${T.rule}`,
+							cursor: 'pointer',
+							transition: 'background 0.12s',
+							'&:hover': { background: T.surf2 }
+						}}>
+							<Box sx={{ minWidth: 0 }}>
+								<Typography sx={{
+									fontSize: 13,
+									fontWeight: 600,
+									color: T.ink,
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap'
+								}}>
+									{i.name}
+								</Typography>
+								<Stack direction="row" alignItems="center" spacing={0.75} sx={{ marginTop: '2px', flexWrap: 'wrap', rowGap: 0.25 }}>
+									<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
+										{fmtQty(i.quantity)} × {fmtPrice(investment?.price, i.currency)}
 									</Typography>
-									<Typography variant="caption" sx={{ color: 'grey.500' }}>*</Typography>
-									<Amount
-										value={investment?.price}
-										size="small"
-										currency={i.currency}
-										showSymbol
-										ignoreDisplayCurrency
-										showColor={false}
-									/>
-									{rate && (
-										<Typography variant="caption" sx={{ color: rate > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-											({rate}%)
+									{typeof rate === 'number' && (
+										<Typography sx={{ ...sMono, fontSize: 11, color: rateColor, whiteSpace: 'nowrap' }}>
+											({rate > 0 ? '+' : ''}{rate}%)
 										</Typography>
 									)}
 								</Stack>
-							</Stack>
-							<Stack alignItems="flex-end">
-								<Amount value={i.appraisedValue} showSymbol showOriginal currency={i.currency}/>
-								<Stack direction="row" alignItems="baseline" spacing={0.5}>
-									<Amount value={Math.round(i.profit)} size="small" negativeColor showSymbol currency={i.currency}/>
-									<Typography variant="caption" sx={{ color: i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
+							</Box>
+							<Stack alignItems="flex-end" sx={{ minWidth: 0 }}>
+								<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.ink, whiteSpace: 'nowrap' }}>
+									{fmtCurrency(i.appraisedValue, i.currency)}
+								</Typography>
+								<Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ marginTop: '2px' }}>
+									<Typography sx={{ ...sMono, fontSize: 11, fontWeight: 600, color: profitColor, whiteSpace: 'nowrap' }}>
+										{i.profit >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(i.profit), i.currency)}
+									</Typography>
+									<Typography sx={{ ...sMono, fontSize: 11, color: profitColor, whiteSpace: 'nowrap' }}>
 										({(i.return * 100).toFixed(2)}%)
 									</Typography>
 								</Stack>
 							</Stack>
-						</Stack>
+						</Box>
 					</Link>
 				);
 			})}
-			<Divider sx={{ my: 1 }} />
-			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1 }}>
-				<Typography variant="body2" sx={{ fontWeight: 'bold' }}>Subtotal</Typography>
-				<Stack alignItems="flex-end">
-					<Amount value={totalAppraisedValue} showSymbol currency="KRW"/>
-					<Stack direction="row" alignItems="baseline" spacing={0.5}>
-						<Amount value={Math.round(totalProfit)} size="small" negativeColor showSymbol currency="KRW"/>
-						<Typography variant="caption" sx={{ color: totalProfit > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-							({totalReturn.toFixed(2)}%)
+
+			{stockList.length > 0 && (
+				<Box sx={{
+					marginTop: 1.25,
+					paddingTop: 1.25,
+					borderTop: `1px solid ${T.rule}`,
+					display: 'grid',
+					gridTemplateColumns: '1fr auto',
+					gap: 1.5,
+					alignItems: 'center'
+				}}>
+					<Typography sx={{ fontSize: 11, fontWeight: 600, color: T.ink2, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+						Subtotal
+					</Typography>
+					<Stack alignItems="flex-end">
+						<Typography sx={{ ...sMono, fontSize: 14, fontWeight: 700, color: T.ink, whiteSpace: 'nowrap' }}>
+							{fmtCurrency(totalAppraisedValue, currency)}
 						</Typography>
+						<Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ marginTop: '2px' }}>
+							<Typography sx={{ ...sMono, fontSize: 11, fontWeight: 600, color: headerSummaryColor, whiteSpace: 'nowrap' }}>
+								{totalProfit >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(totalProfit), currency)}
+							</Typography>
+							<Typography sx={{ ...sMono, fontSize: 11, color: headerSummaryColor, whiteSpace: 'nowrap' }}>
+								({totalReturn.toFixed(2)}%)
+							</Typography>
+						</Stack>
 					</Stack>
-				</Stack>
-			</Stack>
+				</Box>
+			)}
 		</Box>
 	);
 }

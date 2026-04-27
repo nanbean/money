@@ -1,373 +1,752 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Grid';
-import FormControl from '@mui/material/FormControl';
-import Input from '@mui/material/Input';
-import InputAdornment from '@mui/material/InputAdornment';
-import Chip from '@mui/material/Chip';
-
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
+import MuiChip from '@mui/material/Chip';
 
 import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 
-import Layout from '../components/Layout';
-import Amount from '../components/Amount';
+import DesignPage from '../components/DesignPage';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
-import AccountFilter from '../components/AccountFilter';
+
+import useT from '../hooks/useT';
+import { sDisplay, labelStyle, fmtCurrency } from '../utils/designTokens';
+
+const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
+
+const TYPE_OPTIONS = [
+	{ value: 'all', en: 'All', ko: '전체' },
+	{ value: 'expense', en: 'Expense', ko: '지출' },
+	{ value: 'income', en: 'Income', ko: '수입' }
+];
+
+function Chip ({ active, onClick, T, children, color }) {
+	const inactiveBg = T.dark ? 'rgba(255,255,255,0.06)' : '#f1f1ee';
+	const activeBg = color || T.acc.bright;
+	const activeFg = color ? '#fff' : T.acc.deep;
+	return (
+		<Box
+			onClick={onClick}
+			sx={{
+				padding: '6px 12px',
+				fontSize: 11,
+				fontWeight: 600,
+				borderRadius: '999px',
+				background: active ? activeBg : inactiveBg,
+				color: active ? activeFg : T.ink,
+				cursor: 'pointer',
+				border: active ? 'none' : `1px solid ${T.rule}`,
+				display: 'inline-flex',
+				alignItems: 'center',
+				gap: 0.75,
+				whiteSpace: 'nowrap',
+				transition: 'all 0.15s'
+			}}
+		>
+			{children}
+		</Box>
+	);
+}
+
+function StatCard ({ label, value, sub, color, T }) {
+	const lab = labelStyle(T);
+	return (
+		<Box sx={{
+			background: T.surf,
+			border: `1px solid ${T.rule}`,
+			borderRadius: '16px',
+			padding: { xs: '14px', md: '20px' },
+			color: T.ink,
+			minWidth: 0
+		}}>
+			<Typography sx={lab}>{label}</Typography>
+			<Typography sx={{
+				...sDisplay,
+				fontSize: 22,
+				fontWeight: 700,
+				marginTop: '8px',
+				color: color || T.ink,
+				whiteSpace: 'nowrap',
+				overflow: 'hidden',
+				textOverflow: 'ellipsis'
+			}}>
+				{value}
+			</Typography>
+			{sub && (
+				<Typography sx={{ fontSize: 11, color: T.ink2, marginTop: '2px' }}>{sub}</Typography>
+			)}
+		</Box>
+	);
+}
+
+const formatDateOnly = (d) => d.toISOString().slice(0, 10);
 
 export function Search () {
+	const T = useT();
+	const lab = labelStyle(T);
+
 	const accountList = useSelector((state) => state.accountList);
-	const allAccounts = accountList.filter(i => (i.type === 'CCard'|| i.type === 'Bank' || i.type === 'Cash') && !i.closed).map(j => j.name);
-	const [filteredAccounts, setFilteredAccounts] = useState(allAccounts);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
-	const { categoryList } = useSelector((state) => state.settings);
-	const [filteredTransactions, setFilteredTransactions] = useState([]);
+	const { exchangeRate, currency = 'KRW', categoryList = [] } = useSelector((state) => state.settings || {});
+
+	const allBankAccounts = useMemo(
+		() => (accountList || [])
+			.filter(i => (i.type === 'CCard' || i.type === 'Bank' || i.type === 'Cash') && !i.closed)
+			.map(j => j.name),
+		[accountList]
+	);
+
 	const [searchParams, setSearchParams] = useSearchParams();
 	const keyword = searchParams.get('keyword') || '';
-	const [inputValue, setInputValue] = useState(keyword);
-	const category = searchParams.get('category') || '';
+	const categoriesParam = searchParams.get('categories') || searchParams.get('category') || '';
 	const subcategory = searchParams.get('subcategory') || '';
 	const startDate = searchParams.get('startDate') || '';
 	const endDate = searchParams.get('endDate') || '';
+	const amtMin = searchParams.get('amtMin') || '';
+	const amtMax = searchParams.get('amtMax') || '';
+	const type = searchParams.get('type') || 'all';
+	const accountsParam = searchParams.get('accounts') || '';
 
-	const hasFilters = !!(keyword || category || subcategory || startDate || endDate);
-	const dateRangeInvalid = !!(startDate && endDate && startDate > endDate);
+	const selectedCategories = useMemo(
+		() => (categoriesParam ? categoriesParam.split(',').filter(Boolean) : []),
+		[categoriesParam]
+	);
+	const selectedAccounts = useMemo(() => {
+		if (!accountsParam) return allBankAccounts;
+		return accountsParam.split(',').filter(Boolean);
+	}, [accountsParam, allBankAccounts]);
 
-	const { balanceKRW, balanceUSD } = useMemo(() => {
-		if (filteredTransactions.length === 0 || typeof exchangeRate === 'undefined') {
-			return { balanceKRW: 0, balanceUSD: 0 };
-		}
-		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
-
-		let totalKRW = 0;
-		let totalUSD = 0;
-
-		filteredTransactions.forEach(transaction => {
-			const accountDetails = accountList.find(acc => acc._id === transaction.accountId);
-			const transactionCurrency = accountDetails?.currency || 'KRW';
-
-			if (transactionCurrency === 'KRW') {
-				totalKRW += transaction.amount;
-				totalUSD += transaction.amount / validExchangeRate;
-			} else {
-				totalKRW += transaction.amount * validExchangeRate;
-				totalUSD += transaction.amount;
-			}
-		});
-
-		return { balanceKRW: totalKRW, balanceUSD: totalUSD };
-	}, [filteredTransactions, exchangeRate, accountList]);
+	const [inputValue, setInputValue] = useState(keyword);
 
 	useEffect(() => {
-		updateFilteredTransactions(filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate);
-	}, [keyword, category, subcategory, startDate, endDate, filteredAccounts, allAccountsTransactions]);
+		setInputValue(keyword);
+	}, [keyword]);
 
-	const onFilteredAccountsChange = (e) => {
-		setFilteredAccounts(e);
+	const updateParams = (patch) => {
+		const next = new URLSearchParams(searchParams);
+		Object.entries(patch).forEach(([k, v]) => {
+			if (v === undefined || v === null || v === '' || (k === 'type' && v === 'all')) {
+				next.delete(k);
+			} else {
+				next.set(k, String(v));
+			}
+		});
+		// migrate: if we touched `categories`, drop legacy `category` key
+		if (patch.categories !== undefined) {
+			next.delete('category');
+		}
+		setSearchParams(next, { replace: true });
 	};
 
-	const updateFilteredTransactions = (filteredAccounts, allAccountsTransactions, keyword, category, subcategory, startDate, endDate) => {
-		if (keyword || category || subcategory || startDate || endDate) {
-			let filteredTransactions = [];
+	// Debounce keyword updates to URL
+	useEffect(() => {
+		const handle = setTimeout(() => {
+			if (inputValue !== keyword) updateParams({ keyword: inputValue });
+		}, 200);
+		return () => clearTimeout(handle);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [inputValue]);
 
-			filteredTransactions = allAccountsTransactions.filter(transaction => {
-				const accountIdParts = transaction?.accountId?.split(':');
-				const accountId = accountIdParts?.[2];
-				return filteredAccounts.includes(accountId);
-			});
+	const dateRangeInvalid = !!(startDate && endDate && startDate > endDate);
 
-			if (category) {
-				const escapedCategoryString = category.replace(/[[\]()]/g, '\\$&');
-				filteredTransactions = filteredTransactions.filter(i => i.category.match(new RegExp(escapedCategoryString, 'i')));
+	const hasFilters = !!(keyword || selectedCategories.length || subcategory || startDate || endDate || amtMin || amtMax || (type && type !== 'all') || accountsParam);
+
+	const filteredTransactions = useMemo(() => {
+		if (!hasFilters) return [];
+
+		const safeAccounts = selectedAccounts.length > 0 ? selectedAccounts : allBankAccounts;
+		const validRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
+
+		const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const kwRegex = keyword ? new RegExp(escapeRegex(keyword), 'i') : null;
+		const subcatRegex = subcategory ? new RegExp(escapeRegex(subcategory), 'i') : null;
+		const categoriesSet = selectedCategories.length > 0 ? new Set(selectedCategories) : null;
+
+		const accMap = new Map((accountList || []).map(a => [a._id, a]));
+
+		return (allAccountsTransactions || []).filter(t => {
+			const accountIdParts = t?.accountId?.split(':');
+			const accountName = accountIdParts?.[2];
+			if (!safeAccounts.includes(accountName)) return false;
+
+			if (categoriesSet) {
+				const baseCat = (t.category || '').split(':')[0];
+				if (!categoriesSet.has(t.category) && !categoriesSet.has(baseCat)) return false;
+			}
+			if (subcatRegex && !(t.subcategory && subcatRegex.test(t.subcategory))) return false;
+			if (startDate && t.date < startDate) return false;
+			if (endDate && t.date > endDate) return false;
+
+			if (kwRegex) {
+				const hit = (t.payee && kwRegex.test(t.payee)) || (t.memo && kwRegex.test(t.memo));
+				if (!hit) return false;
 			}
 
-			if (subcategory) {
-				const escapedSubCategoryString = subcategory.replace(/[[\]()]/g, '\\$&');
-				filteredTransactions = filteredTransactions.filter(i => i.subcategory && i.subcategory.match(new RegExp(escapedSubCategoryString, 'i')));
+			if (type === 'expense' && t.amount >= 0) return false;
+			if (type === 'income' && t.amount <= 0) return false;
+
+			if (amtMin || amtMax) {
+				const acc = accMap.get(t.accountId);
+				const txCur = acc?.currency || 'KRW';
+				let krwAmount = Math.abs(Number(t.amount) || 0);
+				if (txCur === 'USD') krwAmount = krwAmount * validRate;
+				if (amtMin && krwAmount < Number(amtMin)) return false;
+				if (amtMax && krwAmount > Number(amtMax)) return false;
 			}
 
-			if (startDate) {
-				filteredTransactions = filteredTransactions.filter(i => i.date >= startDate);
-			}
+			return true;
+		});
+	}, [allAccountsTransactions, accountList, hasFilters, selectedAccounts, allBankAccounts, keyword, selectedCategories, subcategory, startDate, endDate, amtMin, amtMax, type, exchangeRate]);
 
-			if (endDate) {
-				filteredTransactions = filteredTransactions.filter(i => i.date <= endDate);
-			}
+	const stats = useMemo(() => {
+		const validRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
+		const accMap = new Map((accountList || []).map(a => [a._id, a]));
+		const conv = (t) => {
+			const acc = accMap.get(t.accountId);
+			const txCur = acc?.currency || 'KRW';
+			const abs = Math.abs(Number(t.amount) || 0);
+			if (txCur === currency) return abs;
+			return currency === 'KRW' ? abs * validRate : abs / validRate;
+		};
+		const real = filteredTransactions.filter(t => !isInternalTransfer(t));
+		const expenseTxns = real.filter(t => t.amount < 0);
+		const incomeTxns = real.filter(t => t.amount > 0);
+		const expense = expenseTxns.reduce((s, t) => s + conv(t), 0);
+		const income = incomeTxns.reduce((s, t) => s + conv(t), 0);
+		const total = real.reduce((s, t) => s + conv(t), 0);
+		const avg = real.length > 0 ? total / real.length : 0;
+		return {
+			matches: filteredTransactions.length,
+			expense,
+			income,
+			expenseCount: expenseTxns.length,
+			incomeCount: incomeTxns.length,
+			avg
+		};
+	}, [filteredTransactions, accountList, exchangeRate, currency]);
 
-			filteredTransactions = filteredTransactions.filter(i => (i.payee && i.payee.match(new RegExp(keyword, 'i'))) || (i.memo && i.memo.match(new RegExp(keyword, 'i'))));
+	const setRangeDays = (days) => {
+		const end = new Date();
+		const start = new Date(end);
+		start.setDate(end.getDate() - days + 1);
+		updateParams({ startDate: formatDateOnly(start), endDate: formatDateOnly(end) });
+	};
+	const setRangeThisMonth = () => {
+		const now = new Date();
+		const start = new Date(now.getFullYear(), now.getMonth(), 1);
+		const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		updateParams({ startDate: formatDateOnly(start), endDate: formatDateOnly(end) });
+	};
+	const setRangeLastMonth = () => {
+		const now = new Date();
+		const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+		const end = new Date(now.getFullYear(), now.getMonth(), 0);
+		updateParams({ startDate: formatDateOnly(start), endDate: formatDateOnly(end) });
+	};
 
-			setFilteredTransactions(filteredTransactions);
+	const clearAll = () => setSearchParams({}, { replace: true });
+
+	const setCategories = (arr) => {
+		updateParams({ categories: arr.join(','), subcategory: '' });
+	};
+
+	const setAccounts = (arr) => {
+		// If selecting all accounts, clear the param
+		if (arr.length === 0 || arr.length === allBankAccounts.length) {
+			updateParams({ accounts: '' });
 		} else {
-			setFilteredTransactions([]);
+			updateParams({ accounts: arr.join(',') });
 		}
 	};
 
-	const onInputValueChange = (e) => {
-		const newKeyword = e.target.value;
-		setInputValue(newKeyword);
+	const activeFilterCount =
+		(keyword ? 1 : 0) +
+		(selectedCategories.length ? 1 : 0) +
+		(startDate || endDate ? 1 : 0) +
+		(amtMin || amtMax ? 1 : 0) +
+		(type !== 'all' ? 1 : 0) +
+		(accountsParam ? 1 : 0);
 
-		const params = {};
-		if (newKeyword) {
-			params.keyword = newKeyword;
-		}
-		if (category) {
-			params.category = category;
-		}
-		if (subcategory) {
-			params.subcategory = subcategory;
-		}
-		if (startDate) {
-			params.startDate = startDate;
-		}
-		if (endDate) {
-			params.endDate = endDate;
-		}
-		setSearchParams(params, { replace: true });
+	const inputSx = {
+		flex: 1,
+		padding: '10px 12px',
+		fontSize: 13,
+		fontFamily: 'inherit',
+		background: T.bg,
+		color: T.ink,
+		border: `1px solid ${T.rule}`,
+		borderRadius: '8px',
+		outline: 'none',
+		colorScheme: T.dark ? 'dark' : 'light',
+		'&:focus': { borderColor: T.acc.hero }
 	};
 
-	const onCategoryChange = (e) => {
-		const params = {};
-		const categoryArray = e.target.value.split(':');
-		if (keyword) {
-			params.keyword = keyword;
-		}
-		if (categoryArray[0]) {
-			params.category = categoryArray[0];
-		}
-		if (categoryArray[1]) {
-			params.subcategory = categoryArray[1];
-		}
-		if (startDate) {
-			params.startDate = startDate;
-		}
-		if (endDate) {
-			params.endDate = endDate;
-		}
-		setSearchParams(params);
-	};
-
-	const onStartDateChange = (e) => {
-		const params = {};
-		if (keyword) {
-			params.keyword = keyword;
-		}
-		if (category) {
-			params.category = category;
-		}
-		if (subcategory) {
-			params.subcategory = subcategory;
-		}
-		if (e.target.value) {
-			params.startDate = e.target.value;
-		}
-		if (endDate) {
-			params.endDate = endDate;
-		}
-		setSearchParams(params);
-	};
-
-	const onEndDateChange = (e) => {
-		const params = {};
-		if (keyword) {
-			params.keyword = keyword;
-		}
-		if (category) {
-			params.category = category;
-		}
-		if (subcategory) {
-			params.subcategory = subcategory;
-		}
-		if (startDate) {
-			params.startDate = startDate;
-		}
-		if (e.target.value) {
-			params.endDate = e.target.value;
-		}
-		setSearchParams(params);
-	};
-
-	const clearCategoryFilter = () => {
-		const params = {};
-		if (keyword) params.keyword = keyword;
-		if (startDate) params.startDate = startDate;
-		if (endDate) params.endDate = endDate;
-		setSearchParams(params);
-	};
-
-	const clearDateFilter = () => {
-		const params = {};
-		if (keyword) params.keyword = keyword;
-		if (category) params.category = category;
-		if (subcategory) params.subcategory = subcategory;
-		setSearchParams(params);
-	};
-
-	const categoryFilterLabel = subcategory ? `${category}:${subcategory}` : category;
-	const dateFilterLabel = startDate && endDate
-		? `${startDate} ~ ${endDate}`
-		: startDate
-			? `${startDate} ~`
-			: `~ ${endDate}`;
+	const heroBg = T.dark
+		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
+		: `linear-gradient(135deg, ${T.acc.hero} 0%, #5b4fd8 100%)`;
+	const heroInk = '#ffffff';
+	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
 
 	return (
-		<Layout title="Search">
-			<Stack direction="row" alignItems="center" justifyContent="space-between">
-				<Chip
-					variant="outlined"
-					label={
-						<Typography variant="subtitle2">
-							{filteredTransactions.length}건 · <Amount
-								value={displayCurrency === 'KRW' ? balanceUSD : balanceKRW}
-								currency={displayCurrency === 'KRW' ? 'USD' : 'KRW'}
-								size="small"
-								negativeColor
-								showSymbol
-								showOriginal
-							/>
+		<DesignPage title="Search" titleKo="검색">
+			{/* Hero */}
+			<Box sx={{
+				position: 'relative',
+				overflow: 'hidden',
+				background: heroBg,
+				borderRadius: { xs: '16px', md: '24px' },
+				padding: { xs: '20px', md: '32px' },
+				color: heroInk,
+				marginBottom: '20px'
+			}}>
+				<Box sx={{
+					position: 'absolute', top: -100, right: -100,
+					width: 400, height: 400, borderRadius: '50%',
+					background: `radial-gradient(circle, ${T.acc.bright}55 0%, transparent 70%)`,
+					pointerEvents: 'none'
+				}}/>
+				<Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'flex-start' }} spacing={2} sx={{ position: 'relative' }}>
+					<Box>
+						<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+							Search · 거래 검색
 						</Typography>
-					}
-				/>
-				<AccountFilter
-					allAccounts={allAccounts}
-					filteredAccounts={filteredAccounts}
-					setfilteredAccounts={onFilteredAccountsChange}
-				/>
-			</Stack>
-			<Grid
-				container
-				spacing={1}
-				sx={(theme) => ({
-					marginTop: theme.spacing(1),
-					marginBottom: theme.spacing(1)
-				})}
-			>
-				<Grid item xs={12} md={5}>
-					<FormControl variant="standard" required fullWidth>
-						<Input
-							id="search"
-							name="search"
-							autoComplete="off"
-							value={inputValue}
-							onChange={onInputValueChange}
-							startAdornment={
-								<InputAdornment position="start">
-									<SearchIcon />
-								</InputAdornment>
-							}
-						/>
-					</FormControl>
-				</Grid>
-				<Grid item xs={12} md={3}>
-					<FormControl variant="standard" fullWidth>
-						<Select
-							value={category && `${category}` + (subcategory ? `:${subcategory}`:'')}
-							onChange={onCategoryChange}
-							displayEmpty
+						<Typography sx={{ ...sDisplay, fontSize: { xs: 24, md: 28 }, fontWeight: 700, marginTop: '6px', lineHeight: 1.1 }}>
+							{stats.matches.toLocaleString()}{' '}
+							<Box component="span" sx={{ color: heroDim, fontWeight: 400 }}>matches</Box>
+						</Typography>
+					</Box>
+					{activeFilterCount > 0 && (
+						<Box
+							component="button"
+							onClick={clearAll}
+							sx={{
+								background: 'rgba(255,255,255,0.1)',
+								border: '1px solid rgba(255,255,255,0.2)',
+								color: heroInk,
+								padding: '8px 14px',
+								borderRadius: '999px',
+								fontSize: 12,
+								fontWeight: 600,
+								fontFamily: 'inherit',
+								cursor: 'pointer',
+								display: 'inline-flex',
+								alignItems: 'center',
+								gap: 0.75,
+								flexShrink: 0,
+								'&:hover': { background: 'rgba(255,255,255,0.18)' }
+							}}
 						>
-							<MenuItem value=""><em>전체</em></MenuItem>
-							{
-								(categoryList || []).map(i => (
-									<MenuItem key={i} value={i}>{i}</MenuItem>
-								))
-							}
-						</Select>
-					</FormControl>
-				</Grid>
-				<Grid item xs={6} md={2}>
-					<FormControl variant="standard" fullWidth>
-						<Input
-							id="startDate"
-							type="date"
-							name="startDate"
-							autoComplete="off"
-							value={startDate}
-							onChange={onStartDateChange}
-							error={dateRangeInvalid}
-							startAdornment={
-								<InputAdornment position="start">
-									From
-								</InputAdornment>
-							}
-						/>
-					</FormControl>
-				</Grid>
-				<Grid item xs={6} md={2}>
-					<FormControl variant="standard" fullWidth>
-						<Input
-							id="endDate"
-							type="date"
-							name="endDate"
-							autoComplete="off"
-							value={endDate}
-							onChange={onEndDateChange}
-							error={dateRangeInvalid}
-							startAdornment={
-								<InputAdornment position="start">
-									To
-								</InputAdornment>
-							}
-						/>
-					</FormControl>
-				</Grid>
-			</Grid>
-			{
-				dateRangeInvalid &&
-					<Typography variant="caption" color="error" sx={{ mb: 1, display: 'block' }}>
-						시작일이 종료일보다 늦습니다.
-					</Typography>
-			}
-			{
-				(category || startDate || endDate) &&
-					<Stack direction="row" sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}>
-						{
-							category &&
-								<Chip
-									label={categoryFilterLabel}
-									size="small"
-									onDelete={clearCategoryFilter}
-								/>
-						}
-						{
-							(startDate || endDate) &&
-								<Chip
-									label={dateFilterLabel}
-									size="small"
-									onDelete={clearDateFilter}
-								/>
-						}
-					</Stack>
-			}
-			<Box sx={{ flex: 1, mt: 1, textAlign: 'center' }}>
-				{
-					filteredTransactions.length > 0 ? (
-						<BankTransactions
-							showAccount
-							transactions={filteredTransactions}
-						/>
-					) : hasFilters ? (
-						<Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
-							검색 결과가 없습니다.
-						</Typography>
-					) : (
-						<Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
-							검색어 또는 필터를 입력하세요.
-						</Typography>
-					)
-				}
+							<CloseIcon sx={{ fontSize: 14 }} />
+							Clear all ({activeFilterCount})
+						</Box>
+					)}
+				</Stack>
+				<Box sx={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 1.5,
+					marginTop: { xs: 2, md: 2.5 },
+					background: 'rgba(255,255,255,0.08)',
+					borderRadius: '14px',
+					padding: '14px 18px',
+					border: '1px solid rgba(255,255,255,0.15)'
+				}}>
+					<SearchIcon sx={{ fontSize: 20, color: heroInk }} />
+					<Box
+						component="input"
+						value={inputValue}
+						onChange={e => setInputValue(e.target.value)}
+						placeholder="Search payee, memo..."
+						sx={{
+							flex: 1,
+							background: 'transparent',
+							border: 'none',
+							outline: 'none',
+							color: heroInk,
+							fontSize: 16,
+							fontFamily: 'inherit',
+							'::placeholder': { color: heroDim }
+						}}
+					/>
+					{inputValue && (
+						<Box
+							component="button"
+							onClick={() => setInputValue('')}
+							sx={{
+								background: 'transparent',
+								border: 'none',
+								color: heroDim,
+								cursor: 'pointer',
+								display: 'inline-flex',
+								padding: 0,
+								'&:hover': { color: heroInk }
+							}}
+						>
+							<CloseIcon sx={{ fontSize: 18 }} />
+						</Box>
+					)}
+				</Box>
 			</Box>
-			<BankTransactionModal
-				isEdit={true}
-				transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
-			/>
-		</Layout>
+
+			{/* Stat cards */}
+			<Box sx={{
+				display: 'grid',
+				gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+				gap: 2,
+				marginBottom: '20px'
+			}}>
+				<StatCard label="Matches · 결과" value={stats.matches.toLocaleString()} T={T} />
+				<StatCard
+					label="Total expenses · 지출"
+					value={`−${fmtCurrency(stats.expense, currency)}`}
+					sub={`${stats.expenseCount} txns`}
+					color={stats.expense > 0 ? T.neg : T.ink}
+					T={T}
+				/>
+				<StatCard
+					label="Total income · 수입"
+					value={`+${fmtCurrency(stats.income, currency)}`}
+					sub={`${stats.incomeCount} txns`}
+					color={stats.income > 0 ? T.pos : T.ink}
+					T={T}
+				/>
+				<StatCard
+					label="Avg per txn · 건당 평균"
+					value={stats.matches > 0 ? fmtCurrency(stats.avg, currency) : '—'}
+					sub="absolute"
+					T={T}
+				/>
+			</Box>
+
+			{/* Filters */}
+			<Box sx={{
+				background: T.surf,
+				border: `1px solid ${T.rule}`,
+				borderRadius: '16px',
+				padding: { xs: '14px', md: '18px' },
+				color: T.ink,
+				marginBottom: '20px'
+			}}>
+				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
+					<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
+						Filters
+						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 필터</Box>
+					</Typography>
+					<Typography sx={{ fontSize: 11, color: T.ink3 }}>{activeFilterCount} active</Typography>
+				</Stack>
+
+				{/* Date range — inputs + quick chips on one row */}
+				<Box sx={{ marginBottom: 1.5 }}>
+					<Typography sx={{ ...lab, marginBottom: '6px' }}>Date range · 기간</Typography>
+					<Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+						<Box
+							component="input"
+							type="date"
+							value={startDate}
+							onChange={e => updateParams({ startDate: e.target.value })}
+							sx={{ ...inputSx, flex: '0 0 150px' }}
+						/>
+						<Typography sx={{ color: T.ink3, fontSize: 13 }}>→</Typography>
+						<Box
+							component="input"
+							type="date"
+							value={endDate}
+							onChange={e => updateParams({ endDate: e.target.value })}
+							sx={{ ...inputSx, flex: '0 0 150px' }}
+						/>
+						<Chip onClick={() => setRangeDays(7)} T={T}>7d</Chip>
+						<Chip onClick={() => setRangeDays(30)} T={T}>30d</Chip>
+						<Chip onClick={() => setRangeDays(90)} T={T}>90d</Chip>
+						<Chip onClick={setRangeThisMonth} T={T}>This mo.</Chip>
+						<Chip onClick={setRangeLastMonth} T={T}>Last mo.</Chip>
+						{(startDate || endDate) && (
+							<Box
+								component="span"
+								onClick={() => updateParams({ startDate: '', endDate: '' })}
+								sx={{ fontSize: 11, color: T.acc.hero, cursor: 'pointer', fontWeight: 600 }}
+							>
+								Clear
+							</Box>
+						)}
+					</Stack>
+					{dateRangeInvalid && (
+						<Typography sx={{ fontSize: 11, color: T.neg, marginTop: 0.5 }}>
+							시작일이 종료일보다 늦습니다.
+						</Typography>
+					)}
+				</Box>
+
+				{/* Categories + Accounts — side by side on desktop */}
+				<Box sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+					gap: 1.5,
+					marginBottom: 1.5
+				}}>
+					{categoryList && categoryList.length > 0 && (
+						<Box>
+							<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: '6px' }}>
+								<Typography sx={lab}>
+									Categories · 카테고리
+									{selectedCategories.length > 0 && (
+										<Box component="span" sx={{ color: T.acc.hero, marginLeft: '6px' }}>({selectedCategories.length})</Box>
+									)}
+								</Typography>
+								{selectedCategories.length > 0 && (
+									<Box
+										component="span"
+										onClick={() => setCategories([])}
+										sx={{ fontSize: 11, color: T.acc.hero, cursor: 'pointer', fontWeight: 600 }}
+									>
+										Clear
+									</Box>
+								)}
+							</Stack>
+							<Autocomplete
+								multiple
+								size="small"
+								options={categoryList}
+								value={selectedCategories}
+								onChange={(_, val) => setCategories(val)}
+								disableCloseOnSelect
+								limitTags={6}
+								ChipProps={{ size: 'small' }}
+								renderTags={(values, getTagProps) =>
+									values.map((option, idx) => {
+										const { key, ...chipProps } = getTagProps({ index: idx });
+										return (
+											<MuiChip
+												key={key}
+												{...chipProps}
+												label={option}
+												size="small"
+												sx={{
+													background: T.acc.bg,
+													color: T.acc.deep,
+													fontWeight: 600,
+													'& .MuiChip-deleteIcon': { color: T.acc.deep, '&:hover': { color: T.acc.hero } }
+												}}
+											/>
+										);
+									})
+								}
+								renderInput={(params) => (
+									<TextField
+										{...params}
+										placeholder={selectedCategories.length === 0 ? 'Select categories…' : ''}
+										sx={{
+											'& .MuiOutlinedInput-root': {
+												background: T.bg,
+												borderRadius: '8px',
+												fontSize: 13,
+												color: T.ink
+											},
+											'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
+											'&:hover .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+											'& .Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+											'& input::placeholder': { color: T.ink3, opacity: 1 }
+										}}
+									/>
+								)}
+								slotProps={{
+									paper: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } }
+								}}
+							/>
+						</Box>
+					)}
+	
+					{/* Accounts */}
+					{allBankAccounts.length > 0 && (
+						<Box>
+							<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: '6px' }}>
+								<Typography sx={lab}>
+									Accounts · 계좌
+									{accountsParam && <Box component="span" sx={{ color: T.acc.hero, marginLeft: '6px' }}>({selectedAccounts.length})</Box>}
+								</Typography>
+								{accountsParam && (
+									<Box
+										component="span"
+										onClick={() => updateParams({ accounts: '' })}
+										sx={{ fontSize: 11, color: T.acc.hero, cursor: 'pointer', fontWeight: 600 }}
+									>
+										All
+									</Box>
+								)}
+							</Stack>
+							<Autocomplete
+								multiple
+								size="small"
+								options={allBankAccounts}
+								value={accountsParam ? selectedAccounts : []}
+								onChange={(_, val) => setAccounts(val)}
+								disableCloseOnSelect
+								limitTags={6}
+								ChipProps={{ size: 'small' }}
+								renderTags={(values, getTagProps) =>
+									values.map((option, idx) => {
+										const { key, ...chipProps } = getTagProps({ index: idx });
+										return (
+											<MuiChip
+												key={key}
+												{...chipProps}
+												label={option}
+												size="small"
+												sx={{
+													background: T.acc.bg,
+													color: T.acc.deep,
+													fontWeight: 600,
+													'& .MuiChip-deleteIcon': { color: T.acc.deep, '&:hover': { color: T.acc.hero } }
+												}}
+											/>
+										);
+									})
+								}
+								renderInput={(params) => (
+									<TextField
+										{...params}
+										placeholder={!accountsParam ? 'All accounts' : 'Select accounts…'}
+										sx={{
+											'& .MuiOutlinedInput-root': {
+												background: T.bg,
+												borderRadius: '8px',
+												fontSize: 13,
+												color: T.ink
+											},
+											'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
+											'&:hover .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+											'& .Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+											'& input::placeholder': { color: T.ink3, opacity: 1 }
+										}}
+									/>
+								)}
+								slotProps={{
+									paper: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } }
+								}}
+							/>
+						</Box>
+					)}
+				</Box>
+
+				{/* Amount + Type */}
+				<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr' }, gap: 1.5 }}>
+					<Box>
+						<Typography sx={{ ...lab, marginBottom: '6px' }}>Amount range ({currency}) · 금액</Typography>
+						<Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+							<Box
+								component="input"
+								type="number"
+								placeholder="Min"
+								value={amtMin}
+								onChange={e => updateParams({ amtMin: e.target.value })}
+								sx={inputSx}
+							/>
+							<Typography sx={{ color: T.ink3, fontSize: 13 }}>→</Typography>
+							<Box
+								component="input"
+								type="number"
+								placeholder="Max"
+								value={amtMax}
+								onChange={e => updateParams({ amtMax: e.target.value })}
+								sx={inputSx}
+							/>
+							{(amtMin || amtMax) && (
+								<Box
+									component="span"
+									onClick={() => updateParams({ amtMin: '', amtMax: '' })}
+									sx={{ fontSize: 11, color: T.acc.hero, cursor: 'pointer', fontWeight: 600 }}
+								>
+									Clear
+								</Box>
+							)}
+						</Stack>
+					</Box>
+					<Box>
+						<Typography sx={{ ...lab, marginBottom: '6px' }}>Type · 거래 유형</Typography>
+						<Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+							{TYPE_OPTIONS.map(({ value, en, ko }) => (
+								<Chip
+									key={value}
+									active={type === value}
+									onClick={() => updateParams({ type: value })}
+									T={T}
+								>
+									{en} · {ko}
+								</Chip>
+							))}
+						</Stack>
+					</Box>
+				</Box>
+			</Box>
+
+			{/* Results */}
+			<Box sx={{
+				background: T.surf,
+				border: `1px solid ${T.rule}`,
+				borderRadius: '16px',
+				padding: { xs: '16px', md: '20px' },
+				color: T.ink,
+				display: 'flex',
+				flexDirection: 'column'
+			}}>
+				<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
+					<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
+						Results
+						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 14 }}> · {stats.matches.toLocaleString()}건</Box>
+					</Typography>
+					{stats.matches > 0 && (
+						<Typography sx={{ fontSize: 11, color: T.ink3 }}>Sorted by date · newest first</Typography>
+					)}
+				</Stack>
+
+				{stats.matches === 0 ? (
+					<Box sx={{ padding: '60px 0', textAlign: 'center', color: T.ink2 }}>
+						<SearchIcon sx={{ fontSize: 28, color: T.ink2 }} />
+						<Typography sx={{ marginTop: 1.5, fontSize: 14, fontWeight: 600, color: T.ink }}>
+							{hasFilters ? 'No transactions match your filters' : '검색어 또는 필터를 입력하세요'}
+						</Typography>
+						<Typography sx={{ fontSize: 12, color: T.ink3, marginTop: 0.5 }}>
+							{hasFilters
+								? 'Try removing some filters or adjusting the date range.'
+								: 'Use the search box or filters above to start.'}
+						</Typography>
+						{hasFilters && activeFilterCount > 0 && (
+							<Box
+								component="button"
+								onClick={clearAll}
+								sx={{
+									marginTop: 2,
+									background: T.acc.hero,
+									color: '#fff',
+									border: 'none',
+									padding: '10px 18px',
+									borderRadius: '999px',
+									fontSize: 12,
+									fontWeight: 600,
+									fontFamily: 'inherit',
+									cursor: 'pointer',
+									'&:hover': { opacity: 0.9 }
+								}}
+							>
+								Clear all filters
+							</Box>
+						)}
+					</Box>
+				) : (
+					<Box sx={{ flex: 1, minHeight: { xs: 480, md: 'calc(100vh - 600px)' } }}>
+						<BankTransactions showAccount transactions={filteredTransactions} />
+					</Box>
+				)}
+			</Box>
+
+			<BankTransactionModal isEdit transactions={filteredTransactions} />
+		</DesignPage>
 	);
 }
 

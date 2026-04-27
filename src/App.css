@@ -1,75 +1,6 @@
-@import url('https://fonts.googleapis.com/css?family=Roboto+Mono|Roboto:300,400,500');
-
 body {
 	height: auto !important;
 	margin: 0;
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
-		sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-		'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5 {
-	font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-	font-weight: 400;
-	margin: 0;
-}
-
-nav {
-	position: fixed;
-	top: 0;
-	width: 150px;
-	min-height: 100%;
-	z-index: 1100;
-	background-color: white;
-}
-
-.ui.header:first-child {
-	margin-top: 0;
-}
-
-header .ui.header h2 {
-	font-weight: 300;
-}
-
-.container {
-	min-height: 100vh;
-}
-
-.openSidebar .container {
-	-webkit-transition: -webkit-transform 0.5s ease;
-	transition: -webkit-transform 0.5s ease;
-	-o-transition: transform 0.5s ease;
-	transition: transform 0.5s ease;
-	transition: transform 0.5s ease, -webkit-transform 0.5s ease;
-}
-
-.closedSidebar .container {
-	-webkit-transition: -webkit-transform 0.5s ease;
-	transition: -webkit-transform 0.5s ease;
-	-o-transition: transform 0.5s ease;
-	transition: transform 0.5s ease;
-	transition: transform 0.5s ease, -webkit-transform 0.5s ease;
-}
-
-.openSidebar nav {
-	-webkit-transition: -webkit-transform 0.5s ease;
-	transition: -webkit-transform 0.5s ease;
-	-o-transition: transform 0.5s ease;
-	transition: transform 0.5s ease;
-	transition: transform 0.5s ease, -webkit-transform 0.5s ease;
-}
-
-.closedSidebar nav {
-	transform: translate3d(-100%, 0px, 0px);
-	-webkit-transition: -webkit-transform 0.5s ease;
-	transition: -webkit-transform 0.5s ease;
-	-o-transition: transform 0.5s ease;
-	transition: transform 0.5s ease;
-	transition: transform 0.5s ease, -webkit-transform 0.5s ease;
 }
 
 .container-full-page {
@@ -79,12 +10,6 @@ header .ui.header h2 {
 }
 
 @media (min-width: 768px) and (max-width: 1193px) {
-	html,
-
-	nav {
-		box-shadow: none;
-	}
-
 	.container-full-page {
 		margin-left: 3px;
 	}
@@ -143,11 +68,6 @@ header .ui.header h2 {
 	padding: 1em;
 	background: #f9fafb;
 	word-break: break-all;
-}
-
-.mono {
-	font-family: 'Roboto Mono', monospace;
-	color: #686869;
 }
 
 .ui.modal.transaction > .content {

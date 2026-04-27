@@ -5,22 +5,9 @@ import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContai
 import stringToColor from 'string-to-color';
 
 import PropTypes from 'prop-types';
-import { useTheme } from '@mui/material/styles';
 import { lighten, darken } from '@mui/material/styles';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
@@ -30,18 +17,14 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-import Layout from '../components/Layout';
-import Amount from '../components/Amount';
+import DesignPage from '../components/DesignPage';
 import SortMenuButton from '../components/SortMenuButton';
 import { getNetWorthFlowAction, getNetWorthDailyAction } from '../actions/couchdbReportActions';
 import { updateGeneralAction } from '../actions/couchdbSettingActions';
 import { getInvestmentPerformance, computeChainLinkedTwr } from '../utils/performance';
 import { toCurrencyFormatWithSymbol } from '../utils/formatting';
-import {
-	POSITIVE_AMOUNT_DARK_COLOR,
-	POSITIVE_AMOUNT_LIGHT_COLOR,
-	NEGATIVE_AMOUNT_COLOR
-} from '../constants';
+import useT from '../hooks/useT';
+import { sDisplay, sMono, fmtCurrency, fmtQty, colorFor } from '../utils/designTokens';
 
 const RANGES = ['1W', '2M', '3M', 'YTD', '1Y', 'All'];
 const DAILY_RANGES = ['1W', '2M'];
@@ -275,7 +258,7 @@ AllocationBar.propTypes = {
 };
 
 export function Investments () {
-	const theme = useTheme();
+	const T = useT();
 	const dispatch = useDispatch();
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const netWorthDaily = useSelector((state) => state.netWorthDaily);
@@ -483,172 +466,242 @@ export function Investments () {
 	const changeRate = firstValue !== 0 ? (change / firstValue * 100) : 0;
 	const isPositive = change >= 0;
 	const formatYAxis = makeFormatYAxis(currency);
-	const isDarkMode = theme.palette.mode === 'dark';
-	const positiveColor = isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR;
-	const negativeColor = NEGATIVE_AMOUNT_COLOR;
-	const accentColor = isPositive ? positiveColor : negativeColor;
+	const accentColor = isPositive ? T.pos : T.neg;
+	const panelSx = {
+		background: T.surf,
+		border: `1px solid ${T.rule}`,
+		borderRadius: '16px',
+		padding: { xs: '16px', md: '20px' },
+		color: T.ink
+	};
+	const sectionTitleSx = {
+		...sDisplay,
+		fontSize: 18,
+		fontWeight: 700,
+		color: T.ink,
+		margin: 0
+	};
+	const chipSx = (active) => ({
+		padding: '6px 12px',
+		fontSize: 11,
+		fontWeight: 600,
+		borderRadius: '999px',
+		background: active ? T.acc.bright : 'transparent',
+		color: active ? T.acc.deep : T.ink,
+		border: active ? 'none' : `1px solid ${T.rule}`,
+		cursor: 'pointer',
+		transition: 'all 0.15s',
+		whiteSpace: 'nowrap'
+	});
 
 	if (netWorthFlow.length > 0 || netWorthDaily.length > 0) {
 		return (
-			<Layout showPaper={false} title="Investments">
+			<DesignPage title="Investments" titleKo="투자">
 				<Stack spacing={2}>
-					<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-						<Stack spacing={0.5}>
-							<Typography variant="caption" color="text.secondary">Portfolio</Typography>
-							<Typography variant="h5" fontWeight="bold">{toCurrencyFormatWithSymbol(latestValue, currency)}</Typography>
-							<Stack direction="row" spacing={0.5} alignItems="center">
-								<Typography variant="body2" sx={{ color: accentColor }}>
-									{isPositive ? '+' : ''}{toCurrencyFormatWithSymbol(change, currency)} ({periodTwr !== null ? (periodTwr >= 0 ? '+' : '') : (isPositive ? '+' : '')}{periodTwr !== null ? (periodTwr * 100).toFixed(2) : changeRate.toFixed(2)}%)
+					{/* Hero panel — portfolio total + chart/allocation */}
+					<Box sx={panelSx}>
+						<Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ marginBottom: 2 }}>
+							<Box>
+								<Typography sx={{ fontSize: 11, color: T.ink2, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+									Portfolio · 포트폴리오
 								</Typography>
-								{periodTwr !== null && (
-									<Typography variant="caption" color="text.disabled">TWR</Typography>
-								)}
+								<Typography sx={{ ...sDisplay, fontSize: { xs: 28, md: 36 }, fontWeight: 700, marginTop: '6px', color: T.ink, lineHeight: 1 }}>
+									{fmtCurrency(latestValue, currency)}
+								</Typography>
+								<Stack direction="row" spacing={1} alignItems="center" sx={{ marginTop: '8px', flexWrap: 'wrap', rowGap: 0.5 }}>
+									<Box sx={{
+										color: accentColor,
+										background: isPositive ? 'rgba(74,222,128,0.18)' : 'rgba(248,113,113,0.18)',
+										padding: '4px 10px',
+										borderRadius: '999px',
+										fontWeight: 600,
+										fontSize: 12,
+										...sMono
+									}}>
+										{isPositive ? '+' : '−'}{fmtCurrency(Math.abs(change), currency)}{' '}
+										({periodTwr !== null
+											? `${periodTwr >= 0 ? '+' : ''}${(periodTwr * 100).toFixed(2)}%`
+											: `${changeRate >= 0 ? '+' : ''}${changeRate.toFixed(2)}%`})
+									</Box>
+									{periodTwr !== null && (
+										<Typography sx={{ fontSize: 11, color: T.ink3 }}>TWR</Typography>
+									)}
+								</Stack>
+							</Box>
+							<Stack direction="row" spacing={0.5}>
+								<Box onClick={() => setView('chart')} sx={{ ...chipSx(view === 'chart'), display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+									<ShowChartIcon sx={{ fontSize: 14 }} /> Chart
+								</Box>
+								<Box onClick={() => setView('allocation')} sx={{ ...chipSx(view === 'allocation'), display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+									<CategoryIcon sx={{ fontSize: 14 }} /> Allocation
+								</Box>
 							</Stack>
 						</Stack>
-						<ToggleButtonGroup
-							value={view}
-							exclusive
-							onChange={(_, val) => val && setView(val)}
-							size="small"
-						>
-							<ToggleButton value="chart">
-								<ShowChartIcon fontSize="small" />
-							</ToggleButton>
-							<ToggleButton value="allocation">
-								<CategoryIcon fontSize="small" />
-							</ToggleButton>
-						</ToggleButtonGroup>
-					</Stack>
 
-					{view === 'chart' ? (
-						<>
-							<Box sx={{ height: 300, width: '100%', minWidth: 0, overflow: 'hidden' }}>
-								<ResponsiveContainer width="100%" height="100%">
-									<AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-										<defs>
-											<linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
-												<stop offset="5%" stopColor={accentColor} stopOpacity={0.3} />
-												<stop offset="95%" stopColor={accentColor} stopOpacity={0} />
-											</linearGradient>
-										</defs>
-										<CartesianGrid vertical={false} stroke={theme.palette.divider} />
-										<XAxis dataKey="date" hide />
-										<YAxis
-											orientation="right"
-											domain={['auto', 'auto']}
-											tickFormatter={formatYAxis}
-											tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-											tickLine={false}
-											axisLine={false}
-											width={50}
-										/>
-										<Tooltip content={(props) => <ChartTooltip {...props} currency={currency} />} />
-										<Area
-											type="monotone"
-											dataKey="value"
-											name="Portfolio"
-											stroke={accentColor}
-											strokeWidth={2}
-											fill="url(#portfolioGradient)"
-											dot={false}
-											activeDot={{ r: 4, fill: accentColor }}
-										/>
-									</AreaChart>
-								</ResponsiveContainer>
-							</Box>
-							<Stack direction="row" justifyContent="center">
-								<ToggleButtonGroup
-									value={range}
-									exclusive
-									onChange={(_, val) => val && setRange(val)}
-									size="small"
-								>
+						{view === 'chart' ? (
+							<>
+								<Box sx={{ height: 300, width: '100%', minWidth: 0, overflow: 'hidden' }}>
+									<ResponsiveContainer width="100%" height="100%">
+										<AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+											<defs>
+												<linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
+													<stop offset="5%" stopColor={accentColor} stopOpacity={0.3} />
+													<stop offset="95%" stopColor={accentColor} stopOpacity={0} />
+												</linearGradient>
+											</defs>
+											<CartesianGrid vertical={false} stroke={T.rule} />
+											<XAxis dataKey="date" hide />
+											<YAxis
+												orientation="right"
+												domain={['auto', 'auto']}
+												tickFormatter={formatYAxis}
+												tick={{ fontSize: 11, fill: T.ink2 }}
+												tickLine={false}
+												axisLine={false}
+												width={50}
+											/>
+											<Tooltip content={(props) => <ChartTooltip {...props} currency={currency} />} />
+											<Area
+												type="monotone"
+												dataKey="value"
+												name="Portfolio"
+												stroke={accentColor}
+												strokeWidth={2}
+												fill="url(#portfolioGradient)"
+												dot={false}
+												activeDot={{ r: 4, fill: accentColor }}
+											/>
+										</AreaChart>
+									</ResponsiveContainer>
+								</Box>
+								<Stack direction="row" spacing={0.5} justifyContent="center" sx={{ marginTop: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
 									{RANGES.map(r => (
-										<ToggleButton key={r} value={r} sx={{ px: 1.5, py: 0.5, fontSize: '0.75rem' }}>
+										<Box key={r} onClick={() => setRange(r)} sx={chipSx(range === r)}>
 											{r}
-										</ToggleButton>
+										</Box>
 									))}
-								</ToggleButtonGroup>
-							</Stack>
-						</>
-					) : (
-						allocationSegments.length > 0 && <AllocationBar segments={allocationSegments} currency={currency} />
-					)}
+								</Stack>
+							</>
+						) : (
+							allocationSegments.length > 0 && <AllocationBar segments={allocationSegments} currency={currency} />
+						)}
+					</Box>
 
-					<Box sx={{ bgcolor: 'action.hover', borderRadius: 2, p: 1.5 }}>
-						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-							<Stack direction="row" spacing={0.5} alignItems="center">
-								<AutoAwesomeIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-								<Typography variant="caption" color="text.secondary">AI Portfolio Analysis</Typography>
+					{/* AI Analysis panel */}
+					<Box sx={panelSx}>
+						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
+							<Stack direction="row" spacing={1} alignItems="center">
+								<AutoAwesomeIcon sx={{ fontSize: 18, color: T.acc.hero }} />
+								<Typography sx={sectionTitleSx}>
+									AI Portfolio Analysis
+									<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 포트폴리오 분석</Box>
+								</Typography>
 							</Stack>
-							<IconButton size="small" onClick={fetchAiComment} disabled={aiLoading}>
-								{aiLoading ? <CircularProgress size={16} /> : <RefreshIcon fontSize="small" />}
+							<IconButton
+								size="small"
+								onClick={fetchAiComment}
+								disabled={aiLoading}
+								sx={{ color: T.ink2, '&:hover': { color: T.acc.hero } }}
+							>
+								{aiLoading ? <CircularProgress size={16} sx={{ color: T.acc.hero }} /> : <RefreshIcon sx={{ fontSize: 16 }} />}
 							</IconButton>
 						</Stack>
 
 						{cagrData && (
 							<>
-								<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-									<Stack direction="row" spacing={0.5} alignItems="baseline">
-										<Typography variant="caption" color="text.secondary">Projection Based on Historical Returns</Typography>
-										<Typography variant="caption" sx={{ color: cagrData.cagr >= 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR, fontWeight: 'bold' }}>
+								<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1, flexWrap: 'wrap', rowGap: 1 }}>
+									<Stack direction="row" spacing={0.75} alignItems="baseline">
+										<Typography sx={{ fontSize: 11, color: T.ink2, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+											Projection · 미래가치 추정
+										</Typography>
+										<Typography sx={{ fontSize: 12, color: colorFor(T, cagrData.cagr), fontWeight: 700 }}>
 											CAGR {cagrData.cagr >= 0 ? '+' : ''}{(cagrData.cagr * 100).toFixed(1)}%
 										</Typography>
 									</Stack>
-									<ToggleButtonGroup value={cagrBase} exclusive onChange={(_, v) => v && setCagrBase(v)} size="small">
+									<Stack direction="row" spacing={0.5}>
 										{[1, 3, 5, 10].map(y => (
-											<ToggleButton key={y} value={y} sx={{ px: 1, py: 0.25, fontSize: '0.7rem' }}>{y}Y</ToggleButton>
+											<Box key={y} onClick={() => setCagrBase(y)} sx={chipSx(cagrBase === y)}>
+												{y}Y
+											</Box>
 										))}
-									</ToggleButtonGroup>
+									</Stack>
 								</Stack>
-								<Table size="small" sx={{ mb: 1 }}>
-									<TableBody>
-										{cagrData.projections.map(p => (
-											<TableRow key={p.years}>
-												<TableCell sx={{ py: 0.5, color: 'text.secondary', fontSize: '0.75rem', border: 'none' }}>{p.years} yr</TableCell>
-												<TableCell align="right" sx={{ py: 0.5, fontWeight: 'bold', fontSize: '0.85rem', border: 'none' }}>
-													{toCurrencyFormatWithSymbol(p.value, currency)}
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-								<Divider sx={{ mb: 1 }} />
+								<Box sx={{
+									display: 'grid',
+									gridTemplateColumns: 'repeat(5, 1fr)',
+									gap: 1,
+									marginBottom: 1.5
+								}}>
+									{cagrData.projections.map(p => (
+										<Box key={p.years} sx={{
+											padding: 1,
+											borderRadius: '8px',
+											background: T.dark ? 'rgba(255,255,255,0.02)' : T.surf2,
+											border: `1px solid ${T.rule}`,
+											textAlign: 'center'
+										}}>
+											<Typography sx={{ fontSize: 10, color: T.ink3, fontWeight: 600, textTransform: 'uppercase' }}>
+												{p.years} yr
+											</Typography>
+											<Typography sx={{ ...sMono, fontSize: 12, fontWeight: 700, color: T.ink, marginTop: '2px' }}>
+												{fmtCurrency(p.value, currency)}
+											</Typography>
+										</Box>
+									))}
+								</Box>
 							</>
 						)}
 
 						{aiComment && (
-							<Typography variant="body2" sx={{ lineHeight: 1.6 }}>{aiComment}</Typography>
+							<Box sx={{ padding: 1.5, background: T.acc.tint, color: T.ink, borderRadius: '8px', fontSize: 13, lineHeight: 1.6 }}>
+								{aiComment}
+							</Box>
 						)}
 						{!aiComment && !aiLoading && (
-							<Typography variant="caption" color="text.disabled">Click refresh to get AI analysis.</Typography>
+							<Typography sx={{ fontSize: 12, color: T.ink3 }}>
+								Click the refresh icon to get AI analysis.
+							</Typography>
 						)}
-						<Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 1 }}>
+						<Typography sx={{ fontSize: 11, color: T.ink3, display: 'block', marginTop: 1 }}>
 							* Past performance does not guarantee future results.
 						</Typography>
 					</Box>
 
-					<Divider />
-
-					<Box>
-						<Typography variant="caption" color="text.secondary">Accounts</Typography>
+					{/* Accounts panel */}
+					<Box sx={panelSx}>
+						<Typography sx={{ ...sectionTitleSx, marginBottom: 1.5 }}>
+							Accounts
+							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 계좌</Box>
+						</Typography>
 						{accountList
 							.filter(a => a.type === 'Invst' && !a.closed && !a.name.match(/_Cash/i))
-							.map(a => (
+							.map((a, idx) => (
 								<Link key={a.name} to={`/Invst/${a.name}`} style={linkStyle}>
-									<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1, borderRadius: 1, '&:hover': { backgroundColor: 'action.hover' } }}>
-										<Typography variant="body2">{a.name}</Typography>
-										<Amount value={a.balance} currency={a.currency} showSymbol showOriginal />
-									</Stack>
+									<Box sx={{
+										display: 'flex',
+										justifyContent: 'space-between',
+										alignItems: 'center',
+										padding: '12px 4px',
+										borderTop: idx === 0 ? 'none' : `1px solid ${T.rule}`,
+										cursor: 'pointer',
+										'&:hover': { background: T.surf2 }
+									}}>
+										<Typography sx={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{a.name}</Typography>
+										<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: a.balance < 0 ? T.neg : T.ink }}>
+											{fmtCurrency(Number(a.balance) || 0, a.currency || 'KRW')}
+										</Typography>
+									</Box>
 								</Link>
 							))}
 					</Box>
 
-					<Divider />
-
-					<Box>
-						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-							<Typography variant="caption" color="text.secondary">Investments</Typography>
+					{/* Holdings panel — table-style */}
+					<Box sx={panelSx}>
+						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
+							<Typography sx={sectionTitleSx}>
+								Holdings
+								<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 보유 종목</Box>
+							</Typography>
 							<SortMenuButton
 								value={sortBy}
 								onChange={handleSortChange}
@@ -659,136 +712,212 @@ export function Investments () {
 								]}
 							/>
 						</Stack>
-						<Table size="small">
-							<TableHead>
-								<TableRow>
-									<TableCell>Name</TableCell>
-									<TableCell align="right">Qty</TableCell>
-									<TableCell align="right">Market Value</TableCell>
-									<TableCell align="right">Retrun (%)</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{stockList.map(i => {
-									const investment = allInvestments.find(j => j.name === i.name);
-									const rate = investment?.rate;
-									const returnColor = i.return > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR;
-									return (
-										<TableRow key={i.name} hover sx={{ cursor: 'pointer' }}>
-											<TableCell>
-												<Link to={`/performance/${i.name}`} style={linkStyle}>
-													<Typography variant="body2">{i.name}</Typography>
-													{rate && (
-														<Typography variant="caption" sx={{ color: rate > 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-															{rate > 0 ? '+' : ''}{rate}%
-														</Typography>
-													)}
-												</Link>
-											</TableCell>
-											<TableCell align="right">
-												<Typography variant="body2">{i.quantity.toLocaleString()}</Typography>
-											</TableCell>
-											<TableCell align="right">
-												<Amount value={i.appraisedValue} showSymbol showOriginal currency={i.currency} />
-											</TableCell>
-											<TableCell align="right">
-												<Amount value={Math.round(i.profit)} negativeColor showSymbol currency={i.currency} />
-												<Typography variant="caption" sx={{ color: returnColor }}>
-													({i.return > 0 ? '+' : ''}{(i.return * 100).toFixed(2)}%)
+						<Box sx={{ border: `1px solid ${T.rule}`, borderRadius: '12px', overflow: 'hidden' }}>
+							<Box sx={{
+								display: 'grid',
+								gridTemplateColumns: { xs: '1fr 90px 110px', md: '1fr 90px 130px 150px' },
+								gap: 1.25,
+								padding: '10px 14px',
+								background: T.dark ? '#15151c' : '#f5f5fa',
+								fontSize: 11,
+								color: T.ink2,
+								fontWeight: 600,
+								textTransform: 'uppercase',
+								letterSpacing: '0.06em',
+								borderBottom: `1px solid ${T.rule}`
+							}}>
+								<Box>Name</Box>
+								<Box sx={{ textAlign: 'right' }}>Qty</Box>
+								<Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>Market value</Box>
+								<Box sx={{ textAlign: 'right' }}>Profit · Return</Box>
+							</Box>
+							{stockList.map(i => {
+								const investment = allInvestments.find(j => j.name === i.name);
+								const rate = investment?.rate;
+								const profitColor = i.profit >= 0 ? T.pos : T.neg;
+								return (
+									<Link key={i.name} to={`/performance/${i.name}`} style={linkStyle}>
+										<Box sx={{
+											display: 'grid',
+											gridTemplateColumns: { xs: '1fr 90px 110px', md: '1fr 90px 130px 150px' },
+											gap: 1.25,
+											padding: '12px 14px',
+											alignItems: 'center',
+											background: T.surf,
+											borderTop: `1px solid ${T.rule}`,
+											cursor: 'pointer',
+											'&:hover': { background: T.surf2 }
+										}}>
+											<Box sx={{ minWidth: 0 }}>
+												<Typography sx={{ fontSize: 13, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+													{i.name}
 												</Typography>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-								<TableRow>
-									<TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>Subtotal</TableCell>
-									<TableCell align="right">
-										<Amount value={totalAppraisedValue} showSymbol currency="KRW" />
-									</TableCell>
-									<TableCell align="right">
-										<Amount value={Math.round(totalProfit)} negativeColor showSymbol currency="KRW" />
-										<Typography variant="caption" sx={{ color: totalProfit > 0 ? (theme.palette.mode === 'dark' ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR }}>
-											({totalReturn > 0 ? '+' : ''}{totalReturn.toFixed(2)}%)
-										</Typography>
-									</TableCell>
-								</TableRow>
-							</TableBody>
-						</Table>
+												{typeof rate === 'number' && (
+													<Typography sx={{ ...sMono, fontSize: 11, color: rate > 0 ? T.pos : rate < 0 ? T.neg : T.ink2 }}>
+														{rate > 0 ? '+' : ''}{rate}%
+													</Typography>
+												)}
+											</Box>
+											<Typography sx={{ ...sMono, fontSize: 13, color: T.ink, textAlign: 'right' }}>
+												{fmtQty(i.quantity)}
+											</Typography>
+											<Typography sx={{
+												...sMono,
+												fontSize: 13,
+												color: T.ink,
+												textAlign: 'right',
+												display: { xs: 'none', md: 'block' }
+											}}>
+												{fmtCurrency(i.appraisedValue, i.currency)}
+											</Typography>
+											<Stack alignItems="flex-end" sx={{ minWidth: 0 }}>
+												<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: profitColor, whiteSpace: 'nowrap' }}>
+													{i.profit >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(i.profit), i.currency)}
+												</Typography>
+												<Typography sx={{ ...sMono, fontSize: 11, color: profitColor }}>
+													{i.return > 0 ? '+' : ''}{(i.return * 100).toFixed(2)}%
+												</Typography>
+											</Stack>
+										</Box>
+									</Link>
+								);
+							})}
+							{/* Subtotal row */}
+							<Box sx={{
+								display: 'grid',
+								gridTemplateColumns: { xs: '1fr 90px 110px', md: '1fr 90px 130px 150px' },
+								gap: 1.25,
+								padding: '12px 14px',
+								alignItems: 'center',
+								background: T.dark ? '#15151c' : '#f5f5fa',
+								borderTop: `1px solid ${T.rule}`
+							}}>
+								<Typography sx={{ fontSize: 12, fontWeight: 700, color: T.ink, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+									Subtotal
+								</Typography>
+								<Box />
+								<Typography sx={{
+									...sMono,
+									fontSize: 13,
+									fontWeight: 700,
+									color: T.ink,
+									textAlign: 'right',
+									display: { xs: 'none', md: 'block' }
+								}}>
+									{fmtCurrency(totalAppraisedValue, currency)}
+								</Typography>
+								<Stack alignItems="flex-end">
+									<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 700, color: totalProfit >= 0 ? T.pos : T.neg, whiteSpace: 'nowrap' }}>
+										{totalProfit >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(totalProfit), currency)}
+									</Typography>
+									<Typography sx={{ ...sMono, fontSize: 11, color: totalProfit >= 0 ? T.pos : T.neg }}>
+										{totalReturn > 0 ? '+' : ''}{totalReturn.toFixed(2)}%
+									</Typography>
+								</Stack>
+							</Box>
+						</Box>
 					</Box>
-					<Divider />
 
-					<Accordion
-						expanded={rhExpanded}
-						onChange={handleRhExpand}
-						disableGutters
-						elevation={0}
-						sx={{ '&:before': { display: 'none' }, bgcolor: 'transparent' }}
-					>
-						<AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0 }}>
-							<Stack direction="row" spacing={1} alignItems="center">
-								<Typography variant="caption" color="text.secondary">Managed Accounts</Typography>
+					{/* Managed Accounts (Robinhood/SnapTrade) */}
+					<Box sx={panelSx}>
+						<Stack
+							direction="row"
+							justifyContent="space-between"
+							alignItems="center"
+							sx={{ cursor: 'pointer', userSelect: 'none' }}
+							onClick={() => handleRhExpand(null, !rhExpanded)}
+						>
+							<Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+								<Typography sx={sectionTitleSx}>
+									Managed Accounts
+									<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 위탁계좌</Box>
+								</Typography>
 								{rhData && (
-									<Chip label={rhAllPositions.length} size="small" sx={{ height: 16, fontSize: '0.65rem' }} />
+									<Box sx={{
+										padding: '2px 8px',
+										fontSize: 11,
+										fontWeight: 600,
+										borderRadius: '999px',
+										background: T.acc.bg,
+										color: T.acc.deep
+									}}>
+										{rhAllPositions.length}
+									</Box>
 								)}
 								{rhData && rhTotalMv > 0 && (
-									<Typography variant="caption" color="text.secondary">
+									<Typography sx={{ ...sMono, fontSize: 12, color: T.ink2 }}>
 										${rhTotalMv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 									</Typography>
 								)}
 							</Stack>
-						</AccordionSummary>
-						<AccordionDetails sx={{ px: 0 }}>
-							{rhLoading && (
-								<Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-									<CircularProgress size={24} />
-								</Box>
-							)}
-							{rhError && (
-								<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-									<Typography variant="caption" color="error">{rhError}</Typography>
-									<IconButton size="small" onClick={fetchRhPositions}>
-										<RefreshIcon fontSize="small" />
-									</IconButton>
-								</Stack>
-							)}
-							{rhData && !rhLoading && (
-								rhAccounts.length > 0 ? (
-									[...rhAccounts].sort((a, b) => String(a.number ?? '').localeCompare(String(b.number ?? ''))).map((account, ai) => {
-										const positions = account.positions ?? [];
-										const balances = account.balances ?? [];
-										const accountMv = positions.reduce((sum, p) => sum + Number(p.units ?? 0) * Number(p.price ?? 0), 0);
-										const accountPnl = positions.reduce((sum, p) => sum + Number(p.open_pnl ?? 0), 0);
-										const acPnlColor = accountPnl >= 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR;
-										const fmt = (v) => `$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-										return (
-											<Box key={account.id}>
-												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-													<Stack spacing={0}>
-														<Typography variant="caption" fontWeight="bold" color="text.primary">
-															{account.institution_name ?? account.name}
-														</Typography>
-														{account.number && (
-															<Typography variant="caption" color="text.disabled">{account.number}</Typography>
-														)}
+							<ExpandMoreIcon sx={{
+								color: T.ink2,
+								transform: rhExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+								transition: 'transform 0.15s'
+							}} />
+						</Stack>
+
+						{rhExpanded && (
+							<Box sx={{ marginTop: 2 }}>
+								{rhLoading && (
+									<Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+										<CircularProgress size={24} sx={{ color: T.acc.hero }} />
+									</Box>
+								)}
+								{rhError && (
+									<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+										<Typography sx={{ fontSize: 12, color: T.neg }}>{rhError}</Typography>
+										<IconButton size="small" onClick={fetchRhPositions} sx={{ color: T.ink2 }}>
+											<RefreshIcon sx={{ fontSize: 16 }} />
+										</IconButton>
+									</Stack>
+								)}
+								{rhData && !rhLoading && (
+									rhAccounts.length > 0 ? (
+										[...rhAccounts].sort((a, b) => String(a.number ?? '').localeCompare(String(b.number ?? ''))).map((account, ai) => {
+											const positions = account.positions ?? [];
+											const balances = account.balances ?? [];
+											const accountMv = positions.reduce((sum, p) => sum + Number(p.units ?? 0) * Number(p.price ?? 0), 0);
+											const accountPnl = positions.reduce((sum, p) => sum + Number(p.open_pnl ?? 0), 0);
+											const acPnlColor = accountPnl >= 0 ? T.pos : T.neg;
+											const fmt = (v) => `$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+											return (
+												<Box key={account.id} sx={{ marginBottom: ai < rhAccounts.length - 1 ? 2 : 0 }}>
+													<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1 }}>
+														<Box>
+															<Typography sx={{ fontSize: 13, fontWeight: 700, color: T.ink }}>
+																{account.institution_name ?? account.name}
+															</Typography>
+															{account.number && (
+																<Typography sx={{ fontSize: 11, color: T.ink3 }}>{account.number}</Typography>
+															)}
+														</Box>
+														<Stack alignItems="flex-end">
+															<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.ink }}>{fmt(accountMv)}</Typography>
+															<Typography sx={{ ...sMono, fontSize: 11, fontWeight: 600, color: acPnlColor }}>
+																{accountPnl >= 0 ? '+' : '−'}{fmt(accountPnl)}
+															</Typography>
+														</Stack>
 													</Stack>
-													<Stack alignItems="flex-end" spacing={0}>
-														<Typography variant="caption">{fmt(accountMv)}</Typography>
-														<Typography variant="caption" sx={{ color: acPnlColor }}>
-															{accountPnl >= 0 ? '+' : '-'}{fmt(accountPnl)}
-														</Typography>
-													</Stack>
-												</Stack>
-												{positions.length > 0 && (
-													<Table size="small">
-														<TableHead>
-															<TableRow>
-																<TableCell>Symbol</TableCell>
-																<TableCell align="right">Qty</TableCell>
-																<TableCell align="right">Market Value</TableCell>
-																<TableCell align="right">P&L</TableCell>
-															</TableRow>
-														</TableHead>
-														<TableBody>
+													{positions.length > 0 && (
+														<Box sx={{ border: `1px solid ${T.rule}`, borderRadius: '10px', overflow: 'hidden' }}>
+															<Box sx={{
+																display: 'grid',
+																gridTemplateColumns: '1fr 70px 130px 110px',
+																gap: 1,
+																padding: '8px 12px',
+																background: T.dark ? '#15151c' : '#f5f5fa',
+																fontSize: 11,
+																color: T.ink2,
+																fontWeight: 600,
+																textTransform: 'uppercase',
+																letterSpacing: '0.06em'
+															}}>
+																<Box>Symbol</Box>
+																<Box sx={{ textAlign: 'right' }}>Qty</Box>
+																<Box sx={{ textAlign: 'right' }}>Market value</Box>
+																<Box sx={{ textAlign: 'right' }}>P&L</Box>
+															</Box>
 															{[...positions]
 																.sort((a, b) => (b.units * b.price) - (a.units * a.price))
 																.map((p, i) => {
@@ -799,74 +928,88 @@ export function Investments () {
 																	const marketValue = units * price;
 																	const allocation = accountMv > 0 ? (marketValue / accountMv * 100) : 0;
 																	const pnl = Number(p.open_pnl ?? 0);
-																	const rowPnlColor = pnl >= 0 ? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR) : NEGATIVE_AMOUNT_COLOR;
+																	const rowPnlColor = pnl >= 0 ? T.pos : T.neg;
 																	return (
-																		<TableRow key={i} hover>
-																			<TableCell>
-																				<Typography variant="body2" fontWeight="bold">{ticker}</Typography>
+																		<Box key={i} sx={{
+																			display: 'grid',
+																			gridTemplateColumns: '1fr 70px 130px 110px',
+																			gap: 1,
+																			padding: '10px 12px',
+																			alignItems: 'center',
+																			borderTop: `1px solid ${T.rule}`,
+																			'&:hover': { background: T.surf2 }
+																		}}>
+																			<Box sx={{ minWidth: 0 }}>
+																				<Typography sx={{ fontSize: 12, fontWeight: 700, color: T.ink }}>{ticker}</Typography>
 																				{description && (
-																					<Typography variant="caption" color="text.secondary" display="block">{description}</Typography>
+																					<Typography sx={{ fontSize: 10, color: T.ink2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{description}</Typography>
 																				)}
-																			</TableCell>
-																			<TableCell align="right">
-																				<Typography variant="body2">{units % 1 === 0 ? units.toLocaleString() : units.toFixed(4)}</Typography>
-																			</TableCell>
-																			<TableCell align="right">
-																				<Typography variant="body2">{fmt(marketValue)}</Typography>
-																				<Typography variant="caption" color="text.secondary">{allocation.toFixed(1)}%</Typography>
-																			</TableCell>
-																			<TableCell align="right">
-																				<Typography variant="body2" sx={{ color: rowPnlColor }}>
-																					{pnl >= 0 ? '+' : '-'}{fmt(pnl)}
-																				</Typography>
-																			</TableCell>
-																		</TableRow>
+																			</Box>
+																			<Typography sx={{ ...sMono, fontSize: 12, color: T.ink, textAlign: 'right' }}>
+																				{units % 1 === 0 ? units.toLocaleString() : units.toFixed(4)}
+																			</Typography>
+																			<Stack alignItems="flex-end">
+																				<Typography sx={{ ...sMono, fontSize: 12, color: T.ink }}>{fmt(marketValue)}</Typography>
+																				<Typography sx={{ ...sMono, fontSize: 10, color: T.ink2 }}>{allocation.toFixed(1)}%</Typography>
+																			</Stack>
+																			<Typography sx={{ ...sMono, fontSize: 12, fontWeight: 600, color: rowPnlColor, textAlign: 'right' }}>
+																				{pnl >= 0 ? '+' : '−'}{fmt(pnl)}
+																			</Typography>
+																		</Box>
 																	);
 																})}
-															<TableRow>
-																<TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>Total</TableCell>
-																<TableCell align="right" sx={{ fontWeight: 'bold' }}>{fmt(accountMv)}</TableCell>
-																<TableCell align="right">
-																	<Typography variant="body2" sx={{ color: acPnlColor, fontWeight: 'bold' }}>
-																		{accountPnl >= 0 ? '+' : '-'}{fmt(accountPnl)}
+															<Box sx={{
+																display: 'grid',
+																gridTemplateColumns: '1fr 70px 130px 110px',
+																gap: 1,
+																padding: '10px 12px',
+																alignItems: 'center',
+																background: T.dark ? '#15151c' : '#f5f5fa',
+																borderTop: `1px solid ${T.rule}`
+															}}>
+																<Typography sx={{ fontSize: 11, fontWeight: 700, color: T.ink, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+																	Total
+																</Typography>
+																<Box />
+																<Typography sx={{ ...sMono, fontSize: 12, fontWeight: 700, color: T.ink, textAlign: 'right' }}>{fmt(accountMv)}</Typography>
+																<Typography sx={{ ...sMono, fontSize: 12, fontWeight: 700, color: acPnlColor, textAlign: 'right' }}>
+																	{accountPnl >= 0 ? '+' : '−'}{fmt(accountPnl)}
+																</Typography>
+															</Box>
+														</Box>
+													)}
+													{balances.length > 0 && (
+														<Stack spacing={0.25} sx={{ marginTop: 1, paddingTop: 1, borderTop: `1px solid ${T.rule}` }}>
+															{balances.map((b, i) => (
+																<Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
+																	<Typography sx={{ fontSize: 11, color: T.ink2 }}>{b.currency?.code ?? b.currency ?? '-'} Cash</Typography>
+																	<Typography sx={{ ...sMono, fontSize: 11, color: T.ink }}>
+																		${Number(b.cash ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 																	</Typography>
-																</TableCell>
-															</TableRow>
-														</TableBody>
-													</Table>
-												)}
-												{balances.length > 0 && (
-													<Box sx={{ mt: 1 }}>
-														<Divider sx={{ mb: 0.5 }} />
-														{balances.map((b, i) => (
-															<Stack key={i} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.25 }}>
-																<Typography variant="caption" color="text.secondary">{b.currency?.code ?? b.currency ?? '-'} Cash</Typography>
-																<Typography variant="caption">${Number(b.cash ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
-															</Stack>
-														))}
-													</Box>
-												)}
-												{ai < rhAccounts.length - 1 && <Divider sx={{ mt: 2, mb: 2 }} />}
-											</Box>
-										);
-									})
-								) : (
-									<Typography variant="caption" color="text.disabled">No accounts found.</Typography>
-								)
-							)}
-						</AccordionDetails>
-					</Accordion>
-
+																</Stack>
+															))}
+														</Stack>
+													)}
+												</Box>
+											);
+										})
+									) : (
+										<Typography sx={{ fontSize: 12, color: T.ink3 }}>No accounts found.</Typography>
+									)
+								)}
+							</Box>
+						)}
+					</Box>
 				</Stack>
-			</Layout>
+			</DesignPage>
 		);
 	} else {
 		return (
-			<Layout title="Investments">
+			<DesignPage title="Investments" titleKo="투자" loading>
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
 					<CircularProgress />
 				</Box>
-			</Layout>
+			</DesignPage>
 		);
 	}
 }

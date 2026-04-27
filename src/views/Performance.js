@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import Layout from '../components/Layout';
+import DesignPage from '../components/DesignPage';
 import InvestmentPerformance from '../components/InvestmentPerformance';
 import Typography from '@mui/material/Typography';
 
@@ -28,7 +28,7 @@ export function Performance () {
 	}, [investmentTransactions, investmentItem]);
 
 	return (
-		<Layout showPaper={false} title={investmentItem ? investmentName : 'Not Found'}>
+		<DesignPage title={investmentItem ? investmentName : 'Not Found'} titleKo="종목">
 			{investmentItem ? (
 				<InvestmentPerformance
 					investment={investmentName}
@@ -41,7 +41,7 @@ export function Performance () {
 			) : (
 				<Typography>Investment "{investmentName}" could not be found.</Typography>
 			)}
-		</Layout>
+		</DesignPage>
 	);
 }
 

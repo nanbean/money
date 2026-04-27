@@ -91,8 +91,83 @@ export const deleteCategoryAction = (index) => {
 export const updateCategoryAction = (index, value) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
+		const oldName = categoryList.value[index];
 		categoryList.value[index] = value;
 		await settingsDB.put(categoryList);
+
+		// If renamed, migrate any custom icon/color mapping from old name to new name
+		if (oldName && oldName !== value) {
+			try {
+				const iconsDoc = await settingsDB.get('categoryIcons');
+				if (iconsDoc?.value && iconsDoc.value[oldName]) {
+					iconsDoc.value[value] = iconsDoc.value[oldName];
+					delete iconsDoc.value[oldName];
+					await settingsDB.put(iconsDoc);
+				}
+			} catch (e) {
+				if (e.name !== 'not_found') throw e;
+			}
+			try {
+				const colorsDoc = await settingsDB.get('categoryColors');
+				if (colorsDoc?.value && colorsDoc.value[oldName]) {
+					colorsDoc.value[value] = colorsDoc.value[oldName];
+					delete colorsDoc.value[oldName];
+					await settingsDB.put(colorsDoc);
+				}
+			} catch (e) {
+				if (e.name !== 'not_found') throw e;
+			}
+		}
+
+		dispatch(getSettingsAction());
+	};
+};
+
+// Stores user-picked icon for a category in settings doc `categoryIcons`.
+// Schema: { _id: 'categoryIcons', value: { [categoryName]: iconKey } }
+// `iconKey` matches one of CATEGORY_ICON_OPTIONS keys in src/utils/categoryIcon.js.
+// Pass `iconKey = null/''` to clear the override (falls back to name-based default).
+export const updateCategoryIconAction = (categoryName, iconKey) => {
+	return async dispatch => {
+		let doc;
+		try {
+			doc = await settingsDB.get('categoryIcons');
+		} catch (e) {
+			if (e.name === 'not_found') {
+				doc = { _id: 'categoryIcons', value: {} };
+			} else {
+				throw e;
+			}
+		}
+		const next = { ...(doc.value || {}) };
+		if (iconKey) next[categoryName] = iconKey;
+		else delete next[categoryName];
+		doc.value = next;
+		await settingsDB.put(doc);
+		dispatch(getSettingsAction());
+	};
+};
+
+// Stores user-picked color for a category in settings doc `categoryColors`.
+// Schema: { _id: 'categoryColors', value: { [categoryName]: hex } }
+// Pass `color = null/''` to clear the override (falls back to project default).
+export const updateCategoryColorAction = (categoryName, color) => {
+	return async dispatch => {
+		let doc;
+		try {
+			doc = await settingsDB.get('categoryColors');
+		} catch (e) {
+			if (e.name === 'not_found') {
+				doc = { _id: 'categoryColors', value: {} };
+			} else {
+				throw e;
+			}
+		}
+		const next = { ...(doc.value || {}) };
+		if (color) next[categoryName] = color;
+		else delete next[categoryName];
+		doc.value = next;
+		await settingsDB.put(doc);
 		dispatch(getSettingsAction());
 	};
 };

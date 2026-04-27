@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import Box from '@mui/material/Box';
+import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+
+import useT from '../../hooks/useT';
 
 export function FilterMenu ({
 	filterName = 'Filter',
@@ -17,6 +20,7 @@ export function FilterMenu ({
 	showAllOption = false,
 	allOptionLabel = 'All'
 }) {
+	const T = useT();
 	const [anchorEl, setAnchorEl] = useState(null);
 	const open = Boolean(anchorEl);
 
@@ -28,28 +32,19 @@ export function FilterMenu ({
 		setAnchorEl(null);
 	};
 
-	const handleOptionChange = (value, isChecked) => {
+	const handleOptionChange = (value) => {
 		const isPresent = selectedOptions.includes(value);
-		let newSelectedOptions;
-
-		if (isChecked && !isPresent) {
-			newSelectedOptions = [...selectedOptions, value];
-		} else if (!isChecked && isPresent) {
-			newSelectedOptions = selectedOptions.filter((i) => i !== value);
-		} else {
-			return; // No change
-		}
+		const newSelectedOptions = isPresent
+			? selectedOptions.filter(i => i !== value)
+			: [...selectedOptions, value];
 		if (onSelectionChange) {
 			onSelectionChange(newSelectedOptions);
 		}
 	};
 
-	const handleAllOptionsClick = (event) => {
-		const { checked } = event.target;
-		let newSelectedOptions = [];
-		if (checked) {
-			newSelectedOptions = options.map(opt => opt.value);
-		}
+	const handleAllOptionsClick = () => {
+		const allSelected = options.length > 0 && selectedOptions.length === options.length;
+		const newSelectedOptions = allSelected ? [] : options.map(opt => opt.value);
 		if (onSelectionChange) {
 			onSelectionChange(newSelectedOptions);
 		}
@@ -65,6 +60,8 @@ export function FilterMenu ({
 		return selectedOptions.length;
 	};
 
+	const allSelected = options.length > 0 && selectedOptions.length === options.length;
+
 	return (
 		<div>
 			<Button
@@ -73,48 +70,83 @@ export function FilterMenu ({
 				aria-expanded={open ? 'true' : undefined}
 				onClick={handleClick}
 				size="small"
-				startIcon={<FilterListIcon />}
-				sx={{ textTransform: 'none' }}
+				startIcon={<FilterListIcon sx={{ fontSize: 16 }} />}
+				sx={{
+					textTransform: 'none',
+					padding: '4px 8px',
+					fontSize: 12,
+					fontWeight: 600,
+					color: T.acc.bright,
+					minWidth: 0,
+					'&:hover': { background: T.acc.tint }
+				}}
 			>
 				{filterName} ({getButtonText()})
 			</Button>
 			<Menu
+				id="filter-menu"
 				anchorEl={anchorEl}
 				open={open}
 				onClose={handleClose}
-				MenuListProps={{ 'aria-labelledby': 'filter-button' }}
+				MenuListProps={{ 'aria-labelledby': 'filter-button', dense: true }}
+				PaperProps={{
+					style: {
+						background: T.surf,
+						border: `1px solid ${T.rule}`,
+						borderRadius: 12,
+						marginTop: 4,
+						color: T.ink,
+						minWidth: 220,
+						maxHeight: 500,
+						boxShadow: T.dark
+							? '0 8px 24px rgba(0,0,0,0.4)'
+							: '0 8px 24px rgba(15,23,42,0.08)'
+					}
+				}}
 			>
-				<Box sx={{ pl: 2, pr: 2, maxHeight: 500, overflowY: 'auto' }}>
-					{options.map((option) => (
-						<FormControlLabel
+				{options.map((option) => {
+					const checked = selectedOptions.includes(option.value);
+					const Icon = checked ? CheckBoxIcon : CheckBoxOutlineBlankIcon;
+					return (
+						<MenuItem
 							key={option.value}
-							control={
-								<Checkbox
-									size="small"
-									checked={selectedOptions.includes(option.value)}
-									onChange={(e) => handleOptionChange(option.value, e.target.checked)}
-								/>
-							}
-							label={option.label}
-							sx={{ display: 'block' }}
-						/>
-					))}
-				</Box>
-				{showAllOption && <Divider />}
+							onClick={() => handleOptionChange(option.value)}
+							sx={{
+								fontSize: 13,
+								fontWeight: checked ? 600 : 500,
+								color: checked ? T.ink : T.ink2,
+								background: 'transparent',
+								gap: 1,
+								paddingY: 0.75,
+								'&:hover': { background: T.surf2 }
+							}}
+						>
+							<Icon sx={{ fontSize: 16, color: checked ? T.acc.bright : T.ink3 }} />
+							<Box component="span" sx={{ flex: 1 }}>{option.label}</Box>
+						</MenuItem>
+					);
+				})}
+				{showAllOption && options.length > 0 && (
+					<Divider sx={{ borderColor: T.rule, marginY: 0.5 }} />
+				)}
 				{showAllOption && (
-					<Box sx={{ pl: 2, pr: 2, pt: 1, pb: 1 }}>
-						<FormControlLabel
-							control={
-								<Checkbox
-									size="small"
-									checked={options.length > 0 && selectedOptions.length === options.length}
-									onChange={handleAllOptionsClick}
-								/>
-							}
-							label={allOptionLabel}
-							sx={{ display: 'block' }}
-						/>
-					</Box>
+					<MenuItem
+						onClick={handleAllOptionsClick}
+						sx={{
+							fontSize: 13,
+							fontWeight: 600,
+							color: T.ink,
+							background: 'transparent',
+							gap: 1,
+							paddingY: 0.75,
+							'&:hover': { background: T.surf2 }
+						}}
+					>
+						{allSelected
+							? <CheckBoxIcon sx={{ fontSize: 16, color: T.acc.bright }} />
+							: <CheckBoxOutlineBlankIcon sx={{ fontSize: 16, color: T.ink3 }} />}
+						<Box component="span" sx={{ flex: 1 }}>{allOptionLabel}</Box>
+					</MenuItem>
 				)}
 			</Menu>
 		</div>

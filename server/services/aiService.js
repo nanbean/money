@@ -73,9 +73,17 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 		: todayMoment;
 	const weekKey = cacheReferenceMoment.format('GGGG-WW');
 	const recapDoc = await reportDB.getReport('weeklyRecap').catch(() => null);
-	if (recapDoc?.weekKey === weekKey && recapDoc?.comment) {
+	// Cache hit only if doc already has the new schema fields (summary). Older docs
+	// without `summary` are treated as stale so the AI re-runs and writes the new shape.
+	if (recapDoc?.weekKey === weekKey && recapDoc?.comment && recapDoc?.summary) {
 		console.log(`weeklyRecap: returning cached result for ${weekKey}`);
-		return recapDoc.comment;
+		return {
+			comment: recapDoc.comment,
+			summary: recapDoc.summary,
+			spent: recapDoc.spent ?? 0,
+			saved: recapDoc.saved ?? 0,
+			topCategory: recapDoc.topCategory || null
+		};
 	}
 
 	const [netWorthDailyDoc, allTransactions, allAccounts, kospiRes, kosdaqRes, usRes, exchangeRate] = await Promise.all([
@@ -121,6 +129,22 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 
 	const incomeTotal = weeklyTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
 	const expenseTotal = weeklyTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
+
+	// Pre-computed metrics for client (Spent / Saved / Top category)
+	const spent = Math.abs(expenseTotal);
+	const saved = incomeTotal + expenseTotal; // expenseTotal is negative
+	const expenseByCategory = weeklyTransactions
+		.filter(t => t.amount < 0)
+		.reduce((map, t) => {
+			const key = (t.category || 'Other').split(':')[0];
+			const krw = toKRW(Math.abs(t.amount), t.accountId);
+			map.set(key, (map.get(key) || 0) + krw);
+			return map;
+		}, new Map());
+	const topCatEntry = [...expenseByCategory.entries()].sort((a, b) => b[1] - a[1])[0];
+	const topCategory = topCatEntry
+		? { name: topCatEntry[0], value: Math.round(topCatEntry[1]), pct: spent > 0 ? Math.round(topCatEntry[1] / spent * 100) : 0 }
+		: null;
 
 	// Separate investment deposit vs price gain/loss
 	// Investment-related accounts: Invst type + _Cash accounts (Bank type, e.g. KB증권_Cash)
@@ -201,7 +225,7 @@ const getWeeklyRecap = async ({ dry = false } = {}) => {
 
 	const model = genAI.getGenerativeModel({
 		model: 'gemini-2.5-flash',
-		systemInstruction: '당신은 개인 자산관리 분석 전문가입니다. 주간 자산 변동을 분석합니다. 마크다운 형식(## 헤더, **굵게** 등)을 사용하고, 한국어로 작성합니다. 전체 분석은 2000자 이내로 작성하세요.'
+		systemInstruction: '당신은 개인 자산관리 분석 전문가입니다. 주간 자산 변동을 분석합니다. 응답은 반드시 다음 두 섹션으로 시작합니다:\n\n[SUMMARY]\n20자 내외의 한국어 한 줄 요약 (이번 주를 한 마디로)\n[/SUMMARY]\n\n그 다음 마크다운 형식(## 헤더, **굵게** 등)으로 한국어 상세 분석을 작성합니다. 전체 분석은 2000자 이내.'
 	});
 
 	const formatKRW = (v) => {
@@ -253,7 +277,13 @@ ${holdingsText || '  (보유 종목 없음)'}
 주요 거래 내역:
 ${txText || '  (거래 없음)'}
 
-위 데이터를 바탕으로 이번 주 자산 변동을 분석해주세요:
+위 데이터를 바탕으로 응답을 작성해주세요. 형식:
+
+[SUMMARY]
+(20자 내외 한 줄 요약)
+[/SUMMARY]
+
+## 분석
 1. 순자산 변동 요약 및 주요 원인
 2. 투자 포트폴리오 분석 (총수익률, 당일 등락 종목 현황, 주간 투자자산 변동 평가)
 3. 주요 수입/지출 패턴
@@ -262,16 +292,38 @@ ${txText || '  (거래 없음)'}
 	if (dry) return prompt;
 
 	const result = await model.generateContent(prompt);
-	const comment = result.response.text().trim();
+	const raw = result.response.text().trim();
+
+	// Parse [SUMMARY]...[/SUMMARY] block
+	const summaryMatch = raw.match(/\[SUMMARY\]\s*([\s\S]*?)\s*\[\/SUMMARY\]/i);
+	const summary = summaryMatch ? summaryMatch[1].trim().replace(/\s+/g, ' ').slice(0, 40) : '';
+	const comment = summaryMatch
+		? raw.replace(/\[SUMMARY\][\s\S]*?\[\/SUMMARY\]/i, '').trim()
+		: raw;
 
 	// Save to single weeklyRecap doc (이번 주 데이터만 유지, 개발 환경에서는 저장 생략)
 	if (process.env.NODE_ENV !== 'development') {
-		const doc = { _id: 'weeklyRecap', weekKey, comment, createdAt: new Date() };
+		const doc = {
+			_id: 'weeklyRecap',
+			weekKey,
+			comment,
+			summary,
+			spent: Math.round(spent),
+			saved: Math.round(saved),
+			topCategory,
+			createdAt: new Date()
+		};
 		if (recapDoc?._rev) doc._rev = recapDoc._rev;
 		await reportDB.insertReport(doc).catch(err => console.error('weeklyRecap cache save error:', err));
 	}
 
-	return comment;
+	return {
+		comment,
+		summary,
+		spent: Math.round(spent),
+		saved: Math.round(saved),
+		topCategory
+	};
 };
 
 module.exports = { getPortfolioComment, getWeeklyRecap };

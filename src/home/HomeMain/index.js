@@ -1,29 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import Masonry from '@mui/lab/Masonry';
-import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
 
 import Layout from '../../components/Layout';
+import useT from '../../hooks/useT';
 
-import LatestTransactions from '../LatestTransactions';
-import AccountList from '../AccountList';
-import WeeklyGraph from '../WeeklyGraph';
+import HomeHero from '../HomeHero';
+import HomeCashFlow from '../HomeCashFlow';
+import HomeWeeklySpend from '../HomeWeeklySpend';
+import HomeUpcoming from '../HomeUpcoming';
+import HomeAccountsGrid from '../HomeAccountsGrid';
+import HomeRecentActivity from '../HomeRecentActivity';
 import StockList from '../StockList';
-import PaymentList from '../PaymentList';
 import WeeklyRecap, { getISOWeekKey, DISMISS_KEY } from '../WeeklyRecap';
-import FinancialHealthScore from '../FinancialHealthScore';
 
 import { getWeeklyTransactionsAction } from '../../actions/couchdbActions';
-
-const basePanels = [
-	{ key: 'accounts', component: AccountList },
-	{ key: 'financialHealthScore', component: FinancialHealthScore },
-	{ key: 'stockList', component: StockList },
-	{ key: 'weeklyGraph', component: WeeklyGraph },
-	{ key: 'latestTransactions', component: LatestTransactions },
-	{ key: 'paymentList', component: PaymentList }
-];
 
 const now = new Date();
 const dayOfWeek = now.getDay();
@@ -33,6 +25,8 @@ const showWeeklyRecapDay = dayOfWeek === 6 || dayOfWeek === 0 || (dayOfWeek === 
 
 export function HomeMain () {
 	const dispatch = useDispatch();
+	const T = useT();
+
 	const [weeklyRecapDismissed, setWeeklyRecapDismissed] = useState(
 		() => localStorage.getItem(DISMISS_KEY) === getISOWeekKey()
 	);
@@ -48,23 +42,58 @@ export function HomeMain () {
 
 	const showWeeklyRecap = showWeeklyRecapDay && !weeklyRecapDismissed;
 
+	const panelSx = {
+		background: T.surf,
+		border: `1px solid ${T.rule}`,
+		borderRadius: '16px',
+		padding: { xs: '16px', md: '20px' },
+		boxShadow: 'none',
+		color: T.ink
+	};
+
 	return (
 		<Layout showPaper={false} title="Home">
-			<Masonry columns={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }}>
-				<Paper key="accounts">
-					<AccountList />
-				</Paper>
+			<Box sx={{
+				background: T.bg,
+				borderRadius: { xs: 0, md: '20px' },
+				padding: { xs: '16px', md: '24px' },
+				color: T.ink,
+				minHeight: 'calc(100vh - 32px)'
+			}}>
+				<HomeHero />
+
 				{showWeeklyRecap && (
-					<Paper key="weeklyRecap">
+					<Box sx={{ marginBottom: '20px' }}>
 						<WeeklyRecap onDismiss={handleDismissWeeklyRecap} />
-					</Paper>
+					</Box>
 				)}
-				{basePanels.filter(({ key }) => key !== 'accounts').map(({ key, component: Component }) => (
-					<Paper key={key}>
-						<Component />
-					</Paper>
-				))}
-			</Masonry>
+
+				{/* 3-column metrics row */}
+				<Box sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr 1fr' },
+					gap: 2,
+					marginBottom: '20px'
+				}}>
+					<HomeCashFlow />
+					<HomeWeeklySpend />
+					<HomeUpcoming />
+				</Box>
+
+				<HomeAccountsGrid />
+
+				{/* 2-column row: Recent activity + side panels */}
+				<Box sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' },
+					gap: 2
+				}}>
+					<HomeRecentActivity />
+					<Box sx={panelSx}>
+						<StockList />
+					</Box>
+				</Box>
+			</Box>
 		</Layout>
 	);
 }

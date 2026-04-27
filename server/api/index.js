@@ -125,7 +125,7 @@ api.get('/weeklyRecap', async (ctx) => {
 	try {
 		const dry = ctx.request.query.dry === 'true';
 		const result = await aiService.getWeeklyRecap({ dry });
-		ctx.body = dry ? { prompt: result } : { comment: result };
+		ctx.body = dry ? { prompt: result } : result;
 	} catch (err) {
 		console.error('weeklyRecap error:', err);
 		ctx.status = 500;

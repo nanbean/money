@@ -1,18 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { styled } from '@mui/material/styles';
-import { AutoSizer, Column, Table } from 'react-virtualized';
+import { AutoSizer, List } from 'react-virtualized';
 
+import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import Amount from '../Amount';
-import Payee from '../Payee';
-import CategoryIcon from '../CategoryIcon';
-
+import useT from '../../hooks/useT';
 import useWidth from '../../hooks/useWidth';
+import { sMono, fmtCurrency } from '../../utils/designTokens';
+import { resolveCategoryIcon } from '../../utils/categoryIcon';
+import { resolveCategoryColor } from '../../utils/categoryColor';
 
 import { toDateFormat } from '../../utils/formatting';
 
@@ -22,20 +22,12 @@ import {
 
 import { TYPE_ICON_MAP } from '../../constants';
 
-import 'react-virtualized/styles.css'; // only needs to be imported once
+import 'react-virtualized/styles.css';
 
-const StyledTable = styled(Table)(({ theme }) => ({
-	'& .ReactVirtualized__Table__headerRow': {
-		borderBottom: `1px solid ${theme.palette.divider}` // 헤더에도 구분선 추가
-	},
-	'& .ReactVirtualized__Table__row': {
-		cursor: 'pointer',
-		borderBottom: `1px solid ${theme.palette.divider}`, // 각 행의 아래에 구분선 추가
-		'&:hover': {
-			backgroundColor: theme.palette.action.hover
-		}
-	}
-}));
+const tint = (hex, alphaHex = '22') => `${hex}${alphaHex}`;
+
+const ROW_HEIGHT_DESKTOP = 64;
+const ROW_HEIGHT_MOBILE = 72;
 
 export function BankTransactions ({
 	account,
@@ -43,14 +35,24 @@ export function BankTransactions ({
 	showAccount,
 	transactions
 }) {
+	const T = useT();
+
 	const width = useWidth();
 	const isSmallScreen = width === 'xs' || width === 'sm';
 
 	const dispatch = useDispatch();
 	const accountList = useSelector(state => state.accountList);
+	const { categoryIcons = {}, categoryColors = {} } = useSelector(state => state.settings || {});
 
-	const onRowSelect = ({ index }) => {
+	const accountById = useMemo(() => {
+		const map = new Map();
+		(accountList || []).forEach(a => map.set(a._id, a));
+		return map;
+	}, [accountList]);
+
+	const onRowSelect = (index) => () => {
 		const transaction = transactions[index];
+		if (!transaction) return;
 
 		dispatch(openTransactionInModal({
 			account: transaction.account || account,
@@ -64,125 +66,150 @@ export function BankTransactions ({
 		}));
 	};
 
-	return (
-		transactions &&
-		<AutoSizer>
-			{({ height, width }) => (
-				<StyledTable
-					width={width}
-					height={height}
-					headerHeight={44}
-					rowHeight={!isSmallScreen ? 38 : 55}
-					scrollToIndex={transactions.length-1}
-					rowCount={transactions.length}
-					rowGetter={({ index }) => transactions[index]}
-					onRowClick={onRowSelect}
-				>
-					{
-						!isSmallScreen && showAccount &&
-						<Column
-							label="Account"
-							dataKey="account"
-							width={width/5}
-							cellDataGetter={({ rowData }) => ({ type: rowData.type, account: rowData.account })}
-							cellRenderer={({ cellData }) => {
-								const IconComponent = TYPE_ICON_MAP[cellData.type];
-								
-								return (
-									<Stack direction="row" justifyContent="center" alignItems="center" spacing={0.5}>
-										{IconComponent && <IconComponent sx={{ fontSize: 12 }} />}
-										<Typography variant="body2">{cellData.account}</Typography>
-									</Stack>
-								);
-							}}
-							headerRenderer={({ label }) => (
-								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
-							)}
-						/>
-					}
-					{
-						!isSmallScreen &&
-						<Column
-							label="Date"
-							dataKey="date"
-							width={width/5}
-							cellRenderer={({ cellData }) => (
-								<Typography align="center" variant="body2">{toDateFormat(cellData)}</Typography>
-							)}
-							headerRenderer={({ label }) => (
-								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
-							)}
-						/>
-					}
-					{
-						<Column
-							label="Category"
-							dataKey="category"
-							width={width/5}
-							cellRenderer={({ cellData }) => (
-								<CategoryIcon category={cellData} fontsize={!isSmallScreen ? 22 : 30} />
-							)}
-							headerRenderer={({ label }) => (
-								<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
-							)}
-						/>
-					}
-					<Column
-						label="Payee"
-						dataKey="payee"
-						width={width/5*3}
-						cellDataGetter={({ rowData }) => ({ type: rowData.type, account: rowData.account, date: rowData.date, category: rowData.category, payee: rowData.payee, amount: rowData.amount })}
-						cellRenderer={({ cellData }) => {
-							const IconComponent = TYPE_ICON_MAP[cellData.type];
+	const rowRenderer = ({ key, index, style }) => {
+		const t = transactions[index];
+		if (!t) return null;
 
-							return (
-								<Stack direction="column" alignItems="center" spacing={0.5}>
-									<Payee value={cellData.payee} category={cellData.category} />
-									{							
-										isSmallScreen && showAccount &&		
-										<Stack direction="row" justifyContent="center" alignItems="center" spacing={0.5}>
-											{IconComponent && <IconComponent sx={{ fontSize: 12 }} />}
-											<Typography variant="body2">{cellData.account}</Typography>
-										</Stack>
-									}
-								</Stack>
-							);
-						}}
-						headerRenderer={({ label }) => (
-							<Typography align="center" variant="subtitle2" color="secondary">{label}</Typography>
+		const baseCat = (t.category || '').split(':')[0] || t.category || '';
+		const fullCat = t.category + (t.subcategory ? `:${t.subcategory}` : '');
+		const Icon = resolveCategoryIcon(fullCat, categoryIcons[baseCat]);
+		const catColor = resolveCategoryColor(fullCat, categoryColors[baseCat]);
+
+		const amount = Number(t.amount) || 0;
+		const amountColor = amount > 0 ? T.pos : T.ink;
+
+		// Resolve currency for the row (prop > account currency lookup)
+		let rowCurrency = currency;
+		if (!rowCurrency && t.accountId) {
+			const acc = accountById.get(t.accountId);
+			if (acc?.currency) rowCurrency = acc.currency;
+		}
+		rowCurrency = rowCurrency || 'KRW';
+
+		const AccountIcon = TYPE_ICON_MAP[t.type];
+
+		return (
+			<Box
+				key={key}
+				style={style}
+				onClick={onRowSelect(index)}
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: '40px 1fr auto',
+					gap: 1.5,
+					alignItems: 'center',
+					padding: '10px 4px',
+					borderTop: `1px solid ${T.rule}`,
+					cursor: 'pointer',
+					transition: 'background 0.12s',
+					'&:hover': { background: T.surf2 }
+				}}
+			>
+				{/* Category icon box */}
+				<Box sx={{
+					width: 40,
+					height: 40,
+					borderRadius: '12px',
+					background: tint(catColor, '22'),
+					color: catColor,
+					display: 'inline-flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					flexShrink: 0
+				}}>
+					<Icon sx={{ fontSize: 18 }} />
+				</Box>
+
+				{/* Payee + meta */}
+				<Box sx={{ minWidth: 0 }}>
+					<Typography sx={{
+						fontSize: 13,
+						fontWeight: 600,
+						color: T.ink,
+						overflow: 'hidden',
+						textOverflow: 'ellipsis',
+						whiteSpace: 'nowrap'
+					}}>
+						{t.payee || baseCat || '—'}
+					</Typography>
+					<Stack direction="row" alignItems="center" spacing={0.75} sx={{ marginTop: '2px', minWidth: 0 }}>
+						<Typography sx={{ fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
+							{toDateFormat(t.date)}
+						</Typography>
+						{baseCat && (
+							<>
+								<Box sx={{ width: 3, height: 3, borderRadius: '2px', background: T.ink3, flexShrink: 0 }} />
+								<Box sx={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									gap: 0.5,
+									padding: '2px 8px',
+									borderRadius: '999px',
+									background: tint(catColor, '22'),
+									color: catColor,
+									fontSize: 10,
+									fontWeight: 600,
+									flexShrink: 1,
+									minWidth: 0,
+									overflow: 'hidden'
+								}}>
+									<Box sx={{ width: 5, height: 5, borderRadius: '3px', background: catColor, flexShrink: 0 }} />
+									<Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+										{baseCat}
+									</Box>
+								</Box>
+							</>
 						)}
-					/>
-					<Column
-						width={width/5}
-						label="Amount"
-						dataKey="amount"
-						cellDataGetter={({ rowData }) => {
-							let accountCurrency = currency;
-							if (!accountCurrency && rowData.accountId && accountList) {
-								const acc = accountList.find(a => a._id === rowData.accountId);
-								if (acc && acc.currency) accountCurrency = acc.currency;
-							}
-							return { date: rowData.date, amount: rowData.amount, currency: accountCurrency };
-						}}
-						cellRenderer={({ cellData }) => (
-							isSmallScreen ? (
-								<Stack spacing={0.5} alignItems="flex-end">
-									<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={cellData.currency} style={{ fontWeight: 700, fontSize: 18, color: '#1976d2' }} />
-									<Typography variant="caption">
-										{toDateFormat(cellData.date)}
+						{showAccount && t.account && (
+							<>
+								<Box sx={{ width: 3, height: 3, borderRadius: '2px', background: T.ink3, flexShrink: 0 }} />
+								<Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
+									{AccountIcon && <AccountIcon sx={{ fontSize: 11, color: T.ink2 }} />}
+									<Typography sx={{ fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
+										{t.account}
 									</Typography>
 								</Stack>
-							) : (
-								<Stack alignItems="flex-end">
-									<Amount value={cellData.amount} ignoreDisplayCurrency showSymbol currency={cellData.currency} style={{ fontWeight: 700, color: '#1976d2' }} />
-								</Stack>
-							)
+							</>
 						)}
-						headerRenderer={({ label }) => (
-							<Typography align="right" variant="subtitle2" color="secondary">{label}</Typography>
-						)}
-					/>
-				</StyledTable>
+					</Stack>
+				</Box>
+
+				{/* Amount */}
+				<Typography sx={{
+					...sMono,
+					fontSize: 14,
+					fontWeight: 600,
+					color: amountColor,
+					whiteSpace: 'nowrap',
+					textAlign: 'right'
+				}}>
+					{amount > 0 ? '+' : amount < 0 ? '−' : ''}
+					{fmtCurrency(Math.abs(amount), rowCurrency)}
+				</Typography>
+			</Box>
+		);
+	};
+
+	if (!transactions || transactions.length === 0) {
+		return (
+			<Box sx={{ padding: '40px 0', textAlign: 'center', color: T.ink2 }}>
+				<Typography sx={{ fontSize: 13 }}>No transactions</Typography>
+			</Box>
+		);
+	}
+
+	return (
+		<AutoSizer>
+			{({ height, width: aw }) => (
+				<List
+					width={aw}
+					height={height}
+					rowHeight={isSmallScreen ? ROW_HEIGHT_MOBILE : ROW_HEIGHT_DESKTOP}
+					scrollToIndex={transactions.length - 1}
+					rowCount={transactions.length}
+					rowRenderer={rowRenderer}
+					overscanRowCount={6}
+				/>
 			)}
 		</AutoSizer>
 	);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -11,6 +12,12 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
+
+import CheckIcon from '@mui/icons-material/Check';
+
+import useT from '../../hooks/useT';
+import { ACCENTS, ACCENT_LABELS } from '../../utils/designTokens';
 
 import {
 	requestPermissionAction,
@@ -22,12 +29,14 @@ import {
 } from '../../actions/couchdbSettingActions';
 
 export function General () {
+	const T = useT();
 	const messagingToken = useSelector((state) => state.messagingToken);
 	const {
 		currency,
 		enableExchangeRateUpdate,
 		exchangeRate,
-		themeMode = 'auto'
+		themeMode = 'auto',
+		accent = 'indigo'
 	} = useSelector((state) => state.settings);
 	const [exchangeRateValue, setExchangeRateValue] = useState(exchangeRate);
 	const dispatch = useDispatch();
@@ -76,6 +85,32 @@ export function General () {
 		}
 	};
 
+	const handleAccentChange = (key) => {
+		if (key && key !== accent) {
+			dispatch(updateGeneralAction('accent', key));
+		}
+	};
+
+	const toggleSx = {
+		textTransform: 'none',
+		'&.Mui-selected': {
+			background: T.acc.bright,
+			color: T.acc.deep,
+			'&:hover': { background: T.acc.bright, opacity: 0.9 }
+		}
+	};
+
+	const switchSx = {
+		'& .MuiSwitch-switchBase.Mui-checked': {
+			color: T.acc.bright,
+			'&:hover': { background: `${T.acc.bright}1f` }
+		},
+		'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+			background: T.acc.bright,
+			opacity: 0.5
+		}
+	};
+
 	return (
 		<List sx={{ width: '100%' }}>
 			<ListSubheader sx={{ bgcolor: 'transparent' }}>Notifications</ListSubheader>
@@ -90,6 +125,7 @@ export function General () {
 						edge="end"
 						checked={!!messagingToken}
 						onChange={handlePushNotificationChange}
+						sx={switchSx}
 						inputProps={{
 							'aria-labelledby': 'push-notification-label'
 						}}
@@ -112,10 +148,10 @@ export function General () {
 						onChange={handleCurrencyChange}
 						aria-labelledby="currency-label"
 					>
-						<ToggleButton value="KRW" aria-label="Korean Won" sx={{ width: 40 }}>
+						<ToggleButton value="KRW" aria-label="Korean Won" sx={{ ...toggleSx, width: 40 }}>
 							₩
 						</ToggleButton>
-						<ToggleButton value="USD" aria-label="US Dollar" sx={{ width: 40 }}>
+						<ToggleButton value="USD" aria-label="US Dollar" sx={{ ...toggleSx, width: 40 }}>
 							$
 						</ToggleButton>
 					</ToggleButtonGroup>
@@ -132,6 +168,7 @@ export function General () {
 						edge="end"
 						checked={enableExchangeRateUpdate}
 						onChange={handleEnabeExchangeRateUpdateChange}
+						sx={switchSx}
 						inputProps={{
 							'aria-labelledby': 'exchange-rate-update-label'
 						}}
@@ -173,16 +210,70 @@ export function General () {
 						onChange={handleThemeModeChange}
 						aria-labelledby="theme-mode-label"
 					>
-						<ToggleButton value="auto" aria-label="Auto theme">
+						<ToggleButton value="auto" aria-label="Auto theme" sx={toggleSx}>
 							Auto
 						</ToggleButton>
-						<ToggleButton value="light" aria-label="Light theme">
+						<ToggleButton value="light" aria-label="Light theme" sx={toggleSx}>
 							Light
 						</ToggleButton>
-						<ToggleButton value="dark" aria-label="Dark theme">
+						<ToggleButton value="dark" aria-label="Dark theme" sx={toggleSx}>
 							Dark
 						</ToggleButton>
 					</ToggleButtonGroup>
+				</ListItemSecondaryAction>
+			</ListItem>
+			<ListItem>
+				<ListItemText
+					id="accent-label"
+					primary="Accent Color"
+					secondary={`Highlight color used across the app · ${ACCENT_LABELS[accent]?.ko || ''}`}
+				/>
+				<ListItemSecondaryAction>
+					<Box
+						role="radiogroup"
+						aria-labelledby="accent-label"
+						sx={{ display: 'flex', gap: 1, alignItems: 'center' }}
+					>
+						{Object.entries(ACCENTS).map(([key, palette]) => {
+							const selected = key === accent;
+							return (
+								<Tooltip key={key} title={ACCENT_LABELS[key]?.en || key} arrow>
+									<Box
+										role="radio"
+										aria-checked={selected}
+										tabIndex={0}
+										onClick={() => handleAccentChange(key)}
+										onKeyDown={(e) => {
+											if (e.key === 'Enter' || e.key === ' ') {
+												e.preventDefault();
+												handleAccentChange(key);
+											}
+										}}
+										sx={{
+											width: 26,
+											height: 26,
+											borderRadius: '50%',
+											background: palette.hero,
+											cursor: 'pointer',
+											display: 'inline-flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											border: selected ? `2px solid ${T.ink}` : '2px solid transparent',
+											boxShadow: selected ? `0 0 0 2px ${T.surf}` : 'none',
+											outline: 'none',
+											transition: 'transform 0.12s, border-color 0.12s',
+											'&:hover': { transform: 'scale(1.08)' },
+											'&:focus-visible': { borderColor: T.ink }
+										}}
+									>
+										{selected && (
+											<CheckIcon sx={{ fontSize: 14, color: '#fff' }} />
+										)}
+									</Box>
+								</Tooltip>
+							);
+						})}
+					</Box>
 				</ListItemSecondaryAction>
 			</ListItem>
 		</List>

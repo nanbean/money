@@ -20,6 +20,7 @@ deploy_server.sh
 
 # misc
 .DS_Store
+design_handoff_money_app/
 .env.local
 .env.development.local
 .env.test.local

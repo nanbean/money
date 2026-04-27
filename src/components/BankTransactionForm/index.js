@@ -2,22 +2,26 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import { evaluate } from 'mathjs';
-
-import FormControl from '@mui/material/FormControl';
-import Input from '@mui/material/Input';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import CallSplitIcon from '@mui/icons-material/CallSplit';
-
 import { findLastIndex } from 'lodash';
 
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import AddIcon from '@mui/icons-material/Add';
+import CallSplitIcon from '@mui/icons-material/CallSplit';
+import RemoveIcon from '@mui/icons-material/Remove';
+
 import AutoComplete from '../AutoComplete';
+
+import useT from '../../hooks/useT';
+import { sMono } from '../../utils/designTokens';
 
 import {
 	addTransactionAction,
@@ -35,11 +39,51 @@ import {
 	changeMemo
 } from '../../actions/ui/form/bankTransaction';
 
+const fieldLabelSx = (T) => ({
+	fontSize: 11,
+	fontWeight: 600,
+	color: T.ink2,
+	marginBottom: '6px',
+	display: 'block',
+	textTransform: 'uppercase',
+	letterSpacing: '0.04em'
+});
+
+const inputSx = (T) => ({
+	width: '100%',
+	padding: '10px 12px',
+	fontSize: 13,
+	fontFamily: 'inherit',
+	background: T.bg,
+	color: T.ink,
+	border: `1px solid ${T.rule}`,
+	borderRadius: '8px',
+	outline: 'none',
+	boxSizing: 'border-box',
+	colorScheme: T.dark ? 'dark' : 'light',
+	'&:focus': { borderColor: T.acc.hero }
+});
+
+const selectSx = (T) => ({
+	width: '100%',
+	background: T.bg,
+	color: T.ink,
+	borderRadius: '8px',
+	fontSize: 13,
+	'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
+	'&:hover .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+	'&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+	'& .MuiSelect-select': { padding: '10px 12px' }
+});
+
 export function BankTransactionForm ({
 	account,
-	accountId, 
-	transactions
+	accountId,
+	transactions,
+	onClose
 }) {
+	const T = useT();
+
 	const { categoryList } = useSelector((state) => state.settings);
 	const dropPayeeList = useSelector((state) => state.dropPayeeList);
 	const form = useSelector((state) => state.ui.form.bankTransaction);
@@ -100,21 +144,15 @@ export function BankTransactionForm ({
 	const onRemoveSplit = (index) => {
 		const newDivisions = divisions.filter((_, i) => i !== index);
 		setDivisions(newDivisions);
-		if (newDivisions.length === 0) {
-			setIsSplit(false);
-		}
+		if (newDivisions.length === 0) setIsSplit(false);
 	};
 
 	const totalAmount = divisions.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
 
 	const handleSubmit = (event) => {
 		event.preventDefault();
-
-		if (form.isEdit) {
-			onEditButton();
-		} else {
-			onAddButton();
-		}
+		if (form.isEdit) onEditButton();
+		else onAddButton();
 	};
 
 	const onChange = handler => event => dispatch(handler(event.target.value));
@@ -126,7 +164,7 @@ export function BankTransactionForm ({
 
 	const isAmountExpression = (value) => {
 		const hasOperator = /[+\-*/]/.test(value);
-		const numbersFound = value.match(/-?\d+(\.\d+)?/g);
+		const numbersFound = String(value).match(/-?\d+(\.\d+)?/g);
 		const hasAtLeastTwoNumbers = numbersFound && numbersFound.length >= 2;
 		return hasOperator && hasAtLeastTwoNumbers;
 	};
@@ -157,10 +195,8 @@ export function BankTransactionForm ({
 	const onPayeeSelect = handler => (_, value) => {
 		const matchIndex = findLastIndex(transactions, i => i.payee === value.name);
 		const matchTransaction = matchIndex >= 0 && transactions[matchIndex];
-		const transaction = {
-			payee: value.name
-		};
-	
+		const transaction = { payee: value.name };
+
 		if (matchTransaction) {
 			if (matchTransaction.division && matchTransaction.division.length > 0) {
 				setIsSplit(true);
@@ -175,7 +211,6 @@ export function BankTransactionForm ({
 				setDivisions([]);
 				transaction.amount = form.amount || matchTransaction.amount;
 			}
-
 			if (matchTransaction.category && matchTransaction.subcategory) {
 				transaction.category = `${matchTransaction.category}:${matchTransaction.subcategory}`;
 			} else {
@@ -188,7 +223,6 @@ export function BankTransactionForm ({
 
 	const onAddButton = () => {
 		const data = {};
-
 		data.account = form.account || account;
 		data.accountId = accountId || form.accountId;
 		data.type = data.accountId.split(':')[1];
@@ -218,9 +252,7 @@ export function BankTransactionForm ({
 			const categoryArray = form.category.split(':');
 			data.category = form.category;
 			data.amount = Number(form.amount);
-			if (form.memo) {
-				data.memo = form.memo;
-			}
+			if (form.memo) data.memo = form.memo;
 			if (categoryArray[0]) data.category = categoryArray[0];
 			if (categoryArray[1]) data.subcategory = categoryArray[1];
 		}
@@ -231,17 +263,12 @@ export function BankTransactionForm ({
 
 	const onEditButton = () => {
 		const transaction = transactions[form.index];
-
 		transaction.account = form.account || account;
 		transaction.changed = {};
 
-		if (transaction.date !== form.date) {
-			transaction.changed.date = form.date;
-		}
+		if (transaction.date !== form.date) transaction.changed.date = form.date;
 		if (transaction.payee !== form.payee) {
-			if (!transaction.originalPayee) {
-				transaction.originalPayee = transaction.payee;
-			}
+			if (!transaction.originalPayee) transaction.originalPayee = transaction.payee;
 			transaction.changed.payee = form.payee;
 		}
 
@@ -264,37 +291,27 @@ export function BankTransactionForm ({
 			}
 		} else {
 			const categoryArray = form.category.split(':');
-			if (transaction.amount !== form.amount) {
-				transaction.changed.amount = Number(form.amount);
-			}
-			if (transaction.memo !== form.memo) {
-				transaction.changed.memo = form.memo;
-			}
+			if (transaction.amount !== form.amount) transaction.changed.amount = Number(form.amount);
+			if (transaction.memo !== form.memo) transaction.changed.memo = form.memo;
 			if (categoryArray[0] && transaction.category !== categoryArray[0]) {
-				if (!transaction.originalCategory) {
-					transaction.changed.originalCategory = transaction.category;
-				}
+				if (!transaction.originalCategory) transaction.changed.originalCategory = transaction.category;
 				transaction.changed.category = categoryArray[0];
 			}
 			if (categoryArray[1] && transaction.subcategory !== categoryArray[1]) {
 				if (!transaction.originalSubcategory) {
-					transaction.changed.originalSubcategory = transaction.subcategory !== undefined ? transaction.subcategory:'';
+					transaction.changed.originalSubcategory = transaction.subcategory !== undefined ? transaction.subcategory : '';
 				}
 				transaction.changed.subcategory = categoryArray[1];
 			}
-			if (!categoryArray[1]) {
-				transaction.changed.subcategory = '';
-			}
-			if (transaction.division) {
-				transaction.changed.division = null;
-			}
+			if (!categoryArray[1]) transaction.changed.subcategory = '';
+			if (transaction.division) transaction.changed.division = null;
 		}
 
 		dispatch(editTransactionAction(transaction));
 		dispatch(resetTransactionForm());
 	};
 
-	const onDeleteButton = handler => () => {
+	const onDeleteButton = () => {
 		const transaction = transactions[form.index];
 		const categoryArray = form.category.split(':');
 
@@ -303,32 +320,45 @@ export function BankTransactionForm ({
 		transaction.payee = form.payee;
 		transaction.amount = form.amount;
 		transaction.memo = form.memo;
-		if (categoryArray[0]) {
-			transaction.category = categoryArray[0];
-		}
-		if (categoryArray[1]) {
-			transaction.subcategory = categoryArray[1];
-		}
+		if (categoryArray[0]) transaction.category = categoryArray[0];
+		if (categoryArray[1]) transaction.subcategory = categoryArray[1];
 
-		dispatch(handler(transaction));
+		dispatch(deleteTransactionAction(transaction));
 		dispatch(resetTransactionForm());
 	};
 
+	const iconBtnSx = {
+		width: 36,
+		height: 36,
+		borderRadius: '8px',
+		border: `1px solid ${T.rule}`,
+		color: T.ink2,
+		flexShrink: 0,
+		'&:hover': { borderColor: T.acc.hero, color: T.acc.hero, background: 'transparent' }
+	};
+
 	return (
-		<form onSubmit={handleSubmit}>
-			<Stack spacing={1.5}>
-				<FormControl required fullWidth>
-					<Input
-						id="date"
+		<Box component="form" onSubmit={handleSubmit}>
+			{/* Date + Payee */}
+			<Box sx={{
+				display: 'grid',
+				gridTemplateColumns: { xs: '1fr', sm: '180px 1fr' },
+				gap: 2,
+				marginBottom: 2
+			}}>
+				<Box>
+					<Typography sx={fieldLabelSx(T)}>Date</Typography>
+					<Box
+						component="input"
 						type="date"
-						name="date"
-						autoComplete="off"
-						value={form.date}
-						fullWidth
+						value={form.date || ''}
 						onChange={onChange(changeDate)}
+						required
+						sx={inputSx(T)}
 					/>
-				</FormControl>
-				<FormControl required fullWidth>
+				</Box>
+				<Box>
+					<Typography sx={fieldLabelSx(T)}>Payee</Typography>
 					<AutoComplete
 						value={form.payee}
 						items={dropPayeeList}
@@ -336,16 +366,28 @@ export function BankTransactionForm ({
 						onInputChange={onPayeeChange(changePayee)}
 						onChange={onPayeeSelect(fillTransactionForm)}
 					/>
-				</FormControl>
-				{isSplit ? (
+				</Box>
+			</Box>
+
+			{/* Category / Amount / Memo — split-aware */}
+			{isSplit ? (
+				<Box sx={{ marginBottom: 2 }}>
+					<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1 }}>
+						<Typography sx={fieldLabelSx(T)}>Splits</Typography>
+						<Typography sx={{ ...sMono, fontSize: 12, color: T.ink2 }}>
+							Total: {totalAmount.toLocaleString()}
+						</Typography>
+					</Stack>
 					<Stack spacing={1}>
 						{divisions.map((division, index) => (
-							<Stack key={index} direction="row" spacing={1} alignItems="center">
-								<FormControl fullWidth variant="standard" sx={{ flex: 2 }}>
+							<Stack key={index} direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
+								<FormControl sx={{ flex: 2, minWidth: 0 }}>
 									<Select
 										value={division.category}
 										onChange={(e) => onDivisionChange(index, 'category', e.target.value)}
 										displayEmpty
+										sx={selectSx(T)}
+										MenuProps={{ PaperProps: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } } }}
 									>
 										<MenuItem value="" disabled>
 											<em>Category</em>
@@ -355,126 +397,205 @@ export function BankTransactionForm ({
 										))}
 									</Select>
 								</FormControl>
-								<FormControl sx={{ flex: 1 }}>
-									<Input
-										type="number"
-										placeholder="Amount"
-										value={division.amount}
-										onChange={(e) => onDivisionChange(index, 'amount', e.target.value)}
-									/>
-								</FormControl>
-								<FormControl sx={{ flex: 1.5 }}>
-									<Input
-										placeholder="Memo"
-										value={division.memo}
-										onChange={(e) => onDivisionChange(index, 'memo', e.target.value)}
-									/>
-								</FormControl>
-								<IconButton onClick={() => onRemoveSplit(index)} size="small" color="error">
-									<DeleteIcon fontSize="small" />
+								<Box
+									component="input"
+									type="number"
+									placeholder="Amount"
+									value={division.amount}
+									onChange={(e) => onDivisionChange(index, 'amount', e.target.value)}
+									sx={{ ...inputSx(T), flex: 1 }}
+								/>
+								<Box
+									component="input"
+									placeholder="Memo"
+									value={division.memo}
+									onChange={(e) => onDivisionChange(index, 'memo', e.target.value)}
+									sx={{ ...inputSx(T), flex: 1.5 }}
+								/>
+								<IconButton
+									onClick={() => onRemoveSplit(index)}
+									size="small"
+									sx={{ ...iconBtnSx, color: T.neg, '&:hover': { color: T.neg, borderColor: T.neg } }}
+								>
+									<RemoveIcon sx={{ fontSize: 16 }} />
 								</IconButton>
 							</Stack>
 						))}
-						<Stack direction="row" justifyContent="space-between" alignItems="center">
-							<Button size="small" startIcon={<AddIcon />} onClick={onAddSplit}>
-								Add Split
-							</Button>
-							<Stack direction="row" spacing={1} alignItems="center">
-								<Typography variant="body2" color="text.secondary">
-									Total: {totalAmount}
-								</Typography>
-								<IconButton size="small" onClick={onToggleSplit} color="primary">
-									<CallSplitIcon fontSize="small" />
-								</IconButton>
-							</Stack>
-						</Stack>
 					</Stack>
-				) : (
-					<>
-						<FormControl required fullWidth variant="standard">
+					<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginTop: 1.25 }}>
+						<Button
+							size="small"
+							onClick={onAddSplit}
+							startIcon={<AddIcon sx={{ fontSize: 14 }} />}
+							sx={{
+								background: 'transparent',
+								border: `1px solid ${T.rule}`,
+								color: T.ink,
+								borderRadius: '999px',
+								padding: '4px 12px',
+								fontSize: 11,
+								fontWeight: 600,
+								textTransform: 'none',
+								'&:hover': { borderColor: T.acc.hero, color: T.acc.hero }
+							}}
+						>
+							Add split
+						</Button>
+						<Button
+							size="small"
+							onClick={onToggleSplit}
+							startIcon={<CallSplitIcon sx={{ fontSize: 14 }} />}
+							sx={{
+								background: 'transparent',
+								color: T.acc.bright,
+								borderRadius: '999px',
+								padding: '4px 12px',
+								fontSize: 11,
+								fontWeight: 600,
+								textTransform: 'none',
+								'&:hover': { background: T.surf2 }
+							}}
+						>
+							Merge to single
+						</Button>
+					</Stack>
+				</Box>
+			) : (
+				<>
+					<Box sx={{ marginBottom: 2 }}>
+						<Typography sx={fieldLabelSx(T)}>Category</Typography>
+						<FormControl fullWidth>
 							<Select
-								value={form.category}
+								value={form.category || ''}
 								onChange={onChange(changeCategory)}
+								displayEmpty
+								required
+								sx={selectSx(T)}
+								MenuProps={{ PaperProps: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } } }}
 							>
+								<MenuItem value="" disabled>
+									<em>Select a category</em>
+								</MenuItem>
 								{categoryList.map(i => (
 									<MenuItem key={i} value={i}>{i}</MenuItem>
 								))}
 							</Select>
 						</FormControl>
-						<Stack direction="row" spacing={1} alignItems="flex-end">
-							<FormControl required sx={{ flexGrow: 1 }}>
-								<Input
-									id="amount"
-									type="text"
-									name="amount"
-									autoComplete="off"
-									placeholder="Amount"
-									fullWidth
-									value={form.amount}
-									onChange={handleAmountChange}
-									onKeyDown={handleAmountKeyDown}
-								/>
-							</FormControl>
+					</Box>
+
+					<Box sx={{ marginBottom: 2 }}>
+						<Typography sx={fieldLabelSx(T)}>Amount</Typography>
+						<Stack direction="row" spacing={1} alignItems="stretch">
+							<Box
+								component="input"
+								id="amount"
+								type="text"
+								name="amount"
+								autoComplete="off"
+								placeholder="0 — supports +, −, *, /"
+								value={form.amount ?? ''}
+								onChange={handleAmountChange}
+								onKeyDown={handleAmountKeyDown}
+								required
+								sx={{ ...inputSx(T), ...sMono, flex: 1 }}
+							/>
 							<IconButton
-								size="small"
 								onClick={handleCalculateAmount}
-								color="secondary"
-								sx={{ mb: '2px' }}
+								size="small"
+								title="Evaluate expression"
+								sx={iconBtnSx}
 							>
-								<Typography variant="body2" fontWeight="bold">=</Typography>
+								<Typography sx={{ fontSize: 14, fontWeight: 700, color: 'inherit' }}>=</Typography>
 							</IconButton>
-							<IconButton size="small" onClick={onToggleSplit} color="primary" sx={{ mb: '2px' }}>
-								<CallSplitIcon fontSize="small" />
+							<IconButton
+								onClick={onToggleSplit}
+								size="small"
+								title="Split into multiple categories"
+								sx={iconBtnSx}
+							>
+								<CallSplitIcon sx={{ fontSize: 16 }} />
 							</IconButton>
 						</Stack>
-						<FormControl fullWidth>
-							<Input
-								id="memo"
-								name="memo"
-								placeholder="Memo"
-								value={form.memo}
-								onChange={onChange(changeMemo)}
-							/>
-						</FormControl>
-					</>
-				)}
-				{form.isEdit ? (
-					<Stack direction="row" spacing={1}>
-						<Button
-							type="submit"
-							fullWidth
-							variant="contained"
-							color="primary"
-						>
-							Edit
-						</Button>
-						<Button
-							fullWidth
-							variant="outlined"
-							color="error"
-							onClick={onDeleteButton(deleteTransactionAction)}
-						>
-							Delete
-						</Button>
-					</Stack>
-				) : (
+					</Box>
+
+					<Box sx={{ marginBottom: 2 }}>
+						<Typography sx={fieldLabelSx(T)}>Memo</Typography>
+						<Box
+							component="input"
+							id="memo"
+							name="memo"
+							placeholder="Optional note"
+							value={form.memo || ''}
+							onChange={onChange(changeMemo)}
+							sx={inputSx(T)}
+						/>
+					</Box>
+				</>
+			)}
+
+			{/* Footer */}
+			<Stack direction="row" spacing={1} sx={{ marginTop: 3, alignItems: 'center' }}>
+				{form.isEdit && (
 					<Button
-						type="submit"
-						fullWidth
-						variant="contained"
-						color="primary"
+						onClick={onDeleteButton}
+						startIcon={<DeleteOutlineIcon sx={{ fontSize: 14 }} />}
+						sx={{
+							background: 'transparent',
+							border: `1px solid ${T.neg}55`,
+							color: T.neg,
+							borderRadius: '999px',
+							padding: '8px 14px',
+							fontSize: 12,
+							fontWeight: 600,
+							textTransform: 'none',
+							'&:hover': { background: `${T.neg}11`, borderColor: T.neg }
+						}}
 					>
-						Add
+						Delete
 					</Button>
 				)}
+				<Box sx={{ flex: 1 }} />
+				<Button
+					onClick={onClose}
+					sx={{
+						background: 'transparent',
+						border: `1px solid ${T.rule}`,
+						color: T.ink,
+						borderRadius: '999px',
+						padding: '8px 16px',
+						fontSize: 12,
+						fontWeight: 600,
+						textTransform: 'none',
+						'&:hover': { background: T.surf2 }
+					}}
+				>
+					Cancel
+				</Button>
+				<Button
+					type="submit"
+					sx={{
+						background: T.acc.hero,
+						color: '#fff',
+						border: 'none',
+						borderRadius: '999px',
+						padding: '9px 18px',
+						fontSize: 12,
+						fontWeight: 700,
+						textTransform: 'none',
+						'&:hover': { background: T.acc.hero, opacity: 0.9 }
+					}}
+				>
+					{form.isEdit ? 'Save' : 'Create'}
+				</Button>
 			</Stack>
-		</form>
+		</Box>
 	);
 }
 
 BankTransactionForm.propTypes = {
 	account: PropTypes.string,
 	accountId: PropTypes.string,
+	onClose: PropTypes.func,
 	transactions: PropTypes.array
 };
 

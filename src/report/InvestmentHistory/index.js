@@ -4,17 +4,18 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
-import { useTheme } from '@mui/material/styles';
-
 import Box from '@mui/material/Box';
-import LinearProgress from '@mui/material/LinearProgress';
-import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
 
 import stc from 'string-to-color';
 
 import InvestmentFilter from '../../components/InvestmentFilter';
 import ChartControls from './ChartControls.js';
+
+import useT from '../../hooks/useT';
+import { sDisplay, fmtCurrency } from '../../utils/designTokens';
 
 import {
 	getHistoryListAction
@@ -24,23 +25,32 @@ import {
 	getNetWorthFlowAction
 } from '../../actions/couchdbReportActions';
 
-import { toCurrencyFormat } from '../../utils/formatting';
-
-const CustomTooltip = ({ active, payload, label }) => {
+const ChartTooltip = ({ active, payload, label, T, currency }) => {
 	if (active && payload && payload.length) {
 		return (
-			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, minWidth: 150, boxShadow: 3 }}>
-				<Typography variant="subtitle2" gutterBottom>{label}</Typography>
+			<Box sx={{
+				background: T.surf,
+				padding: 1,
+				border: `1px solid ${T.rule}`,
+				borderRadius: '8px',
+				minWidth: 180,
+				maxHeight: 320,
+				overflow: 'auto',
+				boxShadow: '0 4px 12px rgba(0,0,0,0.18)'
+			}}>
+				<Typography sx={{ fontSize: 12, fontWeight: 600, color: T.ink, marginBottom: 0.5 }}>{label}</Typography>
 				{payload
 					.filter(entry => entry.value > 0)
 					.sort((a, b) => b.value - a.value)
 					.map(entry => (
-						<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+						<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ paddingY: '2px' }}>
 							<Stack direction="row" spacing={0.5} alignItems="center">
-								<Box sx={{ width: 10, height: 10, bgcolor: entry.fill, borderRadius: '2px' }} />
-								<Typography variant="caption">{entry.name}</Typography>
+								<Box sx={{ width: 8, height: 8, background: entry.fill, borderRadius: '2px', flexShrink: 0 }} />
+								<Typography sx={{ fontSize: 11, color: T.ink2 }}>{entry.name}</Typography>
 							</Stack>
-							<Typography variant="caption">{toCurrencyFormat(entry.value)}</Typography>
+							<Typography sx={{ fontSize: 11, color: T.ink }}>
+								{fmtCurrency(entry.value, currency)}
+							</Typography>
 						</Stack>
 					))}
 			</Box>
@@ -49,28 +59,38 @@ const CustomTooltip = ({ active, payload, label }) => {
 	return null;
 };
 
-CustomTooltip.propTypes = {
+ChartTooltip.propTypes = {
 	active: PropTypes.bool,
+	currency: PropTypes.string,
 	label: PropTypes.string,
-	payload: PropTypes.array
+	payload: PropTypes.array,
+	T: PropTypes.object
 };
 
 function InvestmentHistory () {
-	const theme = useTheme();
+	const T = useT();
+
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
 	const filteredInvestments = useSelector((state) => state.filteredInvestments);
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const historyList = useSelector((state) => state.historyList);
-	const { currency: displayCurrency, exchangeRate, investmentHistoryRange = 'monthly', investmentHistoryType = 'quantity' } = useSelector((state) => state.settings);
+	const {
+		currency: displayCurrency = 'KRW',
+		exchangeRate,
+		investmentHistoryRange = 'monthly',
+		investmentHistoryType = 'quantity'
+	} = useSelector((state) => state.settings);
 	const dispatch = useDispatch();
 
-	const allInvestments = useMemo(() => allInvestmentsPrice.filter(i => allAccountsTransactions.find(j => j.investment === i.name)), [allAccountsTransactions, allInvestmentsPrice]);
+	const allInvestments = useMemo(
+		() => allInvestmentsPrice.filter(i => allAccountsTransactions.find(j => j.investment === i.name)),
+		[allAccountsTransactions, allInvestmentsPrice]
+	);
+
 	const investmentHistory = useMemo(() => netWorthFlow.map(i => {
 		const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
-		const item = {
-			date: i.date
-		};
+		const item = { date: i.date };
 		filteredInvestments.forEach(j => {
 			if (i.netInvestments.length > 0) {
 				let calculatedValue = i.netInvestments.filter(k => k.name === j).reduce((sum, l) => {
@@ -102,7 +122,6 @@ function InvestmentHistory () {
 				item[j] = calculatedValue;
 			}
 		});
-
 		return item;
 	}).filter(item => {
 		if (investmentHistoryRange === 'yearly') {
@@ -112,17 +131,13 @@ function InvestmentHistory () {
 			const date = new Date(item.date);
 			const month = date.getMonth() + 1;
 			const year = date.getFullYear();
-
-			if (year !== currentYear) {
-				return month === 12;
-			} else {
-				return year === currentYear && month === currentMonth;
-			}
+			if (year !== currentYear) return month === 12;
+			return year === currentYear && month === currentMonth;
 		}
-
 		return true;
 	}).map(item => ({
-		...item, date: investmentHistoryRange === 'yearly' ? item.date.substring(0,4):item.date.substring(0,7)
+		...item,
+		date: investmentHistoryRange === 'yearly' ? item.date.substring(0, 4) : item.date.substring(0, 7)
 	})), [netWorthFlow, historyList, filteredInvestments, investmentHistoryType, investmentHistoryRange, displayCurrency, exchangeRate, allInvestments]);
 
 	useEffect(() => {
@@ -130,11 +145,38 @@ function InvestmentHistory () {
 		dispatch(getNetWorthFlowAction());
 	}, [dispatch]);
 
-	if (netWorthFlow.length > 0) {
+	const panelSx = {
+		background: T.surf,
+		border: `1px solid ${T.rule}`,
+		borderRadius: '16px',
+		padding: { xs: '14px', md: '18px' },
+		color: T.ink
+	};
+
+	if (netWorthFlow.length === 0) {
 		return (
-			<React.Fragment>
-				<Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-					<Stack direction="row" spacing={1} alignItems="center">
+			<Box sx={panelSx}>
+				<LinearProgress color="primary" sx={{ borderRadius: '4px' }} />
+				<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: 1 }}>Loading…</Typography>
+			</Box>
+		);
+	}
+
+	return (
+		<Stack spacing={2}>
+			{/* Header + filters panel */}
+			<Box sx={panelSx}>
+				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+					<Box>
+						<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
+							Position history
+							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 보유내역</Box>
+						</Typography>
+						<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: '4px' }}>
+							{investmentHistoryRange === 'yearly' ? 'Yearly snapshot' : 'Monthly progression'} · {investmentHistoryType === 'amount' ? 'value' : 'quantity'}
+						</Typography>
+					</Box>
+					<Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
 						<ChartControls />
 						<InvestmentFilter
 							allInvestments={allInvestments.map(i => i.name).sort()}
@@ -142,48 +184,79 @@ function InvestmentHistory () {
 						/>
 					</Stack>
 				</Stack>
-				{
-					netWorthFlow.length > 1 &&
-					<ResponsiveContainer width="100%" height={400}>
-						<BarChart
-							data={investmentHistory}
-							margin={{ top: 5, right: 10, left: 20, bottom: 5 }}
-						>
-							<XAxis dataKey="date" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
-							<YAxis hide />
-							<Tooltip content={<CustomTooltip />} />
-							{
-								filteredInvestments.map((i, index) => (
+			</Box>
+
+			{/* Chart panel */}
+			<Box sx={panelSx}>
+				{netWorthFlow.length > 1 ? (
+					<Box sx={{ width: '100%', height: 460 }}>
+						<ResponsiveContainer>
+							<BarChart
+								data={investmentHistory}
+								margin={{ top: 8, right: 12, left: 12, bottom: 8 }}
+							>
+								<XAxis
+									dataKey="date"
+									tick={{ fontSize: 11, fill: T.ink2 }}
+									axisLine={{ stroke: T.rule }}
+									tickLine={false}
+								/>
+								<YAxis hide />
+								<Tooltip
+									content={<ChartTooltip T={T} currency={investmentHistoryType === 'amount' ? displayCurrency : ''} />}
+									cursor={{ fill: T.surf2 }}
+								/>
+								{filteredInvestments.map((i) => (
 									<Bar
 										key={i}
 										dataKey={i}
 										stackId="a"
 										fill={stc(i)}
-										radius={[4, 4, 4, 4]} />
-								))
-							}
-						</BarChart>
-					</ResponsiveContainer>
-				}
-			</React.Fragment>
-		);
-	} else {
-		return (
-			<React.Fragment>
-				<LinearProgress
-					color="secondary"
-					sx={(theme) => ({
-						zIndex: theme.zIndex.drawer + 2,
-						position: 'sticky',
-						top: 64,
-						[theme.breakpoints.down('sm')]: {
-							top: 56
-						}
-					})}
-				/>
-			</React.Fragment>
-		);
-	}
+										radius={[3, 3, 3, 3]}
+										isAnimationActive={false}
+									/>
+								))}
+							</BarChart>
+						</ResponsiveContainer>
+					</Box>
+				) : (
+					<Box sx={{ padding: 4, textAlign: 'center' }}>
+						<Typography sx={{ fontSize: 13, color: T.ink2 }}>Not enough data points yet</Typography>
+					</Box>
+				)}
+			</Box>
+
+			{/* Legend panel */}
+			{filteredInvestments.length > 0 && (
+				<Box sx={panelSx}>
+					<Typography sx={{ ...sDisplay, fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 1.25 }}>
+						Holdings
+						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 종목 · {filteredInvestments.length}</Box>
+					</Typography>
+					<Box sx={{
+						display: 'grid',
+						gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' },
+						gap: 1
+					}}>
+						{[...filteredInvestments].sort().map(name => (
+							<Stack key={name} direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+								<Box sx={{ width: 10, height: 10, borderRadius: '3px', background: stc(name), flexShrink: 0 }} />
+								<Typography sx={{
+									fontSize: 12,
+									color: T.ink,
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap'
+								}}>
+									{name}
+								</Typography>
+							</Stack>
+						))}
+					</Box>
+				</Box>
+			)}
+		</Stack>
+	);
 }
 
 export default InvestmentHistory;

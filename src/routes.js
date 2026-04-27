@@ -6,8 +6,10 @@ import { styled } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import SidebarMenu from './components/SidebarMenu';
+import MobileMenuButton from './components/MobileMenuButton';
 
 import {
+	Accounts,
 	Bank,
 	Investment,
 	Investments,
@@ -45,10 +47,12 @@ function RoutesMain () {
 		<BrowserRouter>
 			<div style={{ display: 'flex' }}>
 				<CssBaseline />
+				<MobileMenuButton />
 				<SidebarMenu />
 				<Content>
 					<Routes>
 						<Route path="/" element={<HomeMain />} />
+						<Route path="/accounts" element={<Accounts />} />
 						{
 							BANK_TYPE.map(i => (<Route key={i} path={`/${i}/:name`} element={<Bank />} />))
 						}

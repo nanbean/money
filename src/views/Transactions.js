@@ -9,7 +9,7 @@ import Paper from '@mui/material/Paper';
 
 import moment from 'moment';
 
-import Layout from '../components/Layout';
+import DesignPage from '../components/DesignPage';
 import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 import SortMenuButton from '../components/SortMenuButton';
@@ -187,7 +187,7 @@ const Transactions = () => {
 	);
 
 	return (
-		<Layout title="Transactions">
+		<DesignPage title="Transactions" titleKo="거래">
 			{isSmallScreen ? (
 				<>
 					<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
@@ -218,7 +218,7 @@ const Transactions = () => {
 				transactions={filteredTransactions} // TODO: need to pass allTransactions for input autocomplete
 			/>
 
-		</Layout>
+		</DesignPage>
 	);
 };
 

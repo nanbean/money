@@ -38,7 +38,7 @@ import Paper from '@mui/material/Paper';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import Layout from '../components/Layout';
+import DesignPage from '../components/DesignPage';
 import Amount from '../components/Amount';
 import SpendingHeatmap from '../components/SpendingHeatmap';
 import BankTransactionModal from '../components/BankTransactionModal';
@@ -403,8 +403,8 @@ function Spending () {
 	const categoryBarH = Math.min(categoryData.length * 38 + 20, 360);
 
 	return (
-		<Layout showPaper={false} title="Spending">
-			<Box sx={{ p: { xs: 1, sm: 2 } }}>
+		<DesignPage title="Spending" titleKo="지출">
+			<Box>
 				{/* Transaction Review */}
 				{uncategorizedTxs.length > 0 && (
 					<Paper
@@ -733,7 +733,7 @@ function Spending () {
 					})}
 				</DialogContent>
 			</Dialog>
-		</Layout>
+		</DesignPage>
 	);
 }
 
