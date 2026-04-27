@@ -10,7 +10,9 @@ const DARK = {
 	ink3: '#5a5a68',
 	rule: '#26262f',
 	pos: '#4ade80',
-	neg: '#f87171'
+	neg: '#f87171',
+	posBg: 'rgba(74,222,128,0.18)',
+	negBg: 'rgba(248,113,113,0.18)'
 };
 
 const LIGHT = {
@@ -22,19 +24,21 @@ const LIGHT = {
 	ink3: '#a8a8b0',
 	rule: '#e8e8e3',
 	pos: '#0f6e3f',
-	neg: '#b73a3a'
+	neg: '#b73a3a',
+	posBg: '#dcfce7',
+	negBg: '#fee2e2'
 };
 
 // `bg` = solid pale shade for tinted icon boxes in LIGHT mode (Tailwind {color}-50).
 // `deep` = very dark shade for icon/text on `bg` in LIGHT mode (Tailwind {color}-950).
 // `tint` (translucent) is kept for DARK mode where rgba layering reads well over the dark surface.
 export const ACCENTS = {
-	indigo:     { hero: '#4338ca', bright: '#818cf8', tint: 'rgba(67,56,202,0.12)',   bg: '#eef0ff', deep: '#1e1b4b' },
-	forest:     { hero: '#15803d', bright: '#4ade80', tint: 'rgba(21,128,61,0.12)',   bg: '#f0fdf4', deep: '#052e16' },
-	terracotta: { hero: '#c2410c', bright: '#fb923c', tint: 'rgba(194,65,12,0.12)',   bg: '#fff7ed', deep: '#431407' },
-	slate:      { hero: '#475569', bright: '#94a3b8', tint: 'rgba(71,85,105,0.12)',   bg: '#f8fafc', deep: '#020617' },
-	wine:       { hero: '#9f1239', bright: '#fb7185', tint: 'rgba(159,18,57,0.12)',   bg: '#fff1f2', deep: '#4c0519' },
-	teal:       { hero: '#0f766e', bright: '#2dd4bf', tint: 'rgba(15,118,110,0.12)',  bg: '#f0fdfa', deep: '#042f2e' }
+	indigo:     { hero: '#3730a3', bright: '#818cf8', tint: 'rgba(55,48,163,0.12)',   bg: '#eef0ff', deep: '#1e1b4b' },
+	forest:     { hero: '#166534', bright: '#4ade80', tint: 'rgba(22,101,52,0.12)',   bg: '#f0fdf4', deep: '#052e16' },
+	terracotta: { hero: '#9a3412', bright: '#fb923c', tint: 'rgba(154,52,18,0.12)',   bg: '#fff7ed', deep: '#431407' },
+	slate:      { hero: '#334155', bright: '#94a3b8', tint: 'rgba(51,65,85,0.12)',    bg: '#f8fafc', deep: '#020617' },
+	wine:       { hero: '#881337', bright: '#fb7185', tint: 'rgba(136,19,55,0.12)',   bg: '#fff1f2', deep: '#4c0519' },
+	teal:       { hero: '#115e59', bright: '#2dd4bf', tint: 'rgba(17,94,89,0.12)',    bg: '#f0fdfa', deep: '#042f2e' }
 };
 
 export const ACCENT_LABELS = {

@@ -511,7 +511,7 @@ export function Investments () {
 								<Stack direction="row" spacing={1} alignItems="center" sx={{ marginTop: '8px', flexWrap: 'wrap', rowGap: 0.5 }}>
 									<Box sx={{
 										color: accentColor,
-										background: isPositive ? 'rgba(74,222,128,0.18)' : 'rgba(248,113,113,0.18)',
+										background: isPositive ? T.posBg : T.negBg,
 										padding: '4px 10px',
 										borderRadius: '999px',
 										fontWeight: 600,

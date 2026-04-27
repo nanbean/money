@@ -5,7 +5,7 @@ const initialState = [];
 export default function notifications (state = initialState, action) {
 	switch (action.type) {
 	case actions.SET_NOTIFICATION_HISTORY:
-		if (action.body) {
+		if (Array.isArray(action.body)) {
 			return action.body;
 		} else {
 			return state;

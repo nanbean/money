@@ -144,7 +144,7 @@ export function Investment () {
 
 	const heroBg = T.dark
 		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
-		: `linear-gradient(135deg, ${T.acc.hero} 0%, #5b4fd8 100%)`;
+		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
 	const heroInk = '#ffffff';
 	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
 
@@ -199,7 +199,7 @@ export function Investment () {
 						<Stack direction="row" spacing={1.25} sx={{ marginTop: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
 							<Box sx={{
 								color: stats.ret >= 0 ? T.pos : T.neg,
-								background: stats.ret >= 0 ? 'rgba(74,222,128,0.18)' : 'rgba(248,113,113,0.18)',
+								background: stats.ret >= 0 ? T.posBg : T.negBg,
 								padding: '4px 10px',
 								borderRadius: '999px',
 								fontWeight: 600,

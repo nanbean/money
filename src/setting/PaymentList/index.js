@@ -327,7 +327,7 @@ export default function PaymentList () {
 			<Box sx={{
 				background: T.dark
 					? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
-					: `linear-gradient(135deg, ${T.acc.hero} 0%, #5b4fd8 100%)`,
+					: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`,
 				color: '#fff',
 				borderRadius: '20px',
 				padding: { xs: '20px', md: '28px' },

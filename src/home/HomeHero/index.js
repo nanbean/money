@@ -128,7 +128,7 @@ export default function HomeHero () {
 
 	const heroBg = T.dark
 		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
-		: `linear-gradient(135deg, ${T.acc.hero} 0%, #5b4fd8 100%)`;
+		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
 	const heroInk = '#ffffff';
 	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
 
@@ -179,7 +179,7 @@ export default function HomeHero () {
 							<>
 								<Box sx={{
 									color: monthDelta.diff >= 0 ? T.pos : T.neg,
-									background: monthDelta.diff >= 0 ? 'rgba(74,222,128,0.18)' : 'rgba(248,113,113,0.18)',
+									background: monthDelta.diff >= 0 ? T.posBg : T.negBg,
 									padding: '4px 10px',
 									borderRadius: '999px',
 									fontWeight: 600,

@@ -100,7 +100,7 @@ export function Bank () {
 
 	const heroBg = T.dark
 		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
-		: `linear-gradient(135deg, ${T.acc.hero} 0%, #5b4fd8 100%)`;
+		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
 	const heroInk = '#ffffff';
 	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
 
