@@ -57,6 +57,7 @@ export default function HomeUpcoming () {
 			category: i.category + (i.subcategory ? `:${i.subcategory}` : ''),
 			amount: i.amount,
 			memo: i.memo,
+			isEdit: false,
 			index: idx
 		}));
 	};

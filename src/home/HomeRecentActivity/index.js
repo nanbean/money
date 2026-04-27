@@ -12,6 +12,7 @@ import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 import { openTransactionInModal } from '../../actions/ui/form/bankTransaction';
+import BankTransactionModal from '../../components/BankTransactionModal';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const tint = (hex, alphaHex = '22') => `${hex}${alphaHex}`;
@@ -28,12 +29,14 @@ export default function HomeRecentActivity () {
 		return [...list].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 8);
 	}, [allAccountsTransactions]);
 
-	const onClickRow = (t) => () => {
+	const onClickRow = (t, idx) => () => {
 		dispatch(openTransactionInModal({
 			...t,
 			date: t.date,
 			amount: t.amount,
-			memo: t.memo
+			memo: t.memo,
+			isEdit: true,
+			index: idx
 		}));
 	};
 
@@ -70,7 +73,7 @@ export default function HomeRecentActivity () {
 				return (
 					<Box
 						key={t._id || idx}
-						onClick={onClickRow(t)}
+						onClick={onClickRow(t, idx)}
 						sx={{
 							display: 'grid',
 							gridTemplateColumns: '36px 1fr auto',
@@ -110,6 +113,7 @@ export default function HomeRecentActivity () {
 					</Box>
 				);
 			})}
+			<BankTransactionModal isEdit transactions={recent} />
 		</Box>
 	);
 }
