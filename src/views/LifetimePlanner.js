@@ -18,7 +18,7 @@ import DesignPage from '../components/DesignPage';
 import SortMenuButton from '../components/SortMenuButton';
 
 import useT from '../hooks/useT';
-import { sDisplay, sMono, fmtCurrency, colorFor } from '../utils/designTokens';
+import { sDisplay, sMono, fmtCurrency } from '../utils/designTokens';
 
 import { updateGeneralAction } from '../actions/couchdbSettingActions';
 import { getLifetimeFlowAction } from '../actions/couchdbReportActions';
@@ -202,64 +202,115 @@ function LifetimePlanner () {
 		whiteSpace: 'nowrap'
 	});
 
+	const heroBg = T.dark
+		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
+		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
+	const heroInk = '#ffffff';
+	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
+	const heroDivider = T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)';
+
+	const safe = summary && !summary.depleteYear;
+	const statusBg = summary
+		? (safe ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.22)')
+		: 'transparent';
+	const statusFg = summary
+		? (safe ? '#34d399' : '#fb7185')
+		: heroInk;
+	const statusLabel = summary
+		? (safe ? 'No depletion projected · 고갈 없음' : `Depletes ${summary.depleteYear} · ${summary.depleteYear - currentYear}y away`)
+		: '';
+
 	return (
 		<DesignPage title="Lifetime Planner" titleKo="평생계획">
 			<Stack spacing={2}>
-				{/* Summary stat cards */}
+				{/* Hero panel */}
 				{summary && (
 					<Box sx={{
-						display: 'grid',
-						gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-						gap: 2
+						position: 'relative',
+						overflow: 'hidden',
+						background: heroBg,
+						borderRadius: '20px',
+						padding: { xs: '20px', md: '28px' },
+						color: heroInk
 					}}>
-						<Box sx={panelSx}>
-							<Typography sx={{ fontSize: 10, color: T.ink3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-								Current · 현재
-							</Typography>
-							<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, marginTop: '6px', color: T.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-								{fmtCurrency(summary.currentValue, displayCurrency)}
-							</Typography>
-							<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, marginTop: '2px' }}>{summary.currentYear}</Typography>
-						</Box>
-						<Box sx={panelSx}>
-							<Typography sx={{ fontSize: 10, color: T.ink3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-								Peak · 최고점
-							</Typography>
-							<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, marginTop: '6px', color: T.pos, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-								{fmtCurrency(summary.peakValue, displayCurrency)}
-							</Typography>
-							<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, marginTop: '2px' }}>{summary.peakYear}</Typography>
-						</Box>
-						<Box sx={panelSx}>
-							<Typography sx={{ fontSize: 10, color: T.ink3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-								Final · 최종
-							</Typography>
-							<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, marginTop: '6px', color: colorFor(T, summary.finalValue), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-								{fmtCurrency(summary.finalValue, displayCurrency)}
-							</Typography>
-							<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, marginTop: '2px' }}>{summary.finalYear}</Typography>
-						</Box>
-						<Box sx={panelSx}>
-							<Typography sx={{ fontSize: 10, color: T.ink3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-								Depletion · 고갈 시점
+						<Box sx={{
+							position: 'absolute',
+							top: -100,
+							right: -100,
+							width: 360,
+							height: 360,
+							borderRadius: '50%',
+							background: `radial-gradient(circle, ${T.acc.bright}55 0%, transparent 70%)`,
+							pointerEvents: 'none'
+						}}/>
+						<Box sx={{ position: 'relative', minWidth: 0 }}>
+							<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+								Final value · 최종 자산 ({summary.finalYear})
 							</Typography>
 							<Typography sx={{
 								...sDisplay,
-								fontSize: 18,
+								fontSize: { xs: 32, sm: 42, md: 52 },
 								fontWeight: 700,
-								marginTop: '6px',
-								color: summary.depleteYear ? T.neg : T.pos,
-								whiteSpace: 'nowrap',
+								lineHeight: 1,
+								marginTop: '12px',
+								color: summary.finalValue < 0 ? '#fb7185' : heroInk,
 								overflow: 'hidden',
-								textOverflow: 'ellipsis'
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap'
 							}}>
-								{summary.depleteYear ? `${summary.depleteYear}` : 'Safe'}
+								{fmtCurrency(summary.finalValue, displayCurrency)}
 							</Typography>
-							<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, marginTop: '2px' }}>
-								{summary.depleteYear
-									? `${summary.depleteYear - currentYear}y away`
-									: 'No depletion projected'}
-							</Typography>
+							<Box sx={{
+								display: 'inline-flex',
+								alignItems: 'center',
+								marginTop: 1.5,
+								padding: '4px 12px',
+								borderRadius: '999px',
+								background: statusBg,
+								color: statusFg,
+								fontSize: 12,
+								fontWeight: 600,
+								...sMono
+							}}>
+								{statusLabel}
+							</Box>
+						</Box>
+						<Box sx={{
+							display: 'grid',
+							gridTemplateColumns: { xs: 'repeat(3, 1fr)' },
+							gap: { xs: 1.5, md: 3 },
+							marginTop: { xs: '20px', md: '28px' },
+							position: 'relative'
+						}}>
+							{[
+								{ label: 'Current · 현재', value: fmtCurrency(summary.currentValue, displayCurrency), sub: String(summary.currentYear), color: heroInk, divider: false },
+								{ label: 'Peak · 최고점', value: fmtCurrency(summary.peakValue, displayCurrency), sub: String(summary.peakYear), color: '#34d399', divider: true },
+								{ label: 'Years to peak · 도달', value: `${Math.max(0, summary.peakYear - currentYear)}y`, sub: summary.peakYear > currentYear ? 'ahead' : 'reached', color: heroInk, divider: true }
+							].map((s) => (
+								<Box key={s.label} sx={{
+									borderLeft: { xs: 'none', md: s.divider ? `1px solid ${heroDivider}` : 'none' },
+									paddingLeft: { xs: 0, md: s.divider ? '24px' : 0 },
+									minWidth: 0
+								}}>
+									<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
+										{s.label}
+									</Typography>
+									<Typography sx={{
+										...sDisplay,
+										...sMono,
+										fontSize: { xs: 16, md: 22 },
+										fontWeight: 700,
+										marginTop: '6px',
+										color: s.color,
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap'
+									}}>
+										{s.value}
+									</Typography>
+									<Typography sx={{ ...sMono, fontSize: 11, color: heroDim, marginTop: '2px' }}>{s.sub}</Typography>
+								</Box>
+							))}
 						</Box>
 					</Box>
 				)}

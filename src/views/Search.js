@@ -177,8 +177,9 @@ export function Search () {
 			if (!safeAccounts.includes(accountName)) return false;
 
 			if (categoriesSet) {
-				const baseCat = (t.category || '').split(':')[0];
-				if (!categoriesSet.has(t.category) && !categoriesSet.has(baseCat)) return false;
+				const baseCat = t.category || '';
+				const fullCat = t.subcategory ? `${baseCat}:${t.subcategory}` : baseCat;
+				if (!categoriesSet.has(fullCat) && !categoriesSet.has(baseCat)) return false;
 			}
 			if (subcatRegex && !(t.subcategory && subcatRegex.test(t.subcategory))) return false;
 			if (startDate && t.date < startDate) return false;
