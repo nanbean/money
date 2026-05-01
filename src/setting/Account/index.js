@@ -14,7 +14,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloseIcon from '@mui/icons-material/Close';
 
 import useT from '../../hooks/useT';
-import { sDisplay, sMono, fmtCurrency, labelStyle } from '../../utils/designTokens';
+import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, labelStyle } from '../../utils/designTokens';
 
 import { TYPE_ICON_MAP, TYPE_NAME_MAP } from '../../constants';
 import {
@@ -282,7 +282,7 @@ export default function Account () {
 											whiteSpace: 'nowrap',
 											display: { xs: 'none', md: 'block' }
 										}}>
-											{fmtCurrency(balance, a.currency || 'KRW')}
+											{fmtCurrencyFull(balance, a.currency || 'KRW')}
 										</Typography>
 										<Typography sx={{
 											fontSize: 11,

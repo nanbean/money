@@ -11,6 +11,7 @@ import Tooltip from '@mui/material/Tooltip';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PieChartOutlineIcon from '@mui/icons-material/PieChartOutline';
 import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
 import OutlinedFlagIcon from '@mui/icons-material/OutlinedFlag';
@@ -32,6 +33,7 @@ const navItems = [
 	{ path: '/', exact: true, en: 'Home', ko: '홈', Icon: HomeOutlinedIcon },
 	{ path: '/accounts', en: 'Accounts', ko: '계좌', Icon: CreditCardOutlinedIcon },
 	{ path: '/investments', en: 'Investments', ko: '투자', Icon: TrendingUpOutlinedIcon },
+	{ path: '/spending', en: 'Spending', ko: '지출', Icon: ReceiptLongOutlinedIcon },
 	{ path: '/report', en: 'Reports', ko: '리포트', Icon: PieChartOutlineIcon },
 	{ path: '/networth', en: 'Net worth', ko: '순자산', Icon: AccountBalanceOutlinedIcon },
 	{ path: '/lifetimeplanner', en: 'Lifetime', ko: '평생계획', Icon: OutlinedFlagIcon },
@@ -131,7 +133,10 @@ function SidebarMenu () {
 
 	return (
 		<Drawer
-			variant="permanent"
+			variant={isMobile ? 'temporary' : 'permanent'}
+			open={isMobile ? isSidebarOpen : true}
+			onClose={() => dispatch(toggleSidebar())}
+			ModalProps={{ keepMounted: true }}
 			PaperProps={{
 				style: {
 					// Dark: #0c0c12 (subtle pop above bg #0a0a0f)
@@ -142,20 +147,17 @@ function SidebarMenu () {
 					backgroundImage: 'none'
 				}
 			}}
-			sx={(theme) => ({
-				position: 'relative',
-				boxSizing: 'border-box',
-				width: drawerWidth,
+			sx={{
+				// Permanent variant takes layout space (desktop). Temporary doesn't (mobile overlay).
+				width: isMobile ? 0 : drawerWidth,
 				flexShrink: 0,
 				whiteSpace: 'nowrap',
-				[theme.breakpoints.down('sm')]: { width: isSidebarOpen ? drawerWidth : 0 },
 				'& .MuiDrawer-paper': {
 					width: drawerWidth,
-					overflowX: 'hidden',
-					[theme.breakpoints.down('sm')]: { width: isSidebarOpen ? drawerWidth : 0 }
+					boxSizing: 'border-box',
+					overflowX: 'hidden'
 				}
-			})}
-			open={isSidebarOpen}
+			}}
 		>
 			<Box sx={{ height: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '22px 14px' }}>
 				{/* Brand */}

@@ -24,7 +24,7 @@ import { updateGeneralAction } from '../actions/couchdbSettingActions';
 import { getInvestmentPerformance, computeChainLinkedTwr } from '../utils/performance';
 import { toCurrencyFormatWithSymbol } from '../utils/formatting';
 import useT from '../hooks/useT';
-import { sDisplay, sMono, fmtCurrency, fmtQty, colorFor } from '../utils/designTokens';
+import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, fmtQty, colorFor } from '../utils/designTokens';
 
 const RANGES = ['1W', '2M', '3M', 'YTD', '1Y', 'All'];
 const DAILY_RANGES = ['1W', '2M'];
@@ -378,10 +378,18 @@ export function Investments () {
 	}, [rawStockList, sortBy, exchangeRate]);
 
 	const { totalProfit, totalPurchasedValue, totalAppraisedValue } = stockList.reduce((totals, inv) => {
-		const toKRW = (v) => inv.currency === 'USD' ? v * exchangeRate : v;
-		totals.totalProfit += toKRW(inv.profit);
-		totals.totalPurchasedValue += toKRW(inv.purchasedValue);
-		totals.totalAppraisedValue += toKRW(inv.appraisedValue);
+		const invCurrency = inv.currency || 'KRW';
+		const validRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
+		const toDisplay = (v) => {
+			const num = Number(v) || 0;
+			if (invCurrency === currency) return num;
+			if (currency === 'USD' && invCurrency === 'KRW') return num / validRate;
+			if (currency === 'KRW' && invCurrency === 'USD') return num * validRate;
+			return num;
+		};
+		totals.totalProfit += toDisplay(inv.profit);
+		totals.totalPurchasedValue += toDisplay(inv.purchasedValue);
+		totals.totalAppraisedValue += toDisplay(inv.appraisedValue);
 		return totals;
 	}, { totalProfit: 0, totalPurchasedValue: 0, totalAppraisedValue: 0 });
 
@@ -688,7 +696,7 @@ export function Investments () {
 									}}>
 										<Typography sx={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{a.name}</Typography>
 										<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: a.balance < 0 ? T.neg : T.ink }}>
-											{fmtCurrency(Number(a.balance) || 0, a.currency || 'KRW')}
+											{fmtCurrencyFull(Number(a.balance) || 0, a.currency || 'KRW')}
 										</Typography>
 									</Box>
 								</Link>
@@ -768,11 +776,11 @@ export function Investments () {
 												textAlign: 'right',
 												display: { xs: 'none', md: 'block' }
 											}}>
-												{fmtCurrency(i.appraisedValue, i.currency)}
+												{fmtCurrencyFull(i.appraisedValue, i.currency)}
 											</Typography>
 											<Stack alignItems="flex-end" sx={{ minWidth: 0 }}>
 												<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: profitColor, whiteSpace: 'nowrap' }}>
-													{i.profit >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(i.profit), i.currency)}
+													{i.profit >= 0 ? '+' : '−'}{fmtCurrencyFull(Math.abs(i.profit), i.currency)}
 												</Typography>
 												<Typography sx={{ ...sMono, fontSize: 11, color: profitColor }}>
 													{i.return > 0 ? '+' : ''}{(i.return * 100).toFixed(2)}%

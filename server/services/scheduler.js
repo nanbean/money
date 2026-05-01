@@ -20,13 +20,21 @@ const safeRun = async (name, fn) => {
 };
 
 const updateInvestmentPrice = async () => {
-	await safeRun('arrangeExchangeRate', arrangeExchangeRate);
-	await safeRun('arrangeKRInvestmemt', arrangeKRInvestmemt);
-	await safeRun('arrangeUSInvestmemt', arrangeUSInvestmemt);
+	// Stage 1: independent external fetches — exchange rate + KR/US prices.
+	// Run in parallel since none depend on each other.
+	await Promise.all([
+		safeRun('arrangeExchangeRate', arrangeExchangeRate),
+		safeRun('arrangeKRInvestmemt', arrangeKRInvestmemt),
+		safeRun('arrangeUSInvestmemt', arrangeUSInvestmemt)
+	]);
+	// Stage 2: account balances need updated prices + exchange rate from stage 1.
 	await safeRun('updateAccountList', updateAccountList);
-	await safeRun('updateLifeTimePlanner', updateLifeTimePlanner);
-	await safeRun('updateNetWorth', updateNetWorth);
-	await safeRun('updateNetWorthDaily', updateNetWorthDaily);
+	// Stage 3: derived reports — all read account list, independent of each other.
+	await Promise.all([
+		safeRun('updateLifeTimePlanner', updateLifeTimePlanner),
+		safeRun('updateNetWorth', updateNetWorth),
+		safeRun('updateNetWorthDaily', updateNetWorthDaily)
+	]);
 };
 
 (async () => {

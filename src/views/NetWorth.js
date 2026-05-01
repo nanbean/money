@@ -327,33 +327,28 @@ function NetWorth () {
 								{fmtCurrency(breakdown.netWorth, displayCurrency)}
 							</Typography>
 							{monthDelta && (
-								<Stack direction="row" spacing={1.25} alignItems="center" sx={{ marginTop: 1.5, flexWrap: 'wrap', rowGap: 0.5 }}>
+								<Stack direction="row" alignItems="center" sx={{ marginTop: 1.5, flexWrap: 'wrap', columnGap: 1.25, rowGap: 0.5 }}>
 									<Box sx={{
 										color: monthDelta.diff >= 0 ? T.pos : T.neg,
 										background: monthDelta.diff >= 0 ? T.posBg : T.negBg,
-										padding: '4px 10px',
+										padding: '0 12px',
 										borderRadius: '999px',
 										fontWeight: 600,
 										fontSize: 13,
+										minHeight: 28,
+										display: 'inline-flex',
+										alignItems: 'center',
 										...sMono
 									}}>
 										{monthDelta.diff >= 0 ? '+' : ''}{monthDelta.pct.toFixed(2)}%
 									</Box>
-									<Typography sx={{ ...sMono, color: heroDim, fontSize: 13 }}>
+									<Typography sx={{ ...sMono, color: heroDim, fontSize: 13, lineHeight: '28px' }}>
 										{monthDelta.diff >= 0 ? '+' : '−'}
 										{fmtCurrency(Math.abs(monthDelta.diff), displayCurrency)} past month
 									</Typography>
 								</Stack>
 							)}
 						</Box>
-						<SortMenuButton
-							value={netWorthChartRange}
-							onChange={handleRangeChange}
-							options={[
-								{ value: 'monthly', label: 'Monthly' },
-								{ value: 'yearly', label: 'Yearly' }
-							]}
-						/>
 					</Stack>
 					<Box sx={{
 						display: 'grid',
@@ -369,8 +364,9 @@ function NetWorth () {
 							{ label: 'Liabilities · 부채', value: breakdown.liabOther, divider: true }
 						].map((s) => (
 							<Box key={s.label} sx={{
-								borderLeft: s.divider ? `1px solid ${T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)'}` : 'none',
-								paddingLeft: s.divider ? '24px' : 0,
+								// Dividers only on md+ horizontal row; mobile wraps to 2x2 grid.
+								borderLeft: { xs: 'none', md: s.divider ? `1px solid ${T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)'}` : 'none' },
+								paddingLeft: { xs: 0, md: s.divider ? '24px' : 0 },
 								minWidth: 0
 							}}>
 								<Typography sx={{
@@ -401,14 +397,24 @@ function NetWorth () {
 
 				{/* Net worth trend chart */}
 				<Box sx={panelSx}>
-					<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
-						<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
-							Trend
-							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 추이</Box>
-						</Typography>
-						<Typography sx={{ fontSize: 11, color: T.ink3 }}>
-							{netWorthChartRange === 'yearly' ? 'Year-end snapshots' : 'Monthly progression'}
-						</Typography>
+					<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5, gap: 1, flexWrap: 'wrap' }}>
+						<Stack direction="row" alignItems="baseline" spacing={1} sx={{ minWidth: 0 }}>
+							<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
+								Trend
+								<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 추이</Box>
+							</Typography>
+							<Typography sx={{ fontSize: 11, color: T.ink3 }}>
+								{netWorthChartRange === 'yearly' ? 'Year-end snapshots' : 'Monthly progression'}
+							</Typography>
+						</Stack>
+						<SortMenuButton
+							value={netWorthChartRange}
+							onChange={handleRangeChange}
+							options={[
+								{ value: 'monthly', label: 'Monthly' },
+								{ value: 'yearly', label: 'Yearly' }
+							]}
+						/>
 					</Stack>
 					{rangedNetWorthFlow.length > 1 ? (
 						<Box sx={{ width: '100%', height: 360 }}>

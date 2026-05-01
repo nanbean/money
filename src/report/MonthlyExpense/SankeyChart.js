@@ -3,11 +3,13 @@ import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
 import ReactECharts from 'echarts-for-react';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { toCurrencyFormat } from '../../utils/formatting';
 
 const SankeyChart = ({ data }) => {
 	const theme = useTheme();
 	const isDarkMode = theme.palette.mode === 'dark';
+	const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 	const { currency: displayCurrency, exchangeRate } = useSelector((state) => state.settings);
 
 	const { nodes, links } = useMemo(() => {
@@ -61,8 +63,16 @@ const SankeyChart = ({ data }) => {
 					curveness: 0.5
 				},
 				label: {
-					color: isDarkMode ? '#fff' : '#000'
-				}
+					color: isDarkMode ? '#fff' : '#000',
+					fontSize: isMobile ? 10 : 12
+				},
+				nodeWidth: isMobile ? 14 : 20,
+				nodeGap: isMobile ? 4 : 8,
+				left: isMobile ? 4 : 10,
+				right: isMobile ? 60 : 80,
+				top: isMobile ? 6 : 10,
+				bottom: isMobile ? 6 : 10,
+				layoutIterations: 64
 			}
 		]
 	};

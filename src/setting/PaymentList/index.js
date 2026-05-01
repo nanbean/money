@@ -18,7 +18,7 @@ import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import RepeatIcon from '@mui/icons-material/Repeat';
 
 import useT from '../../hooks/useT';
-import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
+import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 
@@ -292,7 +292,7 @@ export default function PaymentList () {
 
 				<Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'right' }}>
 					<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.ink, whiteSpace: 'nowrap' }}>
-						{fmtCurrency(p.amount, p.currency)}
+						{fmtCurrencyFull(p.amount, p.currency)}
 					</Typography>
 					<Typography sx={{ fontSize: 10, color: T.ink3, marginTop: '2px' }}>
 						day {p.day} · {INTERVAL_LABEL(p.interval).en.toLowerCase()}
@@ -432,7 +432,7 @@ export default function PaymentList () {
 											{p.payee || '(no payee)'}
 										</Typography>
 										<Typography sx={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>
-											{days <= 0 ? 'today' : `in ${days}d`} · {fmtCurrency(p.amount, p.currency)}
+											{days <= 0 ? 'today' : `in ${days}d`} · {fmtCurrencyFull(p.amount, p.currency)}
 										</Typography>
 									</Box>
 								</Box>

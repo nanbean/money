@@ -14,38 +14,27 @@ import {
 } from 'recharts';
 
 import PropTypes from 'prop-types';
-import { useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
-
 import Collapse from '@mui/material/Collapse';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
 
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 import DesignPage from '../components/DesignPage';
-import Amount from '../components/Amount';
 import SpendingHeatmap from '../components/SpendingHeatmap';
 import BankTransactionModal from '../components/BankTransactionModal';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
 import { getCategoryColor } from '../utils/categoryColor';
 import { getCategoryIcon } from '../utils/categoryIcon';
-import { toCurrencyFormatWithSymbol } from '../utils/formatting';
+import useT from '../hooks/useT';
+import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../utils/designTokens';
 import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
 
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
@@ -53,17 +42,16 @@ const EXPENSE_TYPES = ['Bank', 'CCard', 'Cash'];
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const INFLATION_RATE = 1.025;
 
-// Returns start month string (YYYY-MM) for the given range
 const getStartMonthStr = (range) => {
 	const now = new Date();
 	const year = now.getFullYear();
-	const month = now.getMonth(); // 0-indexed
+	const month = now.getMonth();
 	switch (range) {
-	case '1M': return new Date(year, month, 1).toISOString().slice(0, 7);       // current month only
-	case '3M': return new Date(year, month - 2, 1).toISOString().slice(0, 7);   // 3 months
-	case '6M': return new Date(year, month - 5, 1).toISOString().slice(0, 7);   // 6 months
-	case 'YTD': return `${year}-01`;                                              // Jan to current month
-	case '1Y': return new Date(year, month - 12, 1).toISOString().slice(0, 7);  // 12 months
+	case '1M': return new Date(year, month, 1).toISOString().slice(0, 7);
+	case '3M': return new Date(year, month - 2, 1).toISOString().slice(0, 7);
+	case '6M': return new Date(year, month - 5, 1).toISOString().slice(0, 7);
+	case 'YTD': return `${year}-01`;
+	case '1Y': return new Date(year, month - 12, 1).toISOString().slice(0, 7);
 	default: return null;
 	}
 };
@@ -80,20 +68,33 @@ const makeFormatYAxis = (currency) => (value) => {
 	return value.toLocaleString();
 };
 
-const ChartTooltip = ({ active, payload, label, currency }) => {
+const ChartTooltip = ({ active, payload, label, T, currency }) => {
 	if (active && payload && payload.length) {
 		const actual = payload.find(p => p.dataKey === 'actual')?.value ?? payload[0].value;
 		const projected = payload.find(p => p.dataKey === 'projected')?.value ?? 0;
 		return (
-			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, boxShadow: 3 }}>
-				<Typography variant="caption" color="text.secondary">{label}</Typography>
+			<Box sx={{
+				background: T.surf,
+				padding: 1,
+				border: `1px solid ${T.rule}`,
+				borderRadius: '8px',
+				boxShadow: T.dark ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(15,23,42,0.08)',
+				minWidth: 140
+			}}>
+				<Typography sx={{ fontSize: 11, color: T.ink2, marginBottom: 0.25 }}>{label}</Typography>
 				{projected > 0 ? (
 					<>
-						<Typography variant="body2">{`Actual: ${toCurrencyFormatWithSymbol(actual, currency)}`}</Typography>
-						<Typography variant="body2" color="text.secondary">{`Projected: ${toCurrencyFormatWithSymbol(actual + projected, currency)}`}</Typography>
+						<Typography sx={{ ...sMono, fontSize: 12, fontWeight: 600, color: T.ink }}>
+							{`Actual ${fmtCurrency(actual, currency)}`}
+						</Typography>
+						<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2 }}>
+							{`Projected ${fmtCurrency(actual + projected, currency)}`}
+						</Typography>
 					</>
 				) : (
-					<Typography variant="body2" fontWeight="bold">{toCurrencyFormatWithSymbol(actual, currency)}</Typography>
+					<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 700, color: T.ink }}>
+						{fmtCurrency(actual, currency)}
+					</Typography>
 				)}
 			</Box>
 		);
@@ -105,21 +106,36 @@ ChartTooltip.propTypes = {
 	active: PropTypes.bool,
 	currency: PropTypes.string,
 	label: PropTypes.string,
-	payload: PropTypes.array
+	payload: PropTypes.array,
+	T: PropTypes.object
 };
 
-const AnnualTooltip = ({ active, payload, label, currency, currentYear }) => {
+const AnnualTooltip = ({ active, payload, label, T, currency, currentYear }) => {
 	if (active && payload && payload.length) {
 		const lastYear = payload.find(p => p.dataKey === 'lastYear')?.value ?? 0;
 		const actual = payload.find(p => p.dataKey === 'actual')?.value;
 		const projected = payload.find(p => p.dataKey === 'projected')?.value;
 		const thisYear = actual ?? projected ?? 0;
 		return (
-			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, boxShadow: 3 }}>
-				<Typography variant="caption" color="text.secondary">{label} (Cumulative)</Typography>
-				<Typography variant="body2" color="text.disabled">{`${currentYear - 1}: ${toCurrencyFormatWithSymbol(lastYear, currency)}`}</Typography>
-				<Typography variant="body2" fontWeight="bold" color={projected != null && actual == null ? 'text.secondary' : 'text.primary'}>
-					{`${currentYear}${projected != null && actual == null ? ' (proj.)' : ''}: ${toCurrencyFormatWithSymbol(thisYear, currency)}`}
+			<Box sx={{
+				background: T.surf,
+				padding: 1,
+				border: `1px solid ${T.rule}`,
+				borderRadius: '8px',
+				boxShadow: T.dark ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(15,23,42,0.08)',
+				minWidth: 160
+			}}>
+				<Typography sx={{ fontSize: 11, color: T.ink2, marginBottom: 0.25 }}>{label} (Cumulative)</Typography>
+				<Typography sx={{ ...sMono, fontSize: 11, color: T.ink3 }}>
+					{`${currentYear - 1} ${fmtCurrency(lastYear, currency)}`}
+				</Typography>
+				<Typography sx={{
+					...sMono,
+					fontSize: 12,
+					fontWeight: 700,
+					color: projected != null && actual == null ? T.ink2 : T.ink
+				}}>
+					{`${currentYear}${projected != null && actual == null ? ' (proj.)' : ''} ${fmtCurrency(thisYear, currency)}`}
 				</Typography>
 			</Box>
 		);
@@ -132,14 +148,61 @@ AnnualTooltip.propTypes = {
 	currency: PropTypes.string,
 	currentYear: PropTypes.number,
 	label: PropTypes.string,
-	payload: PropTypes.array
+	payload: PropTypes.array,
+	T: PropTypes.object
+};
+
+function StatCell ({ label, value, sub, divider, T }) {
+	return (
+		<Box sx={{
+			// Dividers only on md+ horizontal row; mobile wraps to 2x2 grid.
+			borderLeft: { xs: 'none', md: divider ? `1px solid ${T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)'}` : 'none' },
+			paddingLeft: { xs: 0, md: divider ? '24px' : 0 },
+			minWidth: 0
+		}}>
+			<Typography sx={{
+				fontSize: 11,
+				color: T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)',
+				textTransform: 'uppercase',
+				letterSpacing: '0.08em',
+				fontWeight: 500
+			}}>
+				{label}
+			</Typography>
+			<Typography sx={{
+				...sDisplay,
+				fontSize: { xs: 18, md: 24 },
+				fontWeight: 600,
+				color: '#fff',
+				marginTop: '8px',
+				whiteSpace: 'nowrap',
+				overflow: 'hidden',
+				textOverflow: 'ellipsis'
+			}}>
+				{value}
+			</Typography>
+			{sub && (
+				<Typography sx={{ ...sMono, fontSize: 11, color: T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
+					{sub}
+				</Typography>
+			)}
+		</Box>
+	);
+}
+
+StatCell.propTypes = {
+	divider: PropTypes.bool,
+	label: PropTypes.string,
+	sub: PropTypes.node,
+	T: PropTypes.object,
+	value: PropTypes.node
 };
 
 function Spending () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const accountList = useSelector((state) => state.accountList);
 	const { currency, exchangeRate, livingExpenseExempt = [] } = useSelector((state) => state.settings);
-	const theme = useTheme();
+	const T = useT();
 
 	const dispatch = useDispatch();
 	const [range, setRange] = useState('3M');
@@ -147,7 +210,6 @@ function Spending () {
 	const [projectionExpanded, setProjectionExpanded] = useState(false);
 	const [txDialog, setTxDialog] = useState(null); // { mode: 'category'|'payee', key: string }
 
-	// Uncategorized transactions (all time, Bank/CCard/Cash, expenses)
 	const uncategorizedTxs = useMemo(() => {
 		return allAccountsTransactions
 			.filter(tx => {
@@ -356,19 +418,35 @@ function Spending () {
 		spendingTransactions.forEach(tx => {
 			const payee = tx.payee || '(none)';
 			const cat = (tx.category || '기타 지출').split(':')[0];
-			if (!map[payee]) map[payee] = { payee, total: 0, count: 0, categories: {} };
+			const txCurrency = accountCurrencyMap[tx.accountId] || 'KRW';
+			const abs = Math.abs(tx.amount);
+			if (!map[payee]) map[payee] = { payee, total: 0, count: 0, categories: {}, native: {} };
 			map[payee].total += toDisplayAmount(tx);
 			map[payee].count += 1;
 			map[payee].categories[cat] = (map[payee].categories[cat] || 0) + toDisplayAmount(tx);
+			map[payee].native[txCurrency] = (map[payee].native[txCurrency] || 0) + abs;
 		});
 		return Object.values(map)
 			.map(p => {
 				const topCat = Object.entries(p.categories).sort((a, b) => b[1] - a[1])[0]?.[0];
-				return { payee: p.payee, total: Math.round(p.total), count: p.count, category: topCat };
+				const nativeKeys = Object.keys(p.native);
+				const singleCurrency = nativeKeys.length === 1 ? nativeKeys[0] : null;
+				const displayTotal = singleCurrency
+					? Math.round(p.native[singleCurrency])
+					: Math.round(p.total);
+				const displayCurrency = singleCurrency || currency;
+				return {
+					payee: p.payee,
+					total: Math.round(p.total),
+					displayTotal,
+					displayCurrency,
+					count: p.count,
+					category: topCat
+				};
 			})
 			.sort((a, b) => b.total - a.total)
 			.slice(0, 10);
-	}, [spendingTransactions, toDisplayAmount]);
+	}, [spendingTransactions, toDisplayAmount, accountCurrencyMap, currency]);
 
 	const totalSpending = useMemo(() =>
 		Math.round(spendingTransactions.reduce((sum, tx) => sum + toDisplayAmount(tx), 0)),
@@ -399,177 +477,324 @@ function Spending () {
 		: null;
 
 	const formatYAxis = makeFormatYAxis(currency);
-	const barColor = theme.palette.mode === 'dark' ? '#5e9cd4' : '#4472c4';
+	const barColor = T.acc.hero;
+	const projectedBarColor = T.acc.bright;
 	const categoryBarH = Math.min(categoryData.length * 38 + 20, 360);
+
+	const panelSx = {
+		background: T.surf,
+		border: `1px solid ${T.rule}`,
+		borderRadius: '16px',
+		padding: { xs: '16px', md: '20px' },
+		color: T.ink
+	};
+
+	const heroBg = T.dark
+		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
+		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
+	const heroInk = '#ffffff';
+	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
+
+	const projOver = annualChangeRate !== null && annualChangeRate > (INFLATION_RATE - 1) * 100;
+	const sectionTitleSx = { ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 };
+	const sectionTitleKoSx = { color: T.ink2, fontWeight: 400, fontSize: 12 };
 
 	return (
 		<DesignPage title="Spending" titleKo="지출">
-			<Box>
-				{/* Transaction Review */}
+			<Stack spacing={2}>
+				{/* Transaction Review banner */}
 				{uncategorizedTxs.length > 0 && (
-					<Paper
-						elevation={0}
-						variant="outlined"
-						sx={{ mb: 3, borderColor: 'warning.main', borderRadius: 2, overflow: 'hidden' }}
-					>
+					<Box sx={{
+						background: T.surf,
+						border: `1px solid ${T.dark ? 'rgba(251,146,60,0.4)' : 'rgba(154,52,18,0.3)'}`,
+						borderRadius: '16px',
+						overflow: 'hidden'
+					}}>
 						<Stack
 							direction="row"
 							alignItems="center"
 							spacing={1}
-							sx={{ px: 2, py: 1.5, bgcolor: 'rgba(255, 152, 0, 0.08)', borderBottom: '1px solid', borderColor: 'warning.main' }}
+							sx={{
+								padding: '12px 16px',
+								background: T.dark ? 'rgba(251,146,60,0.08)' : 'rgba(154,52,18,0.06)',
+								borderBottom: `1px solid ${T.dark ? 'rgba(251,146,60,0.2)' : 'rgba(154,52,18,0.18)'}`
+							}}
 						>
-							<Typography variant="subtitle2" fontWeight="bold">Transaction Review</Typography>
-							<Chip label={uncategorizedTxs.length} size="small" color="warning" sx={{ height: 20, fontSize: 11 }} />
-							<Typography variant="caption" color="text.secondary" sx={{ ml: 'auto !important' }}>Uncategorized expenses — click to edit</Typography>
+							<WarningAmberOutlinedIcon sx={{ fontSize: 16, color: T.dark ? '#fb923c' : '#9a3412' }} />
+							<Typography sx={{ ...sDisplay, fontSize: 13, fontWeight: 700, color: T.ink }}>
+								Transaction Review
+							</Typography>
+							<Box sx={{
+								padding: '2px 8px',
+								borderRadius: '999px',
+								background: T.dark ? 'rgba(251,146,60,0.18)' : 'rgba(154,52,18,0.12)',
+								color: T.dark ? '#fb923c' : '#9a3412',
+								fontSize: 11,
+								fontWeight: 700,
+								...sMono
+							}}>
+								{uncategorizedTxs.length}
+							</Box>
+							<Typography sx={{ fontSize: 11, color: T.ink2, marginLeft: 'auto !important' }}>
+								Uncategorized expenses — click to edit
+							</Typography>
 						</Stack>
-						{uncategorizedTxs.map((tx, localIdx) => {
-							const type = tx.accountId ? tx.accountId.split(':')[1] : null;
-							const TypeIcon = TYPE_ICON_MAP[type];
-							return (
-								<Box
-									key={tx._id}
-									onClick={() => onUncategorizedClick(localIdx, tx)}
-									sx={{
-										display: 'flex',
-										alignItems: 'center',
-										px: 2,
-										py: 1,
-										cursor: 'pointer',
-										borderBottom: '1px solid',
-										borderColor: 'divider',
-										'&:last-child': { borderBottom: 'none' },
-										'&:hover': { bgcolor: 'action.hover' }
-									}}
-								>
-									{TypeIcon && <TypeIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 1, flexShrink: 0 }} />}
-									<Typography variant="body2" color="text.secondary" sx={{ width: 80, flexShrink: 0 }}>{tx.date}</Typography>
-									<Typography variant="body2" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-										{tx.payee || '(none)'}
-									</Typography>
-									<Amount value={tx.amount} currency={accountCurrencyMap[tx.accountId] || 'KRW'} showSymbol negativeColor />
-								</Box>
-							);
-						})}
-					</Paper>
+						<Box sx={{ maxHeight: 320, overflowY: 'auto' }}>
+							{uncategorizedTxs.map((tx, localIdx) => {
+								const type = tx.accountId ? tx.accountId.split(':')[1] : null;
+								const TypeIcon = TYPE_ICON_MAP[type];
+								const txCur = accountCurrencyMap[tx.accountId] || 'KRW';
+								return (
+									<Box
+										key={tx._id}
+										onClick={() => onUncategorizedClick(localIdx, tx)}
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											padding: '10px 16px',
+											cursor: 'pointer',
+											borderBottom: `1px solid ${T.rule}`,
+											'&:last-child': { borderBottom: 'none' },
+											'&:hover': { background: T.surf2 }
+										}}
+									>
+										{TypeIcon && <TypeIcon sx={{ fontSize: 14, color: T.ink3, marginRight: '10px', flexShrink: 0 }} />}
+										<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, width: 80, flexShrink: 0 }}>{tx.date}</Typography>
+										<Typography sx={{
+											flex: 1,
+											fontSize: 13,
+											color: T.ink,
+											overflow: 'hidden',
+											textOverflow: 'ellipsis',
+											whiteSpace: 'nowrap'
+										}}>
+											{tx.payee || '(none)'}
+										</Typography>
+										<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.neg }}>
+											{fmtCurrencyFull(tx.amount, txCur)}
+										</Typography>
+									</Box>
+								);
+							})}
+						</Box>
+					</Box>
 				)}
 
-				{/* Header */}
-				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-					<Typography variant="caption" color="text.secondary">Spending</Typography>
-					<Stack direction="row" alignItems="center" spacing={1}>
-						<Chip
-							label="Living Expense"
-							size="small"
-							onClick={() => setLivingExpenseOnly(v => !v)}
-							color={livingExpenseOnly ? 'primary' : 'default'}
-							variant={livingExpenseOnly ? 'filled' : 'outlined'}
-						/>
-						<ToggleButtonGroup
-							value={range}
-							exclusive
-							onChange={(_, v) => v && setRange(v)}
-							size="small"
-						>
-							{RANGES.map(r => (
-								<ToggleButton key={r} value={r} sx={{ px: 0.8, py: 0.25, fontSize: 12 }}>{r}</ToggleButton>
-							))}
-						</ToggleButtonGroup>
+				{/* Hero panel — Annual outlook */}
+				<Box sx={{
+					position: 'relative',
+					overflow: 'hidden',
+					background: heroBg,
+					borderRadius: '20px',
+					padding: { xs: '24px', md: '32px' },
+					color: heroInk
+				}}>
+					<Box sx={{
+						position: 'absolute',
+						top: -100,
+						right: -100,
+						width: 360,
+						height: 360,
+						borderRadius: '50%',
+						background: `radial-gradient(circle, ${T.acc.bright}55 0%, transparent 70%)`,
+						pointerEvents: 'none'
+					}}/>
+					<Stack
+						direction={{ xs: 'column', md: 'row' }}
+						justifyContent="space-between"
+						alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+						spacing={2}
+						sx={{ position: 'relative' }}
+					>
+						<Box sx={{ minWidth: 0, flex: 1 }}>
+							<Stack direction="row" alignItems="center" spacing={1}>
+								<Typography sx={{
+									fontSize: 11,
+									color: heroDim,
+									textTransform: 'uppercase',
+									letterSpacing: '0.08em',
+									fontWeight: 600
+								}}>
+									{currentYear} Projected · 연간 예측
+								</Typography>
+								<Typography sx={{ fontSize: 10, color: heroDim, opacity: 0.7 }}>· 2.5% inflation</Typography>
+							</Stack>
+							<Typography sx={{
+								...sDisplay,
+								fontSize: { xs: 36, sm: 48, md: 60 },
+								fontWeight: 700,
+								lineHeight: 1,
+								marginTop: '14px',
+								color: heroInk
+							}}>
+								{fmtCurrency(projectedAnnual, currency)}
+							</Typography>
+							{annualChangeRate !== null && (
+								<Stack direction="row" alignItems="center" sx={{ marginTop: 1.5, flexWrap: 'wrap', columnGap: 1.25, rowGap: 0.5 }}>
+									<Box sx={{
+										color: projOver ? T.neg : T.pos,
+										background: projOver ? T.negBg : T.posBg,
+										padding: '0 12px',
+										borderRadius: '999px',
+										fontWeight: 600,
+										fontSize: 13,
+										minHeight: 28,
+										display: 'inline-flex',
+										alignItems: 'center',
+										...sMono
+									}}>
+										{annualChangeRate > 0 ? '+' : ''}{annualChangeRate}%
+									</Box>
+									<Typography sx={{ ...sMono, color: heroDim, fontSize: 13, lineHeight: '28px' }}>
+										vs {currentYear - 1} {fmtCurrency(lastYearTotal, currency)}
+									</Typography>
+								</Stack>
+							)}
+						</Box>
+
+						{/* Range / Living toggle — left-aligned on mobile to avoid zigzag with the (left-aligned) hero text */}
+						<Stack direction="column" spacing={1} alignItems={{ xs: 'flex-start', md: 'flex-end' }} sx={{ flexShrink: 0 }}>
+							<Box
+								onClick={() => setLivingExpenseOnly(v => !v)}
+								sx={{
+									cursor: 'pointer',
+									padding: '4px 12px',
+									borderRadius: '999px',
+									fontSize: 11,
+									fontWeight: 700,
+									letterSpacing: '0.04em',
+									textTransform: 'uppercase',
+									background: livingExpenseOnly ? T.acc.bright : 'rgba(255,255,255,0.08)',
+									color: livingExpenseOnly ? T.acc.deep : heroInk,
+									border: `1px solid ${livingExpenseOnly ? T.acc.bright : 'rgba(255,255,255,0.18)'}`,
+									transition: 'background 0.12s'
+								}}
+							>
+								Living Expense
+							</Box>
+							<Stack
+								direction="row"
+								sx={{
+									background: 'rgba(255,255,255,0.08)',
+									border: '1px solid rgba(255,255,255,0.18)',
+									borderRadius: '999px',
+									padding: '3px',
+									gap: '2px'
+								}}
+							>
+								{RANGES.map(r => {
+									const active = range === r;
+									return (
+										<Box
+											key={r}
+											onClick={() => setRange(r)}
+											sx={{
+												cursor: 'pointer',
+												padding: '4px 10px',
+												borderRadius: '999px',
+												fontSize: 11,
+												fontWeight: 700,
+												...sMono,
+												background: active ? '#fff' : 'transparent',
+												color: active ? T.acc.deep : heroInk,
+												transition: 'background 0.12s, color 0.12s',
+												'&:hover': { background: active ? '#fff' : 'rgba(255,255,255,0.12)' }
+											}}
+										>
+											{r}
+										</Box>
+									);
+								})}
+							</Stack>
+						</Stack>
 					</Stack>
-				</Stack>
 
-				{/* Summary cards */}
-				<Stack direction="row" spacing={1.5} sx={{ mb: 1.5 }}>
-					<Box sx={{ flex: 1, p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-						<Typography variant="caption" color="text.secondary">Total</Typography>
-						<Amount value={totalSpending} currency={currency} showSymbol size="large" showColor={false} />
+					{/* 4-stat row */}
+					<Box sx={{
+						display: 'grid',
+						gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+						gap: { xs: 2, md: 3 },
+						marginTop: { xs: '24px', md: '32px' },
+						position: 'relative'
+					}}>
+						<StatCell
+							label={`YTD · ${currentYear}`}
+							value={fmtCurrency(Math.round(ytdTotal), currency)}
+							T={T}
+						/>
+						<StatCell
+							label={`${range} Total`}
+							value={fmtCurrency(totalSpending, currency)}
+							T={T}
+							divider
+						/>
+						<StatCell
+							label="Monthly Avg"
+							value={fmtCurrency(avgMonthly, currency)}
+							T={T}
+							divider
+						/>
+						<StatCell
+							label="This Month"
+							value={fmtCurrency(thisMonthTotal, currency)}
+							sub={momChange !== null ? `${momChange > 0 ? '+' : ''}${momChange}% vs prev mo.` : null}
+							T={T}
+							divider
+						/>
 					</Box>
-					<Box sx={{ flex: 1, p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-						<Typography variant="caption" color="text.secondary">Monthly Avg</Typography>
-						<Amount value={avgMonthly} currency={currency} showSymbol size="large" showColor={false} />
-					</Box>
-					<Box sx={{ flex: 1, p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-						<Typography variant="caption" color="text.secondary">This Month</Typography>
-						<Amount value={thisMonthTotal} currency={currency} showSymbol size="large" showColor={false} />
-						{momChange !== null && (
-							<Chip
-								label={`${momChange > 0 ? '+' : ''}${momChange}% vs prev mo.`}
-								size="small"
-								color={momChange > 0 ? 'error' : 'success'}
-								sx={{ mt: 0.5, height: 18, fontSize: 10 }}
-							/>
-						)}
-					</Box>
-				</Stack>
+				</Box>
 
-				{/* Annual projection vs last year */}
+				{/* Annual cumulative trend (collapsible) */}
 				{annualChangeRate !== null && (
-					<Box sx={{ mb: 3, borderRadius: 1, border: '1px solid', borderColor: annualChangeRate > (INFLATION_RATE - 1) * 100 ? 'error.main' : 'success.main', bgcolor: 'background.paper', overflow: 'hidden' }}>
+					<Box sx={panelSx}>
 						<Box
 							onClick={() => setProjectionExpanded(v => !v)}
-							sx={{ p: 1.5, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+							sx={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
 						>
-							<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-								<Box>
-									<Stack direction="row" alignItems="center" spacing={0.75}>
-										<Typography variant="caption" color="text.secondary">{currentYear} Annual Projection</Typography>
-										<Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>· 2.5% inflation applied</Typography>
-									</Stack>
-									<Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.25 }}>
-										<Amount value={projectedAnnual} currency={currency} showSymbol size="large" showColor={false} />
-										<Chip
-											label={`${annualChangeRate > 0 ? '+' : ''}${annualChangeRate}% vs last year`}
-											size="small"
-											color={annualChangeRate > (INFLATION_RATE - 1) * 100 ? 'error' : 'success'}
-											sx={{ height: 20, fontSize: 11 }}
-										/>
-									</Stack>
-									<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
-										<Typography variant="caption" color="text.disabled">YTD Actual</Typography>
-										<Amount value={Math.round(ytdTotal)} currency={currency} showSymbol size="small" showColor={false} />
-									</Stack>
-								</Box>
-								<Stack direction="column" alignItems="flex-end" spacing={0.5}>
-									<Box sx={{ textAlign: 'right' }}>
-										<Typography variant="caption" color="text.secondary">{currentYear - 1} Actual</Typography>
-										<Amount value={Math.round(lastYearTotal)} currency={currency} showSymbol size="large" showColor={false} />
-									</Box>
-									<ExpandMoreIcon
-										sx={{
-											fontSize: 18,
-											color: 'text.secondary',
-											transform: projectionExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-											transition: 'transform 0.2s'
-										}}
-									/>
-								</Stack>
+							<Stack direction="row" alignItems="baseline" spacing={1}>
+								<Typography sx={sectionTitleSx}>
+									Annual cumulative
+									<Box component="span" sx={sectionTitleKoSx}> · 누적 추이</Box>
+								</Typography>
+								<Typography sx={{ fontSize: 11, color: T.ink3 }}>
+									{currentYear - 1} vs {currentYear}
+								</Typography>
 							</Stack>
+							<ExpandMoreIcon
+								sx={{
+									fontSize: 20,
+									color: T.ink2,
+									transform: projectionExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+									transition: 'transform 0.2s'
+								}}
+							/>
 						</Box>
 						<Collapse in={projectionExpanded}>
-							<Box sx={{ px: 1.5, pb: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
-								<Stack direction="row" spacing={2} sx={{ mt: 1, mb: 0.5 }}>
+							<Box sx={{ paddingTop: 1.5 }}>
+								<Stack direction="row" spacing={2} sx={{ marginBottom: 1 }}>
 									<Stack direction="row" alignItems="center" spacing={0.5}>
-										<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'text.disabled' }} />
-										<Typography variant="caption" color="text.secondary">{currentYear - 1}</Typography>
+										<Box sx={{ width: 10, height: 10, borderRadius: '50%', background: T.ink3 }} />
+										<Typography sx={{ fontSize: 11, color: T.ink2 }}>{currentYear - 1}</Typography>
 									</Stack>
 									<Stack direction="row" alignItems="center" spacing={0.5}>
-										<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: barColor }} />
-										<Typography variant="caption" color="text.secondary">{currentYear} Actual</Typography>
+										<Box sx={{ width: 10, height: 10, borderRadius: '50%', background: barColor }} />
+										<Typography sx={{ fontSize: 11, color: T.ink2 }}>{currentYear} Actual</Typography>
 									</Stack>
 									<Stack direction="row" alignItems="center" spacing={0.5}>
-										<Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: barColor, opacity: 0.35 }} />
-										<Typography variant="caption" color="text.secondary">{currentYear} Projected</Typography>
+										<Box sx={{ width: 10, height: 10, borderRadius: '50%', background: barColor, opacity: 0.4 }} />
+										<Typography sx={{ fontSize: 11, color: T.ink2 }}>{currentYear} Projected</Typography>
 									</Stack>
 								</Stack>
-								<Box sx={{ height: 200, minWidth: 0 }}>
-									<ResponsiveContainer width="100%" height="100%">
+								<Box sx={{ width: '100%', height: 220 }}>
+									<ResponsiveContainer>
 										<LineChart data={cumulativeAnnualData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-											<CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-											<XAxis dataKey="month" tick={{ fontSize: 10 }} />
-											<YAxis tickFormatter={formatYAxis} tick={{ fontSize: 10 }} width={56} />
-											<Tooltip content={<AnnualTooltip currency={currency} currentYear={currentYear} />} />
-											<Line dataKey="lastYear" stroke={theme.palette.text.disabled} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
-											<Line dataKey="actual" stroke={barColor} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
-											<Line dataKey="projected" stroke={barColor} strokeWidth={2} strokeDasharray="5 4" strokeOpacity={0.6} dot={false} isAnimationActive={false} connectNulls />
+											<CartesianGrid strokeDasharray="3 3" stroke={T.rule} vertical={false} />
+											<XAxis dataKey="month" tick={{ fontSize: 11, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false} />
+											<YAxis tickFormatter={formatYAxis} tick={{ fontSize: 11, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false} width={56} />
+											<Tooltip content={<AnnualTooltip T={T} currency={currency} currentYear={currentYear} />} />
+											<Line dataKey="lastYear" stroke={T.ink3} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
+											<Line dataKey="actual" stroke={barColor} strokeWidth={2.5} dot={false} isAnimationActive={false} connectNulls />
+											<Line dataKey="projected" stroke={barColor} strokeWidth={2} strokeDasharray="5 4" strokeOpacity={0.55} dot={false} isAnimationActive={false} connectNulls />
 										</LineChart>
 									</ResponsiveContainer>
 								</Box>
@@ -579,154 +804,261 @@ function Spending () {
 				)}
 
 				{/* Monthly trend */}
-				<Typography variant="caption" color="text.secondary">Monthly Spending</Typography>
-				<Box sx={{ height: 200, mt: 0.5, mb: 3, minWidth: 0, overflow: 'hidden' }}>
-					<ResponsiveContainer width="100%" height="100%">
-						<BarChart data={monthlyData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-							<CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-							<XAxis dataKey="month" tick={{ fontSize: 10 }} />
-							<YAxis tickFormatter={formatYAxis} tick={{ fontSize: 10 }} width={56} />
-							<Tooltip content={<ChartTooltip currency={currency} />} />
-							<Bar dataKey="actual" fill={barColor} radius={[0, 0, 0, 0]} stackId="stack" isAnimationActive={false} />
-							<Bar dataKey="projected" fill={barColor} fillOpacity={0.35} radius={[3, 3, 0, 0]} stackId="stack" isAnimationActive={false} />
-						</BarChart>
-					</ResponsiveContainer>
-				</Box>
-
-				<Divider sx={{ mb: 2 }} />
-
-				{/* Category breakdown */}
-				<Typography variant="caption" color="text.secondary">Spending by Category</Typography>
-				<Box sx={{ height: categoryBarH, mt: 0.5, mb: 3, minWidth: 0, overflow: 'hidden' }}>
-					<ResponsiveContainer width="100%" height="100%">
-						<BarChart data={categoryData} layout="vertical" margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
-							<CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} horizontal={false} />
-							<XAxis type="number" tickFormatter={formatYAxis} tick={{ fontSize: 10 }} />
-							<YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={76} />
-							<Tooltip content={<ChartTooltip currency={currency} />} />
-							<Bar dataKey="total" radius={[0, 3, 3, 0]} onClick={onCategoryBarClick} cursor="pointer">
-								{categoryData.map((entry) => (
-									<Cell key={entry.category} fill={getCategoryColor(entry.category) || barColor} />
-								))}
-							</Bar>
-						</BarChart>
-					</ResponsiveContainer>
-				</Box>
-
-				<Divider sx={{ mb: 2 }} />
-
-				{/* Top payees */}
-				<Typography variant="caption" color="text.secondary">Top Payees</Typography>
-				<Table size="small" sx={{ mt: 0.5 }}>
-					<TableHead>
-						<TableRow>
-							<TableCell sx={{ color: 'text.secondary', fontSize: 11 }}>Payee</TableCell>
-							<TableCell align="right" sx={{ color: 'text.secondary', fontSize: 11 }}>Count</TableCell>
-							<TableCell align="right" sx={{ color: 'text.secondary', fontSize: 11 }}>Total</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						{topPayees.map(({ payee, count, total, category }) => {
-							const catColor = getCategoryColor(category) || barColor;
-							return (
-								<TableRow key={payee} hover sx={{ cursor: 'pointer' }} onClick={() => setTxDialog({ mode: 'payee', key: payee })}>
-									<TableCell>
-										<Stack direction="row" alignItems="center" spacing={1}>
-											<Box sx={{ color: catColor, display: 'flex', flexShrink: 0 }}>{getCategoryIcon(category, 16)}</Box>
-											<Typography variant="body2" sx={{ color: catColor }}>{payee}</Typography>
-										</Stack>
-									</TableCell>
-									<TableCell align="right">
-										<Typography variant="body2" color="text.secondary">{count}</Typography>
-									</TableCell>
-									<TableCell align="right">
-										<Amount value={total} currency={currency} showSymbol showColor={false} />
-									</TableCell>
-								</TableRow>
-							);
-						})}
-					</TableBody>
-				</Table>
-
-				<Divider sx={{ mb: 2 }} />
-
-				{/* Spending Heatmap */}
-				<Typography variant="caption" color="text.secondary">지출 패턴 (최근 13주)</Typography>
-				<Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
-					<Box sx={{ width: 360 }}>
-						<SpendingHeatmap />
+				<Box sx={panelSx}>
+					<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
+						<Typography sx={sectionTitleSx}>
+							Monthly trend
+							<Box component="span" sx={sectionTitleKoSx}> · 월별 추이</Box>
+						</Typography>
+						<Typography sx={{ fontSize: 11, color: T.ink3 }}>{range} window</Typography>
+					</Stack>
+					<Box sx={{ width: '100%', height: 220 }}>
+						<ResponsiveContainer>
+							<BarChart data={monthlyData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+								<CartesianGrid strokeDasharray="3 3" stroke={T.rule} vertical={false} />
+								<XAxis dataKey="month" tick={{ fontSize: 11, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false} />
+								<YAxis tickFormatter={formatYAxis} tick={{ fontSize: 11, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false} width={56} />
+								<Tooltip content={<ChartTooltip T={T} currency={currency} />} cursor={{ fill: T.surf2 }} />
+								<Bar dataKey="actual" fill={barColor} radius={[0, 0, 0, 0]} stackId="stack" isAnimationActive={false} />
+								<Bar dataKey="projected" fill={projectedBarColor} fillOpacity={0.45} radius={[3, 3, 0, 0]} stackId="stack" isAnimationActive={false} />
+							</BarChart>
+						</ResponsiveContainer>
 					</Box>
 				</Box>
 
-			</Box>
+				{/* 2-col: Category + Top payees */}
+				<Box sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+					gap: 2
+				}}>
+					<Box sx={panelSx}>
+						<Typography sx={{ ...sectionTitleSx, marginBottom: 1.5 }}>
+							By category
+							<Box component="span" sx={sectionTitleKoSx}> · 카테고리</Box>
+						</Typography>
+						{categoryData.length === 0 ? (
+							<Box sx={{ padding: 3, textAlign: 'center' }}>
+								<Typography sx={{ fontSize: 13, color: T.ink2 }}>No spending in this range</Typography>
+							</Box>
+						) : (
+							<Box sx={{ width: '100%', height: categoryBarH }}>
+								<ResponsiveContainer>
+									<BarChart data={categoryData} layout="vertical" margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+										<CartesianGrid strokeDasharray="3 3" stroke={T.rule} horizontal={false} />
+										<XAxis type="number" tickFormatter={formatYAxis} tick={{ fontSize: 11, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false} />
+										<YAxis type="category" dataKey="category" tick={{ fontSize: 11, fill: T.ink }} axisLine={{ stroke: T.rule }} tickLine={false} width={84} />
+										<Tooltip content={<ChartTooltip T={T} currency={currency} />} cursor={{ fill: T.surf2 }} />
+										<Bar dataKey="total" radius={[0, 4, 4, 0]} onClick={onCategoryBarClick} cursor="pointer">
+											{categoryData.map((entry) => (
+												<Cell key={entry.category} fill={getCategoryColor(entry.category) || barColor} />
+											))}
+										</Bar>
+									</BarChart>
+								</ResponsiveContainer>
+							</Box>
+						)}
+					</Box>
+
+					<Box sx={panelSx}>
+						<Typography sx={{ ...sectionTitleSx, marginBottom: 1.5 }}>
+							Top payees
+							<Box component="span" sx={sectionTitleKoSx}> · 주요 가맹점</Box>
+						</Typography>
+						{topPayees.length === 0 ? (
+							<Box sx={{ padding: 3, textAlign: 'center' }}>
+								<Typography sx={{ fontSize: 13, color: T.ink2 }}>No payees</Typography>
+							</Box>
+						) : (
+							<Stack spacing={0}>
+								<Stack
+									direction="row"
+									sx={{
+										paddingY: 1,
+										paddingX: 0.5,
+										borderBottom: `1px solid ${T.rule}`
+									}}
+								>
+									<Typography sx={{
+										flex: 1,
+										fontSize: 10,
+										fontWeight: 600,
+										textTransform: 'uppercase',
+										letterSpacing: '0.06em',
+										color: T.ink3
+									}}>
+										Payee
+									</Typography>
+									<Typography sx={{
+										width: 60,
+										textAlign: 'right',
+										fontSize: 10,
+										fontWeight: 600,
+										textTransform: 'uppercase',
+										letterSpacing: '0.06em',
+										color: T.ink3
+									}}>
+										Count
+									</Typography>
+									<Typography sx={{
+										width: 110,
+										textAlign: 'right',
+										fontSize: 10,
+										fontWeight: 600,
+										textTransform: 'uppercase',
+										letterSpacing: '0.06em',
+										color: T.ink3
+									}}>
+										Total
+									</Typography>
+								</Stack>
+								{topPayees.map(({ payee, count, displayTotal, displayCurrency, category }) => {
+									const catColor = getCategoryColor(category) || T.acc.hero;
+									return (
+										<Stack
+											key={payee}
+											direction="row"
+											alignItems="center"
+											onClick={() => setTxDialog({ mode: 'payee', key: payee })}
+											sx={{
+												paddingY: 1,
+												paddingX: 0.5,
+												cursor: 'pointer',
+												borderBottom: `1px solid ${T.rule}`,
+												'&:last-child': { borderBottom: 'none' },
+												'&:hover': { background: T.surf2 }
+											}}
+										>
+											<Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+												<Box sx={{ color: catColor, display: 'flex', flexShrink: 0 }}>
+													{getCategoryIcon(category, 16)}
+												</Box>
+												<Typography sx={{
+													fontSize: 13,
+													color: T.ink,
+													overflow: 'hidden',
+													textOverflow: 'ellipsis',
+													whiteSpace: 'nowrap'
+												}}>
+													{payee}
+												</Typography>
+											</Stack>
+											<Typography sx={{ ...sMono, width: 60, textAlign: 'right', fontSize: 12, color: T.ink2 }}>
+												{count}
+											</Typography>
+											<Typography sx={{ ...sMono, width: 110, textAlign: 'right', fontSize: 13, fontWeight: 600, color: T.ink }}>
+												{fmtCurrency(displayTotal, displayCurrency)}
+											</Typography>
+										</Stack>
+									);
+								})}
+							</Stack>
+						)}
+					</Box>
+				</Box>
+
+				{/* Heatmap */}
+				<Box sx={panelSx}>
+					<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
+						<Typography sx={sectionTitleSx}>
+							Pattern
+							<Box component="span" sx={sectionTitleKoSx}> · 지출 패턴</Box>
+						</Typography>
+						<Typography sx={{ fontSize: 11, color: T.ink3 }}>최근 13주</Typography>
+					</Stack>
+					<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+						<Box sx={{ width: 360, maxWidth: '100%' }}>
+							<SpendingHeatmap />
+						</Box>
+					</Box>
+				</Box>
+			</Stack>
+
 			<BankTransactionModal transactions={uncategorizedTxs} />
+
 			{/* Category / Payee transactions dialog */}
 			<Dialog
 				open={!!txDialog}
 				onClose={() => setTxDialog(null)}
 				maxWidth="sm"
 				fullWidth
+				PaperProps={{
+					style: {
+						background: T.surf,
+						color: T.ink,
+						border: `1px solid ${T.rule}`,
+						borderRadius: 16,
+						backgroundImage: 'none'
+					}
+				}}
 			>
-				<DialogTitle sx={{ py: 1.5 }}>
+				<DialogTitle sx={{ paddingY: 1.5 }}>
 					<Stack direction="row" alignItems="center" justifyContent="space-between">
 						<Stack direction="row" alignItems="center" spacing={1}>
 							{txDialog?.mode === 'category' && (
-								<Box sx={{ color: getCategoryColor(txDialog.key) || barColor, display: 'flex' }}>
+								<Box sx={{ color: getCategoryColor(txDialog.key) || T.acc.hero, display: 'flex' }}>
 									{getCategoryIcon(txDialog.key, 20)}
 								</Box>
 							)}
 							{txDialog?.mode === 'payee' && dialogTopCat && (
-								<Box sx={{ color: getCategoryColor(dialogTopCat) || barColor, display: 'flex' }}>
+								<Box sx={{ color: getCategoryColor(dialogTopCat) || T.acc.hero, display: 'flex' }}>
 									{getCategoryIcon(dialogTopCat, 20)}
 								</Box>
 							)}
-							<Typography variant="subtitle1" fontWeight="bold">{txDialog?.mode === 'payee' ? (dialogTopCat || txDialog?.key) : txDialog?.key}</Typography>
-							<Typography variant="body2" color="text.secondary">({dialogTxns.length})</Typography>
+							<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink }}>
+								{txDialog?.mode === 'payee' ? (dialogTopCat || txDialog?.key) : txDialog?.key}
+							</Typography>
+							<Typography sx={{ fontSize: 12, color: T.ink2 }}>({dialogTxns.length})</Typography>
 						</Stack>
 						<Stack direction="row" alignItems="center" spacing={0.5}>
-							<Amount
-								value={Math.round(dialogTxns.reduce((s, tx) => s + toDisplayAmount(tx), 0))}
-								currency={currency}
-								showSymbol
-								showColor={false}
-							/>
-							<IconButton size="small" onClick={() => setTxDialog(null)}>
+							<Typography sx={{ ...sMono, fontSize: 14, fontWeight: 700, color: T.ink }}>
+								{fmtCurrencyFull(Math.round(dialogTxns.reduce((s, tx) => s + toDisplayAmount(tx), 0)), currency)}
+							</Typography>
+							<IconButton size="small" onClick={() => setTxDialog(null)} sx={{ color: T.ink2 }}>
 								<CloseIcon fontSize="small" />
 							</IconButton>
 						</Stack>
 					</Stack>
 				</DialogTitle>
-				<DialogContent dividers sx={{ p: 0 }}>
+				<DialogContent sx={{ padding: 0, borderTop: `1px solid ${T.rule}` }}>
 					{dialogTxns.map(tx => {
 						const type = tx.accountId ? tx.accountId.split(':')[1] : null;
 						const TypeIcon = TYPE_ICON_MAP[type];
+						const txCur = accountCurrencyMap[tx.accountId] || 'KRW';
 						return (
 							<Box
 								key={tx._id}
 								sx={{
 									display: 'flex',
 									alignItems: 'center',
-									px: 2,
-									py: 1,
-									borderBottom: '1px solid',
-									borderColor: 'divider',
+									paddingX: 2,
+									paddingY: 1,
+									borderBottom: `1px solid ${T.rule}`,
 									'&:last-child': { borderBottom: 'none' }
 								}}
 							>
 								<Box sx={{ flex: 1, overflow: 'hidden' }}>
-									<Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+									<Typography sx={{
+										fontSize: 13,
+										color: T.ink,
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap'
+									}}>
 										{tx.payee || '(none)'}
 									</Typography>
-									<Stack direction="row" alignItems="center" spacing={0.5}>
-										{TypeIcon && <TypeIcon sx={{ fontSize: 12, color: 'text.disabled' }} />}
-										<Typography variant="caption" color="text.disabled">
+									<Stack direction="row" alignItems="center" spacing={0.5} sx={{ marginTop: '2px' }}>
+										{TypeIcon && <TypeIcon sx={{ fontSize: 12, color: T.ink3 }} />}
+										<Typography sx={{ fontSize: 11, color: T.ink3 }}>
 											{tx.account || tx.accountId?.split(':')[2] || ''}
 										</Typography>
 									</Stack>
 								</Box>
 								<Stack alignItems="flex-end" spacing={0}>
-									<Amount value={tx.amount} currency={accountCurrencyMap[tx.accountId] || 'KRW'} showSymbol negativeColor />
-									<Typography variant="caption" color="text.disabled">{tx.date}</Typography>
+									<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.neg }}>
+										{fmtCurrencyFull(tx.amount, txCur)}
+									</Typography>
+									<Typography sx={{ ...sMono, fontSize: 11, color: T.ink3 }}>{tx.date}</Typography>
 								</Stack>
 							</Box>
 						);

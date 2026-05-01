@@ -11,7 +11,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import AppShortcutOutlinedIcon from '@mui/icons-material/AppShortcutOutlined';
 
 import useT from '../../hooks/useT';
-import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
+import { sDisplay, sMono, fmtCurrencyFull } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 
@@ -171,7 +171,7 @@ export function NotificationLog () {
 				<Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'right' }}>
 					{tx ? (
 						<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.ink, whiteSpace: 'nowrap' }}>
-							{fmtCurrency(tx.amount, tx.currency)}
+							{fmtCurrencyFull(tx.amount, tx.currency)}
 						</Typography>
 					) : (
 						<Typography sx={{ fontSize: 11, color: T.ink3 }}>—</Typography>
@@ -271,7 +271,7 @@ export function NotificationLog () {
 											{n.title || '(no title)'}
 										</Typography>
 										<Typography sx={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-											{tx ? `${tx.payee || ''} · ${fmtCurrency(tx.amount, tx.currency)}` : (n.date || shortPackage(n.packageName))}
+											{tx ? `${tx.payee || ''} · ${fmtCurrencyFull(tx.amount, tx.currency)}` : (n.date || shortPackage(n.packageName))}
 										</Typography>
 									</Box>
 								</Box>

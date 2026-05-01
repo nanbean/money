@@ -273,28 +273,36 @@ exports.getLifetimeFlowList = async (accounts) => {
 	// 이벤트 및 netFlow 수집 (saveUpdatedCells 전, 로드된 셀에서 읽기)
 	const events = [];
 
+	// `!` 로 시작하는 노트는 단순 정보(코멘트)로 취급해 events 로 저장하지 않음
+	const isInformational = (note) => typeof note === 'string' && note.trimStart().startsWith('!');
+
 	const scanSection = (startRow, endRow, type) => {
 		let found = 0;
+		let skipped = 0;
 		for (let row = startRow; row <= endRow; row++) {
 			const rowLabel = aColumn[row - 1] || '';
 			for (let j = 0; j < colIndex.length; j++) {
 				try {
 					const cell = firstSheet.getCellByA1(`${colIndex[j]}${row}`);
 					if (cell && cell.note) {
+						if (isInformational(cell.note)) {
+							skipped++;
+							continue;
+						}
 						events.push({ year: yearList[j], label: cell.note, type, row: rowLabel });
 						found++;
 					}
 				} catch (e) { /* 셀 접근 실패 무시 */ }
 			}
 		}
-		console.log(`[events] ${type} section (rows ${startRow}-${endRow}): ${found} notes found`);
+		console.log(`[events] ${type} section (rows ${startRow}-${endRow}): ${found} notes found${skipped ? `, ${skipped} info-only skipped` : ''}`);
 	};
 
 	// 연도 헤더(row 1) 메모 → type: 'year'
 	for (let j = 0; j < colIndex.length; j++) {
 		try {
 			const cell = firstSheet.getCellByA1(`${colIndex[j]}1`);
-			if (cell && cell.note) {
+			if (cell && cell.note && !isInformational(cell.note)) {
 				events.push({ year: yearList[j], label: cell.note, type: 'year' });
 			}
 		} catch (e) { /* 무시 */ }

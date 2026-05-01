@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography';
 
 import useT from '../../hooks/useT';
 import useWidth from '../../hooks/useWidth';
-import { sMono, fmtCurrency, fmtPrice, fmtQty } from '../../utils/designTokens';
+import { sMono, fmtCurrencyFull, fmtPrice, fmtQty } from '../../utils/designTokens';
 
 import { toDateFormat } from '../../utils/formatting';
 
@@ -157,7 +157,7 @@ export function InvestmentTransactions ({
 				{amount === 0 ? '—' : (
 					<>
 						{amount > 0 ? '+' : '−'}
-						{fmtCurrency(Math.abs(amount), currency)}
+						{fmtCurrencyFull(Math.abs(amount), currency)}
 					</>
 				)}
 			</Typography>

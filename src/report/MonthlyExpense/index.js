@@ -175,13 +175,13 @@ const MonthlyExpense = () => {
 			{/* Grid / Sankey panel — fills remaining vertical space */}
 			<Box sx={{
 				...panelSx,
-				flex: 1,
+				flex: { xs: '0 0 auto', md: 1 },
 				display: 'flex',
 				flexDirection: 'column',
-				// minHeight: 0 lets flex shrink properly; explicit min for short viewports.
-				minHeight: { xs: 480, md: 0 },
+				// Mobile takes natural height (Sankey wrapper sets its own px); desktop fills via flex.
+				minHeight: { xs: 'auto', md: 0 },
 				padding: 0,
-				overflow: 'hidden'
+				overflow: { xs: 'visible', md: 'hidden' }
 			}}>
 				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ padding: { xs: '14px 14px 8px', md: '18px 18px 10px' } }}>
 					<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
@@ -201,7 +201,7 @@ const MonthlyExpense = () => {
 						<ReportGrid reportData={reportData} supportSearch />
 					)}
 					{view === 'sankey' && (
-						<Box sx={{ height: '100%', minHeight: 480 }}>
+						<Box sx={{ height: { xs: 600, md: '100%' }, minHeight: { xs: 600, md: 480 } }}>
 							<SankeyChart data={sankeyData} />
 						</Box>
 					)}

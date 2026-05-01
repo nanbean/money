@@ -196,85 +196,103 @@ export function General () {
 			</ListItem>
 			<Divider component="li" sx={{ my: 1 }} />
 			<ListSubheader sx={{ bgcolor: 'transparent' }}>Theme</ListSubheader>
-			<ListItem>
+			<ListItem
+				sx={{
+					flexWrap: { xs: 'wrap', sm: 'nowrap' },
+					rowGap: 1.25
+				}}
+			>
 				<ListItemText
 					id="theme-mode-label"
 					primary="Theme Mode"
 					secondary="Select your preferred theme"
+					sx={{ minWidth: 0, flex: '1 1 auto' }}
 				/>
-				<ListItemSecondaryAction>
-					<ToggleButtonGroup
-						size="small"
-						value={themeMode}
-						exclusive
-						onChange={handleThemeModeChange}
-						aria-labelledby="theme-mode-label"
-					>
-						<ToggleButton value="auto" aria-label="Auto theme" sx={toggleSx}>
-							Auto
-						</ToggleButton>
-						<ToggleButton value="light" aria-label="Light theme" sx={toggleSx}>
-							Light
-						</ToggleButton>
-						<ToggleButton value="dark" aria-label="Dark theme" sx={toggleSx}>
-							Dark
-						</ToggleButton>
-					</ToggleButtonGroup>
-				</ListItemSecondaryAction>
+				<ToggleButtonGroup
+					size="small"
+					value={themeMode}
+					exclusive
+					onChange={handleThemeModeChange}
+					aria-labelledby="theme-mode-label"
+					sx={{ flexShrink: 0, marginLeft: { xs: 0, sm: 'auto' } }}
+				>
+					<ToggleButton value="auto" aria-label="Auto theme" sx={toggleSx}>
+						Auto
+					</ToggleButton>
+					<ToggleButton value="light" aria-label="Light theme" sx={toggleSx}>
+						Light
+					</ToggleButton>
+					<ToggleButton value="dark" aria-label="Dark theme" sx={toggleSx}>
+						Dark
+					</ToggleButton>
+				</ToggleButtonGroup>
 			</ListItem>
-			<ListItem>
+			<ListItem
+				sx={{
+					// On narrow screens, let the swatches drop below the label/description
+					// instead of overlapping it via ListItemSecondaryAction's absolute positioning.
+					flexWrap: { xs: 'wrap', sm: 'nowrap' },
+					rowGap: 1.25
+				}}
+			>
 				<ListItemText
 					id="accent-label"
 					primary="Accent Color"
 					secondary={`Highlight color used across the app · ${ACCENT_LABELS[accent]?.ko || ''}`}
+					sx={{ minWidth: 0, flex: '1 1 auto' }}
 				/>
-				<ListItemSecondaryAction>
-					<Box
-						role="radiogroup"
-						aria-labelledby="accent-label"
-						sx={{ display: 'flex', gap: 1, alignItems: 'center' }}
-					>
-						{Object.entries(ACCENTS).map(([key, palette]) => {
-							const selected = key === accent;
-							return (
-								<Tooltip key={key} title={ACCENT_LABELS[key]?.en || key} arrow>
-									<Box
-										role="radio"
-										aria-checked={selected}
-										tabIndex={0}
-										onClick={() => handleAccentChange(key)}
-										onKeyDown={(e) => {
-											if (e.key === 'Enter' || e.key === ' ') {
-												e.preventDefault();
-												handleAccentChange(key);
-											}
-										}}
-										sx={{
-											width: 26,
-											height: 26,
-											borderRadius: '50%',
-											background: palette.hero,
-											cursor: 'pointer',
-											display: 'inline-flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											border: selected ? `2px solid ${T.ink}` : '2px solid transparent',
-											boxShadow: selected ? `0 0 0 2px ${T.surf}` : 'none',
-											outline: 'none',
-											transition: 'transform 0.12s, border-color 0.12s',
-											'&:hover': { transform: 'scale(1.08)' },
-											'&:focus-visible': { borderColor: T.ink }
-										}}
-									>
-										{selected && (
-											<CheckIcon sx={{ fontSize: 14, color: '#fff' }} />
-										)}
-									</Box>
-								</Tooltip>
-							);
-						})}
-					</Box>
-				</ListItemSecondaryAction>
+				<Box
+					role="radiogroup"
+					aria-labelledby="accent-label"
+					sx={{
+						display: 'flex',
+						gap: 1,
+						alignItems: 'center',
+						flexWrap: 'wrap',
+						flexShrink: 0,
+						marginLeft: { xs: 0, sm: 'auto' }
+					}}
+				>
+					{Object.entries(ACCENTS).map(([key, palette]) => {
+						const selected = key === accent;
+						return (
+							<Tooltip key={key} title={ACCENT_LABELS[key]?.en || key} arrow>
+								<Box
+									role="radio"
+									aria-checked={selected}
+									tabIndex={0}
+									onClick={() => handleAccentChange(key)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											e.preventDefault();
+											handleAccentChange(key);
+										}
+									}}
+									sx={{
+										width: 28,
+										height: 28,
+										borderRadius: '50%',
+										background: palette.hero,
+										cursor: 'pointer',
+										display: 'inline-flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										border: selected ? `2px solid ${T.ink}` : '2px solid transparent',
+										boxShadow: selected ? `0 0 0 2px ${T.surf}` : 'none',
+										outline: 'none',
+										transition: 'transform 0.12s, border-color 0.12s',
+										'&:hover': { transform: 'scale(1.08)' },
+										'&:focus-visible': { borderColor: T.ink }
+									}}
+								>
+									{selected && (
+										<CheckIcon sx={{ fontSize: 14, color: '#fff' }} />
+									)}
+								</Box>
+							</Tooltip>
+						);
+					})}
+				</Box>
 			</ListItem>
 		</List>
 	);

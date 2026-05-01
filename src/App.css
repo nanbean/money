@@ -73,3 +73,40 @@ body {
 .ui.modal.transaction > .content {
 	padding: 0 1px !important;
 }
+
+/* Custom scrollbar for react-virtualized List/Grid (transactions, reports) —
+ * neutral semi-transparent gray works on both light and dark surfaces. */
+.ReactVirtualized__List,
+.ReactVirtualized__Grid {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+}
+.ReactVirtualized__List:focus,
+.ReactVirtualized__Grid:focus {
+	outline: none;
+}
+.ReactVirtualized__List::-webkit-scrollbar,
+.ReactVirtualized__Grid::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+.ReactVirtualized__List::-webkit-scrollbar-track,
+.ReactVirtualized__Grid::-webkit-scrollbar-track {
+	background: transparent;
+}
+.ReactVirtualized__List::-webkit-scrollbar-thumb,
+.ReactVirtualized__Grid::-webkit-scrollbar-thumb {
+	background: rgba(128, 128, 128, 0.28);
+	border-radius: 4px;
+	border: 2px solid transparent;
+	background-clip: content-box;
+}
+.ReactVirtualized__List::-webkit-scrollbar-thumb:hover,
+.ReactVirtualized__Grid::-webkit-scrollbar-thumb:hover {
+	background: rgba(128, 128, 128, 0.55);
+	background-clip: content-box;
+}
+.ReactVirtualized__List::-webkit-scrollbar-corner,
+.ReactVirtualized__Grid::-webkit-scrollbar-corner {
+	background: transparent;
+}

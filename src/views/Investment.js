@@ -20,7 +20,7 @@ import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 
 import useT from '../hooks/useT';
-import { sDisplay, fmtCurrency, colorFor } from '../utils/designTokens';
+import { sDisplay, fmtCurrencyFull, colorFor } from '../utils/designTokens';
 
 import { setAccountAction } from '../actions/accountActions';
 import { getAccountInvestmentsAction } from '../actions/couchdbAccountActions';
@@ -61,7 +61,7 @@ function StatCard ({ label, value, color, T }) {
 			</Typography>
 			<Typography sx={{
 				...sDisplay,
-				fontSize: 22,
+				fontSize: { xs: 16, md: 18 },
 				fontWeight: 700,
 				marginTop: '10px',
 				color: color || T.ink,
@@ -187,13 +187,14 @@ export function Investment () {
 					</Typography>
 					<Typography sx={{
 						...sDisplay,
-						fontSize: { xs: 36, sm: 48, md: 60 },
+						fontSize: { xs: 28, sm: 36, md: 48 },
 						fontWeight: 700,
-						lineHeight: 1,
+						lineHeight: 1.1,
 						marginTop: '14px',
-						color: balance < 0 ? '#fb7185' : heroInk
+						color: balance < 0 ? '#fb7185' : heroInk,
+						wordBreak: 'break-word'
 					}}>
-						{fmtCurrency(balance, currency)}
+						{fmtCurrencyFull(balance, currency)}
 					</Typography>
 					{stats.costBasis > 0 && (
 						<Stack direction="row" spacing={1.25} sx={{ marginTop: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
@@ -205,13 +206,13 @@ export function Investment () {
 								fontWeight: 600,
 								fontSize: 13
 							}}>
-								{stats.ret >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(stats.ret), currency)}
+								{stats.ret >= 0 ? '+' : '−'}{fmtCurrencyFull(Math.abs(stats.ret), currency)}
 								<Box component="span" sx={{ marginLeft: '6px', opacity: 0.85 }}>
 									({stats.ret >= 0 ? '+' : ''}{stats.retPct.toFixed(2)}%)
 								</Box>
 							</Box>
 							<Typography sx={{ color: heroDim, fontSize: 13 }}>
-								Cost basis {fmtCurrency(stats.costBasis, currency)}
+								Cost basis {fmtCurrencyFull(stats.costBasis, currency)}
 							</Typography>
 						</Stack>
 					)}
@@ -293,11 +294,11 @@ export function Investment () {
 					gap: 2,
 					marginBottom: '20px'
 				}}>
-					<StatCard label="Cost basis · 원금" value={fmtCurrency(stats.costBasis, currency)} T={T} />
-					<StatCard label="Market value · 평가액" value={fmtCurrency(stats.marketValue, currency)} T={T} />
+					<StatCard label="Cost basis · 원금" value={fmtCurrencyFull(stats.costBasis, currency)} T={T} />
+					<StatCard label="Market value · 평가액" value={fmtCurrencyFull(stats.marketValue, currency)} T={T} />
 					<StatCard
 						label="Total return · 총수익"
-						value={`${stats.ret >= 0 ? '+' : '−'}${fmtCurrency(Math.abs(stats.ret), currency)}`}
+						value={`${stats.ret >= 0 ? '+' : '−'}${fmtCurrencyFull(Math.abs(stats.ret), currency)}`}
 						color={colorFor(T, stats.ret)}
 						T={T}
 					/>

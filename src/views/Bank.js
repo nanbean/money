@@ -17,7 +17,7 @@ import BankTransactions from '../components/BankTransactions';
 import BankTransactionModal from '../components/BankTransactionModal';
 
 import useT from '../hooks/useT';
-import { sDisplay, fmtCurrency } from '../utils/designTokens';
+import { sDisplay, fmtCurrencyFull } from '../utils/designTokens';
 
 import { setAccountAction } from '../actions/accountActions';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
@@ -137,13 +137,14 @@ export function Bank () {
 					</Typography>
 					<Typography sx={{
 						...sDisplay,
-						fontSize: { xs: 36, sm: 48, md: 60 },
+						fontSize: { xs: 28, sm: 36, md: 48 },
 						fontWeight: 700,
-						lineHeight: 1,
+						lineHeight: 1.1,
 						marginTop: '14px',
-						color: balance < 0 ? '#fb7185' : heroInk
+						color: balance < 0 ? '#fb7185' : heroInk,
+						wordBreak: 'break-word'
 					}}>
-						{fmtCurrency(balance, currency)}
+						{fmtCurrencyFull(balance, currency)}
 					</Typography>
 					<Typography sx={{ fontSize: 12, color: heroDim, marginTop: 1, ...sDisplay, letterSpacing: '0.04em' }}>
 						{accountTransactions.length} transactions

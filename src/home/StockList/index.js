@@ -10,7 +10,7 @@ import SortMenuButton from '../../components/SortMenuButton';
 import { updateGeneralAction } from '../../actions/couchdbSettingActions';
 
 import useT from '../../hooks/useT';
-import { sDisplay, sMono, fmtCurrency, fmtPrice, fmtQty } from '../../utils/designTokens';
+import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, fmtPrice, fmtQty } from '../../utils/designTokens';
 
 const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
 
@@ -161,11 +161,11 @@ export function StockList () {
 							</Box>
 							<Stack alignItems="flex-end" sx={{ minWidth: 0 }}>
 								<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.ink, whiteSpace: 'nowrap' }}>
-									{fmtCurrency(i.appraisedValue, i.currency)}
+									{fmtCurrencyFull(i.appraisedValue, i.currency)}
 								</Typography>
 								<Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ marginTop: '2px' }}>
 									<Typography sx={{ ...sMono, fontSize: 11, fontWeight: 600, color: profitColor, whiteSpace: 'nowrap' }}>
-										{i.profit >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(i.profit), i.currency)}
+										{i.profit >= 0 ? '+' : '−'}{fmtCurrencyFull(Math.abs(i.profit), i.currency)}
 									</Typography>
 									<Typography sx={{ ...sMono, fontSize: 11, color: profitColor, whiteSpace: 'nowrap' }}>
 										({(i.return * 100).toFixed(2)}%)

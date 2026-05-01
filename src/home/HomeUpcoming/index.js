@@ -7,7 +7,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import useT from '../../hooks/useT';
-import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
+import { sDisplay, sMono, labelStyle, fmtCurrency, fmtCurrencyFull } from '../../utils/designTokens';
 import { openTransactionInModal } from '../../actions/ui/form/bankTransaction';
 
 const isPaidFromTransactions = (payment, allAccountsTransactions) => {
@@ -122,7 +122,7 @@ export default function HomeUpcoming () {
 							</Typography>
 						</Box>
 						<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600 }}>
-							{fmtCurrency(p.amount, p.currency || currency)}
+							{fmtCurrencyFull(p.amount, p.currency || currency)}
 						</Typography>
 					</Box>
 				))}

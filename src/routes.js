@@ -6,7 +6,6 @@ import { styled } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import SidebarMenu from './components/SidebarMenu';
-import MobileMenuButton from './components/MobileMenuButton';
 
 import {
 	Accounts,
@@ -47,7 +46,6 @@ function RoutesMain () {
 		<BrowserRouter>
 			<div style={{ display: 'flex' }}>
 				<CssBaseline />
-				<MobileMenuButton />
 				<SidebarMenu />
 				<Content>
 					<Routes>

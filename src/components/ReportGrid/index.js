@@ -74,9 +74,9 @@ export function ReportGrid ({
 			{({ width, height }) => {
 				// react-virtualized AutoSizer/ColumnSizer has an issue where it doesn't account for
 				// the vertical scrollbar width, causing a horizontal scrollbar to always appear.
-				// We check if a vertical scrollbar is needed and adjust the width for ColumnSizer.
+				// Width matches our 8px custom scrollbar in App.css (.ReactVirtualized__Grid).
 				const needsVScroll = reportData.length * ROW_HEIGHT > height;
-				const scrollbarWidth = needsVScroll ? 17 : 0; // Approximate scrollbar width
+				const scrollbarWidth = needsVScroll ? 8 : 0;
 
 				const getColumnWidth = ({ index }) => {
 					const columnCount = reportData[0].length;

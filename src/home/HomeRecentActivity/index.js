@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import useT from '../../hooks/useT';
-import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
+import { sDisplay, sMono, fmtCurrencyFull } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 import { openTransactionInModal } from '../../actions/ui/form/bankTransaction';
@@ -22,12 +22,25 @@ export default function HomeRecentActivity () {
 	const dispatch = useDispatch();
 
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
-	const { currency = 'KRW', categoryIcons = {}, categoryColors = {} } = useSelector((state) => state.settings || {});
+	const accountList = useSelector((state) => state.accountList);
+	const { currency: displayCurrency = 'KRW', categoryIcons = {}, categoryColors = {} } = useSelector((state) => state.settings || {});
+
+	const accountCurrencyMap = useMemo(() => {
+		const map = {};
+		(accountList || []).forEach(acc => { map[acc._id] = acc.currency || 'KRW'; });
+		return map;
+	}, [accountList]);
 
 	const recent = useMemo(() => {
 		const list = (allAccountsTransactions || []).filter(t => !isInternalTransfer(t));
-		return [...list].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 8);
-	}, [allAccountsTransactions]);
+		return [...list]
+			.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+			.slice(0, 8)
+			.map(t => ({
+				...t,
+				_currency: accountCurrencyMap[t.accountId] || t.currency || displayCurrency
+			}));
+	}, [allAccountsTransactions, accountCurrencyMap, displayCurrency]);
 
 	const onClickRow = (t, idx) => () => {
 		dispatch(openTransactionInModal({
@@ -108,7 +121,7 @@ export default function HomeRecentActivity () {
 						</Box>
 						<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: amtColor }}>
 							{amt > 0 ? '+' : amt < 0 ? '−' : ''}
-							{fmtCurrency(Math.abs(amt), t.currency || currency)}
+							{fmtCurrencyFull(Math.abs(amt), t._currency)}
 						</Typography>
 					</Box>
 				);

@@ -26,10 +26,14 @@ const groupBalance = (accountList, predicate, exchangeRate, currency) => account
 	.reduce((sum, a) => sum + toDisplay(a, exchangeRate, currency), 0);
 
 function Stat ({ label, value, delta, deltaColor, T, divider }) {
+	const dividerColor = T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)';
 	return (
 		<Box sx={{
-			borderLeft: divider ? `1px solid ${T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)'}` : 'none',
-			paddingLeft: divider ? '24px' : 0,
+			// Stat is shown in 4-col row on md+, but wraps to 2x2 on mobile.
+			// Dividers/paddingLeft only make sense on the horizontal row layout —
+			// disable them on xs so the bottom-row left item doesn't appear shifted.
+			borderLeft: { xs: 'none', md: divider ? `1px solid ${dividerColor}` : 'none' },
+			paddingLeft: { xs: 0, md: divider ? '24px' : 0 },
 			minWidth: 0
 		}}>
 			<Typography sx={{
@@ -153,105 +157,117 @@ export default function HomeHero () {
 				pointerEvents: 'none'
 			}}/>
 
-			<Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'flex-start' }} spacing={2} sx={{ position: 'relative' }}>
-				<Box sx={{ minWidth: 0 }}>
+			<Box sx={{ position: 'relative' }}>
+				{/* Top row: label + Refresh button always inline at top-right */}
+				<Stack direction="row" justifyContent="space-between" alignItems="center" gap={1} sx={{ marginBottom: { xs: '10px', md: '14px' } }}>
 					<Typography sx={{
 						fontSize: 12,
 						color: heroDim,
 						textTransform: 'uppercase',
 						letterSpacing: '0.08em',
-						fontWeight: 500
+						fontWeight: 500,
+						minWidth: 0,
+						overflow: 'hidden',
+						textOverflow: 'ellipsis',
+						whiteSpace: 'nowrap'
 					}}>
 						Net worth · 순자산
 					</Typography>
-					<Typography sx={{
-						...sDisplay,
-						fontSize: { xs: 40, sm: 56, md: 72 },
-						fontWeight: 700,
-						lineHeight: 1,
-						marginTop: '14px',
-						color: heroInk
-					}}>
-						{fmtCurrency(breakdown.netWorth, currency)}
-					</Typography>
-					<Stack direction="row" alignItems="center" spacing={1.5} sx={{ marginTop: '14px', flexWrap: 'wrap', rowGap: 1 }}>
-						{monthDelta && (
-							<>
-								<Box sx={{
-									color: monthDelta.diff >= 0 ? T.pos : T.neg,
-									background: monthDelta.diff >= 0 ? T.posBg : T.negBg,
-									padding: '4px 10px',
-									borderRadius: '999px',
-									fontWeight: 600,
-									fontSize: 13,
-									...sMono
-								}}>
-									{monthDelta.diff >= 0 ? '+' : ''}{monthDelta.pct.toFixed(2)}%
-								</Box>
-								<Typography sx={{ ...sMono, color: heroDim, fontSize: 13 }}>
-									{monthDelta.diff >= 0 ? '+' : '−'}
-									{fmtCurrency(Math.abs(monthDelta.diff), currency)} past month
-								</Typography>
-							</>
-						)}
-						{score > 0 && (
-							<Box sx={{
-								display: 'inline-flex',
-								alignItems: 'center',
-								gap: 1,
-								background: 'rgba(255,255,255,0.1)',
-								border: '1px solid rgba(255,255,255,0.18)',
-								padding: '4px 12px 4px 8px',
-								borderRadius: '999px',
-								fontSize: 12
-							}}>
-								<Box sx={{
-									width: 22,
-									height: 22,
-									borderRadius: '11px',
-									background: T.pos,
-									color: '#0a0a0e',
-									fontWeight: 800,
-									display: 'inline-flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-									fontSize: 11,
-									...sDisplay
-								}}>
-									{score}
-								</Box>
-								<FavoriteBorderOutlinedIcon sx={{ fontSize: 14, color: heroInk, opacity: 0.85 }} />
-								<Typography sx={{ color: heroInk, fontSize: 12, fontWeight: 600 }}>
-									Financial health
-								</Typography>
-								<Typography sx={{ color: heroDim, fontSize: 11 }}>· {grade(score)}</Typography>
-							</Box>
-						)}
-					</Stack>
-				</Box>
-
-				<Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
 					<Button
 						onClick={onRefresh}
 						disabled={!username}
-						startIcon={<RefreshOutlinedIcon />}
+						startIcon={<RefreshOutlinedIcon sx={{ fontSize: { xs: 14, md: 16 } }} />}
 						sx={{
 							background: T.acc.bright,
 							color: T.acc.deep,
 							border: 'none',
 							borderRadius: '999px',
-							padding: '8px 18px',
-							fontSize: 13,
+							padding: { xs: '5px 12px', md: '8px 18px' },
+							fontSize: { xs: 11, md: 13 },
 							fontWeight: 700,
 							textTransform: 'none',
+							flexShrink: 0,
+							minWidth: 0,
 							'&:hover': { background: T.acc.bright, opacity: 0.9 },
 							'&.Mui-disabled': { background: 'rgba(255,255,255,0.12)', color: heroDim }
 						}}
 					>
-						Refresh prices
+						<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Refresh prices</Box>
+						<Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Refresh</Box>
 					</Button>
 				</Stack>
-			</Stack>
+
+				{/* Big net worth number */}
+				<Typography sx={{
+					...sDisplay,
+					fontSize: { xs: 40, sm: 56, md: 72 },
+					fontWeight: 700,
+					lineHeight: 1,
+					color: heroInk
+				}}>
+					{fmtCurrency(breakdown.netWorth, currency)}
+				</Typography>
+
+				{/* Stat chips — uniform height for clean wrap on mobile */}
+				<Stack direction="row" alignItems="center" sx={{ marginTop: '14px', flexWrap: 'wrap', columnGap: 1.25, rowGap: 1 }}>
+					{monthDelta && (
+						<>
+							<Box sx={{
+								color: monthDelta.diff >= 0 ? T.pos : T.neg,
+								background: monthDelta.diff >= 0 ? T.posBg : T.negBg,
+								padding: '0 12px',
+								borderRadius: '999px',
+								fontWeight: 600,
+								fontSize: 13,
+								minHeight: 28,
+								display: 'inline-flex',
+								alignItems: 'center',
+								...sMono
+							}}>
+								{monthDelta.diff >= 0 ? '+' : ''}{monthDelta.pct.toFixed(2)}%
+							</Box>
+							<Typography sx={{ ...sMono, color: heroDim, fontSize: 13, lineHeight: '28px' }}>
+								{monthDelta.diff >= 0 ? '+' : '−'}
+								{fmtCurrency(Math.abs(monthDelta.diff), currency)} past month
+							</Typography>
+						</>
+					)}
+					{score > 0 && (
+						<Box sx={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: 0.75,
+							background: 'rgba(255,255,255,0.1)',
+							border: '1px solid rgba(255,255,255,0.18)',
+							padding: '0 12px 0 4px',
+							borderRadius: '999px',
+							fontSize: 12,
+							minHeight: 28
+						}}>
+							<Box sx={{
+								width: 20,
+								height: 20,
+								borderRadius: '10px',
+								background: T.pos,
+								color: '#0a0a0e',
+								fontWeight: 800,
+								display: 'inline-flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								fontSize: 11,
+								...sDisplay
+							}}>
+								{score}
+							</Box>
+							<FavoriteBorderOutlinedIcon sx={{ fontSize: 13, color: heroInk, opacity: 0.85 }} />
+							<Typography sx={{ color: heroInk, fontSize: 12, fontWeight: 600 }}>
+								Financial health
+							</Typography>
+							<Typography sx={{ color: heroDim, fontSize: 11 }}>· {grade(score)}</Typography>
+						</Box>
+					)}
+				</Stack>
+			</Box>
 
 			<Box sx={{
 				display: 'grid',

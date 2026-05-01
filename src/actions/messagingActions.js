@@ -18,15 +18,40 @@ export const getTokenFailure = () => ({
 
 export const requestPermissionAction = () => {
 	return async dispatch => {
-		const permission = await Notification.requestPermission();
+		try {
+			if (typeof Notification === 'undefined') {
+				console.error('[push] Notification API not available (iOS <16.4 or non-secure context)');
+				alert('이 브라우저/OS는 푸시 알림을 지원하지 않습니다.\niOS는 16.4 이상 + 홈 화면에서 실행 필요.');
+				dispatch(getTokenFailure());
+				return;
+			}
 
-		if (permission === 'granted') {
-		  const messagingToken = await getToken(messaging, {
-				vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY
-		  });
+			console.log('[push] requesting permission, current=', Notification.permission);
+			const permission = await Notification.requestPermission();
+			console.log('[push] permission result=', permission);
 
-			const apiUrl = '/api/registerMessageToken';
-			const response = await fetch(apiUrl, {
+			if (permission !== 'granted') {
+				alert(`푸시 알림 권한이 거부되었습니다 (${permission}).`);
+				dispatch(getTokenFailure());
+				return;
+			}
+
+			const reg = await navigator.serviceWorker.ready;
+			console.log('[push] service worker ready, scope=', reg.scope);
+
+			const messagingToken = await getToken(messaging, {
+				vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY,
+				serviceWorkerRegistration: reg
+			});
+			console.log('[push] FCM token=', messagingToken ? messagingToken.slice(0, 20) + '...' : '(empty)');
+
+			if (!messagingToken) {
+				alert('FCM 토큰을 받지 못했습니다. SW 또는 VAPID 키 설정을 확인하세요.');
+				dispatch(getTokenFailure());
+				return;
+			}
+
+			const response = await fetch('/api/registerMessageToken', {
 				method: 'POST',
 				headers: {
 					'Accept': 'application/json, text/plain, */*',
@@ -36,12 +61,17 @@ export const requestPermissionAction = () => {
 			});
 
 			const result = await response.json();
+			console.log('[push] register result=', result);
 
 			if (result.return === true) {
 				dispatch(getTokenSuccess(messagingToken));
 			} else {
 				dispatch(getTokenFailure());
 			}
+		} catch (err) {
+			console.error('[push] requestPermission error:', err);
+			alert(`Push 등록 실패: ${err && err.message ? err.message : err}`);
+			dispatch(getTokenFailure());
 		}
 	};
 };

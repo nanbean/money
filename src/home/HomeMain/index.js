@@ -4,7 +4,9 @@ import { useDispatch } from 'react-redux';
 import Box from '@mui/material/Box';
 
 import Layout from '../../components/Layout';
+import MobileMenuButton from '../../components/MobileMenuButton';
 import useT from '../../hooks/useT';
+import useMobile from '../../hooks/useMobile';
 
 import HomeHero from '../HomeHero';
 import HomeCashFlow from '../HomeCashFlow';
@@ -26,6 +28,7 @@ const showWeeklyRecapDay = dayOfWeek === 6 || dayOfWeek === 0 || (dayOfWeek === 
 export function HomeMain () {
 	const dispatch = useDispatch();
 	const T = useT();
+	const isMobile = useMobile();
 
 	const [weeklyRecapDismissed, setWeeklyRecapDismissed] = useState(
 		() => localStorage.getItem(DISMISS_KEY) === getISOWeekKey()
@@ -55,11 +58,16 @@ export function HomeMain () {
 		<Layout showPaper={false} title="Home">
 			<Box sx={{
 				background: T.bg,
-				borderRadius: { xs: 0, md: '20px' },
-				padding: { xs: '16px', md: '24px' },
 				color: T.ink,
-				minHeight: 'calc(100vh - 32px)'
+				maxWidth: 1320,
+				padding: { xs: '16px 16px 32px', md: '24px 32px 60px' },
+				minHeight: '100vh'
 			}}>
+				{isMobile && (
+					<Box sx={{ marginBottom: '12px' }}>
+						<MobileMenuButton />
+					</Box>
+				)}
 				<HomeHero />
 
 				{showWeeklyRecap && (

@@ -15,7 +15,7 @@ import {
 	sDisplay,
 	sMono,
 	colorFor,
-	fmtCurrency,
+	fmtCurrencyFull,
 	fmtPrice,
 	fmtQty
 } from '../utils/designTokens';
@@ -166,7 +166,7 @@ export function InvestmentPerformance ({
 				</Stack>
 				<Stack alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
 					<Box sx={{ ...sDisplay, fontSize: 22, fontWeight: 700, color: colorFor(T, totalReturn) }}>
-						{totalReturn >= 0 ? '+' : ''}{fmtCurrency(totalReturn, currency)}
+						{totalReturn >= 0 ? '+' : ''}{fmtCurrencyFull(totalReturn, currency)}
 					</Box>
 					<Box sx={{ ...sMono, fontSize: 12, color: colorFor(T, returnPct), fontWeight: 600 }}>
 						{returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%
@@ -192,22 +192,22 @@ export function InvestmentPerformance ({
 									<Stack spacing={0.5}>
 										<Box sx={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{i.account}</Box>
 										<Box sx={{ ...sMono, fontSize: 14, color: T.ink, fontWeight: 600 }}>
-											{fmtCurrency(i.marketValue, currency)}
+											{fmtCurrencyFull(i.marketValue, currency)}
 										</Box>
 										<Stack direction="row" gap={1.5} sx={{ ...sMono, fontSize: 11, color: T.ink2 }}>
-											<Box>매입 {fmtCurrency(i.costBasis, currency)}</Box>
+											<Box>매입 {fmtCurrencyFull(i.costBasis, currency)}</Box>
 											<Box>· 수량 {fmtQty(i.quantity)}</Box>
 										</Stack>
 									</Stack>
 									<Stack alignItems="flex-end" spacing={0.5}>
 										<Box sx={{ ...sMono, fontSize: 13, fontWeight: 700, color: colorFor(T, i.periodReturn) }}>
-											{i.periodReturn >= 0 ? '+' : ''}{fmtCurrency(i.periodReturn, currency)}
+											{i.periodReturn >= 0 ? '+' : ''}{fmtCurrencyFull(i.periodReturn, currency)}
 										</Box>
 										<Box sx={{ ...sMono, fontSize: 11, color: colorFor(T, pct), fontWeight: 600 }}>
 											{pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
 										</Box>
 										<Box sx={{ ...sMono, fontSize: 10, color: T.ink3 }}>
-											실현 {i.periodGain >= 0 ? '+' : ''}{fmtCurrency(i.periodGain, currency)}
+											실현 {i.periodGain >= 0 ? '+' : ''}{fmtCurrencyFull(i.periodGain, currency)}
 										</Box>
 									</Stack>
 								</Stack>
@@ -225,24 +225,24 @@ export function InvestmentPerformance ({
 								<Stack spacing={0.5}>
 									<Box sx={{ fontSize: 13, fontWeight: 700, color: T.ink }}>Total · 합계</Box>
 									<Box sx={{ ...sMono, fontSize: 14, color: T.ink, fontWeight: 700 }}>
-										{fmtCurrency(totalMarketValue, currency)}
+										{fmtCurrencyFull(totalMarketValue, currency)}
 									</Box>
 									<Stack direction="row" gap={1.5} sx={{ ...sMono, fontSize: 11, color: T.ink2 }}>
-										<Box>매입 {fmtCurrency(totalCostBasis, currency)}</Box>
+										<Box>매입 {fmtCurrencyFull(totalCostBasis, currency)}</Box>
 										<Box>· 수량 {fmtQty(totalQuantity)}</Box>
 									</Stack>
 								</Stack>
 								<Stack alignItems="flex-end" spacing={0.5}>
 									<Box sx={{ ...sMono, fontSize: 13, fontWeight: 700, color: colorFor(T, totalReturn) }}>
-										{totalReturn >= 0 ? '+' : ''}{fmtCurrency(totalReturn, currency)}
+										{totalReturn >= 0 ? '+' : ''}{fmtCurrencyFull(totalReturn, currency)}
 									</Box>
 									<Box sx={{ ...sMono, fontSize: 11, color: colorFor(T, returnPct), fontWeight: 600 }}>
 										{returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%
 									</Box>
 									<Box sx={{ ...sMono, fontSize: 10, color: T.ink3 }}>
-										실현 {totalRealized >= 0 ? '+' : ''}{fmtCurrency(totalRealized, currency)}
+										실현 {totalRealized >= 0 ? '+' : ''}{fmtCurrencyFull(totalRealized, currency)}
 										{totalDividend !== 0 && (
-											<Box component="span"> · 배당 {fmtCurrency(totalDividend, currency)}</Box>
+											<Box component="span"> · 배당 {fmtCurrencyFull(totalDividend, currency)}</Box>
 										)}
 									</Box>
 								</Stack>
@@ -268,16 +268,16 @@ export function InvestmentPerformance ({
 									{i.account}
 								</Box>
 								<Box sx={{ ...cellSx('right', stripe), ...sMono, color: T.ink }}>
-									{fmtCurrency(i.costBasis, currency)}
+									{fmtCurrencyFull(i.costBasis, currency)}
 								</Box>
 								<Box sx={{ ...cellSx('right', stripe), ...sMono, color: T.ink }}>
-									{fmtCurrency(i.marketValue, currency)}
+									{fmtCurrencyFull(i.marketValue, currency)}
 								</Box>
 								<Box sx={{ ...cellSx('right', stripe), ...sMono, color: colorFor(T, i.periodGain) }}>
-									{i.periodGain >= 0 ? '+' : ''}{fmtCurrency(i.periodGain, currency)}
+									{i.periodGain >= 0 ? '+' : ''}{fmtCurrencyFull(i.periodGain, currency)}
 								</Box>
 								<Box sx={{ ...cellSx('right', stripe), ...sMono, color: colorFor(T, i.periodReturn), fontWeight: 700 }}>
-									<Box>{i.periodReturn >= 0 ? '+' : ''}{fmtCurrency(i.periodReturn, currency)}</Box>
+									<Box>{i.periodReturn >= 0 ? '+' : ''}{fmtCurrencyFull(i.periodReturn, currency)}</Box>
 									<Box sx={{ fontSize: 11, fontWeight: 600 }}>
 										{pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
 									</Box>
@@ -293,16 +293,16 @@ export function InvestmentPerformance ({
 						<React.Fragment>
 							<Box sx={{ ...totalCellSx('left'), color: T.ink }}>Total</Box>
 							<Box sx={{ ...totalCellSx('right'), ...sMono, color: T.ink }}>
-								{fmtCurrency(totalCostBasis, currency)}
+								{fmtCurrencyFull(totalCostBasis, currency)}
 							</Box>
 							<Box sx={{ ...totalCellSx('right'), ...sMono, color: T.ink }}>
-								{fmtCurrency(totalMarketValue, currency)}
+								{fmtCurrencyFull(totalMarketValue, currency)}
 							</Box>
 							<Box sx={{ ...totalCellSx('right'), ...sMono, color: colorFor(T, totalRealized) }}>
-								{totalRealized >= 0 ? '+' : ''}{fmtCurrency(totalRealized, currency)}
+								{totalRealized >= 0 ? '+' : ''}{fmtCurrencyFull(totalRealized, currency)}
 							</Box>
 							<Box sx={{ ...totalCellSx('right'), ...sMono, color: colorFor(T, totalReturn) }}>
-								<Box>{totalReturn >= 0 ? '+' : ''}{fmtCurrency(totalReturn, currency)}</Box>
+								<Box>{totalReturn >= 0 ? '+' : ''}{fmtCurrencyFull(totalReturn, currency)}</Box>
 								<Box sx={{ fontSize: 11, fontWeight: 600 }}>
 									{returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%
 								</Box>

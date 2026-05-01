@@ -97,6 +97,18 @@ export const fmtCurrency = (n, currency) => {
 	return fmtKRW(n);
 };
 
+// Full precision (no 억/만 abbreviation). Use for account detail views where the
+// exact balance matters more than dashboard-style magnitude.
+export const fmtCurrencyFull = (n, currency) => {
+	if (!Number.isFinite(n)) return currency === 'USD' ? '$0.00' : '₩0';
+	const sign = n < 0 ? '−' : '';
+	const abs = Math.abs(n);
+	if (currency === 'USD') {
+		return `${sign}$${abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+	}
+	return `${sign}₩${Math.round(abs).toLocaleString('ko-KR')}`;
+};
+
 export const fmtPrice = (p, currency) => {
 	if (!Number.isFinite(p)) return '—';
 	if (currency === 'USD') return `$${p.toFixed(2)}`;

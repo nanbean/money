@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 
 import useT from '../../hooks/useT';
 import useWidth from '../../hooks/useWidth';
-import { sMono, fmtCurrency } from '../../utils/designTokens';
+import { sMono, fmtCurrencyFull } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 
@@ -184,7 +184,7 @@ export function BankTransactions ({
 					textAlign: 'right'
 				}}>
 					{amount > 0 ? '+' : amount < 0 ? '−' : ''}
-					{fmtCurrency(Math.abs(amount), rowCurrency)}
+					{fmtCurrencyFull(Math.abs(amount), rowCurrency)}
 				</Typography>
 			</Box>
 		);
