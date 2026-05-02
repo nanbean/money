@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem';
 import moment from 'moment';
 
 import FilterMenu from '../../components/FilterMenu';
-import ReportGrid from '../../components/ReportGrid';
+import MonthlyExpenseGrid from './MonthlyExpenseGrid';
 import SortMenuButton from '../../components/SortMenuButton';
 import MonthlyComparisonChart from './MonthlyComparisonChart';
 
@@ -196,12 +196,20 @@ const MonthlyExpense = () => {
 						</Typography>
 					)}
 				</Stack>
-				<Box sx={{ flex: 1, minHeight: 0, position: 'relative' }}>
+				<Box sx={{
+					// Mobile: drop flex so the explicit pixel height wins. With flex:1, the
+					// "1 1 0%" shorthand resets flex-basis to 0 and overrides height:600,
+					// collapsing the inner area to 0 and hiding the grid.
+					flex: { md: 1 },
+					minHeight: { md: 0 },
+					position: 'relative',
+					height: { xs: 600, md: 'auto' }
+				}}>
 					{view === 'grid' && reportData.length > 1 && (
-						<ReportGrid reportData={reportData} supportSearch />
+						<MonthlyExpenseGrid reportData={reportData} />
 					)}
 					{view === 'sankey' && (
-						<Box sx={{ height: { xs: 600, md: '100%' }, minHeight: { xs: 600, md: 480 } }}>
+						<Box sx={{ height: '100%', minHeight: 480 }}>
 							<SankeyChart data={sankeyData} />
 						</Box>
 					)}

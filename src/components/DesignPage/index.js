@@ -17,19 +17,33 @@ function DesignPage ({
 	subtitle,
 	loading,
 	headerRight,
+	fillViewport = false,
 	children
 }) {
 	const T = useT();
 
+	// fillViewport: page exactly fits the viewport on md+ — title/header at the
+	// top, then a flex:1 children container so a virtualized list at the bottom
+	// scrolls inside itself instead of the page.
+	const outerSx = {
+		background: T.bg,
+		color: T.ink,
+		maxWidth: 1320,
+		padding: { xs: '16px 16px 32px', md: '24px 32px 60px' }
+	};
+	if (fillViewport) {
+		outerSx.minHeight = { xs: '100vh', md: 0 };
+		outerSx.height = { md: '100vh' };
+		outerSx.display = { md: 'flex' };
+		outerSx.flexDirection = { md: 'column' };
+		outerSx.overflow = { md: 'hidden' };
+	} else {
+		outerSx.minHeight = '100vh';
+	}
+
 	return (
 		<Layout showPaper={false} title={title}>
-			<Box sx={{
-				background: T.bg,
-				color: T.ink,
-				maxWidth: 1320,
-				padding: { xs: '16px 16px 32px', md: '24px 32px 60px' },
-				minHeight: '100vh'
-			}}>
+			<Box sx={outerSx}>
 				{loading && (
 					<LinearProgress color="primary" sx={{ marginBottom: '20px', borderRadius: '4px' }} />
 				)}
@@ -62,7 +76,20 @@ function DesignPage ({
 					</Stack>
 					{headerRight}
 				</Box>
-				{children}
+				{fillViewport ? (
+					<Box sx={{
+						// flex column on all sizes so `gap` applies on mobile too
+						// (display:block doesn't honor gap). Desktop additionally
+						// uses flex:1 to fill the viewport-fit ancestor.
+						display: 'flex',
+						flexDirection: 'column',
+						gap: 2,
+						flex: { md: 1 },
+						minHeight: { md: 0 }
+					}}>
+						{children}
+					</Box>
+				) : children}
 			</Box>
 		</Layout>
 	);
@@ -71,6 +98,7 @@ function DesignPage ({
 DesignPage.propTypes = {
 	title: PropTypes.string.isRequired,
 	children: PropTypes.node,
+	fillViewport: PropTypes.bool,
 	headerRight: PropTypes.node,
 	loading: PropTypes.bool,
 	subtitle: PropTypes.node,

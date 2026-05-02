@@ -15,6 +15,7 @@ import { openTransactionInModal } from '../../actions/ui/form/bankTransaction';
 import BankTransactionModal from '../../components/BankTransactionModal';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
+const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 const tint = (hex, alphaHex = '22') => `${hex}${alphaHex}`;
 
 export default function HomeRecentActivity () {
@@ -32,7 +33,7 @@ export default function HomeRecentActivity () {
 	}, [accountList]);
 
 	const recent = useMemo(() => {
-		const list = (allAccountsTransactions || []).filter(t => !isInternalTransfer(t));
+		const list = (allAccountsTransactions || []).filter(t => !isInternalTransfer(t) && !isInvestmentTxn(t));
 		return [...list]
 			.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 			.slice(0, 8)

@@ -10,6 +10,7 @@ import useT from '../../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
+const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 
 export default function HomeCashFlow () {
 	const T = useT();
@@ -23,7 +24,7 @@ export default function HomeCashFlow () {
 		const monthStart = moment().startOf('month').format('YYYY-MM-DD');
 		const monthEnd = moment().endOf('month').format('YYYY-MM-DD');
 		const monthTxns = (allAccountsTransactions || []).filter(t =>
-			t.date >= monthStart && t.date <= monthEnd && !isInternalTransfer(t)
+			t.date >= monthStart && t.date <= monthEnd && !isInternalTransfer(t) && !isInvestmentTxn(t)
 		);
 		const accountMap = new Map((accountList || []).map(a => [a._id, a]));
 		const conv = (t) => {

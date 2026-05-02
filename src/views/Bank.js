@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 
 import AddIcon from '@mui/icons-material/Add';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -85,19 +84,6 @@ export function Bank () {
 
 	const onNewClick = () => dispatch(openTransactionInModal());
 
-	const breadcrumb = (
-		<Stack direction="row" alignItems="center" spacing={0.5} sx={{ fontSize: 12, color: T.ink2, marginBottom: 1.5 }}>
-			<Box component={Link} to="/accounts" sx={{
-				color: T.ink2, textDecoration: 'none',
-				'&:hover': { color: T.ink }
-			}}>Accounts</Box>
-			<ChevronRightIcon sx={{ fontSize: 14, color: T.ink3 }} />
-			<Box sx={{ color: T.ink2 }}>{typeEn}</Box>
-			<ChevronRightIcon sx={{ fontSize: 14, color: T.ink3 }} />
-			<Box sx={{ color: T.ink, fontWeight: 600 }}>{name}</Box>
-		</Stack>
-	);
-
 	const heroBg = T.dark
 		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
 		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
@@ -111,8 +97,7 @@ export function Bank () {
 			background: heroBg,
 			borderRadius: { xs: '16px', md: '24px' },
 			padding: { xs: '24px', md: '36px' },
-			color: heroInk,
-			marginBottom: '20px'
+			color: heroInk
 		}}>
 			<Box sx={{
 				position: 'absolute',
@@ -276,8 +261,7 @@ export function Bank () {
 	);
 
 	return (
-		<DesignPage title={name} titleKo={typeKo || '계좌'}>
-			{breadcrumb}
+		<DesignPage title={name} titleKo={typeKo || '계좌'} fillViewport>
 			{hero}
 
 			<Box sx={{
@@ -287,10 +271,20 @@ export function Bank () {
 				padding: { xs: '16px', md: '20px' },
 				color: T.ink,
 				display: 'flex',
-				flexDirection: 'column'
+				flexDirection: 'column',
+				// Desktop: fill leftover height inside DesignPage's viewport-fit container.
+				flex: { md: 1 },
+				minHeight: { md: 0 }
 			}}>
 				{filterRow}
-				<Box sx={{ flex: 1, minHeight: { xs: 480, md: 'calc(100vh - 380px)' } }}>
+				<Box sx={{
+					// Mobile: explicit pixel height (page is natural flow).
+					// Desktop: flex:1 — parent has measurable height so the virtualizer
+					// reads its scroll container size correctly.
+					flex: { md: 1 },
+					minHeight: { md: 0 },
+					height: { xs: 600, md: 'auto' }
+				}}>
 					<BankTransactions
 						account={account}
 						currency={currency}

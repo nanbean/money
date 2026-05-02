@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 
-import ReportGrid from '../../components/ReportGrid';
+import ReturnYearlyTable from './YearlyTable';
 import AccountFilter from '../../components/AccountFilter';
 
 import useT from '../../hooks/useT';
@@ -99,6 +99,7 @@ export function RateOfReturn () {
 	const historyList = useSelector((state) => state.historyList);
 	const allInvestmentAccounts = Object.keys(_.groupBy(investementTransactions, 'account')).map(account => account);
 	const [filteredAccounts, setFilteredAccounts] = useState(allInvestmentAccounts);
+	const [filteredAccountsTouched, setFilteredAccountsTouched] = useState(false);
 	const allCashAccounts = Object.keys(_.groupBy(cashTransactions, 'account')).map(account => account).filter(i => i && filteredAccounts.includes(i.split('_')[0]));
 	const dispatch = useDispatch();
 
@@ -106,9 +107,22 @@ export function RateOfReturn () {
 		dispatch(getHistoryListAction());
 	}, [dispatch]);
 
-	const onFilteredAccountsChange = (e) => setFilteredAccounts(e);
+	// useState's initial value is captured on first render, but Redux data may
+	// load afterwards or new investment accounts may appear over time. Sync
+	// filteredAccounts with allInvestmentAccounts until the user touches it.
+	useEffect(() => {
+		if (filteredAccountsTouched) return;
+		const next = allInvestmentAccounts;
+		const same = next.length === filteredAccounts.length && next.every(a => filteredAccounts.includes(a));
+		if (!same) setFilteredAccounts(next);
+	}, [allInvestmentAccounts, filteredAccounts, filteredAccountsTouched]);
 
-	const { reportData, chartData, geometricMean, overallSummary } = useReturnReport(
+	const onFilteredAccountsChange = (e) => {
+		setFilteredAccountsTouched(true);
+		setFilteredAccounts(e);
+	};
+
+	const { chartData, geometricMean, overallSummary } = useReturnReport(
 		allInvestments, allAccountsTransactions, investementTransactions, cashTransactions,
 		historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate
 	);
@@ -226,28 +240,38 @@ export function RateOfReturn () {
 				</Box>
 			</Box>
 
-			{/* Report grid panel — fills remaining vertical space */}
+			{/* Yearly table panel — fills remaining vertical space (desktop) or
+			    takes natural height (mobile) so the inner 600px table wrapper
+			    isn't clipped by an outer flex:1 panel. */}
 			<Box sx={{
 				...panelSx,
-				flex: 1,
+				flex: { xs: '0 0 auto', md: 1 },
 				display: 'flex',
 				flexDirection: 'column',
-				minHeight: { xs: 480, md: 0 },
+				minHeight: { xs: 'auto', md: 0 },
 				padding: 0,
-				overflow: 'hidden'
+				overflow: { xs: 'visible', md: 'hidden' }
 			}}>
 				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ padding: { xs: '14px 14px 8px', md: '18px 18px 10px' } }}>
 					<Typography sx={{ ...sDisplay, fontSize: 14, fontWeight: 700, color: T.ink, margin: 0 }}>
 						Yearly breakdown
 						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 연도별 내역</Box>
 					</Typography>
-					{reportData.length > 0 && (
-						<Typography sx={{ fontSize: 11, color: T.ink3 }}>{reportData.length - 1} rows</Typography>
+					{chartData.length > 0 && (
+						<Typography sx={{ fontSize: 11, color: T.ink3 }}>{chartData.length} rows</Typography>
 					)}
 				</Stack>
-				<Box sx={{ flex: 1, minHeight: 0, position: 'relative' }}>
-					{reportData.length > 0 ? (
-						<ReportGrid reportData={reportData} />
+				<Box sx={{
+					// Mobile: drop flex (its `1 1 0%` resets flex-basis and lets the
+					// native table grow to its full content height). Pin a fixed pixel
+					// height so the table's maxHeight:100% can confine the scroll.
+					flex: { md: 1 },
+					minHeight: { md: 0 },
+					position: 'relative',
+					height: { xs: 600, md: 'auto' }
+				}}>
+					{chartData.length > 0 ? (
+						<ReturnYearlyTable rows={chartData} />
 					) : (
 						<Box sx={{ padding: 4, textAlign: 'center' }}>
 							<Typography sx={{ fontSize: 13, color: T.ink2 }}>No return data yet</Typography>

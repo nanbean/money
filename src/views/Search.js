@@ -55,37 +55,6 @@ function Chip ({ active, onClick, T, children, color }) {
 	);
 }
 
-function StatCard ({ label, value, sub, color, T }) {
-	const lab = labelStyle(T);
-	return (
-		<Box sx={{
-			background: T.surf,
-			border: `1px solid ${T.rule}`,
-			borderRadius: '16px',
-			padding: { xs: '14px', md: '20px' },
-			color: T.ink,
-			minWidth: 0
-		}}>
-			<Typography sx={lab}>{label}</Typography>
-			<Typography sx={{
-				...sDisplay,
-				fontSize: 22,
-				fontWeight: 700,
-				marginTop: '8px',
-				color: color || T.ink,
-				whiteSpace: 'nowrap',
-				overflow: 'hidden',
-				textOverflow: 'ellipsis'
-			}}>
-				{value}
-			</Typography>
-			{sub && (
-				<Typography sx={{ fontSize: 11, color: T.ink2, marginTop: '2px' }}>{sub}</Typography>
-			)}
-		</Box>
-	);
-}
-
 const formatDateOnly = (d) => d.toISOString().slice(0, 10);
 
 export function Search () {
@@ -296,16 +265,15 @@ export function Search () {
 	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
 
 	return (
-		<DesignPage title="Search" titleKo="검색">
+		<DesignPage title="Search" titleKo="검색" fillViewport>
 			{/* Hero */}
 			<Box sx={{
 				position: 'relative',
 				overflow: 'hidden',
 				background: heroBg,
-				borderRadius: { xs: '16px', md: '24px' },
-				padding: { xs: '20px', md: '32px' },
-				color: heroInk,
-				marginBottom: '20px'
+				borderRadius: { xs: '16px', md: '20px' },
+				padding: { xs: '20px', md: '24px' },
+				color: heroInk
 			}}>
 				<Box sx={{
 					position: 'absolute', top: -100, right: -100,
@@ -314,15 +282,9 @@ export function Search () {
 					pointerEvents: 'none'
 				}}/>
 				<Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'flex-start' }} spacing={2} sx={{ position: 'relative' }}>
-					<Box>
-						<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-							Search · 거래 검색
-						</Typography>
-						<Typography sx={{ ...sDisplay, fontSize: { xs: 24, md: 28 }, fontWeight: 700, marginTop: '6px', lineHeight: 1.1 }}>
-							{stats.matches.toLocaleString()}{' '}
-							<Box component="span" sx={{ color: heroDim, fontWeight: 400 }}>matches</Box>
-						</Typography>
-					</Box>
+					<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+						Search · 거래 검색
+					</Typography>
 					{activeFilterCount > 0 && (
 						<Box
 							component="button"
@@ -394,36 +356,80 @@ export function Search () {
 						</Box>
 					)}
 				</Box>
-			</Box>
-
-			{/* Stat cards */}
-			<Box sx={{
-				display: 'grid',
-				gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-				gap: 2,
-				marginBottom: '20px'
-			}}>
-				<StatCard label="Matches · 결과" value={stats.matches.toLocaleString()} T={T} />
-				<StatCard
-					label="Total expenses · 지출"
-					value={`−${fmtCurrency(stats.expense, currency)}`}
-					sub={`${stats.expenseCount} txns`}
-					color={stats.expense > 0 ? T.neg : T.ink}
-					T={T}
-				/>
-				<StatCard
-					label="Total income · 수입"
-					value={`+${fmtCurrency(stats.income, currency)}`}
-					sub={`${stats.incomeCount} txns`}
-					color={stats.income > 0 ? T.pos : T.ink}
-					T={T}
-				/>
-				<StatCard
-					label="Avg per txn · 건당 평균"
-					value={stats.matches > 0 ? fmtCurrency(stats.avg, currency) : '—'}
-					sub="absolute"
-					T={T}
-				/>
+				<Box sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+					gap: { xs: 1.5, md: 3 },
+					marginTop: { xs: '16px', md: '20px' },
+					position: 'relative'
+				}}>
+					{[
+						{
+							label: 'Matches · 결과',
+							value: stats.matches.toLocaleString(),
+							sub: null,
+							color: heroInk,
+							divider: false
+						},
+						{
+							label: 'Total expenses · 지출',
+							value: `−${fmtCurrency(stats.expense, currency)}`,
+							sub: `${stats.expenseCount} txns`,
+							color: stats.expense > 0 ? '#fb7185' : heroInk,
+							divider: true
+						},
+						{
+							label: 'Total income · 수입',
+							value: `+${fmtCurrency(stats.income, currency)}`,
+							sub: `${stats.incomeCount} txns`,
+							color: stats.income > 0 ? '#34d399' : heroInk,
+							divider: true
+						},
+						{
+							label: 'Avg per txn · 건당 평균',
+							value: stats.matches > 0 ? fmtCurrency(stats.avg, currency) : '—',
+							sub: 'absolute',
+							color: heroInk,
+							divider: true
+						}
+					].map(item => (
+						<Box key={item.label} sx={{
+							borderLeft: { xs: 'none', md: item.divider ? `1px solid ${T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)'}` : 'none' },
+							paddingLeft: { xs: 0, md: item.divider ? '20px' : 0 },
+							minWidth: 0
+						}}>
+							<Typography sx={{
+								fontSize: 11,
+								color: heroDim,
+								textTransform: 'uppercase',
+								letterSpacing: '0.06em',
+								fontWeight: 500,
+								whiteSpace: 'nowrap',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis'
+							}}>
+								{item.label}
+							</Typography>
+							<Typography sx={{
+								...sDisplay,
+								fontSize: { xs: 16, md: 20 },
+								fontWeight: 700,
+								marginTop: '4px',
+								color: item.color,
+								whiteSpace: 'nowrap',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis'
+							}}>
+								{item.value}
+							</Typography>
+							{item.sub && (
+								<Typography sx={{ fontSize: 11, color: heroDim, marginTop: '2px' }}>
+									{item.sub}
+								</Typography>
+							)}
+						</Box>
+					))}
+				</Box>
 			</Box>
 
 			{/* Filters */}
@@ -432,8 +438,7 @@ export function Search () {
 				border: `1px solid ${T.rule}`,
 				borderRadius: '16px',
 				padding: { xs: '14px', md: '18px' },
-				color: T.ink,
-				marginBottom: '20px'
+				color: T.ink
 			}}>
 				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
 					<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
@@ -694,7 +699,9 @@ export function Search () {
 				padding: { xs: '16px', md: '20px' },
 				color: T.ink,
 				display: 'flex',
-				flexDirection: 'column'
+				flexDirection: 'column',
+				flex: { md: 1 },
+				minHeight: { md: 0 }
 			}}>
 				<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
 					<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
@@ -717,30 +724,13 @@ export function Search () {
 								? 'Try removing some filters or adjusting the date range.'
 								: 'Use the search box or filters above to start.'}
 						</Typography>
-						{hasFilters && activeFilterCount > 0 && (
-							<Box
-								component="button"
-								onClick={clearAll}
-								sx={{
-									marginTop: 2,
-									background: T.acc.hero,
-									color: '#fff',
-									border: 'none',
-									padding: '10px 18px',
-									borderRadius: '999px',
-									fontSize: 12,
-									fontWeight: 600,
-									fontFamily: 'inherit',
-									cursor: 'pointer',
-									'&:hover': { opacity: 0.9 }
-								}}
-							>
-								Clear all filters
-							</Box>
-						)}
 					</Box>
 				) : (
-					<Box sx={{ flex: 1, minHeight: { xs: 480, md: 'calc(100vh - 600px)' } }}>
+					<Box sx={{
+						flex: { md: 1 },
+						minHeight: { md: 0 },
+						height: { xs: 600, md: 'auto' }
+					}}>
 						<BankTransactions showAccount transactions={filteredTransactions} />
 					</Box>
 				)}

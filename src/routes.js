@@ -33,6 +33,12 @@ import {
 
 const Content = styled('main')(({ theme }) => ({
 	flexGrow: 1,
+	// Flex items default to min-width:auto (= child min-content). A wide
+	// horizontally-scrollable child (e.g. report tables) would bubble its
+	// minWidth up through this <main>, the outer flex row, and into the
+	// viewport — producing a browser-level horizontal scrollbar. Resetting
+	// minWidth to 0 confines overflow to the descendant container.
+	minWidth: 0,
 	backgroundColor: theme.palette.background.default
 }));
 

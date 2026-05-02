@@ -429,11 +429,14 @@ function NetWorth () {
 										axisLine={{ stroke: T.rule }}
 										tickLine={false}
 									/>
-									<YAxis hide />
+									<YAxis hide domain={[dataMin => Math.min(0, dataMin), 'dataMax']} />
 									<Tooltip content={<ChartTooltip T={T} currency={displayCurrency} />} cursor={{ fill: T.surf2 }} />
-									<Bar dataKey="cashNetWorth" name="Cash" stackId="a" fill={ASSET_TONES[0]} radius={[3, 3, 3, 3]} />
-									<Bar dataKey="investmentsNetWorth" name="Investments" stackId="a" fill={ASSET_TONES[1]} radius={[3, 3, 3, 3]} />
+									{/* Real estate is the largest, slowest-moving slice — keep it at the
+									    base so cash/investments variation (and any negative cash) doesn't
+									    push the visual baseline up. */}
 									<Bar dataKey="assetNetWorth" name="Real estate" stackId="a" fill={ASSET_TONES[2]} radius={[3, 3, 3, 3]} />
+									<Bar dataKey="investmentsNetWorth" name="Investments" stackId="a" fill={ASSET_TONES[1]} radius={[3, 3, 3, 3]} />
+									<Bar dataKey="cashNetWorth" name="Cash" stackId="a" fill={ASSET_TONES[0]} radius={[3, 3, 3, 3]} />
 									<Line dataKey="netWorth" name="Net worth" stroke={T.ink} strokeDasharray="4 4" strokeWidth={2} dot={false} />
 								</ComposedChart>
 							</ResponsiveContainer>

@@ -110,22 +110,28 @@ export const getInvestmentList = (allInvestments, allTransactions, transactions)
 
 	return investments.map(i => {
 		const investment = allInvestments.find(j => j.name === i.name);
+		// Fall back to the purchased price when the live feed entry is missing
+		// or hasn't loaded a price yet — otherwise downstream NaNs propagate
+		// through reduce() and zero out every subsequent year's balance.
+		const livePrice = investment && Number.isFinite(investment.price) ? investment.price : null;
+		const safeMeanPrice = Number.isFinite(i.price) ? i.price : 0;
+		const effectivePrice = livePrice ?? safeMeanPrice;
 
 		if (investment) {
-			// update current price
 			return {
 				...i,
-				purchasedPrice: i.price,
-				purchasedValue: i.price * i.quantity,
-				appraisedValue: investment.price * i.quantity,
-				price: investment.price
+				purchasedPrice: safeMeanPrice,
+				purchasedValue: safeMeanPrice * i.quantity,
+				appraisedValue: effectivePrice * i.quantity,
+				price: effectivePrice
 			};
 		} else {
 			return {
 				...i,
-				purchasedPrice: i.price,
-				purchasedValue: i.price * i.quantity,
-				appraisedValue: i.price * i.quantity
+				purchasedPrice: safeMeanPrice,
+				purchasedValue: safeMeanPrice * i.quantity,
+				appraisedValue: safeMeanPrice * i.quantity,
+				price: safeMeanPrice
 			};
 		}
 	});
@@ -133,6 +139,10 @@ export const getInvestmentList = (allInvestments, allTransactions, transactions)
 
 export const getInvestmentBalance = (investments, date, histories) => {
 	const currentYearMonth = moment().format('YYYY-MM');
+	const safeMul = (a, b) => {
+		const v = a * b;
+		return Number.isFinite(v) ? v : 0;
+	};
 	let balance = 0;
 	if (investments.length > 0) {
 		balance = investments.map(i => {
@@ -146,16 +156,16 @@ export const getInvestmentBalance = (investments, date, histories) => {
 					});
 					const historicalPrice = historical && historical.length > 0 && historical[historical.length - 1].close;
 					if (currentYearMonth === dateYearMonth) {
-						return investment.price * i.quantity;
+						return safeMul(investment.price, i.quantity);
 					}
 					if (historicalPrice) {
-						return historicalPrice * i.quantity;
+						return safeMul(historicalPrice, i.quantity);
 					}
 				}
 			}
-			return i.price * i.quantity;
+			return safeMul(i.price, i.quantity);
 		})
-			.reduce((prev, curr) => prev + curr);
+			.reduce((prev, curr) => prev + curr, 0);
 	}
 
 	return balance;

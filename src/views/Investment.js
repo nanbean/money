@@ -12,7 +12,6 @@ import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import MoneyIcon from '@mui/icons-material/Money';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 import AccountInvestments from '../components/AccountInvestments';
 import DesignPage from '../components/DesignPage';
@@ -20,7 +19,7 @@ import InvestmentTransactions from '../components/InvestmentTransactions';
 import InvestmentTransactionModal from '../components/InvestmentTransactionModal';
 
 import useT from '../hooks/useT';
-import { sDisplay, fmtCurrencyFull, colorFor } from '../utils/designTokens';
+import { sDisplay, sMono, fmtCurrencyFull } from '../utils/designTokens';
 
 import { setAccountAction } from '../actions/accountActions';
 import { getAccountInvestmentsAction } from '../actions/couchdbAccountActions';
@@ -40,40 +39,6 @@ const csvHeaders = [
 const getAccountId = pathname => `account${decodeURI(pathname.replace(/\//g, ':'))}`;
 const getAccountTransactions = (transactions, accountId) =>
 	transactions.filter(i => i.accountId === accountId);
-
-function StatCard ({ label, value, color, T }) {
-	return (
-		<Box sx={{
-			background: T.surf,
-			border: `1px solid ${T.rule}`,
-			borderRadius: '16px',
-			padding: { xs: '16px', md: '20px' },
-			color: T.ink
-		}}>
-			<Typography sx={{
-				fontSize: 11,
-				fontWeight: 600,
-				textTransform: 'uppercase',
-				letterSpacing: '0.06em',
-				color: T.ink2
-			}}>
-				{label}
-			</Typography>
-			<Typography sx={{
-				...sDisplay,
-				fontSize: { xs: 16, md: 18 },
-				fontWeight: 700,
-				marginTop: '10px',
-				color: color || T.ink,
-				overflow: 'hidden',
-				textOverflow: 'ellipsis',
-				whiteSpace: 'nowrap'
-			}}>
-				{value}
-			</Typography>
-		</Box>
-	);
-}
 
 export function Investment () {
 	const dispatch = useDispatch();
@@ -129,19 +94,6 @@ export function Investment () {
 
 	const onNewClick = () => dispatch(openTransactionInModal());
 
-	const breadcrumb = (
-		<Stack direction="row" alignItems="center" spacing={0.5} sx={{ fontSize: 12, color: T.ink2, marginBottom: 1.5 }}>
-			<Box component={Link} to="/accounts" sx={{
-				color: T.ink2, textDecoration: 'none',
-				'&:hover': { color: T.ink }
-			}}>Accounts</Box>
-			<ChevronRightIcon sx={{ fontSize: 14, color: T.ink3 }} />
-			<Box sx={{ color: T.ink2 }}>Investment</Box>
-			<ChevronRightIcon sx={{ fontSize: 14, color: T.ink3 }} />
-			<Box sx={{ color: T.ink, fontWeight: 600 }}>{name}</Box>
-		</Stack>
-	);
-
 	const heroBg = T.dark
 		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
 		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
@@ -153,10 +105,9 @@ export function Investment () {
 			position: 'relative',
 			overflow: 'hidden',
 			background: heroBg,
-			borderRadius: { xs: '16px', md: '24px' },
-			padding: { xs: '24px', md: '36px' },
-			color: heroInk,
-			marginBottom: '20px'
+			borderRadius: { xs: '16px', md: '20px' },
+			padding: { xs: '20px', md: '24px' },
+			color: heroInk
 		}}>
 			<Box sx={{
 				position: 'absolute',
@@ -187,34 +138,32 @@ export function Investment () {
 					</Typography>
 					<Typography sx={{
 						...sDisplay,
-						fontSize: { xs: 28, sm: 36, md: 48 },
+						fontSize: { xs: 24, sm: 30, md: 36 },
 						fontWeight: 700,
 						lineHeight: 1.1,
-						marginTop: '14px',
+						marginTop: '10px',
 						color: balance < 0 ? '#fb7185' : heroInk,
 						wordBreak: 'break-word'
 					}}>
 						{fmtCurrencyFull(balance, currency)}
 					</Typography>
 					{stats.costBasis > 0 && (
-						<Stack direction="row" spacing={1.25} sx={{ marginTop: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
-							<Box sx={{
-								color: stats.ret >= 0 ? T.pos : T.neg,
-								background: stats.ret >= 0 ? T.posBg : T.negBg,
-								padding: '4px 10px',
-								borderRadius: '999px',
-								fontWeight: 600,
-								fontSize: 13
-							}}>
-								{stats.ret >= 0 ? '+' : '−'}{fmtCurrencyFull(Math.abs(stats.ret), currency)}
-								<Box component="span" sx={{ marginLeft: '6px', opacity: 0.85 }}>
-									({stats.ret >= 0 ? '+' : ''}{stats.retPct.toFixed(2)}%)
-								</Box>
+						<Box sx={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							marginTop: 1,
+							color: stats.ret >= 0 ? T.pos : T.neg,
+							background: stats.ret >= 0 ? T.posBg : T.negBg,
+							padding: '3px 10px',
+							borderRadius: '999px',
+							fontWeight: 600,
+							fontSize: 12
+						}}>
+							{stats.ret >= 0 ? '+' : '−'}{fmtCurrencyFull(Math.abs(stats.ret), currency)}
+							<Box component="span" sx={{ marginLeft: '6px', opacity: 0.85 }}>
+								({stats.ret >= 0 ? '+' : ''}{stats.retPct.toFixed(2)}%)
 							</Box>
-							<Typography sx={{ color: heroDim, fontSize: 13 }}>
-								Cost basis {fmtCurrencyFull(stats.costBasis, currency)}
-							</Typography>
-						</Stack>
+						</Box>
 					)}
 				</Box>
 				<Stack direction="row" spacing={1} sx={{ flexShrink: 0, flexWrap: 'wrap', rowGap: 1, justifyContent: 'flex-end' }}>
@@ -226,8 +175,8 @@ export function Investment () {
 							color: T.acc.deep,
 							border: 'none',
 							borderRadius: '999px',
-							padding: '8px 18px',
-							fontSize: 13,
+							padding: '6px 14px',
+							fontSize: 12,
 							fontWeight: 700,
 							textTransform: 'none',
 							'&:hover': { background: T.acc.bright, opacity: 0.9 }
@@ -244,8 +193,8 @@ export function Investment () {
 							color: heroInk,
 							border: '1px solid rgba(255,255,255,0.2)',
 							borderRadius: '999px',
-							padding: '8px 18px',
-							fontSize: 13,
+							padding: '6px 14px',
+							fontSize: 12,
 							fontWeight: 600,
 							textTransform: 'none',
 							'&:hover': { background: 'rgba(255,255,255,0.18)' }
@@ -278,52 +227,73 @@ export function Investment () {
 					</CSVLink>
 				</Stack>
 			</Stack>
-		</Box>
-	);
-
-	return (
-		<DesignPage title={name} titleKo="투자 계좌">
-			{breadcrumb}
-			{hero}
-
-			{/* Stat cards */}
 			{stats.costBasis > 0 && (
 				<Box sx={{
 					display: 'grid',
 					gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-					gap: 2,
-					marginBottom: '20px'
+					gap: { xs: 1.5, md: 3 },
+					marginTop: { xs: '16px', md: '20px' },
+					position: 'relative'
 				}}>
-					<StatCard label="Cost basis · 원금" value={fmtCurrencyFull(stats.costBasis, currency)} T={T} />
-					<StatCard label="Market value · 평가액" value={fmtCurrencyFull(stats.marketValue, currency)} T={T} />
-					<StatCard
-						label="Total return · 총수익"
-						value={`${stats.ret >= 0 ? '+' : '−'}${fmtCurrencyFull(Math.abs(stats.ret), currency)}`}
-						color={colorFor(T, stats.ret)}
-						T={T}
-					/>
-					<StatCard
-						label="Return rate · 수익률"
-						value={`${stats.retPct >= 0 ? '+' : ''}${stats.retPct.toFixed(2)}%`}
-						color={colorFor(T, stats.retPct)}
-						T={T}
-					/>
+					{[
+						{ label: 'Cost basis · 원금', value: fmtCurrencyFull(stats.costBasis, currency), color: heroInk, divider: false },
+						{ label: 'Market value · 평가액', value: fmtCurrencyFull(stats.marketValue, currency), color: heroInk, divider: true },
+						{ label: 'Total return · 총수익', value: `${stats.ret >= 0 ? '+' : '−'}${fmtCurrencyFull(Math.abs(stats.ret), currency)}`, color: stats.ret >= 0 ? '#34d399' : '#fb7185', divider: true },
+						{ label: 'Return rate · 수익률', value: `${stats.retPct >= 0 ? '+' : ''}${stats.retPct.toFixed(2)}%`, color: stats.retPct >= 0 ? '#34d399' : '#fb7185', divider: true }
+					].map(item => (
+						<Box key={item.label} sx={{
+							borderLeft: { xs: 'none', md: item.divider ? `1px solid ${T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)'}` : 'none' },
+							paddingLeft: { xs: 0, md: item.divider ? '20px' : 0 },
+							minWidth: 0
+						}}>
+							<Typography sx={{
+								fontSize: 11,
+								color: heroDim,
+								textTransform: 'uppercase',
+								letterSpacing: '0.06em',
+								fontWeight: 500,
+								whiteSpace: 'nowrap',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis'
+							}}>
+								{item.label}
+							</Typography>
+							<Typography sx={{
+								...sDisplay,
+								...sMono,
+								fontSize: { xs: 14, md: 18 },
+								fontWeight: 700,
+								marginTop: '4px',
+								color: item.color,
+								whiteSpace: 'nowrap',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis'
+							}}>
+								{item.value}
+							</Typography>
+						</Box>
+					))}
 				</Box>
 			)}
+		</Box>
+	);
+
+	return (
+		<DesignPage title={name} titleKo="투자 계좌" fillViewport>
+			{hero}
 
 			{/* Holdings */}
 			<Box sx={{
 				background: T.surf,
 				border: `1px solid ${T.rule}`,
 				borderRadius: '16px',
-				padding: { xs: '16px', md: '20px' },
-				color: T.ink,
-				marginBottom: '20px'
+				padding: { xs: '12px 14px', md: '14px 18px' },
+				color: T.ink
 			}}>
-				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
-					<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
+				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1 }}>
+					<Typography sx={{ ...sDisplay, fontSize: 15, fontWeight: 700, color: T.ink, margin: 0 }}>
 						Holdings
-						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 보유 종목</Box>
+						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 보유 종목</Box>
 					</Typography>
 					{performance.length > 0 && (
 						<Typography sx={{ fontSize: 12, color: T.ink2 }}>
@@ -342,13 +312,20 @@ export function Investment () {
 				padding: { xs: '16px', md: '20px' },
 				color: T.ink,
 				display: 'flex',
-				flexDirection: 'column'
+				flexDirection: 'column',
+				// Desktop: fill remaining viewport-fit height; mobile: natural flow
+				flex: { md: 1 },
+				minHeight: { md: 0 }
 			}}>
-				<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0, marginBottom: 1.5 }}>
+				<Typography sx={{ ...sDisplay, fontSize: 15, fontWeight: 700, color: T.ink, margin: 0, marginBottom: 1 }}>
 					Transactions
-					<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 거래 내역</Box>
+					<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 거래 내역</Box>
 				</Typography>
-				<Box sx={{ flex: 1, minHeight: { xs: 480, md: 600 } }}>
+				<Box sx={{
+					flex: { md: 1 },
+					minHeight: { md: 0 },
+					height: { xs: 600, md: 'auto' }
+				}}>
 					<InvestmentTransactions
 						transactions={accountTransactions}
 						currency={currency}

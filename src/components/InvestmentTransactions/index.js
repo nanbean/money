@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch } from 'react-redux';
 
-import { AutoSizer, List } from 'react-virtualized';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -17,11 +17,8 @@ import {
 	openTransactionInModal
 } from '../../actions/ui/form/bankTransaction';
 
-import 'react-virtualized/styles.css';
-
 const tint = (hex, alphaHex = '22') => `${hex}${alphaHex}`;
 
-// Per-activity colors and which fields they use (mirrors design INV_ACTIVITIES intent)
 const buildActivityMeta = (T) => ({
 	Buy:     { label: 'Buy',      color: T.pos,        showQty: true,  showPrice: true,  showCommission: true },
 	Sell:    { label: 'Sell',     color: T.neg,        showQty: true,  showPrice: true,  showCommission: true },
@@ -32,9 +29,8 @@ const buildActivityMeta = (T) => ({
 });
 
 const ROW_HEIGHT = 44;
+const OVERSCAN = 6;
 
-// Two responsive grid templates — the small one for narrow viewports
-// hides Date / Qty / Price / Commission and shows Security · Activity · Amount.
 const GRID_FULL = '88px 1fr 110px 80px 100px 90px 130px';
 const GRID_SMALL = '1fr 100px 110px';
 
@@ -65,6 +61,23 @@ export function InvestmentTransactions ({
 	const dispatch = useDispatch();
 	const meta = useMemo(() => buildActivityMeta(T), [T]);
 
+	const scrollRef = useRef(null);
+	const count = transactions ? transactions.length : 0;
+
+	const rowVirtualizer = useVirtualizer({
+		count,
+		getScrollElement: () => scrollRef.current,
+		estimateSize: () => ROW_HEIGHT,
+		overscan: OVERSCAN,
+		getItemKey: (index) => transactions[index]?._id || index
+	});
+
+	// Auto-scroll to the latest row on mount / when transactions list grows.
+	useEffect(() => {
+		if (count === 0) return;
+		rowVirtualizer.scrollToIndex(count - 1, { align: 'end' });
+	}, [count, rowVirtualizer]);
+
 	const onRowSelect = (index) => () => {
 		const t = transactions[index];
 		if (!t) return;
@@ -94,7 +107,10 @@ export function InvestmentTransactions ({
 		letterSpacing: '0.06em',
 		borderTopLeftRadius: '12px',
 		borderTopRightRadius: '12px',
-		borderBottom: `1px solid ${T.rule}`
+		borderBottom: `1px solid ${T.rule}`,
+		position: 'sticky',
+		top: 0,
+		zIndex: 1
 	};
 
 	const cellMonoSx = {
@@ -106,7 +122,22 @@ export function InvestmentTransactions ({
 
 	const headers = isSmallScreen ? COL_HEADERS_SMALL : COL_HEADERS;
 
-	const rowRenderer = ({ key, index, style }) => {
+	if (count === 0) {
+		return (
+			<Box sx={{ padding: '40px 0', textAlign: 'center', color: T.ink2 }}>
+				<Typography sx={{ fontSize: 13 }}>No transactions yet</Typography>
+				<Typography sx={{ fontSize: 12, color: T.ink3, marginTop: 0.5 }}>
+					매수, 매도, 배당 등을 기록하세요.
+				</Typography>
+			</Box>
+		);
+	}
+
+	const virtualItems = rowVirtualizer.getVirtualItems();
+	const totalSize = rowVirtualizer.getTotalSize();
+
+	const renderRow = (vRow) => {
+		const index = vRow.index;
 		const t = transactions[index];
 		if (!t) return null;
 
@@ -163,23 +194,30 @@ export function InvestmentTransactions ({
 			</Typography>
 		);
 
+		const commonRowSx = {
+			position: 'absolute',
+			top: 0,
+			left: 0,
+			right: 0,
+			transform: `translateY(${vRow.start}px)`,
+			height: ROW_HEIGHT,
+			boxSizing: 'border-box',
+			display: 'grid',
+			gap: '10px',
+			padding: '10px 14px',
+			alignItems: 'center',
+			background: T.surf,
+			borderTop: `1px solid ${T.rule}`,
+			cursor: 'pointer',
+			'&:hover': { background: T.surf2 }
+		};
+
 		if (isSmallScreen) {
 			return (
 				<Box
-					key={key}
-					style={style}
+					key={vRow.key}
 					onClick={onRowSelect(index)}
-					sx={{
-						display: 'grid',
-						gridTemplateColumns: GRID_SMALL,
-						gap: '10px',
-						padding: '10px 14px',
-						alignItems: 'center',
-						background: T.surf,
-						borderTop: `1px solid ${T.rule}`,
-						cursor: 'pointer',
-						'&:hover': { background: T.surf2 }
-					}}
+					sx={{ ...commonRowSx, gridTemplateColumns: GRID_SMALL }}
 				>
 					{security}
 					{activityChip}
@@ -191,20 +229,9 @@ export function InvestmentTransactions ({
 		const dash = <Box component="span" sx={{ color: T.ink3 }}>—</Box>;
 		return (
 			<Box
-				key={key}
-				style={style}
+				key={vRow.key}
 				onClick={onRowSelect(index)}
-				sx={{
-					display: 'grid',
-					gridTemplateColumns: GRID_FULL,
-					gap: '10px',
-					padding: '10px 14px',
-					alignItems: 'center',
-					background: T.surf,
-					borderTop: `1px solid ${T.rule}`,
-					cursor: 'pointer',
-					'&:hover': { background: T.surf2 }
-				}}
+				sx={{ ...commonRowSx, gridTemplateColumns: GRID_FULL }}
 			>
 				<Box sx={{ ...sMono, fontSize: 12, color: T.ink2, whiteSpace: 'nowrap' }}>
 					{toDateFormat(t.date)}
@@ -225,49 +252,51 @@ export function InvestmentTransactions ({
 		);
 	};
 
-	if (!transactions || transactions.length === 0) {
-		return (
-			<Box sx={{ padding: '40px 0', textAlign: 'center', color: T.ink2 }}>
-				<Typography sx={{ fontSize: 13 }}>No transactions yet</Typography>
-				<Typography sx={{ fontSize: 12, color: T.ink3, marginTop: 0.5 }}>
-					매수, 매도, 배당 등을 기록하세요.
-				</Typography>
-			</Box>
-		);
-	}
-
 	return (
 		<Box sx={{
 			display: 'flex',
 			flexDirection: 'column',
-			minHeight: { xs: 480, md: 600 },
 			height: '100%',
 			border: `1px solid ${T.rule}`,
 			borderRadius: '12px',
 			overflow: 'hidden'
 		}}>
-			{/* Sticky header */}
-			<Box sx={{ ...headerSx, flexShrink: 0 }}>
-				{headers.map(h => (
-					<Box key={h.key} sx={{ textAlign: h.align }}>{h.label}</Box>
-				))}
-			</Box>
+			<Box
+				ref={scrollRef}
+				sx={{
+					flex: 1,
+					minHeight: 0,
+					minWidth: 0,
+					overflow: 'auto',
+					WebkitOverflowScrolling: 'touch',
+					overscrollBehavior: 'contain',
+					scrollbarWidth: 'thin',
+					scrollbarColor: 'rgba(128, 128, 128, 0.3) transparent',
+					'&::-webkit-scrollbar': { width: 8, height: 8 },
+					'&::-webkit-scrollbar-track': { background: 'transparent' },
+					'&::-webkit-scrollbar-thumb': {
+						background: 'rgba(128, 128, 128, 0.28)',
+						borderRadius: '4px',
+						border: '2px solid transparent',
+						backgroundClip: 'content-box'
+					},
+					'&::-webkit-scrollbar-thumb:hover': {
+						background: 'rgba(128, 128, 128, 0.55)',
+						backgroundClip: 'content-box'
+					}
+				}}
+			>
+				{/* Sticky header — pinned to top while body scrolls under it */}
+				<Box sx={headerSx}>
+					{headers.map(h => (
+						<Box key={h.key} sx={{ textAlign: h.align }}>{h.label}</Box>
+					))}
+				</Box>
 
-			{/* Virtualized rows — flex:1 + explicit minHeight so AutoSizer always has a non-zero parent. */}
-			<Box sx={{ flex: 1, minHeight: 400, position: 'relative' }}>
-				<AutoSizer>
-					{({ height, width: aw }) => (
-						<List
-							width={aw}
-							height={height}
-							rowHeight={ROW_HEIGHT}
-							scrollToIndex={transactions.length - 1}
-							rowCount={transactions.length}
-							rowRenderer={rowRenderer}
-							overscanRowCount={6}
-						/>
-					)}
-				</AutoSizer>
+				{/* Virtualized body */}
+				<Box sx={{ height: totalSize, position: 'relative', width: '100%' }}>
+					{virtualItems.map(renderRow)}
+				</Box>
 			</Box>
 		</Box>
 	);

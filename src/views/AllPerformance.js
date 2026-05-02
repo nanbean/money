@@ -105,14 +105,13 @@ export function AllPerformance ({ embedded = false }) {
 	};
 
 	const content = (
-		<React.Fragment>
+		<Stack spacing={2}>
 			{/* HERO — 5 cell grand totals */}
 			<Box sx={{
 				...cardSx,
 				background: T.acc.tint,
 				borderColor: 'transparent',
-				padding: { xs: '20px', md: '32px' },
-				marginBottom: '20px'
+				padding: { xs: '20px', md: '32px' }
 			}}>
 				<Box sx={{
 					display: 'grid',
@@ -178,7 +177,7 @@ export function AllPerformance ({ embedded = false }) {
 			</Box>
 
 			{/* FILTER chips */}
-			<Box sx={{ ...cardSx, marginBottom: '20px' }}>
+			<Box sx={cardSx}>
 				<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: '14px', gap: '12px' }}>
 					<Typography
 						component="h3"
@@ -292,20 +291,18 @@ export function AllPerformance ({ embedded = false }) {
 				</Box>
 			)}
 
-			<Stack spacing={2.5}>
-				{rows.map(r => (
-					<InvestmentPerformance
-						key={r.investment}
-						investment={r.investment}
-						price={r.price}
-						currency={r.currency}
-						performance={r.performance}
-						symbol={r.symbol}
-						weeklyPrices={r.weeklyPrices}
-					/>
-				))}
-			</Stack>
-		</React.Fragment>
+			{rows.map(r => (
+				<InvestmentPerformance
+					key={r.investment}
+					investment={r.investment}
+					price={r.price}
+					currency={r.currency}
+					performance={r.performance}
+					symbol={r.symbol}
+					weeklyPrices={r.weeklyPrices}
+				/>
+			))}
+		</Stack>
 	);
 
 	if (embedded) {

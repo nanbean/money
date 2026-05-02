@@ -12,6 +12,7 @@ import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designToke
 const PALETTE = ['#818cf8', '#f59e0b', '#34d399', '#f472b6', '#22d3ee', '#a78bfa', '#fb7185', '#facc15'];
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
+const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 
 function Donut ({ data, total, T, currency }) {
 	const r = 64;
@@ -65,6 +66,7 @@ export default function HomeWeeklySpend () {
 			t.date >= weekStart &&
 			t.amount < 0 &&
 			!isInternalTransfer(t) &&
+			!isInvestmentTxn(t) &&
 			!livingExpenseExempt.some(e => t.category?.startsWith(e))
 		);
 		const grouped = expenseTxns.reduce((map, t) => {

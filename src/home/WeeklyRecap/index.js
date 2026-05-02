@@ -17,6 +17,7 @@ import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
+const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 
 export const getISOWeekKey = () => {
 	const now = new Date();
@@ -100,7 +101,7 @@ export function WeeklyRecap ({ onDismiss }) {
 		const startStr = start.format('YYYY-MM-DD');
 		const endStr = end.format('YYYY-MM-DD');
 		const within = (weeklyTransactions || []).filter(t =>
-			t.date >= startStr && t.date <= endStr && !isInternalTransfer(t)
+			t.date >= startStr && t.date <= endStr && !isInternalTransfer(t) && !isInvestmentTxn(t)
 		);
 		const expenseTxns = within.filter(t =>
 			t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e))

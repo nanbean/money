@@ -154,7 +154,7 @@ const Transactions = () => {
 		: `${dateRange.start.format('MMM D, YYYY')} → ${dateRange.end.format('MMM D, YYYY')}`;
 
 	return (
-		<DesignPage title="Transactions" titleKo="거래">
+		<DesignPage title="Transactions" titleKo="거래" fillViewport>
 			{/* Hero panel */}
 			<Box sx={{
 				position: 'relative',
@@ -162,8 +162,7 @@ const Transactions = () => {
 				background: heroBg,
 				borderRadius: '20px',
 				padding: { xs: '20px', md: '28px' },
-				color: heroInk,
-				marginBottom: '20px'
+				color: heroInk
 			}}>
 				<Box sx={{
 					position: 'absolute',
@@ -241,8 +240,7 @@ const Transactions = () => {
 				border: `1px solid ${T.rule}`,
 				borderRadius: '16px',
 				padding: { xs: '14px', md: '18px' },
-				color: T.ink,
-				marginBottom: '20px'
+				color: T.ink
 			}}>
 				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
 					<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
@@ -348,7 +346,9 @@ const Transactions = () => {
 				padding: { xs: '16px', md: '20px' },
 				color: T.ink,
 				display: 'flex',
-				flexDirection: 'column'
+				flexDirection: 'column',
+				flex: { md: 1 },
+				minHeight: { md: 0 }
 			}}>
 				<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
 					<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
@@ -370,7 +370,11 @@ const Transactions = () => {
 						</Typography>
 					</Box>
 				) : (
-					<Box sx={{ flex: 1, minHeight: { xs: 480, md: 'calc(100vh - 600px)' } }}>
+					<Box sx={{
+						flex: { md: 1 },
+						minHeight: { md: 0 },
+						height: { xs: 600, md: 'auto' }
+					}}>
 						<BankTransactions showAccount transactions={filteredTransactions} />
 					</Box>
 				)}
