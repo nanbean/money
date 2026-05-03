@@ -64,7 +64,12 @@ function Amount ({
 							? (isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR)
 							: undefined)
 					)
-					: undefined
+					: undefined,
+				// Amounts should never wrap — narrow grid cells were splitting
+				// long values across two lines. Truncate with ellipsis instead.
+				whiteSpace: 'nowrap',
+				overflow: 'hidden',
+				textOverflow: 'ellipsis'
 			}}
 		>
 			{amountText}

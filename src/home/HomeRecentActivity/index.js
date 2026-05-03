@@ -7,6 +7,8 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrencyFull } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
@@ -33,7 +35,11 @@ export default function HomeRecentActivity () {
 	}, [accountList]);
 
 	const recent = useMemo(() => {
-		const list = (allAccountsTransactions || []).filter(t => !isInternalTransfer(t) && !isInvestmentTxn(t));
+		// Investment transactions stay excluded; internal transfers come through
+		// only on the outflow side (amount < 0) so each transfer pair shows once.
+		const list = (allAccountsTransactions || [])
+			.filter(t => !isInvestmentTxn(t))
+			.filter(t => !isInternalTransfer(t) || (Number(t.amount) || 0) < 0);
 		return [...list]
 			.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 			.slice(0, 8)
@@ -80,10 +86,20 @@ export default function HomeRecentActivity () {
 			)}
 			{recent.map((t, idx) => {
 				const amt = Number(t.amount) || 0;
-				const amtColor = amt > 0 ? T.pos : T.ink;
+				const isTransfer = isInternalTransfer(t);
 				const baseCat = (t.category || '').split(':')[0] || t.category || '';
-				const Icon = resolveCategoryIcon(t.category, categoryIcons[baseCat]);
-				const catColor = resolveCategoryColor(t.category, categoryColors[baseCat]);
+				const Icon = isTransfer
+					? SwapHorizIcon
+					: resolveCategoryIcon(t.category, categoryIcons[baseCat]);
+				const accentColor = isTransfer
+					? T.ink2
+					: resolveCategoryColor(t.category, categoryColors[baseCat]);
+				const amountColor = isTransfer
+					? T.ink2
+					: amt > 0 ? T.pos : T.ink;
+				const counterAccount = isTransfer
+					? (t.category || '').replace(/^\[|\]$/g, '')
+					: null;
 				return (
 					<Box
 						key={t._id || idx}
@@ -103,8 +119,8 @@ export default function HomeRecentActivity () {
 							width: 36,
 							height: 36,
 							borderRadius: '12px',
-							background: tint(catColor, '22'),
-							color: catColor,
+							background: tint(accentColor, '22'),
+							color: accentColor,
 							display: 'inline-flex',
 							alignItems: 'center',
 							justifyContent: 'center',
@@ -113,15 +129,17 @@ export default function HomeRecentActivity () {
 							<Icon sx={{ fontSize: 16 }} />
 						</Box>
 						<Box sx={{ minWidth: 0 }}>
-							<Typography sx={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-								{t.payee || baseCat || '—'}
+							<Typography sx={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isTransfer ? T.ink : T.ink }}>
+								{isTransfer
+									? `Transfer · ${t.account || '—'} → ${counterAccount || '—'}`
+									: (t.payee || baseCat || '—')}
 							</Typography>
 							<Typography sx={{ fontSize: 11, color: T.ink2 }}>
-								{moment(t.date).format('MMM D')} · {t.account || '—'}
+								{moment(t.date).format('MMM D')}{!isTransfer && ` · ${t.account || '—'}`}
 							</Typography>
 						</Box>
-						<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: amtColor }}>
-							{amt > 0 ? '+' : amt < 0 ? '−' : ''}
+						<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: amountColor }}>
+							{!isTransfer && (amt > 0 ? '+' : amt < 0 ? '−' : '')}
 							{fmtCurrencyFull(Math.abs(amt), t._currency)}
 						</Typography>
 					</Box>

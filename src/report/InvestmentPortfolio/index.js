@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 import ReactEcharts from 'echarts-for-react';
 
@@ -16,6 +18,8 @@ import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 
 function InvestmentPortfolio () {
 	const T = useT();
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
 	const accountList = useSelector((state) => state.accountList);
 	const allAccounts = accountList.filter(i => i.type === 'Invst' && !i.closed).map(j => j.name);
@@ -77,19 +81,32 @@ function InvestmentPortfolio () {
 
 	const onFilteredAccountsChange = (e) => setFilteredAccounts(e);
 
+	const labelColor = T.dark ? '#fff' : '#0f172a';
+	const upperLabelColor = T.dark ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.85)';
+
 	const option = {
+		backgroundColor: 'transparent',
 		tooltip: {
 			trigger: 'item',
-			formatter: d => `${d.name}\n${fmtCurrency(d.value, displayCurrency)}\n${(d.value / totalAmount * 100).toFixed(3)}%`
+			backgroundColor: T.surf,
+			borderColor: T.rule,
+			borderWidth: 1,
+			textStyle: { color: T.ink, fontSize: 12 },
+			formatter: d => `${d.name}<br/>${fmtCurrency(d.value, displayCurrency)} · ${(d.value / totalAmount * 100).toFixed(2)}%`
 		},
 		series: [{
 			name: 'Portfolio',
 			type: 'treemap',
-			height: '95%',
+			width: '100%',
+			height: '100%',
+			roam: false,
 			breadcrumb: { show: false },
 			label: {
 				show: true,
-				formatter: d => `${d.name}\n${(d.value / totalAmount * 100).toFixed(3)}%`
+				color: labelColor,
+				fontSize: isMobile ? 10 : 12,
+				fontWeight: 600,
+				formatter: d => `${d.name}\n${(d.value / totalAmount * 100).toFixed(2)}%`
 			},
 			data: allInvestments.map(i => ({
 				name: i.name,
@@ -97,8 +114,22 @@ function InvestmentPortfolio () {
 				children: i.children.map(j => ({ name: j.account, value: j.amount }))
 			})),
 			levels: [
-				{ itemStyle: { color: '#000' }, upperLabel: { show: false }, color, colorMappingBy: 'id' },
-				{ itemStyle: { borderColor: '#555' }, upperLabel: { show: true, height: 30 } }
+				{
+					itemStyle: { gapWidth: 2, borderColor: T.rule, borderWidth: 1 },
+					upperLabel: { show: false },
+					color,
+					colorMappingBy: 'id'
+				},
+				{
+					itemStyle: { gapWidth: 1, borderColor: T.rule, borderWidth: 1 },
+					upperLabel: {
+						show: true,
+						height: 26,
+						color: upperLabelColor,
+						fontSize: 11,
+						fontWeight: 600
+					}
+				}
 			]
 		}]
 	};
@@ -138,7 +169,14 @@ function InvestmentPortfolio () {
 			{/* Treemap panel */}
 			<Box sx={panelSx}>
 				{allInvestments.length > 0 ? (
-					<ReactEcharts option={option} style={{ height: '600px' }} />
+					<Box sx={{ height: { xs: 420, md: 600 } }}>
+						<ReactEcharts
+							option={option}
+							style={{ height: '100%', width: '100%' }}
+							opts={{ renderer: 'canvas' }}
+							notMerge
+						/>
+					</Box>
 				) : (
 					<Box sx={{ padding: 6, textAlign: 'center' }}>
 						<Typography sx={{ fontSize: 13, color: T.ink2 }}>No holdings to display</Typography>

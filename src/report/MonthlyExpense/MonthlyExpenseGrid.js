@@ -1,12 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import Amount from '../../components/Amount';
 import useT from '../../hooks/useT';
+import { resolveCategoryColor } from '../../utils/categoryColor';
 
 const FIRST_COL_WIDTH = 140;
 const OTHER_COL_MIN_WIDTH = 94;
@@ -34,7 +37,9 @@ const renderCellContent = (item) => {
 		return <Typography variant="body2">{item.value}</Typography>;
 	}
 	if (typeof item.value === 'number') {
-		return <Amount value={item.value} />;
+		// Show the display currency symbol — same convention as NormalGrid /
+		// AccountInvestments / Holdings tables.
+		return <Amount value={item.value} showSymbol />;
 	}
 	return <Typography variant="body2">{item.value === null || item.value === undefined ? '' : String(item.value)}</Typography>;
 };
@@ -49,8 +54,28 @@ const renderCellContent = (item) => {
 export function MonthlyExpenseGrid ({ reportData }) {
 	const navigate = useNavigate();
 	const T = useT();
+	const { categoryColors = {} } = useSelector((state) => state.settings || {});
 
 	if (!reportData || reportData.length === 0) return null;
+
+	// First-column label rows carry the category — render a small color dot
+	// next to the name so the same category is identifiable in this grid as
+	// in Recent activity / Spending / Search.
+	const renderLabelWithDot = (item) => {
+		if (!item.category) {
+			return <Typography variant="body2">{item.value}</Typography>;
+		}
+		const baseCat = item.category.split(':')[0] || item.category;
+		const color = resolveCategoryColor(item.category, categoryColors[baseCat]);
+		return (
+			<Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, justifyContent: 'center' }}>
+				<Box sx={{ width: 6, height: 6, borderRadius: '2px', background: color, flexShrink: 0 }}/>
+				<Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+					{item.value}
+				</Typography>
+			</Stack>
+		);
+	};
 
 	const columnCount = reportData[0].length;
 	const headerRow = reportData[0];
@@ -77,7 +102,11 @@ export function MonthlyExpenseGrid ({ reportData }) {
 			color: T.ink,
 			fontWeight: isHeader ? 600 : 400,
 			boxSizing: 'border-box',
-			cursor: clickable ? 'pointer' : 'default'
+			cursor: clickable ? 'pointer' : 'default',
+			// Keep long amounts on a single line; the inner Typography also
+			// has nowrap/ellipsis but we belt-and-brace at the cell level.
+			overflow: 'hidden',
+			whiteSpace: 'nowrap'
 		};
 		if (isHeader && isFirstCol) {
 			sx.position = 'sticky';
@@ -155,6 +184,9 @@ export function MonthlyExpenseGrid ({ reportData }) {
 								const isFirstCol = colIdx === 0;
 								const path = buildSearchPath(item);
 								const handleClick = path ? () => navigate(path) : undefined;
+								const renderedContent = isFirstCol && item.type === 'label'
+									? renderLabelWithDot(item)
+									: renderCellContent(item);
 								return (
 									<Box
 										component="td"
@@ -162,7 +194,7 @@ export function MonthlyExpenseGrid ({ reportData }) {
 										onClick={handleClick}
 										sx={cellSx({ item, isHeader: false, isFirstCol, clickable: !!path })}
 									>
-										{renderCellContent(item)}
+										{renderedContent}
 									</Box>
 								);
 							})}

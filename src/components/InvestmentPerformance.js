@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import stringToColor from 'string-to-color';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -87,10 +88,15 @@ export function InvestmentPerformance ({
 		if (tossSymbol) window.open(`https://tossinvest.com/stocks/${tossSymbol}`, '_blank', 'noopener,noreferrer');
 	};
 
+	// Pre-mixed opaque tint for header / total rows — matches the value used
+	// across MonthlyExpenseGrid, AccountInvestments, and Investments Holdings.
+	const emphasisBg = T.dark ? '#1f1f28' : '#ededea';
+	const dotColor = stringToColor(investment);
+
 	const cardSx = {
 		background: T.surf,
 		borderRadius: '16px',
-		padding: { xs: '16px', sm: '22px' },
+		padding: { xs: '16px', md: '20px' },
 		border: `1px solid ${T.rule}`,
 		color: T.ink
 	};
@@ -103,19 +109,21 @@ export function InvestmentPerformance ({
 		textTransform: 'uppercase',
 		letterSpacing: '0.04em',
 		textAlign: align,
-		borderBottom: `1px solid ${T.rule}`
+		borderBottom: `1px solid ${T.rule}`,
+		background: emphasisBg
 	});
 
 	const cellSx = (align, stripe) => ({
-		padding: '12px',
+		padding: '10px 12px',
 		background: stripe ? T.surf2 : 'transparent',
 		fontSize: 13,
 		textAlign: align
 	});
 
 	const totalCellSx = (align) => ({
-		padding: '14px 12px',
-		borderTop: `2px solid ${T.rule}`,
+		padding: '10px 12px',
+		borderTop: `1px solid ${T.rule}`,
+		background: emphasisBg,
 		fontSize: 13,
 		fontWeight: 700,
 		textAlign: align
@@ -132,6 +140,13 @@ export function InvestmentPerformance ({
 				sx={{ marginBottom: '16px', paddingBottom: '14px', borderBottom: `1px solid ${T.rule}` }}
 			>
 				<Stack direction="row" alignItems="center" gap={1.25} flexWrap="wrap">
+					<Box sx={{
+						width: 10,
+						height: 10,
+						borderRadius: '3px',
+						background: dotColor,
+						flexShrink: 0
+					}}/>
 					<Typography
 						component="h3"
 						sx={{ ...sDisplay, fontSize: 22, fontWeight: 700, color: T.ink, m: 0 }}

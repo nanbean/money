@@ -8,9 +8,13 @@ import Typography from '@mui/material/Typography';
 
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
+import { NON_EXPENSE_CATEGORY } from '../../constants';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
+// Match Spending page's monthly projection blend (src/views/Spending.js).
+const INFLATION_RATE = 1.025;
+const EXPENSE_TYPES = ['Bank', 'CCard', 'Cash'];
 
 export default function HomeCashFlow () {
 	const T = useT();
@@ -20,7 +24,7 @@ export default function HomeCashFlow () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const { exchangeRate, currency = 'KRW', livingExpenseExempt = [] } = useSelector((state) => state.settings || {});
 
-	const { income, expense, budget, monthLabel, daysIn } = useMemo(() => {
+	const { income, expense, livingExpense, budget, monthLabel, daysIn } = useMemo(() => {
 		const monthStart = moment().startOf('month').format('YYYY-MM-DD');
 		const monthEnd = moment().endOf('month').format('YYYY-MM-DD');
 		const monthTxns = (allAccountsTransactions || []).filter(t =>
@@ -35,17 +39,57 @@ export default function HomeCashFlow () {
 			return currency === 'KRW' ? abs * exchangeRate : abs / exchangeRate;
 		};
 		const inc = monthTxns.filter(t => t.amount > 0).reduce((s, t) => s + conv(t), 0);
-		const exp = monthTxns.filter(t => t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e))).reduce((s, t) => s + conv(t), 0);
-		const monthName = moment().format('MMMM');
-		const today = moment();
-		const days = today.date();
-		const bud = inc > 0 ? inc * 1.0 : exp;
-		return { income: inc, expense: exp, budget: bud, monthLabel: monthName, daysIn: days };
+		// Cash flow = every outflow this month (e.g. insurance, loan interest).
+		const exp = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + conv(t), 0);
+		// Living expense = budget-relevant outflows only. Mirrors Spending's
+		// isExpenseTx (livingExpenseOnly=true): expense-type accounts only,
+		// drop NON_EXPENSE_CATEGORY / uncategorized / internal transfers,
+		// and match livingExpenseExempt against `category:subcategory`.
+		const isLivingExpense = (t) => {
+			if (!t.amount || t.amount >= 0) return false;
+			const type = t.accountId ? t.accountId.split(':')[1] : null;
+			if (!EXPENSE_TYPES.includes(type)) return false;
+			if (!t.category) return false;
+			if (t.category === NON_EXPENSE_CATEGORY) return false;
+			if (isInternalTransfer(t)) return false;
+			const fullCategory = t.subcategory ? `${t.category}:${t.subcategory}` : t.category;
+			if (livingExpenseExempt.some(e => fullCategory.startsWith(e))) return false;
+			return true;
+		};
+		const livingExp = monthTxns.filter(isLivingExpense).reduce((s, t) => s + conv(t), 0);
+
+		// Budget = month-end projection of living expense (matches Spending's
+		// per-month projection: blend current pace with last-year same-month
+		// adjusted by inflation).
+		const todayM = moment();
+		const days = todayM.date();
+		const daysInCurrentMonth = todayM.daysInMonth();
+		const lastYearMonthStart = todayM.clone().subtract(1, 'year').startOf('month').format('YYYY-MM-DD');
+		const lastYearMonthEnd = todayM.clone().subtract(1, 'year').endOf('month').format('YYYY-MM-DD');
+		const lastYearLivingExp = (allAccountsTransactions || []).filter(t =>
+			t.date >= lastYearMonthStart && t.date <= lastYearMonthEnd
+			&& !isInternalTransfer(t) && !isInvestmentTxn(t)
+			&& isLivingExpense(t)
+		).reduce((s, t) => s + conv(t), 0);
+		const weight = days / daysInCurrentMonth;
+		const currentPace = days > 0 ? (livingExp / days) * daysInCurrentMonth : 0;
+		const historical = lastYearLivingExp * INFLATION_RATE;
+		const projectedLivingExp = Math.max(livingExp, Math.round(weight * currentPace + (1 - weight) * historical));
+
+		const monthName = todayM.format('MMMM');
+		return {
+			income: inc,
+			expense: exp,
+			livingExpense: livingExp,
+			budget: projectedLivingExp,
+			monthLabel: monthName,
+			daysIn: days
+		};
 	}, [allAccountsTransactions, accountList, exchangeRate, currency, livingExpenseExempt]);
 
 	const net = income - expense;
 	const netColor = net >= 0 ? T.pos : T.neg;
-	const expensePct = budget > 0 ? Math.min(100, (expense / budget) * 100) : 0;
+	const expensePct = budget > 0 ? Math.min(100, (livingExpense / budget) * 100) : 0;
 
 	return (
 		<Box sx={{
@@ -75,8 +119,8 @@ export default function HomeCashFlow () {
 					<Box sx={{ height: '100%', background: T.pos, width: '100%' }}/>
 				</Box>
 				<Stack direction="row" justifyContent="space-between" sx={{ fontSize: 12, mt: 1.5, mb: '6px' }}>
-					<Typography sx={{ fontSize: 12, color: T.ink2 }}>Spent of {fmtCurrency(budget, currency)} budget</Typography>
-					<Typography sx={{ ...sMono, fontSize: 12, fontWeight: 600 }}>{fmtCurrency(expense, currency)}</Typography>
+					<Typography sx={{ fontSize: 12, color: T.ink2 }}>Spent of {fmtCurrency(budget, currency)} projection</Typography>
+					<Typography sx={{ ...sMono, fontSize: 12, fontWeight: 600 }}>{fmtCurrency(livingExpense, currency)}</Typography>
 				</Stack>
 				<Box sx={{ height: 8, background: T.dark ? T.rule : '#fff', borderRadius: '4px', overflow: 'hidden' }}>
 					<Box sx={{ height: '100%', background: T.neg, width: `${expensePct}%` }}/>

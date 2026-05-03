@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -162,9 +162,10 @@ export function Dividend () {
 					</Typography>
 					<Typography sx={{ fontSize: 11, color: T.ink3 }}>Click a bar to switch year</Typography>
 				</Stack>
-				<Box sx={{ width: '100%', height: 160 }}>
+				<Box sx={{ width: '100%', height: { xs: 200, md: 220 } }}>
 					<ResponsiveContainer>
-						<BarChart data={yearlyDividendData} onClick={onBarClick}>
+						<BarChart data={yearlyDividendData} onClick={onBarClick} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+							<CartesianGrid vertical={false} stroke={T.rule} />
 							<XAxis dataKey="year" tick={{ fontSize: 12, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false} />
 							<YAxis hide />
 							<Tooltip content={<CustomTooltip T={T} />} cursor={{ fill: T.surf2 }} />

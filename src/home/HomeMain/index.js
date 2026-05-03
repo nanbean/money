@@ -45,15 +45,6 @@ export function HomeMain () {
 
 	const showWeeklyRecap = showWeeklyRecapDay && !weeklyRecapDismissed;
 
-	const panelSx = {
-		background: T.surf,
-		border: `1px solid ${T.rule}`,
-		borderRadius: '16px',
-		padding: { xs: '16px', md: '20px' },
-		boxShadow: 'none',
-		color: T.ink
-	};
-
 	return (
 		<Layout showPaper={false} title="Home">
 			<Box sx={{
@@ -97,9 +88,7 @@ export function HomeMain () {
 					gap: 2
 				}}>
 					<HomeRecentActivity />
-					<Box sx={panelSx}>
-						<StockList />
-					</Box>
+					<StockList />
 				</Box>
 			</Box>
 		</Layout>

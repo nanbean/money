@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -189,12 +189,13 @@ function InvestmentHistory () {
 			{/* Chart panel */}
 			<Box sx={panelSx}>
 				{netWorthFlow.length > 1 ? (
-					<Box sx={{ width: '100%', height: 460 }}>
+					<Box sx={{ width: '100%', height: { xs: 360, md: 460 } }}>
 						<ResponsiveContainer>
 							<BarChart
 								data={investmentHistory}
 								margin={{ top: 8, right: 12, left: 12, bottom: 8 }}
 							>
+								<CartesianGrid vertical={false} stroke={T.rule} />
 								<XAxis
 									dataKey="date"
 									tick={{ fontSize: 11, fill: T.ink2 }}

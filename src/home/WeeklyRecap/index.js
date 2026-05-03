@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import ReactMarkdown from 'react-markdown';
 import moment from 'moment';
@@ -112,8 +112,8 @@ export function WeeklyRecap ({ onDismiss }) {
 		return { spent, saved: income - spent };
 	}, [weeklyTransactions, accountList, exchangeRate, currency, livingExpenseExempt, start, end]);
 
-	const fetchRecap = async () => {
-		setLoading(true);
+	const fetchRecap = async ({ silent = false } = {}) => {
+		if (!silent) setLoading(true);
 		setError('');
 		try {
 			const res = await fetch('/api/weeklyRecap');
@@ -121,11 +121,18 @@ export function WeeklyRecap ({ onDismiss }) {
 			const data = await res.json();
 			setRecap(data);
 		} catch (err) {
-			setError(err.message || '분석 중 오류가 발생했습니다.');
+			if (!silent) setError(err.message || '분석 중 오류가 발생했습니다.');
 		} finally {
-			setLoading(false);
+			if (!silent) setLoading(false);
 		}
 	};
+
+	// Prefetch on mount so the teaser headline shows recap.summary immediately
+	// (server caches the result by weekKey, so cache hits are cheap).
+	useEffect(() => {
+		fetchRecap({ silent: true });
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleOpen = (e) => {
 		e?.stopPropagation();

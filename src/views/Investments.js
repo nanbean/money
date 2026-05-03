@@ -470,11 +470,20 @@ export function Investments () {
 
 	const latestValue = chartData.length > 0 ? chartData[chartData.length - 1].value : 0;
 	const firstValue = chartData.length > 0 ? chartData[0].value : 0;
+	// Headline chip = net change of portfolio value during the period
+	// (intuitive — what users expect when they see "since 3 months ago").
+	// The chip's amount and % share this single metric so signs always agree.
+	// TWR is shown separately as a sub-label since it has different meaning
+	// (cash-flow-adjusted return, can disagree with net change in sign).
 	const change = latestValue - firstValue;
 	const changeRate = firstValue !== 0 ? (change / firstValue * 100) : 0;
 	const isPositive = change >= 0;
 	const formatYAxis = makeFormatYAxis(currency);
 	const accentColor = isPositive ? T.pos : T.neg;
+	// Opaque tint for header/subtotal rows. Pre-mixed against T.surf so sticky
+	// rows don't bleed when content scrolls underneath. Same value as the one
+	// used by AccountInvestments — keeps visual language consistent.
+	const emphasisBg = T.dark ? '#1f1f28' : '#ededea';
 	const panelSx = {
 		background: T.surf,
 		border: `1px solid ${T.rule}`,
@@ -527,12 +536,12 @@ export function Investments () {
 										...sMono
 									}}>
 										{isPositive ? '+' : '−'}{fmtCurrency(Math.abs(change), currency)}{' '}
-										({periodTwr !== null
-											? `${periodTwr >= 0 ? '+' : ''}${(periodTwr * 100).toFixed(2)}%`
-											: `${changeRate >= 0 ? '+' : ''}${changeRate.toFixed(2)}%`})
+										({changeRate >= 0 ? '+' : ''}{changeRate.toFixed(2)}%)
 									</Box>
 									{periodTwr !== null && (
-										<Typography sx={{ fontSize: 11, color: T.ink3 }}>TWR</Typography>
+										<Typography sx={{ ...sMono, fontSize: 11, color: T.ink3 }}>
+											TWR {periodTwr >= 0 ? '+' : ''}{(periodTwr * 100).toFixed(2)}%
+										</Typography>
 									)}
 								</Stack>
 							</Box>
@@ -703,7 +712,10 @@ export function Investments () {
 							))}
 					</Box>
 
-					{/* Holdings panel — table-style */}
+					{/* Holdings panel — table-style. Visual language matches
+					    AccountInvestments (Investment > Holdings): same row padding,
+					    opaque emphasis tint pre-mixed against T.surf, color dot per
+					    ticker via stringToColor for cross-page identity. */}
 					<Box sx={panelSx}>
 						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
 							<Typography sx={sectionTitleSx}>
@@ -725,8 +737,8 @@ export function Investments () {
 								display: 'grid',
 								gridTemplateColumns: { xs: '1fr 90px 110px', md: '1fr 90px 130px 150px' },
 								gap: 1.25,
-								padding: '10px 14px',
-								background: T.dark ? '#15151c' : '#f5f5fa',
+								padding: '10px 12px',
+								background: emphasisBg,
 								fontSize: 11,
 								color: T.ink2,
 								fontWeight: 600,
@@ -749,23 +761,26 @@ export function Investments () {
 											display: 'grid',
 											gridTemplateColumns: { xs: '1fr 90px 110px', md: '1fr 90px 130px 150px' },
 											gap: 1.25,
-											padding: '12px 14px',
+											padding: '10px 12px',
 											alignItems: 'center',
 											background: T.surf,
 											borderTop: `1px solid ${T.rule}`,
 											cursor: 'pointer',
 											'&:hover': { background: T.surf2 }
 										}}>
-											<Box sx={{ minWidth: 0 }}>
-												<Typography sx={{ fontSize: 13, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-													{i.name}
-												</Typography>
-												{typeof rate === 'number' && (
-													<Typography sx={{ ...sMono, fontSize: 11, color: rate > 0 ? T.pos : rate < 0 ? T.neg : T.ink2 }}>
-														{rate > 0 ? '+' : ''}{rate}%
+											<Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0 }}>
+												<Box sx={{ width: 8, height: 8, borderRadius: '2px', background: stringToColor(i.name), flexShrink: 0 }} />
+												<Box sx={{ minWidth: 0 }}>
+													<Typography sx={{ fontSize: 13, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+														{i.name}
 													</Typography>
-												)}
-											</Box>
+													{typeof rate === 'number' && (
+														<Typography sx={{ ...sMono, fontSize: 11, color: rate > 0 ? T.pos : rate < 0 ? T.neg : T.ink2 }}>
+															{rate > 0 ? '+' : ''}{rate}%
+														</Typography>
+													)}
+												</Box>
+											</Stack>
 											<Typography sx={{ ...sMono, fontSize: 13, color: T.ink, textAlign: 'right' }}>
 												{fmtQty(i.quantity)}
 											</Typography>
@@ -790,14 +805,14 @@ export function Investments () {
 									</Link>
 								);
 							})}
-							{/* Subtotal row */}
+							{/* Subtotal row — opaque tint matches AccountInvestments */}
 							<Box sx={{
 								display: 'grid',
 								gridTemplateColumns: { xs: '1fr 90px 110px', md: '1fr 90px 130px 150px' },
 								gap: 1.25,
-								padding: '12px 14px',
+								padding: '10px 12px',
 								alignItems: 'center',
-								background: T.dark ? '#15151c' : '#f5f5fa',
+								background: emphasisBg,
 								borderTop: `1px solid ${T.rule}`
 							}}>
 								<Typography sx={{ fontSize: 12, fontWeight: 700, color: T.ink, textTransform: 'uppercase', letterSpacing: '0.04em' }}>

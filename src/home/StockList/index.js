@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import stringToColor from 'string-to-color';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -94,7 +95,13 @@ export function StockList () {
 	const headerSummaryColor = totalProfit >= 0 ? T.pos : T.neg;
 
 	return (
-		<Box>
+		<Box sx={{
+			background: T.surf,
+			border: `1px solid ${T.rule}`,
+			borderRadius: '16px',
+			padding: { xs: '16px', md: '20px' },
+			color: T.ink
+		}}>
 			<Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={1} sx={{ marginBottom: 1.5 }}>
 				<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
 					Stock list
@@ -137,28 +144,37 @@ export function StockList () {
 							transition: 'background 0.12s',
 							'&:hover': { background: T.surf2 }
 						}}>
-							<Box sx={{ minWidth: 0 }}>
-								<Typography sx={{
-									fontSize: 13,
-									fontWeight: 600,
-									color: T.ink,
-									overflow: 'hidden',
-									textOverflow: 'ellipsis',
-									whiteSpace: 'nowrap'
-								}}>
-									{i.name}
-								</Typography>
-								<Stack direction="row" alignItems="center" spacing={0.75} sx={{ marginTop: '2px', flexWrap: 'wrap', rowGap: 0.25 }}>
-									<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
-										{fmtQty(i.quantity)} × {fmtPrice(investment?.price, i.currency)}
+							<Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0 }}>
+								<Box sx={{
+									width: 8,
+									height: 8,
+									borderRadius: '2px',
+									background: stringToColor(i.name),
+									flexShrink: 0
+								}}/>
+								<Box sx={{ minWidth: 0 }}>
+									<Typography sx={{
+										fontSize: 13,
+										fontWeight: 600,
+										color: T.ink,
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap'
+									}}>
+										{i.name}
 									</Typography>
-									{typeof rate === 'number' && (
-										<Typography sx={{ ...sMono, fontSize: 11, color: rateColor, whiteSpace: 'nowrap' }}>
-											({rate > 0 ? '+' : ''}{rate}%)
+									<Stack direction="row" alignItems="center" spacing={0.75} sx={{ marginTop: '2px', flexWrap: 'wrap', rowGap: 0.25 }}>
+										<Typography sx={{ ...sMono, fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
+											{fmtQty(i.quantity)} × {fmtPrice(investment?.price, i.currency)}
 										</Typography>
-									)}
-								</Stack>
-							</Box>
+										{typeof rate === 'number' && (
+											<Typography sx={{ ...sMono, fontSize: 11, color: rateColor, whiteSpace: 'nowrap' }}>
+												({rate > 0 ? '+' : ''}{rate}%)
+											</Typography>
+										)}
+									</Stack>
+								</Box>
+							</Stack>
 							<Stack alignItems="flex-end" sx={{ minWidth: 0 }}>
 								<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.ink, whiteSpace: 'nowrap' }}>
 									{fmtCurrencyFull(i.appraisedValue, i.currency)}

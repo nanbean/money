@@ -19,7 +19,6 @@ import {
 
 import {
 	accountsDB,
-	getAllAccounts,
 	initCouchdbAccountAction,
 	finalizeCouchdbAccountAction
 } from './couchdbAccountActions';
@@ -66,6 +65,102 @@ const normalizeTransaction = (doc) => ({
 	type: doc.accountId ? doc.accountId.split(':')[1] : undefined,
 	account: doc.accountId ? doc.accountId.split(':')[2] : undefined
 });
+
+const isInternalTransferCategory = (cat) => !!cat && /^\[.*\]$/.test(cat);
+
+// Locate the doubleEntry pair for an internal transfer transaction.
+// Strict match: same date, opposite-sign amount, counterpart accountId, and
+// reciprocal category. Returns null if zero or multiple candidates.
+const findTransferPair = (t, allAccountsTransactions, accountList) => {
+	if (!isInternalTransferCategory(t.category)) return null;
+
+	// Preferred: explicit link by transferId. Unambiguous even when same-day
+	// same-amount transfers collide. New docs always carry it; older docs
+	// fall through to the legacy heuristic below.
+	if (t.transferId) {
+		const linked = (allAccountsTransactions || []).find(p =>
+			p._id !== t._id && p.transferId === t.transferId
+		);
+		if (linked) return linked;
+	}
+
+	const counterName = t.category.replace(/^\[|\]$/g, '');
+	const selfName = t.account || (t.accountId ? t.accountId.split(':')[2] : null);
+	if (!counterName || !selfName) return null;
+	const counterMeta = accountList.find(a => a.name === counterName);
+	if (!counterMeta) return null;
+	const counterAccountId = `account:${counterMeta.type}:${counterName}`;
+	const expectedCategory = `[${selfName}]`;
+	const tAmt = Number(t.amount) || 0;
+	const tSign = Math.sign(tAmt);
+	const tAbs = Math.abs(tAmt);
+	const candidates = (allAccountsTransactions || []).filter(p => {
+		const pAmt = Number(p.amount) || 0;
+		return p._id !== t._id
+			&& p.accountId === counterAccountId
+			&& p.category === expectedCategory
+			&& p.date === t.date
+			&& Math.sign(pAmt) === -tSign
+			&& Math.abs(pAmt) === tAbs;
+	});
+	return candidates.length === 1 ? candidates[0] : null;
+};
+
+// Drop NaN-valued numeric fields so they don't poison PouchDB docs.
+const stripNaN = (obj) => {
+	Object.keys(obj).forEach(k => {
+		if (Number.isNaN(obj[k])) delete obj[k];
+	});
+	return obj;
+};
+
+// Build a doubleEntry counterpart doc for an internal-transfer source.
+// Returns null when the counter account name in `[brackets]` doesn't resolve
+// to a real account — caller should fall back to single-entry write.
+const buildPairTransaction = (source, accountList) => {
+	if (!isInternalTransferCategory(source.category)) return null;
+	const counterName = source.category.replace(/^\[|\]$/g, '');
+	const selfName = source.account || (source.accountId ? source.accountId.split(':')[2] : null);
+	if (!counterName || !selfName) return null;
+	const counterMeta = accountList.find(a => a.name === counterName);
+	if (!counterMeta) return null;
+	const pair = {
+		...source,
+		_id: `${source.date}:${counterName}:${uuidv1()}`,
+		accountId: `account:${counterMeta.type}:${counterName}`,
+		category: `[${selfName}]`,
+		amount: -Number(source.amount)
+	};
+	delete pair._rev;
+	delete pair.account;
+	delete pair.type;
+	return pair;
+};
+
+// Same-currency check between two accounts. Cross-currency transfers carry
+// distinct amounts on each side (with embedded FX), so we never auto-sync them.
+const isSameCurrencyPair = (selfAccountId, counterAccountId, accountList) => {
+	const selfAcc = accountList.find(a => a._id === selfAccountId);
+	const counterAcc = accountList.find(a => a._id === counterAccountId);
+	if (!selfAcc || !counterAcc) return false;
+	return (selfAcc.currency || 'KRW') === (counterAcc.currency || 'KRW');
+};
+
+// Stamp a transaction with denormalized currency + (when relevant) the
+// at-write FX rate, so the doc is self-describing and historical FX is
+// preserved. Mutates and returns the doc.
+const stampMeta = (txn, accountList, fxRate, displayCurrency) => {
+	const acc = accountList.find(a => a._id === txn.accountId);
+	if (!acc) return txn;
+	const txCur = acc.currency || 'KRW';
+	txn.currency = txCur;
+	if (txCur !== displayCurrency && Number.isFinite(fxRate) && fxRate > 0) {
+		txn.fxRate = fxRate;
+	} else {
+		delete txn.fxRate; // same-currency: fxRate has no meaning
+	}
+	return txn;
+};
 
 const getAllTransactions = async () => {
 	const transactionsResponse = await transactionsDB.allDocs({
@@ -388,49 +483,57 @@ export const setAddTransactionFetchingAction = value => ({
 });
 
 export const addTransactionAction = param => {
-	return async dispatch => {
-		if (param && param.date && param.account) {
-			const transaction = { ...param, _id: `${param.date}:${param.account}:${uuidv1()}` };
-			Object.keys(transaction).forEach(key => {
-				if (Number.isNaN(transaction[key])) {
-					delete transaction[key];
-				}
-			});
-			delete transaction.account;
-			delete transaction.type;
+	return async (dispatch, getState) => {
+		if (!param || !param.date || !param.account) return;
+		const transaction = stripNaN({ ...param, _id: `${param.date}:${param.account}:${uuidv1()}` });
+		delete transaction.account;
+		delete transaction.type;
 
-			dispatch(setAddTransactionFetchingAction(true));
+		const state = getState();
+		const accountList = state.accountList || [];
+		const settings = state.settings || {};
+		const displayCurrency = settings.currency || 'KRW';
+		const fxRate = Number(settings.exchangeRate);
+
+		// Resolve doubleEntry pair before any dispatch / put so a missing
+		// counter account or cross-currency mismatch can't leave the UI and
+		// DB half-written.
+		let pairTxn = null;
+		if (isInternalTransferCategory(transaction.category)) {
+			// Issue an explicit transferId so both halves are unambiguously
+			// linked (replaces the legacy date+amount heuristic).
+			transaction.transferId = uuidv1();
+			const candidate = buildPairTransaction(transaction, accountList);
+			if (candidate && isSameCurrencyPair(transaction.accountId, candidate.accountId, accountList)) {
+				candidate.transferId = transaction.transferId;
+				stampMeta(candidate, accountList, fxRate, displayCurrency);
+				pairTxn = candidate;
+			}
+			// Counter account missing or cross-currency: skip auto-pair, the
+			// transferId still stamps this side so a manually-added counterpart
+			// can be linked later by editing it to the same transferId.
+		}
+
+		stampMeta(transaction, accountList, fxRate, displayCurrency);
+
+		dispatch(setAddTransactionFetchingAction(true));
+		dispatch({
+			type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
+			payload: normalizeTransaction(transaction)
+		});
+		await transactionsDB.put(transaction);
+
+		if (pairTxn) {
 			dispatch({
 				type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
-				payload: normalizeTransaction(transaction)
+				payload: normalizeTransaction(pairTxn)
 			});
-			await transactionsDB.put(transaction);
-
-			if (transaction.category && transaction.category.startsWith('[') && transaction.category.endsWith(']')) {
-				const accountList = await getAllAccounts();
-				const doubleEntryAccount = transaction.category.replace(/^\[|\]$/g, '');
-				const doubleEntryType = accountList.find(i => i.name === doubleEntryAccount).type;
-				const doubleEntryAccountId = `account:${doubleEntryType}:${doubleEntryAccount}`;
-				const doubleEntryTransaction = {
-					...transaction,
-					_id: `${transaction.date}:${doubleEntryAccount}:${uuidv1()}`,
-					accountId: doubleEntryAccountId,
-					category: `[${transaction.accountId.split(':')[2]}]`,
-					amount: -transaction.amount
-				};
-
-				dispatch({
-					type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
-					payload: normalizeTransaction(doubleEntryTransaction)
-				});
-				await transactionsDB.put(doubleEntryTransaction);
-				await updateAccount(doubleEntryTransaction.accountId);
-			}
-
-			await updateAccount(transaction.accountId);
-			dispatch(setAddTransactionFetchingAction(false));
-			// dispatch(getAllAccountsTransactionsAction());
+			await transactionsDB.put(pairTxn);
+			await updateAccount(pairTxn.accountId);
 		}
+
+		await updateAccount(transaction.accountId);
+		dispatch(setAddTransactionFetchingAction(false));
 	};
 };
 
@@ -440,27 +543,157 @@ export const setEditTransactionFetchingAction = value => ({
 });
 
 export const editTransactionAction = param => {
-	return async dispatch => {
-		if (param) {
-			const transaction = { ...param, ...param.changed };
-			const accountId = `account:${transaction.type}:${transaction.account}`;
-			delete transaction.changed;
-			delete transaction.account;
-			delete transaction.type;
+	return async (dispatch, getState) => {
+		if (!param) return;
+		const transaction = stripNaN({ ...param, ...param.changed });
+		const accountId = `account:${transaction.type}:${transaction.account}`;
+		const original = param;
+		delete transaction.changed;
+		delete transaction.account;
+		delete transaction.type;
+		// Keep the embedded accountId in lockstep with the (possibly edited)
+		// type/account so stampMeta reads the right currency.
+		transaction.accountId = accountId;
 
-			dispatch(setEditTransactionFetchingAction(true));
-			dispatch({
-				type: EDIT_ALL_ACCOUNTS_TRANSACTIONS,
-				payload: transaction
-			});
-			await transactionsDB.put({
-				...transaction
-			});
+		const state = getState();
+		const accountList = state.accountList || [];
+		const allAccountsTransactions = state.allAccountsTransactions || [];
+		const settings = state.settings || {};
+		const displayCurrency = settings.currency || 'KRW';
+		const fxRate = Number(settings.exchangeRate);
 
-			await updateAccount(accountId);
-			// dispatch(getAccountList());
-			// dispatch(setEditTransactionFetchingAction(false));
-			// dispatch(getAllAccountsTransactionsAction());
+		const wasTransfer = isInternalTransferCategory(original.category);
+		const isStillTransfer = isInternalTransferCategory(transaction.category);
+		const oldPair = wasTransfer ? findTransferPair(original, allAccountsTransactions, accountList) : null;
+		// Category retarget — e.g. [A] → [B]. Old pair lives on the wrong
+		// counter account; we must drop it and create a fresh pair.
+		const counterChanged = wasTransfer && isStillTransfer
+			&& original.category !== transaction.category;
+
+		// Decide the transferId for the post-edit doc.
+		//   - still a transfer & same counter → reuse existing id (or mint one
+		//     for legacy docs so this edit propagates the link).
+		//   - transitioning into a transfer or counter changed → fresh id.
+		//   - no longer a transfer → drop the field.
+		if (isStillTransfer) {
+			if (wasTransfer && !counterChanged) {
+				transaction.transferId = original.transferId || oldPair?.transferId || uuidv1();
+			} else {
+				transaction.transferId = uuidv1();
+			}
+		} else {
+			delete transaction.transferId;
+		}
+
+		stampMeta(transaction, accountList, fxRate, displayCurrency);
+
+		dispatch(setEditTransactionFetchingAction(true));
+		dispatch({
+			type: EDIT_ALL_ACCOUNTS_TRANSACTIONS,
+			payload: transaction
+		});
+		await transactionsDB.put({ ...transaction });
+		await updateAccount(accountId);
+
+		try {
+			// Case 1: transfer → non-transfer. Drop the orphaned counterpart.
+			if (wasTransfer && !isStillTransfer) {
+				if (oldPair) {
+					const liveDoc = await transactionsDB.get(oldPair._id).catch(() => null);
+					if (liveDoc) {
+						await transactionsDB.remove(liveDoc);
+						dispatch({ type: DELETE_ALL_ACCOUNTS_TRANSACTIONS, payload: oldPair._id });
+						await updateAccount(oldPair.accountId);
+					}
+				}
+				return;
+			}
+
+			// Case 2 & 3: pair must be (re)created — either a brand new transfer,
+			// or the counter account just changed.
+			if (isStillTransfer && (!wasTransfer || counterChanged)) {
+				if (counterChanged && oldPair) {
+					const liveDoc = await transactionsDB.get(oldPair._id).catch(() => null);
+					if (liveDoc) {
+						await transactionsDB.remove(liveDoc);
+						dispatch({ type: DELETE_ALL_ACCOUNTS_TRANSACTIONS, payload: oldPair._id });
+						await updateAccount(oldPair.accountId);
+					}
+				}
+				const candidate = buildPairTransaction(transaction, accountList);
+				if (candidate && isSameCurrencyPair(transaction.accountId, candidate.accountId, accountList)) {
+					candidate.transferId = transaction.transferId;
+					stampMeta(candidate, accountList, fxRate, displayCurrency);
+					dispatch({
+						type: ADD_ALL_ACCOUNTS_TRANSACTIONS,
+						payload: normalizeTransaction(candidate)
+					});
+					await transactionsDB.put(candidate);
+					await updateAccount(candidate.accountId);
+				}
+				// Cross-currency or unresolved counter account: skip auto-pair,
+				// user manages the other side manually.
+				return;
+			}
+
+			// Case 4: same transfer (same counter account) — sync amount /
+			// date / payee / memo / subcategory across the pair.
+			if (wasTransfer && isStillTransfer && oldPair) {
+				if (!isSameCurrencyPair(transaction.accountId, oldPair.accountId, accountList)) {
+					return; // cross-currency: leave pair as-is so FX isn't overwritten
+				}
+
+				const liveDoc = await transactionsDB.get(oldPair._id);
+				const newAmount = -Number(transaction.amount);
+				const dateChanged = transaction.date !== oldPair.date;
+				// Only sync subcategory when the edit explicitly carried one;
+				// undefined would silently strip the field on JSON serialize.
+				const syncedSubcategory = transaction.subcategory !== undefined
+					? transaction.subcategory
+					: liveDoc.subcategory;
+
+				if (dateChanged) {
+					// _id encodes the date, so a date change means remove + new put
+					await transactionsDB.remove(liveDoc);
+					dispatch({ type: DELETE_ALL_ACCOUNTS_TRANSACTIONS, payload: oldPair._id });
+					const counterName = oldPair.accountId.split(':')[2];
+					const newDoc = {
+						...liveDoc,
+						_id: `${transaction.date}:${counterName}:${uuidv1()}`,
+						date: transaction.date,
+						amount: newAmount,
+						payee: transaction.payee,
+						memo: transaction.memo,
+						subcategory: syncedSubcategory,
+						transferId: transaction.transferId
+					};
+					delete newDoc._rev;
+					stampMeta(newDoc, accountList, fxRate, displayCurrency);
+					const result = await transactionsDB.put(newDoc);
+					dispatch({
+						type: ADD_OR_EDIT_ALL_ACCOUNTS_TRANSACTIONS,
+						payload: normalizeTransaction({ ...newDoc, _rev: result.rev })
+					});
+				} else {
+					const updated = {
+						...liveDoc,
+						amount: newAmount,
+						payee: transaction.payee,
+						memo: transaction.memo,
+						subcategory: syncedSubcategory,
+						transferId: transaction.transferId
+					};
+					stampMeta(updated, accountList, fxRate, displayCurrency);
+					const result = await transactionsDB.put(updated);
+					dispatch({
+						type: EDIT_ALL_ACCOUNTS_TRANSACTIONS,
+						payload: normalizeTransaction({ ...updated, _rev: result.rev })
+					});
+				}
+				await updateAccount(oldPair.accountId);
+			}
+		} catch (err) {
+			console.log('editTransactionAction pair sync error:', err); // eslint-disable-line no-console
 		}
 	};
 };
@@ -471,19 +704,37 @@ export const setDeleteTransactionFetchingAction = value => ({
 });
 
 export const deleteTransactionAction = params => {
-	return async dispatch => {
-		if (params) {
-			dispatch(setDeleteTransactionFetchingAction(true));
-			dispatch({
-				type: DELETE_ALL_ACCOUNTS_TRANSACTIONS,
-				payload: params._id
-			});
-			await transactionsDB.remove(params._id, params._rev);
+	return async (dispatch, getState) => {
+		if (!params) return;
+		dispatch(setDeleteTransactionFetchingAction(true));
 
-			await updateAccount(params.accountId);
-			// dispatch(getAccountList());
-			// dispatch(setDeleteTransactionFetchingAction(false));
-			// dispatch(getAllAccountsTransactionsAction());
+		const state = getState();
+		const accountList = state.accountList || [];
+		const allAccountsTransactions = state.allAccountsTransactions || [];
+
+		// Locate the doubleEntry pair before we delete the original record,
+		// so we can remove both halves of the transfer atomically (otherwise
+		// the counterpart becomes an orphan booking).
+		const pair = isInternalTransferCategory(params.category)
+			? findTransferPair(params, allAccountsTransactions, accountList)
+			: null;
+
+		dispatch({
+			type: DELETE_ALL_ACCOUNTS_TRANSACTIONS,
+			payload: params._id
+		});
+		await transactionsDB.remove(params._id, params._rev);
+		await updateAccount(params.accountId);
+
+		if (pair) {
+			try {
+				const liveDoc = await transactionsDB.get(pair._id);
+				await transactionsDB.remove(liveDoc);
+				dispatch({ type: DELETE_ALL_ACCOUNTS_TRANSACTIONS, payload: pair._id });
+				await updateAccount(pair.accountId);
+			} catch (err) {
+				console.log('deleteTransactionAction pair removal error:', err); // eslint-disable-line no-console
+			}
 		}
 	};
 };

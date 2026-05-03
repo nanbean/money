@@ -8,13 +8,13 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 
 import ReturnYearlyTable from './YearlyTable';
 import AccountFilter from '../../components/AccountFilter';
 
 import useT from '../../hooks/useT';
-import { sDisplay, sMono, labelStyle, fmtCurrency, colorFor } from '../../utils/designTokens';
+import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 
 import {
 	getHistoryListAction
@@ -51,40 +51,6 @@ ChartTooltip.propTypes = {
 	label: PropTypes.string,
 	payload: PropTypes.array,
 	T: PropTypes.object
-};
-
-function StatCard ({ label, value, color, T }) {
-	const lab = labelStyle(T);
-	return (
-		<Box sx={{
-			background: T.surf,
-			border: `1px solid ${T.rule}`,
-			borderRadius: '12px',
-			padding: { xs: '12px', md: '14px' },
-			minWidth: 0
-		}}>
-			<Typography sx={lab}>{label}</Typography>
-			<Typography sx={{
-				...sMono,
-				fontSize: 16,
-				fontWeight: 700,
-				marginTop: '4px',
-				color: color || T.ink,
-				whiteSpace: 'nowrap',
-				overflow: 'hidden',
-				textOverflow: 'ellipsis'
-			}}>
-				{value}
-			</Typography>
-		</Box>
-	);
-}
-
-StatCard.propTypes = {
-	color: PropTypes.string,
-	label: PropTypes.string,
-	T: PropTypes.object,
-	value: PropTypes.string
 };
 
 export function RateOfReturn () {
@@ -135,6 +101,17 @@ export function RateOfReturn () {
 		color: T.ink
 	};
 
+	const heroBg = T.dark
+		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
+		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
+	const heroInk = '#ffffff';
+	const heroDim = T.dark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.7)';
+	const heroDivider = T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)';
+	const heroPos = '#34d399';
+	const heroNeg = '#fb7185';
+	const meanPct = geometricMean ? (geometricMean - 1) * 100 : 0;
+	const meanColor = meanPct > 0 ? heroPos : meanPct < 0 ? heroNeg : heroInk;
+
 	return (
 		<Stack
 			spacing={2}
@@ -146,21 +123,49 @@ export function RateOfReturn () {
 				flexDirection: 'column'
 			}}
 		>
-			{/* Header + filter */}
-			<Box sx={panelSx}>
-				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-					<Box>
-						<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
-							Rate of return
-							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 수익률</Box>
+			{/* Hero — Rate of return + 4 grand-total metrics */}
+			<Box sx={{
+				position: 'relative',
+				overflow: 'hidden',
+				background: heroBg,
+				borderRadius: { xs: '16px', md: '20px' },
+				padding: { xs: '20px', md: '24px' },
+				color: heroInk
+			}}>
+				<Box sx={{
+					position: 'absolute', top: -100, right: -100,
+					width: 360, height: 360, borderRadius: '50%',
+					background: `radial-gradient(circle, ${T.acc.bright}55 0%, transparent 70%)`,
+					pointerEvents: 'none'
+				}}/>
+				<Stack
+					direction={{ xs: 'column', md: 'row' }}
+					justifyContent="space-between"
+					alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+					spacing={2}
+					sx={{ position: 'relative' }}
+				>
+					<Box sx={{ minWidth: 0 }}>
+						<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+							Rate of return · 수익률
 						</Typography>
 						{overallSummary && (
-							<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: '4px' }}>
-								Geometric mean&nbsp;
-								<Box component="span" sx={{ ...sMono, fontWeight: 700, color: colorFor(T, geometricMean - 1) }}>
-									{`${((geometricMean - 1) * 100).toFixed(3)}%`}
-								</Box>
-							</Typography>
+							<>
+								<Typography sx={{
+									...sDisplay,
+									...sMono,
+									fontSize: { xs: 32, sm: 40, md: 52 },
+									fontWeight: 700,
+									lineHeight: 1,
+									marginTop: '12px',
+									color: meanColor
+								}}>
+									{meanPct >= 0 ? '+' : ''}{meanPct.toFixed(3)}%
+								</Typography>
+								<Typography sx={{ fontSize: 12, color: heroDim, marginTop: '6px' }}>
+									Geometric mean across {chartData.length - 1 || 0} years
+								</Typography>
+							</>
 						)}
 					</Box>
 					<AccountFilter
@@ -169,39 +174,55 @@ export function RateOfReturn () {
 						setfilteredAccounts={onFilteredAccountsChange}
 					/>
 				</Stack>
+				{overallSummary && (
+					<Box sx={{
+						display: 'grid',
+						gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+						gap: { xs: 1.5, md: 3 },
+						marginTop: { xs: '20px', md: '28px' },
+						position: 'relative'
+					}}>
+						{[
+							{ label: 'Final value · 평가액', value: fmtCurrency(overallSummary.finalValue, currency), color: heroInk, divider: false },
+							{ label: 'Final cash · 현금', value: fmtCurrency(overallSummary.finalCash, currency), color: heroInk, divider: true },
+							{ label: 'Total cash flow · 현금 흐름', value: fmtCurrency(overallSummary.totalCashFlow, currency), color: overallSummary.totalCashFlow > 0 ? heroPos : overallSummary.totalCashFlow < 0 ? heroNeg : heroInk, divider: true },
+							{ label: 'Capital gains · 자본 손익', value: fmtCurrency(overallSummary.capitalGains, currency), color: overallSummary.capitalGains > 0 ? heroPos : overallSummary.capitalGains < 0 ? heroNeg : heroInk, divider: true }
+						].map(item => (
+							<Box key={item.label} sx={{
+								borderLeft: { xs: 'none', md: item.divider ? `1px solid ${heroDivider}` : 'none' },
+								paddingLeft: { xs: 0, md: item.divider ? '20px' : 0 },
+								minWidth: 0
+							}}>
+								<Typography sx={{
+									fontSize: 11,
+									color: heroDim,
+									textTransform: 'uppercase',
+									letterSpacing: '0.06em',
+									fontWeight: 500,
+									whiteSpace: 'nowrap',
+									overflow: 'hidden',
+									textOverflow: 'ellipsis'
+								}}>
+									{item.label}
+								</Typography>
+								<Typography sx={{
+									...sDisplay,
+									...sMono,
+									fontSize: { xs: 16, md: 20 },
+									fontWeight: 700,
+									marginTop: '4px',
+									color: item.color,
+									whiteSpace: 'nowrap',
+									overflow: 'hidden',
+									textOverflow: 'ellipsis'
+								}}>
+									{item.value}
+								</Typography>
+							</Box>
+						))}
+					</Box>
+				)}
 			</Box>
-
-			{/* Stat cards (4 metrics) */}
-			{overallSummary && (
-				<Box sx={{
-					display: 'grid',
-					gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-					gap: 2
-				}}>
-					<StatCard
-						label="Final value · 평가액"
-						value={fmtCurrency(overallSummary.finalValue, currency)}
-						T={T}
-					/>
-					<StatCard
-						label="Final cash · 현금"
-						value={fmtCurrency(overallSummary.finalCash, currency)}
-						T={T}
-					/>
-					<StatCard
-						label="Total cash flow · 현금 흐름"
-						value={fmtCurrency(overallSummary.totalCashFlow, currency)}
-						color={colorFor(T, overallSummary.totalCashFlow)}
-						T={T}
-					/>
-					<StatCard
-						label="Capital gains · 자본 손익"
-						value={fmtCurrency(overallSummary.capitalGains, currency)}
-						color={colorFor(T, overallSummary.capitalGains)}
-						T={T}
-					/>
-				</Box>
-			)}
 
 			{/* Chart panel */}
 			<Box sx={panelSx}>
@@ -209,9 +230,10 @@ export function RateOfReturn () {
 					Cumulative return
 					<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 누적 수익률</Box>
 				</Typography>
-				<Box sx={{ width: '100%', height: 200 }}>
+				<Box sx={{ width: '100%', height: { xs: 220, md: 260 } }}>
 					<ResponsiveContainer>
-						<LineChart data={chartData}>
+						<LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+							<CartesianGrid vertical={false} stroke={T.rule} />
 							<XAxis
 								dataKey="date"
 								tickFormatter={(tick) => tick.substring(0, 4)}
@@ -225,7 +247,7 @@ export function RateOfReturn () {
 								axisLine={{ stroke: T.rule }}
 								tickLine={false}
 							/>
-							<Tooltip content={<ChartTooltip T={T} />} />
+							<Tooltip content={<ChartTooltip T={T} />} cursor={{ stroke: T.rule, strokeWidth: 1 }} />
 							<Line
 								type="monotone"
 								dataKey="cumulativeReturn"
