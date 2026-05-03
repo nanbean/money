@@ -35,3 +35,6 @@ yarn-error.log*
 server/tools/transaction_bulk_edit.js
 /transactions
 .gstack/
+
+# node-persist runtime cache (KIS API tokens etc.) — machine-local
+.node-persist/
