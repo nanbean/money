@@ -8,6 +8,7 @@ const snaptradeService = require('../services/snaptradeService');
 const { updateUSStockList } = require('../services/usStockListService');
 const { updateKRStockList } = require('../services/krStockListService');
 const { updateLifeTimePlanner } = require('../services/reportService');
+const benchmarkService = require('../services/benchmarkService');
 const requireAuth = require('../middleware/requireAuth');
 
 const api = new Router();
@@ -139,6 +140,40 @@ api.get('/robinhoodAccounts', async (ctx) => {
 		ctx.body = data;
 	} catch (err) {
 		console.error('robinhoodAccounts error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.get('/benchmark/sp500', async (ctx) => {
+	try {
+		const data = await benchmarkService.getSp500History();
+		ctx.body = { data };
+	} catch (err) {
+		console.error('benchmark/sp500 error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.post('/benchmark/sp500/backfill', async (ctx) => {
+	try {
+		const years = Number(ctx.request.body?.years) || undefined;
+		const summary = await benchmarkService.backfillSp500(years);
+		ctx.body = summary;
+	} catch (err) {
+		console.error('benchmark/sp500/backfill error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.get('/benchmark/sp500/update', async (ctx) => {
+	try {
+		const summary = await benchmarkService.updateSp500();
+		ctx.body = summary;
+	} catch (err) {
+		console.error('benchmark/sp500/update error:', err);
 		ctx.status = 500;
 		ctx.body = { error: err.message };
 	}

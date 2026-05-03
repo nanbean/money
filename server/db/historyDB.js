@@ -9,7 +9,22 @@ const bulkDocs = async (docs) => {
 	return await historiesDB.bulk({ docs });
 };
 
+const getDoc = async (id) => {
+	try {
+		return await historiesDB.get(id);
+	} catch (err) {
+		if (err.statusCode === 404) return null;
+		throw err;
+	}
+};
+
+const putDoc = async (doc) => {
+	return await historiesDB.insert(doc);
+};
+
 module.exports = {
 	listHistories,
-	bulkDocs
+	bulkDocs,
+	getDoc,
+	putDoc
 };

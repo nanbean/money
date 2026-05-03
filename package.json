@@ -54,7 +54,8 @@
     "snaptrade-typescript-sdk": "^9.0.166",
     "string-to-color": "^2.2.2",
     "uuid": "^3.3.2",
-    "web-vitals": "^4.2.1"
+    "web-vitals": "^4.2.1",
+    "yahoo-finance2": "^3.14.0"
   },
   "scripts": {
     "start": "HTTPS=true react-scripts start",

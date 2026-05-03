@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import stringToColor from 'string-to-color';
 
 import PropTypes from 'prop-types';
@@ -20,6 +20,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import DesignPage from '../components/DesignPage';
 import SortMenuButton from '../components/SortMenuButton';
 import { getNetWorthFlowAction, getNetWorthDailyAction } from '../actions/couchdbReportActions';
+import { getSp500BenchmarkAction } from '../actions/benchmarkActions';
 import { updateGeneralAction } from '../actions/couchdbSettingActions';
 import { getInvestmentPerformance, computeChainLinkedTwr } from '../utils/performance';
 import { toCurrencyFormatWithSymbol } from '../utils/formatting';
@@ -112,6 +113,32 @@ const ChartTooltip = ({ active, payload, label, currency }) => {
 ChartTooltip.propTypes = {
 	active: PropTypes.bool,
 	currency: PropTypes.string,
+	label: PropTypes.string,
+	payload: PropTypes.array
+};
+
+const CompareTooltip = ({ active, payload, label }) => {
+	if (active && payload && payload.length) {
+		const port = payload.find(p => p.dataKey === 'portfolioReturn')?.value;
+		const spy = payload.find(p => p.dataKey === 'spyReturn')?.value;
+		const fmt = (v) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+		return (
+			<Box sx={{ bgcolor: 'background.paper', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, boxShadow: 3 }}>
+				<Typography variant="caption" color="text.secondary">{label}</Typography>
+				{port !== undefined && (
+					<Typography variant="body2" fontWeight="bold">Portfolio {fmt(port)}</Typography>
+				)}
+				{spy !== undefined && spy !== null && (
+					<Typography variant="body2">S&amp;P 500 {fmt(spy)}</Typography>
+				)}
+			</Box>
+		);
+	}
+	return null;
+};
+
+CompareTooltip.propTypes = {
+	active: PropTypes.bool,
 	label: PropTypes.string,
 	payload: PropTypes.array
 };
@@ -262,6 +289,7 @@ export function Investments () {
 	const dispatch = useDispatch();
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const netWorthDaily = useSelector((state) => state.netWorthDaily);
+	const sp500Benchmark = useSelector((state) => state.sp500Benchmark || []);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const allInvestmentsPrice = useSelector((state) => state.allInvestmentsPrice);
 	const accountList = useSelector((state) => state.accountList);
@@ -270,6 +298,7 @@ export function Investments () {
 
 	const [range, setRange] = useState('3M');
 	const [view, setView] = useState('chart');
+	const [compareSpy, setCompareSpy] = useState(false);
 	const [aiComment, setAiComment] = useState(null);
 	const [aiLoading, setAiLoading] = useState(false);
 	const [cagrBase, setCagrBase] = useState(10);
@@ -283,6 +312,13 @@ export function Investments () {
 		dispatch(getNetWorthDailyAction());
 	}, [dispatch]);
 
+	// Lazy-fetch SPY benchmark only when the user toggles Compare on.
+	useEffect(() => {
+		if (compareSpy && sp500Benchmark.length === 0) {
+			dispatch(getSp500BenchmarkAction());
+		}
+	}, [compareSpy, sp500Benchmark.length, dispatch]);
+
 	const chartData = useMemo(() => {
 		const startDateStr = getStartDateStr(range);
 		const useDaily = DAILY_RANGES.includes(range);
@@ -294,6 +330,37 @@ export function Investments () {
 				value: Math.round(currency === 'USD' ? item.investmentsNetWorth / exchangeRate : item.investmentsNetWorth)
 			}));
 	}, [netWorthFlow, netWorthDaily, range, currency, exchangeRate]);
+
+	// % cumulative return series for Compare-with-SPY mode. Both portfolio and
+	// SPY are normalized to 0 at the first date the two timeseries overlap, so
+	// the lines are directly comparable on the same axis.
+	const compareData = useMemo(() => {
+		if (!compareSpy) return null;
+		if (chartData.length === 0 || sp500Benchmark.length === 0) return null;
+
+		const useDaily = DAILY_RANGES.includes(range);
+		const spyByKey = new Map();
+		if (useDaily) {
+			sp500Benchmark.forEach(e => spyByKey.set(e.date, e.close));
+		} else {
+			// Last close of each calendar month — sp500Benchmark is sorted asc,
+			// so successive sets within a month overwrite to land on the latest.
+			sp500Benchmark.forEach(e => spyByKey.set(e.date.substring(0, 7), e.close));
+		}
+
+		const intersected = chartData.filter(p => spyByKey.has(p.date));
+		if (intersected.length < 2) return null;
+
+		const portfolioBase = intersected[0].value;
+		const spyBase = spyByKey.get(intersected[0].date);
+		if (!portfolioBase || !spyBase) return null;
+
+		return intersected.map(p => ({
+			date: p.date,
+			portfolioReturn: ((p.value - portfolioBase) / portfolioBase) * 100,
+			spyReturn: ((spyByKey.get(p.date) - spyBase) / spyBase) * 100
+		}));
+	}, [compareSpy, chartData, sp500Benchmark, range]);
 
 	const allocationSegments = useMemo(() => {
 		const allInvestmentsTransactions = allAccountsTransactions.filter(
@@ -559,45 +626,90 @@ export function Investments () {
 							<>
 								<Box sx={{ height: 300, width: '100%', minWidth: 0, overflow: 'hidden' }}>
 									<ResponsiveContainer width="100%" height="100%">
-										<AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-											<defs>
-												<linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
-													<stop offset="5%" stopColor={accentColor} stopOpacity={0.3} />
-													<stop offset="95%" stopColor={accentColor} stopOpacity={0} />
-												</linearGradient>
-											</defs>
-											<CartesianGrid vertical={false} stroke={T.rule} />
-											<XAxis dataKey="date" hide />
-											<YAxis
-												orientation="right"
-												domain={['auto', 'auto']}
-												tickFormatter={formatYAxis}
-												tick={{ fontSize: 11, fill: T.ink2 }}
-												tickLine={false}
-												axisLine={false}
-												width={50}
-											/>
-											<Tooltip content={(props) => <ChartTooltip {...props} currency={currency} />} />
-											<Area
-												type="monotone"
-												dataKey="value"
-												name="Portfolio"
-												stroke={accentColor}
-												strokeWidth={2}
-												fill="url(#portfolioGradient)"
-												dot={false}
-												activeDot={{ r: 4, fill: accentColor }}
-											/>
-										</AreaChart>
+										{compareSpy && compareData ? (
+											<LineChart data={compareData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+												<CartesianGrid vertical={false} stroke={T.rule} />
+												<XAxis dataKey="date" hide />
+												<YAxis
+													orientation="right"
+													domain={['auto', 'auto']}
+													tickFormatter={(v) => `${v.toFixed(0)}%`}
+													tick={{ fontSize: 11, fill: T.ink2 }}
+													tickLine={false}
+													axisLine={false}
+													width={50}
+												/>
+												<Tooltip content={<CompareTooltip />} />
+												<Line
+													type="monotone"
+													dataKey="portfolioReturn"
+													name="Portfolio"
+													stroke={accentColor}
+													strokeWidth={2}
+													dot={false}
+													activeDot={{ r: 4, fill: accentColor }}
+													isAnimationActive={false}
+												/>
+												<Line
+													type="monotone"
+													dataKey="spyReturn"
+													name="S&P 500 (SPY)"
+													stroke={T.ink3}
+													strokeWidth={2}
+													strokeDasharray="5 4"
+													dot={false}
+													isAnimationActive={false}
+												/>
+											</LineChart>
+										) : (
+											<AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+												<defs>
+													<linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
+														<stop offset="5%" stopColor={accentColor} stopOpacity={0.3} />
+														<stop offset="95%" stopColor={accentColor} stopOpacity={0} />
+													</linearGradient>
+												</defs>
+												<CartesianGrid vertical={false} stroke={T.rule} />
+												<XAxis dataKey="date" hide />
+												<YAxis
+													orientation="right"
+													domain={['auto', 'auto']}
+													tickFormatter={formatYAxis}
+													tick={{ fontSize: 11, fill: T.ink2 }}
+													tickLine={false}
+													axisLine={false}
+													width={50}
+												/>
+												<Tooltip content={(props) => <ChartTooltip {...props} currency={currency} />} />
+												<Area
+													type="monotone"
+													dataKey="value"
+													name="Portfolio"
+													stroke={accentColor}
+													strokeWidth={2}
+													fill="url(#portfolioGradient)"
+													dot={false}
+													activeDot={{ r: 4, fill: accentColor }}
+												/>
+											</AreaChart>
+										)}
 									</ResponsiveContainer>
 								</Box>
-								<Stack direction="row" spacing={0.5} justifyContent="center" sx={{ marginTop: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
+								<Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" sx={{ marginTop: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
 									{RANGES.map(r => (
 										<Box key={r} onClick={() => setRange(r)} sx={chipSx(range === r)}>
 											{r}
 										</Box>
 									))}
+									<Box onClick={() => setCompareSpy(v => !v)} sx={chipSx(compareSpy)}>
+										Compare: SPY
+									</Box>
 								</Stack>
+								{compareSpy && !compareData && sp500Benchmark.length > 0 && (
+									<Typography sx={{ fontSize: 11, color: T.ink3, textAlign: 'center', marginTop: 0.5 }}>
+										SPY 시계열이 이 구간과 겹치지 않습니다.
+									</Typography>
+								)}
 							</>
 						) : (
 							allocationSegments.length > 0 && <AllocationBar segments={allocationSegments} currency={currency} />

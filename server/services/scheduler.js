@@ -10,6 +10,7 @@ const checkAndSendNotification = require('./paymentService');
 const { updateUSStockList } = require('./usStockListService');
 const { updateKRStockList } = require('./krStockListService');
 const { getWeeklyRecap } = require('./aiService');
+const { updateSp500 } = require('./benchmarkService');
 
 const safeRun = async (name, fn) => {
 	try {
@@ -106,6 +107,7 @@ const updateInvestmentPrice = async () => {
 			await safeRun('updateLifeTimePlanner', updateLifeTimePlanner);
 			await safeRun('updateNetWorth', updateNetWorth);
 			await safeRun('updateNetWorthDaily', updateNetWorthDaily);
+			await safeRun('updateSp500', updateSp500);
 		} else {
 			console.log('US holiday, dailyArrangeInvestmemtjob skip');
 		}

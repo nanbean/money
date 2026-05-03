@@ -228,6 +228,46 @@ async function getKisDailyPriceUS (accessToken, googleSymbol) {
 	}
 }
 
+// Variant of getKisDailyPriceUS that accepts a BYMD anchor date (YYYY-MM-DD or
+// YYYYMMDD) to walk further into the past for backfill. KIS returns the page
+// of ~100 trading days ending at BYMD; pass the day before the oldest entry
+// of the previous page to paginate.
+async function getKisDailyPriceUSWithDate (accessToken, googleSymbol, bymd = '') {
+	let EXCD = '';
+	if (googleSymbol.startsWith('NYSE:')) EXCD = 'NYS';
+	else if (googleSymbol.startsWith('NASDAQ:')) EXCD = 'NAS';
+	else if (googleSymbol.startsWith('NYSEARCA:')) EXCD = 'AMS';
+	else return null;
+
+	const symb = googleSymbol.split(':')[1];
+	const bymdParam = bymd ? String(bymd).replace(/-/g, '') : '';
+
+	const doRequest = async (token) => {
+		const headers = {
+			'content-type': 'application/json; charset=utf-8',
+			authorization: `Bearer ${token}`,
+			appkey: process.env.KIS_APP_KEY,
+			appsecret: process.env.KIS_APP_SECRET,
+			'tr_id': 'HHDFS76240000'
+		};
+		const response = await fetchWithRetry(
+			`${KIS_URL}/uapi/overseas-price/v1/quotations/dailyprice?AUTH=&EXCD=${EXCD}&SYMB=${symb}&GUBN=0&BYMD=${bymdParam}&MODP=0`,
+			{ method: 'GET', headers }
+		);
+		return await response.json();
+	};
+
+	try {
+		return await doRequest(accessToken);
+	} catch (err) {
+		if ((err.message && err.message.includes('500')) || isNetworkError(err)) {
+			const freshToken = await getKisToken(true);
+			return await doRequest(freshToken);
+		}
+		throw err;
+	}
+}
+
 // Get US stock weekly candlestick (GUBN=1): open/high/low/close for current week
 // Response output2[0] = current week: { xymd, open, high, low, clos }
 async function getKisWeeklyPriceUS (accessToken, googleSymbol) {
@@ -303,5 +343,6 @@ exports.getKisQuoteKorea = getKisQuoteKorea;
 exports.getKisQuoteUS = getKisQuoteUS;
 exports.getKisExchangeRate = getKisExchangeRate;
 exports.getKisDailyPriceUS = getKisDailyPriceUS;
+exports.getKisDailyPriceUSWithDate = getKisDailyPriceUSWithDate;
 exports.getKisWeeklyPriceUS = getKisWeeklyPriceUS;
 exports.getKisWeeklyPriceKorea = getKisWeeklyPriceKorea;
