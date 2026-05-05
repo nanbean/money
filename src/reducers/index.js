@@ -15,6 +15,7 @@ import lifetimePlannerFlow from './lifetimePlannerFlow';
 import netWorthFlow from './netWorthFlow';
 import netWorthDaily from './netWorthDaily';
 import sp500Benchmark from './sp500Benchmark';
+import theses from './theses';
 import allAccountsTransactions from './allAccountsTransactions';
 import messagingToken from './messagingToken';
 import notifications from './notifications';
@@ -47,6 +48,7 @@ const money = combineReducers({
 	netWorthFlow,
 	netWorthDaily,
 	sp500Benchmark,
+	theses,
 	allAccountsTransactions,
 	messagingToken,
 	notifications,

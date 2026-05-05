@@ -8,13 +8,16 @@ const settingsDB = nano.use('settings_nanbean');
 const reportsDB = nano.use('reports_nanbean');
 const notificationsDB = nano.use('notifications_nanbean');
 const historiesDB = nano.use('histories_nanbean');
+const thesesDB = nano.use('theses_nanbean');
 
 module.exports = {
+	nano,
 	accountsDB,
 	transactionsDB,
 	stocksDB,
 	settingsDB,
 	reportsDB,
 	notificationsDB,
-	historiesDB
+	historiesDB,
+	thesesDB
 };

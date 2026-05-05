@@ -15,6 +15,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PieChartOutlineIcon from '@mui/icons-material/PieChartOutline';
 import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
 import OutlinedFlagIcon from '@mui/icons-material/OutlinedFlag';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
@@ -33,6 +34,7 @@ const navItems = [
 	{ path: '/', exact: true, en: 'Home', ko: '홈', Icon: HomeOutlinedIcon },
 	{ path: '/accounts', en: 'Accounts', ko: '계좌', Icon: CreditCardOutlinedIcon },
 	{ path: '/investments', en: 'Investments', ko: '투자', Icon: TrendingUpOutlinedIcon },
+	{ path: '/thesis', en: 'Thesis', ko: '투자가설', Icon: LightbulbOutlinedIcon },
 	{ path: '/spending', en: 'Spending', ko: '지출', Icon: ReceiptLongOutlinedIcon },
 	{ path: '/report', en: 'Reports', ko: '리포트', Icon: PieChartOutlineIcon },
 	{ path: '/networth', en: 'Net worth', ko: '순자산', Icon: AccountBalanceOutlinedIcon },

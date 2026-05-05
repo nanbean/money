@@ -9,6 +9,7 @@ const { updateUSStockList } = require('../services/usStockListService');
 const { updateKRStockList } = require('../services/krStockListService');
 const { updateLifeTimePlanner } = require('../services/reportService');
 const benchmarkService = require('../services/benchmarkService');
+const thesisService = require('../services/thesisService');
 const requireAuth = require('../middleware/requireAuth');
 
 const api = new Router();
@@ -174,6 +175,58 @@ api.get('/benchmark/sp500/update', async (ctx) => {
 		ctx.body = summary;
 	} catch (err) {
 		console.error('benchmark/sp500/update error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.get('/theses', async (ctx) => {
+	try {
+		ctx.body = { theses: await thesisService.list() };
+	} catch (err) {
+		console.error('GET /theses error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.get('/theses/:id', async (ctx) => {
+	try {
+		ctx.body = await thesisService.get(ctx.params.id);
+	} catch (err) {
+		if (err.statusCode === 404) {
+			ctx.status = 404;
+			ctx.body = { error: 'not found' };
+			return;
+		}
+		console.error('GET /theses/:id error:', err);
+		ctx.status = 500;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.post('/theses', async (ctx) => {
+	try {
+		const saved = await thesisService.upsert(ctx.request.body);
+		ctx.body = saved;
+	} catch (err) {
+		console.error('POST /theses error:', err);
+		ctx.status = 400;
+		ctx.body = { error: err.message };
+	}
+});
+
+api.delete('/theses/:id', async (ctx) => {
+	try {
+		await thesisService.remove(ctx.params.id);
+		ctx.body = { ok: true };
+	} catch (err) {
+		if (err.statusCode === 404) {
+			ctx.status = 404;
+			ctx.body = { error: 'not found' };
+			return;
+		}
+		console.error('DELETE /theses/:id error:', err);
 		ctx.status = 500;
 		ctx.body = { error: err.message };
 	}

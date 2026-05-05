@@ -18,6 +18,7 @@ import {
 	Performance,
 	AllPerformance,
 	Search,
+	Thesis,
 	Transactions
 } from './views';
 import ReportMain from './report/ReportMain';
@@ -68,6 +69,7 @@ function RoutesMain () {
 						<Route path="/performance/:investment" element={<Performance />} />
 						<Route path="/allperformance" element={<AllPerformance />} />
 						<Route path="/investments" element={<Investments />} />
+						<Route path="/thesis" element={<Thesis />} />
 						<Route path="/spending" element={<Spending />} />
 						<Route path="/search" element={<Search />} />
 						<Route path="/transactions" element={<Transactions />} />
