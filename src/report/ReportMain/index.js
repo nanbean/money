@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import DesignPage from '../../components/DesignPage';
 import MonthlyExpense from '../MonthlyExpense';
 import Dividend from '../Dividend';
+import FamilyGifts from '../FamilyGifts';
 import InvestmentHistory from '../InvestmentHistory';
 import InvestmentPortfolio from '../InvestmentPortfolio';
 import RateOfReturn from '../RateOfReturn';
@@ -21,7 +22,8 @@ const SECTIONS = [
 		label: 'Spending',
 		ko: '지출',
 		subs: [
-			{ id: 'expense', label: 'Expense', ko: '지출', component: <MonthlyExpense /> }
+			{ id: 'expense', label: 'Expense', ko: '지출', component: <MonthlyExpense /> },
+			{ id: 'gifts',   label: 'Gifts',   ko: '선물·용돈', component: <FamilyGifts /> }
 		]
 	},
 	{

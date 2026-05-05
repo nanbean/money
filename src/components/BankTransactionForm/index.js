@@ -19,6 +19,7 @@ import CallSplitIcon from '@mui/icons-material/CallSplit';
 import RemoveIcon from '@mui/icons-material/Remove';
 
 import AutoComplete from '../AutoComplete';
+import MemoTagPreview from '../MemoTagPreview';
 
 import useT from '../../hooks/useT';
 import { sMono } from '../../utils/designTokens';
@@ -524,11 +525,12 @@ export function BankTransactionForm ({
 							component="input"
 							id="memo"
 							name="memo"
-							placeholder="Optional note"
+							placeholder="Optional note · credit:11 / refund / gift:엄마 / allowance:민정"
 							value={form.memo || ''}
 							onChange={onChange(changeMemo)}
 							sx={inputSx(T)}
 						/>
+						<MemoTagPreview memo={form.memo}/>
 					</Box>
 				</>
 			)}

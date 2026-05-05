@@ -24,6 +24,7 @@ import {
 } from './couchdbAccountActions';
 
 import { COUCHDB_URL } from '../constants';
+import { applyMemoTags } from '../utils/memoTags';
 
 import {
 	SET_ADD_TRANSACTION_FETCHING,
@@ -488,6 +489,7 @@ export const addTransactionAction = param => {
 		const transaction = stripNaN({ ...param, _id: `${param.date}:${param.account}:${uuidv1()}` });
 		delete transaction.account;
 		delete transaction.type;
+		applyMemoTags(transaction);
 
 		const state = getState();
 		const accountList = state.accountList || [];
@@ -554,6 +556,7 @@ export const editTransactionAction = param => {
 		// Keep the embedded accountId in lockstep with the (possibly edited)
 		// type/account so stampMeta reads the right currency.
 		transaction.accountId = accountId;
+		applyMemoTags(transaction);
 
 		const state = getState();
 		const accountList = state.accountList || [];
