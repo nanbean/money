@@ -6,6 +6,7 @@ import { styled } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import SidebarMenu from './components/SidebarMenu';
+import BottomNav from './components/BottomNav';
 
 import {
 	Accounts,
@@ -40,7 +41,11 @@ const Content = styled('main')(({ theme }) => ({
 	// viewport — producing a browser-level horizontal scrollbar. Resetting
 	// minWidth to 0 confines overflow to the descendant container.
 	minWidth: 0,
-	backgroundColor: theme.palette.background.default
+	backgroundColor: theme.palette.background.default,
+	// Mobile: leave room for the fixed bottom navigation (56px + safe area).
+	[theme.breakpoints.down('md')]: {
+		paddingBottom: 'calc(56px + env(safe-area-inset-bottom))'
+	}
 }));
 
 
@@ -80,6 +85,7 @@ function RoutesMain () {
 						<Route exact path="/signin" element={<Signin />} />
 					</Routes>
 				</Content>
+				<BottomNav />
 			</div>
 		</BrowserRouter>
 	);

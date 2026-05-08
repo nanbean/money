@@ -7,7 +7,6 @@ import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import Layout from '../Layout';
-import MobileMenuButton from '../MobileMenuButton';
 import useT from '../../hooks/useT';
 import { sDisplay } from '../../utils/designTokens';
 
@@ -49,7 +48,6 @@ function DesignPage ({
 				)}
 				<Box sx={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
 					<Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0 }}>
-						<MobileMenuButton />
 						<Box sx={{ minWidth: 0 }}>
 							<Typography
 								component="h1"
