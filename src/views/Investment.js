@@ -279,59 +279,56 @@ export function Investment () {
 	);
 
 	return (
-		<DesignPage title={name} titleKo="투자 계좌" fillViewport>
-			{hero}
+		<DesignPage title={name} titleKo="투자 계좌">
+			<Stack spacing={2}>
+				{hero}
 
-			{/* Holdings */}
-			<Box sx={{
-				background: T.surf,
-				border: `1px solid ${T.rule}`,
-				borderRadius: '16px',
-				padding: { xs: '12px 14px', md: '14px 18px' },
-				color: T.ink
-			}}>
-				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1 }}>
-					<Typography sx={{ ...sDisplay, fontSize: 15, fontWeight: 700, color: T.ink, margin: 0 }}>
-						Holdings
-						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 보유 종목</Box>
-					</Typography>
-					{performance.length > 0 && (
-						<Typography sx={{ fontSize: 12, color: T.ink2 }}>
-							{performance.length} positions
-						</Typography>
-					)}
-				</Stack>
-				<AccountInvestments currency={currency} />
-			</Box>
-
-			{/* Transactions */}
-			<Box sx={{
-				background: T.surf,
-				border: `1px solid ${T.rule}`,
-				borderRadius: '16px',
-				padding: { xs: '16px', md: '20px' },
-				color: T.ink,
-				display: 'flex',
-				flexDirection: 'column',
-				// Desktop: fill remaining viewport-fit height; mobile: natural flow
-				flex: { md: 1 },
-				minHeight: { md: 0 }
-			}}>
-				<Typography sx={{ ...sDisplay, fontSize: 15, fontWeight: 700, color: T.ink, margin: 0, marginBottom: 1 }}>
-					Transactions
-					<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 거래 내역</Box>
-				</Typography>
+				{/* Holdings — natural height, grows with the number of positions */}
 				<Box sx={{
-					flex: { md: 1 },
-					minHeight: { md: 0 },
-					height: { xs: 600, md: 'auto' }
+					background: T.surf,
+					border: `1px solid ${T.rule}`,
+					borderRadius: '16px',
+					padding: { xs: '12px 14px', md: '14px 18px' },
+					color: T.ink
 				}}>
-					<InvestmentTransactions
-						transactions={accountTransactions}
-						currency={currency}
-					/>
+					<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1 }}>
+						<Typography sx={{ ...sDisplay, fontSize: 15, fontWeight: 700, color: T.ink, margin: 0 }}>
+							Holdings
+							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 보유 종목</Box>
+						</Typography>
+						{performance.length > 0 && (
+							<Typography sx={{ fontSize: 12, color: T.ink2 }}>
+								{performance.length} positions
+							</Typography>
+						)}
+					</Stack>
+					<AccountInvestments currency={currency} />
 				</Box>
-			</Box>
+
+				{/* Transactions — fixed-ish panel that always has enough room to be
+				    legible. The internal list virtualizes its own scroll, so the
+				    page can flow naturally and the browser handles outer scroll. */}
+				<Box sx={{
+					background: T.surf,
+					border: `1px solid ${T.rule}`,
+					borderRadius: '16px',
+					padding: { xs: '16px', md: '20px' },
+					color: T.ink,
+					display: 'flex',
+					flexDirection: 'column'
+				}}>
+					<Typography sx={{ ...sDisplay, fontSize: 15, fontWeight: 700, color: T.ink, margin: 0, marginBottom: 1 }}>
+						Transactions
+						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 거래 내역</Box>
+					</Typography>
+					<Box sx={{ height: { xs: 600, md: 720 } }}>
+						<InvestmentTransactions
+							transactions={accountTransactions}
+							currency={currency}
+						/>
+					</Box>
+				</Box>
+			</Stack>
 
 			<InvestmentTransactionModal
 				account={account}
