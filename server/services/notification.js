@@ -73,17 +73,29 @@ const findCategoryFromGemini = async (transaction) => {
 };
 
 const findCategoryByPayee = async (transactions, transaction) => {
-	const matchTransaction = transactions.find((i) => i.payee === transaction.payee || i.originalPayee === transaction.payee);
-	if (matchTransaction) {
-		if (matchTransaction.payee !== transaction.payee) {
+	const matches = transactions.filter((i) => i.payee === transaction.payee || i.originalPayee === transaction.payee);
+	if (matches.length > 0) {
+		// Pick the most frequent (category, subcategory) pair across all past
+		// transactions with this payee. A one-off manual override is outvoted by
+		// the historical norm and won't pollute future auto-categorization.
+		const tally = new Map();
+		for (const m of matches) {
+			const key = JSON.stringify([m.category || '', m.subcategory || '']);
+			tally.set(key, (tally.get(key) || 0) + 1);
+		}
+		const [bestKey] = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
+		const [bestCategory, bestSubcategory] = JSON.parse(bestKey);
+
+		const sample = matches[0];
+		if (sample.payee !== transaction.payee) {
 			transaction.originalPayee = transaction.payee;
-			transaction.payee = matchTransaction.payee;
+			transaction.payee = sample.payee;
 		}
-		if (matchTransaction.category) {
-			transaction.category = matchTransaction.category;
+		if (bestCategory) {
+			transaction.category = bestCategory;
 		}
-		if (matchTransaction.subcategory) {
-			transaction.subcategory = matchTransaction.subcategory;
+		if (bestSubcategory) {
+			transaction.subcategory = bestSubcategory;
 		}
 	} else {
 		const category = await findCategoryFromGemini(transaction);
