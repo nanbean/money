@@ -261,43 +261,35 @@ export function Bank () {
 	);
 
 	return (
-		<DesignPage title={name} titleKo={typeKo || '계좌'} fillViewport>
-			{hero}
+		<DesignPage title={name} titleKo={typeKo || '계좌'}>
+			<Stack spacing={2}>
+				{hero}
 
-			<Box sx={{
-				background: T.surf,
-				border: `1px solid ${T.rule}`,
-				borderRadius: '16px',
-				padding: { xs: '16px', md: '20px' },
-				color: T.ink,
-				display: 'flex',
-				flexDirection: 'column',
-				// Desktop: fill leftover height inside DesignPage's viewport-fit container.
-				flex: { md: 1 },
-				minHeight: { md: 0 }
-			}}>
-				{filterRow}
 				<Box sx={{
-					// Mobile: explicit pixel height (page is natural flow).
-					// Desktop: flex:1 — parent has measurable height so the virtualizer
-					// reads its scroll container size correctly.
-					flex: { md: 1 },
-					minHeight: { md: 0 },
-					height: { xs: 600, md: 'auto' }
+					background: T.surf,
+					border: `1px solid ${T.rule}`,
+					borderRadius: '16px',
+					padding: { xs: '16px', md: '20px' },
+					color: T.ink,
+					display: 'flex',
+					flexDirection: 'column'
 				}}>
-					<BankTransactions
-						account={account}
-						currency={currency}
-						transactions={accountTransactions}
-					/>
+					{filterRow}
+					<Box sx={{ height: { xs: 600, md: 720 } }}>
+						<BankTransactions
+							account={account}
+							currency={currency}
+							transactions={accountTransactions}
+						/>
+					</Box>
 				</Box>
-			</Box>
 
-			<BankTransactionModal
-				accountId={accountId}
-				account={account}
-				transactions={accountTransactions}
-			/>
+				<BankTransactionModal
+					accountId={accountId}
+					account={account}
+					transactions={accountTransactions}
+				/>
+			</Stack>
 		</DesignPage>
 	);
 }

@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 import SidebarMenu from './components/SidebarMenu';
 import BottomNav from './components/BottomNav';
+import ScrollToTop from './components/ScrollToTop';
 
 import {
 	Accounts,
@@ -56,6 +57,7 @@ const Content = styled('main')(({ theme }) => ({
 function RoutesMain () {
 	return (
 		<BrowserRouter>
+			<ScrollToTop />
 			<div style={{ display: 'flex' }}>
 				<CssBaseline />
 				<SidebarMenu />

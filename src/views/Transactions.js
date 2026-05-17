@@ -154,233 +154,229 @@ const Transactions = () => {
 		: `${dateRange.start.format('MMM D, YYYY')} → ${dateRange.end.format('MMM D, YYYY')}`;
 
 	return (
-		<DesignPage title="Transactions" titleKo="거래" fillViewport>
-			{/* Hero panel */}
-			<Box sx={{
-				position: 'relative',
-				overflow: 'hidden',
-				background: heroBg,
-				borderRadius: '20px',
-				padding: { xs: '20px', md: '28px' },
-				color: heroInk
-			}}>
+		<DesignPage title="Transactions" titleKo="거래">
+			<Stack spacing={2}>
+				{/* Hero panel */}
 				<Box sx={{
-					position: 'absolute',
-					top: -100,
-					right: -100,
-					width: 360,
-					height: 360,
-					borderRadius: '50%',
-					background: `radial-gradient(circle, ${T.acc.bright}55 0%, transparent 70%)`,
-					pointerEvents: 'none'
-				}}/>
-				<Box sx={{ position: 'relative', minWidth: 0 }}>
-					<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-						Net flow · 순흐름 · {rangeLabel}
-					</Typography>
-					<Typography sx={{
-						...sDisplay,
-						fontSize: { xs: 32, sm: 42, md: 52 },
-						fontWeight: 700,
-						lineHeight: 1,
-						marginTop: '12px',
-						color: stats.net < 0 ? '#fb7185' : heroInk,
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap'
-					}}>
-						{stats.net >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(stats.net), displayCurrency)}
-					</Typography>
-					<Typography sx={{ ...sMono, fontSize: 13, color: heroDim, marginTop: '6px' }}>
-						{stats.total.toLocaleString()} transactions
-					</Typography>
-				</Box>
-				<Box sx={{
-					display: 'grid',
-					gridTemplateColumns: { xs: 'repeat(3, 1fr)' },
-					gap: { xs: 1.5, md: 3 },
-					marginTop: { xs: '20px', md: '28px' },
-					position: 'relative'
+					position: 'relative',
+					overflow: 'hidden',
+					background: heroBg,
+					borderRadius: '20px',
+					padding: { xs: '20px', md: '28px' },
+					color: heroInk
 				}}>
-					{[
-						{ label: 'Income · 수입', value: `+${fmtCurrency(stats.income, displayCurrency)}`, sub: `${stats.countIncome} txns`, color: '#34d399', divider: false },
-						{ label: 'Expense · 지출', value: `−${fmtCurrency(stats.expense, displayCurrency)}`, sub: `${stats.countExpense} txns`, color: '#fb7185', divider: true },
-						{ label: 'Accounts · 계좌', value: accountsAllSelected ? `All ${allBankAccounts.length}` : `${allFilteredCount} / ${allBankAccounts.length}`, sub: 'selected', color: heroInk, divider: true }
-					].map(s => (
-						<Box key={s.label} sx={{
-							borderLeft: { xs: 'none', md: s.divider ? `1px solid ${heroDivider}` : 'none' },
-							paddingLeft: { xs: 0, md: s.divider ? '24px' : 0 },
-							minWidth: 0
-						}}>
-							<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
-								{s.label}
-							</Typography>
-							<Typography sx={{
-								...sDisplay,
-								...sMono,
-								fontSize: { xs: 16, md: 22 },
-								fontWeight: 700,
-								marginTop: '6px',
-								color: s.color,
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap'
-							}}>
-								{s.value}
-							</Typography>
-							<Typography sx={{ ...sMono, fontSize: 11, color: heroDim, marginTop: '2px' }}>{s.sub}</Typography>
-						</Box>
-					))}
-				</Box>
-			</Box>
-
-			{/* Filters panel */}
-			<Box sx={{
-				background: T.surf,
-				border: `1px solid ${T.rule}`,
-				borderRadius: '16px',
-				padding: { xs: '14px', md: '18px' },
-				color: T.ink
-			}}>
-				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
-					<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
-						Filters
-						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 필터</Box>
-					</Typography>
-				</Stack>
-
-				<Box sx={{ marginBottom: 1.5 }}>
-					<Typography sx={{ ...lab, marginBottom: '6px' }}>Date range · 기간</Typography>
-					<Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-						{RANGE_OPTIONS.map(opt => (
-							<Chip
-								key={opt.value}
-								active={selectedRange === opt.value}
-								onClick={() => setSelectedRange(opt.value)}
-								T={T}
-							>
-								{opt.label}
-							</Chip>
-						))}
-					</Stack>
-				</Box>
-
-				{allBankAccounts.length > 0 && (
-					<Box>
-						<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: '6px' }}>
-							<Typography sx={lab}>
-								Accounts · 계좌
-								{!accountsAllSelected && (
-									<Box component="span" sx={{ color: T.acc.hero, marginLeft: '6px' }}>({allFilteredCount})</Box>
-								)}
-							</Typography>
-							{!accountsAllSelected && (
-								<Box
-									component="span"
-									onClick={() => setAccounts(allBankAccounts)}
-									sx={{ fontSize: 11, color: T.acc.hero, cursor: 'pointer', fontWeight: 600 }}
-								>
-									All
-								</Box>
-							)}
-						</Stack>
-						<Autocomplete
-							multiple
-							size="small"
-							options={allBankAccounts}
-							value={filteredAccounts}
-							onChange={(_, val) => setAccounts(val)}
-							disableCloseOnSelect
-							limitTags={6}
-							ChipProps={{ size: 'small' }}
-							renderTags={(values, getTagProps) =>
-								values.map((option, idx) => {
-									const { key, ...chipProps } = getTagProps({ index: idx });
-									return (
-										<MuiChip
-											key={key}
-											{...chipProps}
-											label={option}
-											size="small"
-											sx={{
-												background: T.acc.bg,
-												color: T.acc.deep,
-												fontWeight: 600,
-												'& .MuiChip-deleteIcon': { color: T.acc.deep, '&:hover': { color: T.acc.hero } }
-											}}
-										/>
-									);
-								})
-							}
-							renderInput={(params) => (
-								<TextField
-									{...params}
-									placeholder={filteredAccounts.length === 0 ? 'Select accounts…' : ''}
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											background: T.bg,
-											borderRadius: '8px',
-											fontSize: 13,
-											color: T.ink
-										},
-										'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
-										'&:hover .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
-										'& .Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
-										'& input::placeholder': { color: T.ink3, opacity: 1 }
-									}}
-								/>
-							)}
-							slotProps={{
-								paper: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } }
-							}}
-						/>
-					</Box>
-				)}
-			</Box>
-
-			{/* Results */}
-			<Box sx={{
-				background: T.surf,
-				border: `1px solid ${T.rule}`,
-				borderRadius: '16px',
-				padding: { xs: '16px', md: '20px' },
-				color: T.ink,
-				display: 'flex',
-				flexDirection: 'column',
-				flex: { md: 1 },
-				minHeight: { md: 0 }
-			}}>
-				<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
-					<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
-						Results
-						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 14 }}> · {stats.total.toLocaleString()}건</Box>
-					</Typography>
-					{stats.total > 0 && (
-						<Typography sx={{ fontSize: 11, color: T.ink3 }}>Sorted by date · newest first</Typography>
-					)}
-				</Stack>
-
-				{stats.total === 0 ? (
-					<Box sx={{ padding: '60px 0', textAlign: 'center', color: T.ink2 }}>
-						<Typography sx={{ fontSize: 14, fontWeight: 600, color: T.ink }}>
-							No transactions in this range
-						</Typography>
-						<Typography sx={{ fontSize: 12, color: T.ink3, marginTop: 0.5 }}>
-							Try a wider date range or include more accounts.
-						</Typography>
-					</Box>
-				) : (
 					<Box sx={{
-						flex: { md: 1 },
-						minHeight: { md: 0 },
-						height: { xs: 600, md: 'auto' }
-					}}>
-						<BankTransactions showAccount transactions={filteredTransactions} />
+						position: 'absolute',
+						top: -100,
+						right: -100,
+						width: 360,
+						height: 360,
+						borderRadius: '50%',
+						background: `radial-gradient(circle, ${T.acc.bright}55 0%, transparent 70%)`,
+						pointerEvents: 'none'
+					}}/>
+					<Box sx={{ position: 'relative', minWidth: 0 }}>
+						<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+							Net flow · 순흐름 · {rangeLabel}
+						</Typography>
+						<Typography sx={{
+							...sDisplay,
+							fontSize: { xs: 32, sm: 42, md: 52 },
+							fontWeight: 700,
+							lineHeight: 1,
+							marginTop: '12px',
+							color: stats.net < 0 ? '#fb7185' : heroInk,
+							overflow: 'hidden',
+							textOverflow: 'ellipsis',
+							whiteSpace: 'nowrap'
+						}}>
+							{stats.net >= 0 ? '+' : '−'}{fmtCurrency(Math.abs(stats.net), displayCurrency)}
+						</Typography>
+						<Typography sx={{ ...sMono, fontSize: 13, color: heroDim, marginTop: '6px' }}>
+							{stats.total.toLocaleString()} transactions
+						</Typography>
 					</Box>
-				)}
-			</Box>
+					<Box sx={{
+						display: 'grid',
+						gridTemplateColumns: { xs: 'repeat(3, 1fr)' },
+						gap: { xs: 1.5, md: 3 },
+						marginTop: { xs: '20px', md: '28px' },
+						position: 'relative'
+					}}>
+						{[
+							{ label: 'Income · 수입', value: `+${fmtCurrency(stats.income, displayCurrency)}`, sub: `${stats.countIncome} txns`, color: '#34d399', divider: false },
+							{ label: 'Expense · 지출', value: `−${fmtCurrency(stats.expense, displayCurrency)}`, sub: `${stats.countExpense} txns`, color: '#fb7185', divider: true },
+							{ label: 'Accounts · 계좌', value: accountsAllSelected ? `All ${allBankAccounts.length}` : `${allFilteredCount} / ${allBankAccounts.length}`, sub: 'selected', color: heroInk, divider: true }
+						].map(s => (
+							<Box key={s.label} sx={{
+								borderLeft: { xs: 'none', md: s.divider ? `1px solid ${heroDivider}` : 'none' },
+								paddingLeft: { xs: 0, md: s.divider ? '24px' : 0 },
+								minWidth: 0
+							}}>
+								<Typography sx={{ fontSize: 11, color: heroDim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
+									{s.label}
+								</Typography>
+								<Typography sx={{
+									...sDisplay,
+									...sMono,
+									fontSize: { xs: 16, md: 22 },
+									fontWeight: 700,
+									marginTop: '6px',
+									color: s.color,
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap'
+								}}>
+									{s.value}
+								</Typography>
+								<Typography sx={{ ...sMono, fontSize: 11, color: heroDim, marginTop: '2px' }}>{s.sub}</Typography>
+							</Box>
+						))}
+					</Box>
+				</Box>
 
-			<BankTransactionModal isEdit transactions={filteredTransactions} />
+				{/* Filters panel */}
+				<Box sx={{
+					background: T.surf,
+					border: `1px solid ${T.rule}`,
+					borderRadius: '16px',
+					padding: { xs: '14px', md: '18px' },
+					color: T.ink
+				}}>
+					<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 1.5 }}>
+						<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
+							Filters
+							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 필터</Box>
+						</Typography>
+					</Stack>
+
+					<Box sx={{ marginBottom: 1.5 }}>
+						<Typography sx={{ ...lab, marginBottom: '6px' }}>Date range · 기간</Typography>
+						<Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+							{RANGE_OPTIONS.map(opt => (
+								<Chip
+									key={opt.value}
+									active={selectedRange === opt.value}
+									onClick={() => setSelectedRange(opt.value)}
+									T={T}
+								>
+									{opt.label}
+								</Chip>
+							))}
+						</Stack>
+					</Box>
+
+					{allBankAccounts.length > 0 && (
+						<Box>
+							<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: '6px' }}>
+								<Typography sx={lab}>
+									Accounts · 계좌
+									{!accountsAllSelected && (
+										<Box component="span" sx={{ color: T.acc.hero, marginLeft: '6px' }}>({allFilteredCount})</Box>
+									)}
+								</Typography>
+								{!accountsAllSelected && (
+									<Box
+										component="span"
+										onClick={() => setAccounts(allBankAccounts)}
+										sx={{ fontSize: 11, color: T.acc.hero, cursor: 'pointer', fontWeight: 600 }}
+									>
+										All
+									</Box>
+								)}
+							</Stack>
+							<Autocomplete
+								multiple
+								size="small"
+								options={allBankAccounts}
+								value={filteredAccounts}
+								onChange={(_, val) => setAccounts(val)}
+								disableCloseOnSelect
+								limitTags={6}
+								ChipProps={{ size: 'small' }}
+								renderTags={(values, getTagProps) =>
+									values.map((option, idx) => {
+										const { key, ...chipProps } = getTagProps({ index: idx });
+										return (
+											<MuiChip
+												key={key}
+												{...chipProps}
+												label={option}
+												size="small"
+												sx={{
+													background: T.acc.bg,
+													color: T.acc.deep,
+													fontWeight: 600,
+													'& .MuiChip-deleteIcon': { color: T.acc.deep, '&:hover': { color: T.acc.hero } }
+												}}
+											/>
+										);
+									})
+								}
+								renderInput={(params) => (
+									<TextField
+										{...params}
+										placeholder={filteredAccounts.length === 0 ? 'Select accounts…' : ''}
+										sx={{
+											'& .MuiOutlinedInput-root': {
+												background: T.bg,
+												borderRadius: '8px',
+												fontSize: 13,
+												color: T.ink
+											},
+											'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
+											'&:hover .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+											'& .Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
+											'& input::placeholder': { color: T.ink3, opacity: 1 }
+										}}
+									/>
+								)}
+								slotProps={{
+									paper: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } }
+								}}
+							/>
+						</Box>
+					)}
+				</Box>
+
+				{/* Results */}
+				<Box sx={{
+					background: T.surf,
+					border: `1px solid ${T.rule}`,
+					borderRadius: '16px',
+					padding: { xs: '16px', md: '20px' },
+					color: T.ink,
+					display: 'flex',
+					flexDirection: 'column'
+				}}>
+					<Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ marginBottom: 1.5 }}>
+						<Typography sx={{ ...sDisplay, fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>
+							Results
+							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 14 }}> · {stats.total.toLocaleString()}건</Box>
+						</Typography>
+						{stats.total > 0 && (
+							<Typography sx={{ fontSize: 11, color: T.ink3 }}>Sorted by date · newest first</Typography>
+						)}
+					</Stack>
+
+					{stats.total === 0 ? (
+						<Box sx={{ padding: '60px 0', textAlign: 'center', color: T.ink2 }}>
+							<Typography sx={{ fontSize: 14, fontWeight: 600, color: T.ink }}>
+								No transactions in this range
+							</Typography>
+							<Typography sx={{ fontSize: 12, color: T.ink3, marginTop: 0.5 }}>
+								Try a wider date range or include more accounts.
+							</Typography>
+						</Box>
+					) : (
+						<Box sx={{ height: { xs: 600, md: 720 } }}>
+							<BankTransactions showAccount transactions={filteredTransactions} />
+						</Box>
+					)}
+				</Box>
+
+				<BankTransactionModal isEdit transactions={filteredTransactions} />
+			</Stack>
 		</DesignPage>
 	);
 };
