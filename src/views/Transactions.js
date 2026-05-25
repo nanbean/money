@@ -100,7 +100,7 @@ const Transactions = () => {
 
 			const date = moment(t.date);
 			return date.isSameOrAfter(dateRange.start, 'day') && date.isSameOrBefore(dateRange.end, 'day');
-		});
+		}).reverse();
 	}, [allAccountsTransactions, dateRange, filteredAccounts]);
 
 	const stats = useMemo(() => {

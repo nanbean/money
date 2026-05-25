@@ -70,7 +70,8 @@ export function Bank () {
 				(i.category && i.category.toLowerCase().includes(q))
 			);
 		}
-		return tx;
+		// Newest first. Source array is shared with Redux, so clone before reversing.
+		return [...tx].reverse();
 	}, [allAccountsTransactions, accountId, endDate, query]);
 
 	const balance = useMemo(() => {

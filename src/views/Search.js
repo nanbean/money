@@ -140,6 +140,7 @@ export function Search () {
 
 		const accMap = new Map((accountList || []).map(a => [a._id, a]));
 
+		// Newest first — list is ordered ascending in Redux; reverse the filtered slice.
 		return (allAccountsTransactions || []).filter(t => {
 			const accountIdParts = t?.accountId?.split(':');
 			const accountName = accountIdParts?.[2];
@@ -172,7 +173,7 @@ export function Search () {
 			}
 
 			return true;
-		});
+		}).reverse();
 	}, [allAccountsTransactions, accountList, hasFilters, selectedAccounts, allBankAccounts, keyword, selectedCategories, subcategory, startDate, endDate, amtMin, amtMax, type, exchangeRate]);
 
 	const stats = useMemo(() => {

@@ -62,10 +62,10 @@ export function BankTransactions ({
 		getItemKey: (index) => transactions[index]?._id || index
 	});
 
-	// Auto-scroll to the latest row on mount / when transactions list grows.
+	// Desc-sorted: newest sits at index 0. Snap to top on mount / list growth.
 	useEffect(() => {
 		if (count === 0) return;
-		rowVirtualizer.scrollToIndex(count - 1, { align: 'end' });
+		rowVirtualizer.scrollToIndex(0, { align: 'start' });
 	}, [count, rowVirtualizer]);
 
 	const onRowSelect = (index) => () => {

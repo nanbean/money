@@ -61,7 +61,7 @@ export function Investment () {
 	const balance = Number(accountMeta?.balance) || 0;
 
 	const accountTransactions = useMemo(
-		() => getAccountTransactions(allAccountsTransactions, accountId),
+		() => [...getAccountTransactions(allAccountsTransactions, accountId)].reverse(),
 		[allAccountsTransactions, accountId]
 	);
 

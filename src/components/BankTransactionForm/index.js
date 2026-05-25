@@ -53,7 +53,7 @@ const fieldLabelSx = (T) => ({
 const inputSx = (T) => ({
 	width: '100%',
 	padding: '10px 12px',
-	fontSize: 13,
+	fontSize: { xs: 16, sm: 13 },
 	fontFamily: 'inherit',
 	background: T.bg,
 	color: T.ink,
@@ -70,7 +70,7 @@ const selectSx = (T) => ({
 	background: T.bg,
 	color: T.ink,
 	borderRadius: '8px',
-	fontSize: 13,
+	fontSize: { xs: 16, sm: 13 },
 	'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
 	'&:hover .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },
 	'&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: T.acc.hero },

@@ -53,7 +53,7 @@ const fieldLabelSx = (T) => ({
 const inputSx = (T) => ({
 	width: '100%',
 	padding: '10px 12px',
-	fontSize: 13,
+	fontSize: { xs: 16, sm: 13 },
 	fontFamily: 'inherit',
 	background: T.bg,
 	color: T.ink,
