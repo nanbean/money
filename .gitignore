@@ -32,6 +32,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .vscode/launch.json
+# server/tools/는 일회성/로컬 운영 스크립트 폴더. 새로 추가되는 파일은 기본 ignore.
+# 기존 추적 파일은 git 동작상 영향받지 않음. 새 파일을 커밋해야 하면 git add -f 사용.
+/server/tools/*
 server/tools/transaction_bulk_edit.js
 /transactions
 .gstack/
