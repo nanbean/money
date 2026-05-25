@@ -1,5 +1,6 @@
 const settingDB = require('../db/settingDB');
 const { getKisToken, getKisExchangeRate } = require('./kisConnector');
+const { singleFlight } = require('../utils/singleFlight');
 
 const getSettings = async () => {
 	return await settingDB.getSettings();
@@ -38,7 +39,7 @@ const getCategoryList = async () => {
 	return [];
 };
 
-const arrangeExchangeRate = async () => {
+const _arrangeExchangeRate = async () => {
 	const settings = await settingDB.getSettings();
 	const enableExchangeRateUpdate = settings.find(i => i._id === 'enableExchangeRateUpdate');
 	const exchangeRateSetting = settings.find(i => i._id === 'exchangeRate');
@@ -52,6 +53,8 @@ const arrangeExchangeRate = async () => {
 		}
 	}
 };
+
+const arrangeExchangeRate = singleFlight('arrangeExchangeRate', _arrangeExchangeRate);
 
 module.exports = {
 	getSettings,

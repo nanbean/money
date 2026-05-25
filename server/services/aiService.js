@@ -4,6 +4,7 @@ const reportDB = require('../db/reportDB');
 const transactionDB = require('../db/transactionDB');
 const accountDB = require('../db/accountDB');
 const stockDB = require('../db/stockDB');
+const { singleFlight } = require('../utils/singleFlight');
 const { getExchangeRate } = require('./settingService');
 const { getKisToken, getKisWeeklyPriceUS, getKisWeeklyPriceKorea } = require('./kisConnector');
 
@@ -51,7 +52,7 @@ ${projectionText}
 	return result.response.text().trim();
 };
 
-const getWeeklyRecap = async ({ dry = false } = {}) => {
+const _getWeeklyRecap = async ({ dry = false } = {}) => {
 	const todayMoment = moment().tz('Asia/Seoul');
 	const dayOfWeek = todayMoment.day(); // 0=Sun, 1=Mon
 
@@ -325,5 +326,7 @@ ${txText || '  (거래 없음)'}
 		topCategory
 	};
 };
+
+const getWeeklyRecap = singleFlight('getWeeklyRecap', _getWeeklyRecap);
 
 module.exports = { getPortfolioComment, getWeeklyRecap };

@@ -2,6 +2,7 @@ const moment = require('moment-timezone');
 const stockDB = require('../db/stockDB');
 const accountDB = require('../db/accountDB');
 const { getInvestmentsFromAccounts } = require('../utils/investment');
+const { singleFlight } = require('../utils/singleFlight');
 const { getKisToken, getKisQuoteKorea, getKisQuoteUS } = require('./kisConnector');
 
 // Append today's price to weeklyPrices array, keep last 10 trading days
@@ -10,7 +11,7 @@ const updateWeeklyPrices = (existing = [], date, price) => {
 	return [...filtered, { date, price }].slice(-10);
 };
 
-const arrangeKRInvestmemt = async () => {
+const _arrangeKRInvestmemt = async () => {
 	const allAccounts = await accountDB.listAccounts();
 	const kospiResponse = await stockDB.getStock('kospi');
 	const investments = getInvestmentsFromAccounts(kospiResponse.data, allAccounts).filter(i => i.quantity > 0);
@@ -43,7 +44,7 @@ const arrangeKRInvestmemt = async () => {
 	});
 };
 
-const arrangeUSInvestmemt = async () => {
+const _arrangeUSInvestmemt = async () => {
 	const allAccounts = await accountDB.listAccounts();
 	const usResponse = await stockDB.getStock('us');
 	const investments  = getInvestmentsFromAccounts(usResponse.data, allAccounts).filter(i => i.quantity > 0);
@@ -76,6 +77,9 @@ const arrangeUSInvestmemt = async () => {
 		})
 	});
 };
+
+const arrangeKRInvestmemt = singleFlight('arrangeKRInvestmemt', _arrangeKRInvestmemt);
+const arrangeUSInvestmemt = singleFlight('arrangeUSInvestmemt', _arrangeUSInvestmemt);
 
 module.exports = {
 	arrangeKRInvestmemt,

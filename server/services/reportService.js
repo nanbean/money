@@ -6,12 +6,13 @@ const transactionDB = require('../db/transactionDB');
 const stockDB = require('../db/stockDB');
 const historyDB = require('../db/historyDB');
 const spreadSheet = require('../utils/spreadSheet');
+const { singleFlight } = require('../utils/singleFlight');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
 const { getBalance } = require('../utils/account');
 const { getExchangeRate } = require('./settingService');
 const { getAllAccounts } = require('./accountService');
 
-const updateLifeTimePlanner = async () => {
+const _updateLifeTimePlanner = async () => {
 	console.time('updateLifeTimePlanner');
 	console.log('updateLifeTimePlanner start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 	const [oldLifeTimePlanner, accounts] = await Promise.all([
@@ -108,7 +109,7 @@ const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, 
 // All other months are handled by fingerprint-based change detection.
 const RECALC_MONTHS = 1;
 
-const updateNetWorth = async () => {
+const _updateNetWorth = async () => {
 	console.log('updateNetWorth start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 	console.time('updateNetWorth');
 	let dates = [];
@@ -220,7 +221,7 @@ const updateNetWorth = async () => {
 
 const DAILY_RETENTION_DAYS = 93;
 
-const updateNetWorthDaily = async () => {
+const _updateNetWorthDaily = async () => {
 	console.log('updateNetWorthDaily start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
 
 	const today = moment().tz('Asia/Seoul').format('YYYY-MM-DD');
@@ -254,6 +255,13 @@ const updateNetWorthDaily = async () => {
 	await reportDB.insertReport(doc);
 	console.log('updateNetWorthDaily done');
 };
+
+// Wrap mutating reports with singleFlight so concurrent triggers
+// (scheduler cron + API endpoint + frontend polling) don't race on the same CouchDB
+// document and produce 409 conflicts or duplicate console.time labels.
+const updateLifeTimePlanner = singleFlight('updateLifeTimePlanner', _updateLifeTimePlanner);
+const updateNetWorth = singleFlight('updateNetWorth', _updateNetWorth);
+const updateNetWorthDaily = singleFlight('updateNetWorthDaily', _updateNetWorthDaily);
 
 module.exports = {
 	updateLifeTimePlanner,

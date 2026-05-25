@@ -4,6 +4,15 @@ const path = require('path');
 const envFile = process.env.NODE_ENV === 'development' ? '.env.development' : '.env.production';
 dotenv.config({ path: path.resolve(__dirname, '..', envFile) });
 
+// Log crashes loudly so the next investigation isn't blind. Node 22 terminates the
+// process on unhandled rejection by default, which is why we silently restart.
+process.on('unhandledRejection', (reason, promise) => {
+	console.error('[fatal] unhandledRejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+	console.error('[fatal] uncaughtException:', err);
+});
+
 const Koa = require('koa');
 const Router = require('koa-router');
 const bodyParser = require('koa-bodyparser');
