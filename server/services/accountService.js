@@ -4,8 +4,9 @@ const _ = require('lodash');
 const transactionDB = require('../db/transactionDB');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
 const { getBalance } = require('../utils/account');
+const { singleFlight } = require('../utils/singleFlight');
 
-const updateAccountList = async () => {
+const _updateAccountList = async () => {
 	const label = `updateAccountList:${Date.now()}`;
 	console.time(label);
 	console.log('updateAccountList start', moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'));
@@ -59,6 +60,8 @@ const getAllAccounts = async () => {
 
 	return allAccounts;
 };
+
+const updateAccountList = singleFlight('updateAccountList', _updateAccountList);
 
 module.exports = {
 	updateAccountList,
