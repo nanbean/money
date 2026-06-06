@@ -23,14 +23,17 @@ import {
 
 import {
 	calcSavingsScore,
+	calcSavingsBreakdown,
 	calcInvestmentScore,
 	calcEmergencyScore,
 	calcDebtScore,
+	healthGrade,
 	toDisplay,
 	isInternalTransfer
 } from '../home/FinancialHealthScore/utils';
 
 import moment from 'moment';
+
 
 // Color palette (dedicated semantics — distinct from accent)
 const ASSET_TONES = ['#10b981', '#3b82f6', '#f59e0b', '#a78bfa']; // bank/cash/invst/realestate
@@ -74,13 +77,7 @@ ChartTooltip.propTypes = {
 	T: PropTypes.object
 };
 
-const grade = (score) => {
-	if (score >= 85) return { label: '최우수', color: '#10b981' };
-	if (score >= 70) return { label: '좋음', color: '#10b981' };
-	if (score >= 50) return { label: '보통', color: '#f59e0b' };
-	if (score >= 30) return { label: '주의', color: '#f59e0b' };
-	return { label: '위험', color: '#ef4444' };
-};
+const grade = healthGrade;
 
 function MetricBar ({ label, score, max, detail, T }) {
 	const pctVal = Math.min(100, Math.max(0, (score / max) * 100));
@@ -186,27 +183,23 @@ function NetWorth () {
 	// Financial health (ported from home/FinancialHealthScore)
 	const fhScore = useMemo(() => {
 		if (!accountList || accountList.length === 0) return null;
-		const savings = calcSavingsScore(allAccountsTransactions || [], livingExpenseExempt);
+		const savings = calcSavingsScore(allAccountsTransactions || [], accountList, livingExpenseExempt, exchangeRate, displayCurrency);
 		const investing = calcInvestmentScore(accountList, exchangeRate, displayCurrency);
 		const emergency = calcEmergencyScore(accountList, allAccountsTransactions || [], exchangeRate, displayCurrency);
 		const debt = calcDebtScore(accountList, exchangeRate, displayCurrency);
 		return { savings, investing, emergency, debt, total: savings + investing + emergency + debt };
 	}, [accountList, allAccountsTransactions, exchangeRate, displayCurrency, livingExpenseExempt]);
 
-	// Detailed metrics (income/expense/ratio numbers for the bar tooltips)
+	// Detailed metrics (income/expense/ratio numbers for the bar tooltips).
+	// Reuse calcSavingsBreakdown so the displayed numbers match what the score is computed from.
 	const fhDetails = useMemo(() => {
 		if (!accountList || accountList.length === 0) return null;
-		const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
-		const lastMonthEnd = moment().subtract(1, 'months').endOf('month').format('YYYY-MM-DD');
 		const sym = displayCurrency === 'USD' ? '$' : '₩';
 		const fmt = (n) => Math.round(n).toLocaleString();
 
-		const pastTxns = (allAccountsTransactions || []).filter(t => t.date >= threeMonthsAgo && t.date <= lastMonthEnd);
-		const income = pastTxns.filter(t => t.amount > 0 && !isInternalTransfer(t)).reduce((s, t) => s + t.amount, 0);
-		const expense = pastTxns
-			.filter(t => t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e)))
-			.reduce((s, t) => s + Math.abs(t.amount), 0);
-		const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0;
+		const { income, expense, savingsRate: savingsRateFrac } =
+			calcSavingsBreakdown(allAccountsTransactions || [], accountList, livingExpenseExempt, exchangeRate, displayCurrency);
+		const savingsRate = savingsRateFrac * 100;
 
 		const totalNet = accountList
 			.filter(a => !a.closed && !a.name.match(/_Cash/i))
@@ -227,6 +220,7 @@ function NetWorth () {
 		const liquidAssets = accountList
 			.filter(a => !a.closed && (a.type === 'Bank' || a.type === 'Cash') && !a.name.match(/_Cash/i))
 			.reduce((s, a) => s + toDisplay(a, exchangeRate, displayCurrency), 0);
+		const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 		const expenseTxns = (allAccountsTransactions || []).filter(t =>
 			t.date >= threeMonthsAgo && t.amount < 0 && !isInternalTransfer(t)
 		);

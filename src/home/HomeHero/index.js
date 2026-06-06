@@ -16,6 +16,7 @@ import {
 	calcInvestmentScore,
 	calcEmergencyScore,
 	calcDebtScore,
+	healthGrade,
 	toDisplay
 } from '../FinancialHealthScore/utils';
 import { getNetWorthFlowAction } from '../../actions/couchdbReportActions';
@@ -66,13 +67,7 @@ function Stat ({ label, value, delta, deltaColor, T, divider }) {
 	);
 }
 
-const grade = (score) => {
-	if (score >= 85) return '최우수';
-	if (score >= 70) return '좋음';
-	if (score >= 50) return '보통';
-	if (score >= 30) return '주의';
-	return '위험';
-};
+const grade = (score) => healthGrade(score).label;
 
 export default function HomeHero () {
 	const dispatch = useDispatch();
@@ -121,7 +116,7 @@ export default function HomeHero () {
 	const score = useMemo(() => {
 		if (!accountList || accountList.length === 0) return 0;
 		return (
-			calcSavingsScore(allAccountsTransactions || [], livingExpenseExempt) +
+			calcSavingsScore(allAccountsTransactions || [], accountList, livingExpenseExempt, exchangeRate, currency) +
 			calcInvestmentScore(accountList, exchangeRate, currency) +
 			calcEmergencyScore(accountList, allAccountsTransactions || [], exchangeRate, currency) +
 			calcDebtScore(accountList, exchangeRate, currency)
@@ -248,7 +243,7 @@ export default function HomeHero () {
 								width: 20,
 								height: 20,
 								borderRadius: '10px',
-								background: T.pos,
+								background: healthGrade(score).color,
 								color: '#0a0a0e',
 								fontWeight: 800,
 								display: 'inline-flex',
