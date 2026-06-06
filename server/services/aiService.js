@@ -53,30 +53,28 @@ ${projectionText}
 };
 
 const _getWeeklyRecap = async ({ dry = false } = {}) => {
-	const todayMoment = moment().tz('Asia/Seoul');
-	const dayOfWeek = todayMoment.day(); // 0=Sun, 1=Mon
+	// Anchor everything to the most recent Friday 17:00 PT (US after-hours close).
+	// All calls within [lastClose, nextClose) share the same week boundaries and cache key,
+	// regardless of when (or in which timezone) the call happens. This prevents stale caches
+	// from mid-week prefetches polluting the weekend recap.
+	const ptNow = moment().tz('America/Los_Angeles');
+	const lastClose = ptNow.clone().isoWeekday(5).hour(17).minute(0).second(0).millisecond(0);
+	if (lastClose.isAfter(ptNow)) lastClose.subtract(7, 'days');
 
-	// Week range: always covers last Mon ~ last Sun (or Fri for Sat)
-	// Saturday: last Monday (5 days ago) ~ today
-	// Sunday: last Monday (6 days ago) ~ today
-	// Monday: last Monday (7 days ago) ~ yesterday (Sunday)
-	const daysToLastMonday = dayOfWeek === 0 ? 6 : dayOfWeek === 6 ? 5 : 7;
-	const weekStartMoment = todayMoment.clone().subtract(daysToLastMonday, 'days');
-	const weekEndMoment = dayOfWeek === 1 ? todayMoment.clone().subtract(1, 'days') : todayMoment;
+	// Analysis window: Mon ~ Fri (KST) of the ISO week containing lastClose's KST date.
+	const lastCloseKST = lastClose.clone().tz('Asia/Seoul');
+	const weekStartMoment = lastCloseKST.clone().isoWeekday(1);
+	const weekEndMoment = lastCloseKST.clone().isoWeekday(5);
 
 	const today = weekEndMoment.format('YYYY-MM-DD');
 	const weekAgo = weekStartMoment.format('YYYY-MM-DD');
+	const weekKey = lastCloseKST.format('GGGG-WW');
 
-	// Week key: Sat/Sun/Mon-morning 모두 동일한 주 키 사용 (지난 주 기준)
-	// Monday는 이미 새 ISO 주 시작이므로 전날(일요일) 기준으로 맞춤
-	const cacheReferenceMoment = dayOfWeek === 1
-		? todayMoment.clone().subtract(2, 'days')
-		: todayMoment;
-	const weekKey = cacheReferenceMoment.format('GGGG-WW');
 	const recapDoc = await reportDB.getReport('weeklyRecap').catch(() => null);
-	// Cache hit only if doc already has the new schema fields (summary). Older docs
-	// without `summary` are treated as stale so the AI re-runs and writes the new shape.
-	if (recapDoc?.weekKey === weekKey && recapDoc?.comment && recapDoc?.summary) {
+	// Cache must (a) match weekKey, (b) have the new schema fields, and (c) have been written
+	// AFTER the most recent close — otherwise it was generated mid-week with partial data.
+	const cacheFresh = recapDoc?.createdAt && new Date(recapDoc.createdAt) >= lastClose.toDate();
+	if (recapDoc?.weekKey === weekKey && recapDoc?.comment && recapDoc?.summary && cacheFresh) {
 		console.log(`weeklyRecap: returning cached result for ${weekKey}`);
 		return {
 			comment: recapDoc.comment,
@@ -104,8 +102,9 @@ const _getWeeklyRecap = async ({ dry = false } = {}) => {
 		return currency === 'USD' ? amount * exchangeRate : amount;
 	};
 
-	// Net worth daily trend (Mon ~ today)
-	const netWorthDailyData = (netWorthDailyDoc?.data || []).filter(d => d.date >= weekAgo);
+	// Net worth daily trend (Mon ~ Fri of the analysis week — bound by `today` so
+	// post-Friday entries don't sneak in and skew "end of week" net worth.)
+	const netWorthDailyData = (netWorthDailyDoc?.data || []).filter(d => d.date >= weekAgo && d.date <= today);
 
 	// Start baseline: last entry on or before last Sat/Sun (day before this week's Monday)
 	const netWorthBaselineDate = weekStartMoment.clone().subtract(1, 'days').format('YYYY-MM-DD');

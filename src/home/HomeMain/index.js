@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import moment from 'moment-timezone';
 
 import Box from '@mui/material/Box';
 
@@ -17,11 +18,16 @@ import WeeklyRecap, { getISOWeekKey, DISMISS_KEY } from '../WeeklyRecap';
 
 import { getWeeklyTransactionsAction } from '../../actions/couchdbActions';
 
-const now = new Date();
-const dayOfWeek = now.getDay();
-const hour = now.getHours();
-// 미국 금요일 장 마감(KST 토요일 아침) 이후 ~ 한국 월요일 장 시작(KST 09:00) 이전
-const showWeeklyRecapDay = dayOfWeek === 6 || dayOfWeek === 0 || (dayOfWeek === 1 && hour < 9);
+// 미국 금요일 시간외 거래 마감(17:00 PT) ~ 한국 월요일 장 시작(KST 09:00)
+const computeShowWeeklyRecap = () => {
+	const now = moment();
+	const fridayClose = moment.tz('America/Los_Angeles').isoWeekday(5).hour(17).minute(0).second(0).millisecond(0);
+	if (fridayClose.isAfter(now)) fridayClose.subtract(7, 'days');
+	const mondayOpen = moment.tz('Asia/Seoul').isoWeekday(1).hour(9).minute(0).second(0).millisecond(0);
+	if (mondayOpen.isSameOrBefore(fridayClose)) mondayOpen.add(7, 'days');
+	return now.isSameOrAfter(fridayClose) && now.isBefore(mondayOpen);
+};
+const showWeeklyRecapDay = computeShowWeeklyRecap();
 
 export function HomeMain () {
 	const dispatch = useDispatch();

@@ -148,16 +148,16 @@ const updateInvestmentPrice = async () => {
 		console.log('krStockList monthly job ended');
 	}, true, 'Asia/Seoul');
 
-	new CronJob('00 00 16 * * 5', async () => {
+	new CronJob('00 00 17 * * 5', async () => {
 		/*
 			 * Weekly recap AI analysis pre-generation.
-			 * Runs every Friday at 16:00 PT (America/Los_Angeles).
-			 * US market closes Friday 4PM ET = 1PM PT, so 4PM PT is right after close.
+			 * Runs every Friday at 17:00 PT (America/Los_Angeles) — right after
+			 * US after-hours trading closes (5PM PT = 8PM ET extended-hours end).
 			 * Pre-caches the AI analysis so it's ready when user opens the app over the weekend.
 			 */
-		console.log('weeklyRecap Friday 16:00 PT started');
+		console.log('weeklyRecap Friday 17:00 PT started');
 		await getWeeklyRecap().catch(err => console.error('weeklyRecap scheduled job error:', err));
-		console.log('weeklyRecap Friday 16:00 PT ended');
+		console.log('weeklyRecap Friday 17:00 PT ended');
 	}, null, true, 'America/Los_Angeles');
 })();
 
