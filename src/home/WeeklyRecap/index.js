@@ -15,6 +15,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
+import { NON_INCOME_CATEGORY } from '../../constants';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
@@ -106,7 +107,7 @@ export function WeeklyRecap ({ onDismiss }) {
 		const expenseTxns = within.filter(t =>
 			t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e))
 		);
-		const incomeTxns = within.filter(t => t.amount > 0);
+		const incomeTxns = within.filter(t => t.amount > 0 && t.category !== NON_INCOME_CATEGORY);
 		const spent = expenseTxns.reduce((s, t) => s + conv(t), 0);
 		const income = incomeTxns.reduce((s, t) => s + conv(t), 0);
 		return { spent, saved: income - spent };

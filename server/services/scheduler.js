@@ -16,7 +16,9 @@ const safeRun = async (name, fn) => {
 	try {
 		await fn();
 	} catch (err) {
-		console.error(`[scheduler] ${name} failed:`, err.message);
+		// err가 Error가 아니거나 message가 비어 있어도 원인을 잃지 않도록
+		// stack → message → 원본 err 순으로 폴백해서 남긴다.
+		console.error(`[scheduler] ${name} failed:`, err?.stack || err?.message || err);
 	}
 };
 

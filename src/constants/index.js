@@ -37,6 +37,7 @@ export const TAX_CATEGORY = '세금';
 export const COMMISSION_CATEGORY = '수수료';
 export const FOOD_CATEGORY = '식비';
 export const NON_EXPENSE_CATEGORY = '실제지출아님';
+export const NON_INCOME_CATEGORY = '실제수입아님';
 export const CHILD_CARE_CATEGORY = '육아';
 export const MEDICAL_CATEGORY = '의료비';
 export const CLOTH_CATEGORY = '의류';

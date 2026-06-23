@@ -127,7 +127,9 @@ const _getWeeklyRecap = async ({ dry = false } = {}) => {
 			&& !(t.category && t.category.startsWith('[') && t.category.endsWith(']')))
 		.sort((a, b) => b.date.localeCompare(a.date));
 
-	const incomeTotal = weeklyTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
+	// NON_INCOME_CATEGORY('실제수입아님'): 차량 매각 등 자산→현금 유입은 실제 수입이
+	// 아니므로 income/saved 집계에서 제외 (client FinancialHealthScore와 동일 취지)
+	const incomeTotal = weeklyTransactions.filter(t => t.amount > 0 && t.category !== '실제수입아님').reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
 	const expenseTotal = weeklyTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
 
 	// Pre-computed metrics for client (Spent / Saved / Top category)

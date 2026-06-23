@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { NON_EXPENSE_CATEGORY } from '../../constants';
+import { NON_EXPENSE_CATEGORY, NON_INCOME_CATEGORY } from '../../constants';
 
 // 통화 변환 헬퍼 — calcInvestmentScore, calcEmergencyScore, calcDebtScore 공통 사용
 export const toDisplay = (acc, exchangeRate, currency) => {
@@ -20,6 +20,8 @@ const CASH_ACCOUNT_TYPES = ['Bank', 'CCard', 'Cash'];
 //    당월은 부분 데이터이므로 제외하고, 직전 3개월 합산으로 계산
 //    income/expense는 cash 계좌(Bank/CCard/Cash) 한정, 내부이체·NON_EXPENSE_CATEGORY·
 //    livingExpenseExempt 카테고리 제외, USD 거래는 표시 통화로 환산.
+//    income은 NON_INCOME_CATEGORY(차량 매각 등 자산→현금 유입)도 제외 — 일회성
+//    자산 매각이 수입으로 잡혀 저축률이 왜곡되는 문제 방지(투자 매도 제외와 동일 취지).
 export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExempt, exchangeRate, currency) => {
 	const accountMap = new Map((accountList || []).map(a => [a._id, a]));
 	const accountType = (t) => t.accountId ? t.accountId.split(':')[1] : null;
@@ -41,7 +43,7 @@ export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExe
 	);
 
 	const income = pastTxns
-		.filter(t => t.amount > 0)
+		.filter(t => t.amount > 0 && t.category !== NON_INCOME_CATEGORY)
 		.reduce((sum, t) => sum + toAmount(t), 0);
 	const expense = pastTxns
 		.filter(t => t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e)))

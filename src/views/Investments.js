@@ -28,7 +28,7 @@ import useT from '../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, fmtQty, colorFor } from '../utils/designTokens';
 
 const RANGES = ['1W', '2M', '3M', 'YTD', '1Y', 'All'];
-const DAILY_RANGES = ['1W', '2M'];
+const DAILY_RANGES = ['1W', '2M', '3M'];
 
 const SVG_W = 1000;
 const DEPTH_X = 22;

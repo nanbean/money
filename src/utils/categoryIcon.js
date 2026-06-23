@@ -63,6 +63,7 @@ import {
 	COMMISSION_CATEGORY,
 	FOOD_CATEGORY,
 	NON_EXPENSE_CATEGORY,
+	NON_INCOME_CATEGORY,
 	CHILD_CARE_CATEGORY,
 	MEDICAL_CATEGORY,
 	CLOTH_CATEGORY,
@@ -156,6 +157,7 @@ export function resolveCategoryIcon (name, pickedKey) {
 	case COMMISSION_CATEGORY:   return AttachMoneyIcon;
 	case FOOD_CATEGORY:         return RestaurantIcon;
 	case NON_EXPENSE_CATEGORY:  return MonetizationOnIcon;
+	case NON_INCOME_CATEGORY:   return TrendingUpIcon;
 	case CHILD_CARE_CATEGORY:   return ChildCareIcon;
 	case MEDICAL_CATEGORY:      return LocalHospitalIcon;
 	case CLOTH_CATEGORY:        return CheckroomIcon;
