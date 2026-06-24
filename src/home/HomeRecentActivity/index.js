@@ -53,6 +53,9 @@ export default function HomeRecentActivity () {
 		dispatch(openTransactionInModal({
 			...t,
 			date: t.date,
+			// categoryList 항목은 '상위:하위' 결합 형식이므로 모달 Select가 값을
+			// 매칭하려면 subcategory를 합쳐줘야 한다 (BankTransactions와 동일).
+			category: t.category ? t.category + (t.subcategory ? `:${t.subcategory}` : '') : '',
 			amount: t.amount,
 			memo: t.memo,
 			isEdit: true,
