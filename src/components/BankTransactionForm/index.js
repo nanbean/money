@@ -87,6 +87,7 @@ export function BankTransactionForm ({
 
 	const { categoryList } = useSelector((state) => state.settings);
 	const dropPayeeList = useSelector((state) => state.dropPayeeList);
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const form = useSelector((state) => state.ui.form.bankTransaction);
 	const dispatch = useDispatch();
 
@@ -194,8 +195,9 @@ export function BankTransactionForm ({
 	const onPayeeChange = handler => (_, value) => dispatch(handler(value));
 
 	const onPayeeSelect = handler => (_, value) => {
-		const matchIndex = findLastIndex(transactions, i => i.payee === value.name);
-		const matchTransaction = matchIndex >= 0 && transactions[matchIndex];
+		// allAccountsTransactions spans every account and is stored oldest-first, so the last match is the most recent one.
+		const matchIndex = findLastIndex(allAccountsTransactions, i => i.payee === value.name);
+		const matchTransaction = matchIndex >= 0 && allAccountsTransactions[matchIndex];
 		const transaction = { payee: value.name };
 
 		if (matchTransaction) {
