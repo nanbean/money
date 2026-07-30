@@ -42,16 +42,21 @@ const EXPENSE_TYPES = ['Bank', 'CCard', 'Cash'];
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const INFLATION_RATE = 1.025;
 
+const monthsAgoStr = (monthsBack) => {
+	const d = new Date();
+	d.setDate(1);
+	d.setMonth(d.getMonth() - monthsBack);
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
 const getStartMonthStr = (range) => {
-	const now = new Date();
-	const year = now.getFullYear();
-	const month = now.getMonth();
+	const year = new Date().getFullYear();
 	switch (range) {
-	case '1M': return new Date(year, month, 1).toISOString().slice(0, 7);
-	case '3M': return new Date(year, month - 2, 1).toISOString().slice(0, 7);
-	case '6M': return new Date(year, month - 5, 1).toISOString().slice(0, 7);
+	case '1M': return monthsAgoStr(0);
+	case '3M': return monthsAgoStr(2);
+	case '6M': return monthsAgoStr(5);
 	case 'YTD': return `${year}-01`;
-	case '1Y': return new Date(year, month - 12, 1).toISOString().slice(0, 7);
+	case '1Y': return monthsAgoStr(12);
 	default: return null;
 	}
 };
