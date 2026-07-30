@@ -248,7 +248,7 @@ export function Search () {
 	const inputSx = {
 		flex: 1,
 		padding: '10px 12px',
-		fontSize: 13,
+		fontSize: { xs: 16, sm: 13 },
 		fontFamily: 'inherit',
 		background: T.bg,
 		color: T.ink,
@@ -553,7 +553,7 @@ export function Search () {
 												'& .MuiOutlinedInput-root': {
 													background: T.bg,
 													borderRadius: '8px',
-													fontSize: 13,
+													fontSize: { xs: 16, sm: 13 },
 													color: T.ink
 												},
 												'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
@@ -624,7 +624,7 @@ export function Search () {
 												'& .MuiOutlinedInput-root': {
 													background: T.bg,
 													borderRadius: '8px',
-													fontSize: 13,
+													fontSize: { xs: 16, sm: 13 },
 													color: T.ink
 												},
 												'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },

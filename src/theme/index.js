@@ -157,7 +157,11 @@ function theme ({ prefersDarkMode }) {
 		},
 		MuiTextField: {
 			styleOverrides: {
-				root: ({ theme: th }) => ({ paddingBottom: th.spacing(0.5), fontSize: '0.8rem' })
+				root: ({ theme: th }) => ({
+					paddingBottom: th.spacing(0.5),
+					fontSize: '1rem',
+					[th.breakpoints.up('sm')]: { fontSize: '0.8rem' }
+				})
 			}
 		},
 		MuiAutocomplete: {

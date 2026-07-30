@@ -321,7 +321,7 @@ const Transactions = () => {
 											'& .MuiOutlinedInput-root': {
 												background: T.bg,
 												borderRadius: '8px',
-												fontSize: 13,
+												fontSize: { xs: 16, sm: 13 },
 												color: T.ink
 											},
 											'& .MuiOutlinedInput-notchedOutline': { borderColor: T.rule },
