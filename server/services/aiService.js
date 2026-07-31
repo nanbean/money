@@ -5,6 +5,7 @@ const transactionDB = require('../db/transactionDB');
 const accountDB = require('../db/accountDB');
 const stockDB = require('../db/stockDB');
 const { singleFlight } = require('../utils/singleFlight');
+const { retryWithBackoff } = require('../utils/retry');
 const { getExchangeRate } = require('./settingService');
 const { getKisToken, getKisWeeklyPriceUS, getKisWeeklyPriceKorea } = require('./kisConnector');
 
@@ -48,7 +49,10 @@ ${projectionText}
 
 위 현황과 미래 예측을 바탕으로 3-4문장으로 분석 코멘트를 한국어로 작성해주세요. 현재 포트폴리오 특징, CAGR 수준 평가, 장기 전망의 주목할 점을 포함해주세요.`;
 
-	const result = await model.generateContent(prompt);
+	const result = await retryWithBackoff(
+		() => model.generateContent(prompt),
+		{ label: 'getPortfolioComment' }
+	);
 	return result.response.text().trim();
 };
 
@@ -293,7 +297,10 @@ ${txText || '  (거래 없음)'}
 
 	if (dry) return prompt;
 
-	const result = await model.generateContent(prompt);
+	const result = await retryWithBackoff(
+		() => model.generateContent(prompt),
+		{ label: 'weeklyRecap' }
+	);
 	const raw = result.response.text().trim();
 
 	// Parse [SUMMARY]...[/SUMMARY] block

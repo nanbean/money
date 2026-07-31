@@ -2,6 +2,7 @@ const moment = require('moment-timezone');
 const uuidv1 = require('uuid/v1');
 const messaging = require('./messaging');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { retryWithBackoff } = require('../utils/retry');
 const settingService = require('./settingService');
 const transactionService = require('./transactionService');
 const notificationService = require('./notificationService');
@@ -64,7 +65,10 @@ const findCategoryFromGemini = async (transaction) => {
 	});
 
 	try {
-		const result = await chatSession.sendMessage(`What is the best expense category for ${transaction.payee}?`);
+		const result = await retryWithBackoff(
+			() => chatSession.sendMessage(`What is the best expense category for ${transaction.payee}?`),
+			{ label: 'findCategoryFromGemini' }
+		);
 		return result.response.text().replace(/\s+$/g, '');
 	} catch (error) {
 		console.error('Error finding category from Gemini:', error);
