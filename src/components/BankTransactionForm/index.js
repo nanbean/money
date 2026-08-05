@@ -192,15 +192,54 @@ export function BankTransactionForm ({
 		}
 	};
 
-	const onPayeeChange = handler => (_, value) => dispatch(handler(value));
+	const onPayeeChange = handler => (_, value, reason) => {
+		// After Enter/selection, MUI's freeSolo echoes the raw typed text back via a
+		// 'reset' onInputChange, which would clobber the canonical payee we just resolved
+		// (leaving category/amount filled but payee reverted). Only react to real user
+		// typing ('input') and the clear button ('clear').
+		if (reason === 'reset') return;
+		dispatch(handler(value));
+	};
 
-	const onPayeeSelect = handler => (_, value) => {
-		// allAccountsTransactions spans every account and is stored oldest-first, so the last match is the most recent one.
-		const matchIndex = findLastIndex(allAccountsTransactions, i => i.payee === value.name);
-		const matchTransaction = matchIndex >= 0 && allAccountsTransactions[matchIndex];
-		const transaction = { payee: value.name };
+	// The account this form is working on. accountId is only passed from the Bank view;
+	// the other entry points (Transactions/Search/Spending) only carry the account name,
+	// so fall back to matching on that.
+	const currentAccountId = accountId || form.accountId;
+	const currentAccount = form.account || account;
+	const isCurrentAccount = i => (currentAccountId ? i.accountId === currentAccountId : i.account === currentAccount);
+
+	// Find the most recent transaction for a payee name, preferring the account being
+	// edited and only falling back to other accounts when this account has never used
+	// the payee — a payee's category/amount is usually account-specific.
+	// Match by payee OR originalPayee so a raw store name (e.g. the pre-merge
+	// "(주)이마트에브리데이동탄호수점") resolves to its canonical payee — mirroring the
+	// card-notification flow's findCategoryByPayee. allAccountsTransactions spans every
+	// account and is stored oldest-first, so the last match is the most recent one.
+	const findPayeeMatch = (name) => {
+		const isMatch = i => i.payee === name || i.originalPayee === name;
+
+		if (currentAccountId || currentAccount) {
+			const sameAccountIndex = findLastIndex(allAccountsTransactions, i => isCurrentAccount(i) && isMatch(i));
+			if (sameAccountIndex >= 0) return allAccountsTransactions[sameAccountIndex];
+		}
+
+		const anyAccountIndex = findLastIndex(allAccountsTransactions, isMatch);
+		return anyAccountIndex >= 0 ? allAccountsTransactions[anyAccountIndex] : null;
+	};
+
+	// Resolve a typed/selected payee name and fill the form from its most recent match.
+	const fillFromPayee = (name, { normalizeOnly = false } = {}) => {
+		if (!name) return;
+		const matchTransaction = findPayeeMatch(name);
+		// normalizeOnly (blur): only rewrite a raw variant name → canonical payee. If there's
+		// no match, or the name is already the canonical payee, leave the form untouched so an
+		// incidental focus loss never clobbers category/amount (matters most when editing).
+		if (normalizeOnly && (!matchTransaction || matchTransaction.payee === name)) return;
+		const transaction = { payee: name };
 
 		if (matchTransaction) {
+			// Resolve to the canonical payee (name may have been an originalPayee).
+			transaction.payee = matchTransaction.payee;
 			if (matchTransaction.division && matchTransaction.division.length > 0) {
 				setIsSplit(true);
 				setDivisions(matchTransaction.division.map(d => ({
@@ -221,8 +260,17 @@ export function BankTransactionForm ({
 			}
 		}
 
-		return dispatch(handler(transaction));
+		dispatch(fillTransactionForm(transaction));
 	};
+
+	// AutoComplete is freeSolo: `value` is the selected option object (dropdown click),
+	// or a raw string when free-typed text is committed. Normalize to the entered name.
+	const onPayeeSelect = (_, value) => fillFromPayee(typeof value === 'string' ? value : (value && value.name));
+	// Enter in the payee field: commit the typed text and fill instead of submitting the form.
+	const onPayeeEnter = (inputValue) => fillFromPayee(inputValue);
+	// Blur (e.g. moving to the next field on mobile): normalize a raw variant name to its
+	// canonical payee only — guarded so it never clobbers an already-set category/amount.
+	const onPayeeBlur = (inputValue) => fillFromPayee(inputValue, { normalizeOnly: true });
 
 	const onAddButton = () => {
 		const data = {};
@@ -367,7 +415,9 @@ export function BankTransactionForm ({
 						items={dropPayeeList}
 						placeholder="Payee"
 						onInputChange={onPayeeChange(changePayee)}
-						onChange={onPayeeSelect(fillTransactionForm)}
+						onChange={onPayeeSelect}
+						onEnter={onPayeeEnter}
+						onBlur={onPayeeBlur}
 					/>
 				</Box>
 			</Box>
