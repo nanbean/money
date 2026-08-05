@@ -183,6 +183,12 @@ export function Bank () {
 						fontFamily: 'inherit',
 						colorScheme: T.dark ? 'dark' : 'light',
 						outline: 'none',
+						// iOS Safari sizes input[type=date] natively and lets its internal date
+						// fields spill past the border box, clipping the right edge on mobile.
+						// No minWidth:0 here — this input is sized by its content, so letting it
+						// shrink below min-content would reintroduce the clipping.
+						WebkitAppearance: 'none',
+						appearance: 'none',
 						'&:focus': { borderColor: T.acc.hero }
 					}}
 				/>

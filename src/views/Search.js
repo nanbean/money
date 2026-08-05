@@ -259,6 +259,16 @@ export function Search () {
 		'&:focus': { borderColor: T.acc.hero }
 	};
 
+	// iOS Safari sizes input[type=date] natively and lets its internal date fields spill
+	// past the border box, clipping the right edge on mobile. appearance:none drops that
+	// native sizing. No minWidth:0 — min-width:auto is what keeps these inputs from being
+	// squeezed below their content by the flex basis.
+	const dateInputSx = {
+		...inputSx,
+		WebkitAppearance: 'none',
+		appearance: 'none'
+	};
+
 	const heroBg = T.dark
 		? 'linear-gradient(135deg, #15151c 0%, #1d1d26 100%)'
 		: `linear-gradient(135deg, ${T.acc.hero} 0%, ${T.acc.deep} 100%)`;
@@ -459,7 +469,7 @@ export function Search () {
 								type="date"
 								value={startDate}
 								onChange={e => updateParams({ startDate: e.target.value })}
-								sx={{ ...inputSx, flex: '0 0 150px' }}
+								sx={{ ...dateInputSx, flex: '0 0 150px' }}
 							/>
 							<Typography sx={{ color: T.ink3, fontSize: 13 }}>→</Typography>
 							<Box
@@ -467,7 +477,7 @@ export function Search () {
 								type="date"
 								value={endDate}
 								onChange={e => updateParams({ endDate: e.target.value })}
-								sx={{ ...inputSx, flex: '0 0 150px' }}
+								sx={{ ...dateInputSx, flex: '0 0 150px' }}
 							/>
 							<Chip onClick={() => setRangeDays(7)} T={T}>7d</Chip>
 							<Chip onClick={() => setRangeDays(30)} T={T}>30d</Chip>

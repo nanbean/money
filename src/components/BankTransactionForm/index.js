@@ -65,6 +65,20 @@ const inputSx = (T) => ({
 	'&:focus': { borderColor: T.acc.hero }
 });
 
+// iOS Safari sizes input[type=date] from its own native intrinsic width and lets the
+// internal date fields spill past the border box, so on a narrow screen the right edge
+// (year / picker) gets clipped. appearance:none drops the native sizing and minWidth:0
+// lets it shrink into its grid cell; minHeight keeps the height iOS would otherwise
+// collapse once appearance is off.
+const dateInputSx = (T) => ({
+	...inputSx(T),
+	WebkitAppearance: 'none',
+	appearance: 'none',
+	minWidth: 0,
+	minHeight: 44,
+	display: 'block'
+});
+
 const selectSx = (T) => ({
 	width: '100%',
 	background: T.bg,
@@ -397,7 +411,9 @@ export function BankTransactionForm ({
 				gap: 2,
 				marginBottom: 2
 			}}>
-				<Box>
+				{/* minWidth:0 — grid items default to min-width:auto, so an input that
+				    refuses to shrink would widen the track past the dialog. */}
+				<Box sx={{ minWidth: 0 }}>
 					<Typography sx={fieldLabelSx(T)}>Date</Typography>
 					<Box
 						component="input"
@@ -405,10 +421,10 @@ export function BankTransactionForm ({
 						value={form.date || ''}
 						onChange={onChange(changeDate)}
 						required
-						sx={inputSx(T)}
+						sx={dateInputSx(T)}
 					/>
 				</Box>
-				<Box>
+				<Box sx={{ minWidth: 0 }}>
 					<Typography sx={fieldLabelSx(T)}>Payee</Typography>
 					<AutoComplete
 						value={form.payee}

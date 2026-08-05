@@ -66,6 +66,18 @@ const inputSx = (T) => ({
 	'&:disabled': { opacity: 0.5, cursor: 'not-allowed' }
 });
 
+// iOS Safari sizes input[type=date] from its own native intrinsic width and lets the
+// internal date fields spill past the border box, clipping the right edge on a narrow
+// screen. See BankTransactionForm for the same fix.
+const dateInputSx = (T) => ({
+	...inputSx(T),
+	WebkitAppearance: 'none',
+	appearance: 'none',
+	minWidth: 0,
+	minHeight: 44,
+	display: 'block'
+});
+
 export function InvestmentTransactionForm ({
 	account,
 	accountId,
@@ -172,7 +184,9 @@ export function InvestmentTransactionForm ({
 				gap: 2,
 				marginBottom: 2
 			}}>
-				<Box>
+				{/* minWidth:0 — grid items default to min-width:auto, so an input that
+				    refuses to shrink would widen the track past the dialog. */}
+				<Box sx={{ minWidth: 0 }}>
 					<Typography sx={fieldLabelSx(T)}>Date</Typography>
 					<Box
 						component="input"
@@ -180,7 +194,7 @@ export function InvestmentTransactionForm ({
 						value={form.date || ''}
 						onChange={onChange(changeDate)}
 						required
-						sx={inputSx(T)}
+						sx={dateInputSx(T)}
 					/>
 				</Box>
 				<Box>
