@@ -8,6 +8,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import SidebarMenu from './components/SidebarMenu';
 import BottomNav from './components/BottomNav';
 import ScrollToTop from './components/ScrollToTop';
+import GlobalToast from './components/GlobalToast';
 
 import {
 	Accounts,
@@ -58,6 +59,7 @@ function RoutesMain () {
 	return (
 		<BrowserRouter>
 			<ScrollToTop />
+			<GlobalToast />
 			<div style={{ display: 'flex' }}>
 				<CssBaseline />
 				<SidebarMenu />

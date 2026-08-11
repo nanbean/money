@@ -30,6 +30,7 @@ import weeklyTransactions from './weeklyTransactions';
 import latestTransactions from './latestTransactions';
 import trascationsFetching from './trascationsFetching';
 import settings from './settings';
+import toast from './toast';
 
 const money = combineReducers({
 	ui,
@@ -62,7 +63,8 @@ const money = combineReducers({
 	weeklyTransactions,
 	latestTransactions,
 	trascationsFetching,
-	settings
+	settings,
+	toast
 });
 
 export default money;
