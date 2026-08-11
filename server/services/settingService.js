@@ -1,5 +1,5 @@
 const settingDB = require('../db/settingDB');
-const { getKisToken, getKisExchangeRate } = require('./kisConnector');
+const { getTossExchangeRate } = require('./tossConnector');
 const { singleFlight } = require('../utils/singleFlight');
 
 const getSettings = async () => {
@@ -45,10 +45,9 @@ const _arrangeExchangeRate = async () => {
 	const exchangeRateSetting = settings.find(i => i._id === 'exchangeRate');
 
 	if (enableExchangeRateUpdate && enableExchangeRateUpdate.value) {
-		const accessToken = await getKisToken();
-		const kisExchangeRate = await getKisExchangeRate(accessToken);
-		if (kisExchangeRate) {
-			exchangeRateSetting.value = kisExchangeRate;
+		const exchangeRate = await getTossExchangeRate();
+		if (exchangeRate) {
+			exchangeRateSetting.value = exchangeRate;
 			await settingDB.insertSetting(exchangeRateSetting);
 		}
 	}

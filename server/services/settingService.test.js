@@ -1,7 +1,7 @@
 
 const { getSettings, getExchangeRate, getCategoryList, arrangeExchangeRate } = require('./settingService');
 const settingDB = require('../db/settingDB');
-const kisConnector = require('./kisConnector');
+const tossConnector = require('./tossConnector');
 
 // Mock dependencies
 jest.mock('../db/settingDB', () => ({
@@ -9,9 +9,8 @@ jest.mock('../db/settingDB', () => ({
 	insertSetting: jest.fn()
 }));
 
-jest.mock('./kisConnector', () => ({
-	getKisToken: jest.fn(),
-	getKisExchangeRate: jest.fn()
+jest.mock('./tossConnector', () => ({
+	getTossExchangeRate: jest.fn()
 }));
 
 describe('settingService', () => {
@@ -111,15 +110,13 @@ describe('settingService', () => {
 				{ _id: 'exchangeRate', _rev: '1-abc', value: 1300 }
 			];
 			settingDB.getSettings.mockResolvedValue(mockSettings);
-			kisConnector.getKisToken.mockResolvedValue('fake-token');
-			kisConnector.getKisExchangeRate.mockResolvedValue(1355.7);
+			tossConnector.getTossExchangeRate.mockResolvedValue(1355.7);
 
 			// Act
 			await arrangeExchangeRate();
 
 			// Assert
-			expect(kisConnector.getKisToken).toHaveBeenCalledTimes(1);
-			expect(kisConnector.getKisExchangeRate).toHaveBeenCalledWith('fake-token');
+			expect(tossConnector.getTossExchangeRate).toHaveBeenCalledTimes(1);
 			expect(settingDB.insertSetting).toHaveBeenCalledTimes(1);
 			expect(settingDB.insertSetting).toHaveBeenCalledWith({
 				_id: 'exchangeRate',
@@ -140,8 +137,7 @@ describe('settingService', () => {
 			await arrangeExchangeRate();
 
 			// Assert
-			expect(kisConnector.getKisToken).not.toHaveBeenCalled();
-			expect(kisConnector.getKisExchangeRate).not.toHaveBeenCalled();
+			expect(tossConnector.getTossExchangeRate).not.toHaveBeenCalled();
 			expect(settingDB.insertSetting).not.toHaveBeenCalled();
 		});
 
@@ -152,15 +148,13 @@ describe('settingService', () => {
 				{ _id: 'exchangeRate', value: 1300 }
 			];
 			settingDB.getSettings.mockResolvedValue(mockSettings);
-			kisConnector.getKisToken.mockResolvedValue('fake-token');
-			kisConnector.getKisExchangeRate.mockResolvedValue(null); // KIS call failed
+			tossConnector.getTossExchangeRate.mockResolvedValue(null); // Toss call failed
 
 			// Act
 			await arrangeExchangeRate();
 
 			// Assert
-			expect(kisConnector.getKisToken).toHaveBeenCalledTimes(1);
-			expect(kisConnector.getKisExchangeRate).toHaveBeenCalledWith('fake-token');
+			expect(tossConnector.getTossExchangeRate).toHaveBeenCalledTimes(1);
 			expect(settingDB.insertSetting).not.toHaveBeenCalled();
 		});
 
@@ -171,7 +165,7 @@ describe('settingService', () => {
 
 			// Act & Assert
 			await expect(arrangeExchangeRate()).resolves.not.toThrow();
-			expect(kisConnector.getKisToken).not.toHaveBeenCalled();
+			expect(tossConnector.getTossExchangeRate).not.toHaveBeenCalled();
 			expect(settingDB.insertSetting).not.toHaveBeenCalled();
 		});
 	});
