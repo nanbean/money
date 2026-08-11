@@ -888,7 +888,7 @@ export function Investments () {
 													</Typography>
 													{typeof rate === 'number' && (
 														<Typography sx={{ ...sMono, fontSize: 11, color: rate > 0 ? T.pos : rate < 0 ? T.neg : T.ink2 }}>
-															{rate > 0 ? '+' : ''}{rate}%
+															{rate > 0 ? '+' : ''}{rate.toFixed(2)}%
 														</Typography>
 													)}
 												</Box>

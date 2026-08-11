@@ -169,7 +169,7 @@ export function StockList () {
 										</Typography>
 										{typeof rate === 'number' && (
 											<Typography sx={{ ...sMono, fontSize: 11, color: rateColor, whiteSpace: 'nowrap' }}>
-												({rate > 0 ? '+' : ''}{rate}%)
+												({rate > 0 ? '+' : ''}{rate.toFixed(2)}%)
 											</Typography>
 										)}
 									</Stack>
