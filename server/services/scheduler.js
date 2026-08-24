@@ -158,7 +158,12 @@ const updateInvestmentPrice = async () => {
 			 * Pre-caches the AI analysis so it's ready when user opens the app over the weekend.
 			 */
 		console.log('weeklyRecap Friday 17:00 PT started');
-		await getWeeklyRecap().catch(err => console.error('weeklyRecap scheduled job error:', err));
+		// 주 1회짜리 잡이라 실패하면 다음 기회가 일주일 뒤다. Gemini 503('high demand')
+		// 스파이크는 분 단위로 이어지므로 기본 재시도 예산(약 7초)으로는 거의 못 넘긴다.
+		// 이 경로는 사용자가 기다리는 요청이 아니므로 총 6~8분(6회 시도)까지 버틴다.
+		await safeRun('weeklyRecap', () => getWeeklyRecap({
+			retryOptions: { retries: 5, baseDelay: 20000, maxDelay: 120000 }
+		}));
 		console.log('weeklyRecap Friday 17:00 PT ended');
 	}, null, true, 'America/Los_Angeles');
 })();

@@ -56,7 +56,9 @@ ${projectionText}
 	return result.response.text().trim();
 };
 
-const _getWeeklyRecap = async ({ dry = false } = {}) => {
+// retryOptions: 재시도 예산을 호출자가 정한다. 스케줄 prefetch는 아무도 기다리지
+// 않으므로 길게, 온디맨드 API는 응답성을 위해 기본값(약 7초)을 그대로 쓴다.
+const _getWeeklyRecap = async ({ dry = false, retryOptions = {} } = {}) => {
 	// Anchor everything to the most recent Friday 17:00 PT (US after-hours close).
 	// All calls within [lastClose, nextClose) share the same week boundaries and cache key,
 	// regardless of when (or in which timezone) the call happens. This prevents stale caches
@@ -214,7 +216,9 @@ const _getWeeklyRecap = async ({ dry = false } = {}) => {
 							}
 						}
 					} catch (err) {
-						console.error(`weeklyRecap: price fetch failed for ${h.name}:`, err.message);
+						// 종목당 한 줄이라 stack보다 message를 우선하되, message가 비어 있으면
+						// 원인을 잃지 않도록 stack → 원본 err로 폴백한다.
+						console.error(`weeklyRecap: price fetch failed for ${h.name}:`, err?.message || err?.stack || err);
 					}
 				}
 
@@ -299,7 +303,7 @@ ${txText || '  (거래 없음)'}
 
 	const result = await retryWithBackoff(
 		() => model.generateContent(prompt),
-		{ label: 'weeklyRecap' }
+		{ label: 'weeklyRecap', ...retryOptions }
 	);
 	const raw = result.response.text().trim();
 

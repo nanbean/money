@@ -40,7 +40,8 @@ const retryWithBackoff = async (fn, options = {}) => {
 			const backoff = Math.min(baseDelay * 2 ** attempt, maxDelay);
 			const jitter = Math.round(backoff * 0.25 * Math.random());
 			const delay = backoff + jitter;
-			console.warn(`[retry] ${label}: transient error (${error.status || error.message}), retry ${attempt + 1}/${retries} in ${delay}ms`);
+			const cause = error?.status || error?.message || error?.stack || error;
+			console.warn(`[retry] ${label}: transient error (${cause}), retry ${attempt + 1}/${retries} in ${delay}ms`);
 			await sleep(delay);
 		}
 	}
