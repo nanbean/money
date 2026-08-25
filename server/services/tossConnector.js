@@ -195,12 +195,20 @@ async function getTossKrPreviousClose (symbol) {
 
 // 미국 종목의 전일 종가. 미국장은 NXT 같은 별도 세션 이슈가 없어 일봉 종가가
 // KIS 등락률과 소수점 둘째 자리까지 일치한다. 장중에는 당일 봉이 섞여 오므로
-// marketTz 기준 오늘 날짜 봉은 제외하고 가장 최근 봉의 종가를 쓴다.
-async function getTossPreviousClose (symbol, marketTz) {
+// 당일 봉을 제외하고 가장 최근 봉의 종가를 쓴다.
+//
+// 세션 날짜는 반드시 America/New_York 로 판정한다. 토스는 미국 일봉을 KST 13:00 으로
+// 스탬프하는데(예: 08-25 세션 → 2026-08-25T13:00:00+09:00), 이걸 America/Los_Angeles
+// 로 변환하면 08-24 21:00 이 되어 하루 밀린다. 그 상태로 '오늘 봉'을 걸러내면 당일 봉이
+// 안 걸러지고 당일 종가가 전일 종가로 들어와, 등락률이 '전일대비'가 아니라 '당일 종가
+// 대비 장외 변동'(≈0%)이 된다. ET 로 보면 08-25 00:00 이라 세션 날짜와 정확히 맞는다.
+const CANDLE_SESSION_TZ = 'America/New_York';
+
+async function getTossPreviousClose (symbol) {
 	const candles = await getTossDailyCandles(symbol, 3);
-	const today = moment().tz(marketTz).format('YYYY-MM-DD');
+	const today = moment().tz(CANDLE_SESSION_TZ).format('YYYY-MM-DD');
 	const past = candles
-		.filter(c => c && c.timestamp && moment(c.timestamp).tz(marketTz).format('YYYY-MM-DD') !== today)
+		.filter(c => c && c.timestamp && moment(c.timestamp).tz(CANDLE_SESSION_TZ).format('YYYY-MM-DD') < today)
 		.sort((a, b) => moment(a.timestamp).valueOf() - moment(b.timestamp).valueOf());
 	const last = past[past.length - 1];
 	const close = parseFloat(last?.closePrice);
