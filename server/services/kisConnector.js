@@ -614,8 +614,10 @@ exports.getKisWeeklyPriceKorea = getKisWeeklyPriceKorea;
 
 // hashkey is required on every POST trade request — KIS verifies the body
 // hasn't been tampered with by re-hashing on their side.
-async function getKisHashkey ({ live, body } = {}) {
-	const ctx = tradeContext(live);
+async function getKisHashkey ({ live, body, account } = {}) {
+	// alias를 넘겨야 한다. 연금계좌처럼 자체 App Key가 발급된 계좌는 main 키로 받은
+	// 해시를 pension 키 헤더와 함께 보내면 KIS가 불일치로 처리한다.
+	const ctx = tradeContext(live, account);
 	const headers = {
 		'content-type': 'application/json; charset=utf-8',
 		appkey: ctx.appkey,
@@ -658,7 +660,7 @@ async function placeKisDomesticOrder ({ live, side, symbol, quantity, price, ord
 		ORD_QTY: String(quantity),
 		ORD_UNPR: ordType === '01' ? '0' : String(price)
 	};
-	const hashkey = await getKisHashkey({ live, body });
+	const hashkey = await getKisHashkey({ live, body, account });
 	const headers = {
 		'content-type': 'application/json; charset=utf-8',
 		authorization: `Bearer ${token}`,
@@ -705,7 +707,7 @@ async function placeKisOverseasOrder ({ live, side, symbol, exchange = 'NASD', q
 		ORD_SVR_DVSN_CD: '0',
 		ORD_DVSN: ordType
 	};
-	const hashkey = await getKisHashkey({ live, body });
+	const hashkey = await getKisHashkey({ live, body, account });
 	const headers = {
 		'content-type': 'application/json; charset=utf-8',
 		authorization: `Bearer ${token}`,
