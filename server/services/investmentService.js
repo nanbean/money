@@ -4,6 +4,7 @@ const accountDB = require('../db/accountDB');
 const { getInvestmentsFromAccounts } = require('../utils/investment');
 const { singleFlight } = require('../utils/singleFlight');
 const { getTossPrices, getTossKrPreviousClose, getTossPreviousClose, mapWithRateLimit } = require('./tossConnector');
+const { isKrRegularSession } = require('../utils/marketHours');
 
 // Append today's price to weeklyPrices array, keep last 10 trading days
 const updateWeeklyPrices = (existing = [], date, price) => {
@@ -59,10 +60,33 @@ const calcRate = (price, prevClose, prevCloseDate, date) => {
 	return Math.round(((price - prevClose) / prevClose) * 10000) / 100;
 };
 
-const _arrangeInvestment = async ({ stockId, marketTz, parsePrice, fetchPrevClose }) => {
+const _arrangeInvestment = async ({ stockId, marketTz, parsePrice, fetchPrevClose, isRegularSession, label }) => {
 	const allAccounts = await accountDB.listAccounts();
 	const stockResponse = await stockDB.getStock(stockId);
 	const investments = getInvestmentsFromAccounts(stockResponse.data, allAccounts).filter(i => i.quantity > 0);
+
+	// 토스 lastPrice 는 마지막 체결가라 정규장이 끝나면 시간외 체결가로 바뀐다.
+	// 그걸 전일 종가와 비교하면 홈 Stock List 에 장외 등락률이 찍힌다.
+	//
+	// 국내는 NXT 애프터마켓(15:40~20:00)이 붙어 있어 장 종료 후 갱신하면 정규장
+	// 등락률이 장외 값으로 덮인다. 그래서 KR 만 정규장으로 게이트한다. 마감 직후
+	// 크론(15:30:30)은 CLOSE_GRACE_MINUTES 안이라 정규장으로 취급되어 종가를 잡고,
+	// 그 값이 다음 개장까지 유지된다.
+	//
+	// 미국은 게이트하지 않는다(isRegularSession 미지정). 마감 크론(16:00:30 ET)이
+	// 전일 종가 대비 정규장 등락률을 남기고, 이후 한국장 마감 크론이 애프터마켓
+	// 값으로 갱신하는 것은 의도된 동작이다.
+	const regular = isRegularSession ? isRegularSession() : true;
+	const priceOf = (googleSymbol) => stockResponse.data.find(d => d.googleSymbol === googleSymbol)?.price;
+	if (!regular) {
+		// 가격이 아직 없는 종목(신규 편입 등)은 장외 시세라도 채워야 화면이 빈칸이 안 된다.
+		const unpriced = investments.filter(i => !Number.isFinite(priceOf(i.googleSymbol)));
+		if (unpriced.length === 0) {
+			console.log(`${label}: 정규장 아님 — 정규장 종가 유지 (${investments.length}종목)`);
+			return;
+		}
+		console.log(`${label}: 정규장 아님 — 가격 없는 ${unpriced.length}종목만 채운다`);
+	}
 
 	const date = moment().tz(marketTz).format('YYYY-MM-DD');
 
@@ -78,6 +102,9 @@ const _arrangeInvestment = async ({ stockId, marketTz, parsePrice, fetchPrevClos
 			const price = parsePrice(quote?.lastPrice);
 
 			if (!Number.isFinite(price)) return i;
+
+			// 장외에는 가격이 비어 있던 종목만 채운다. 나머지는 정규장 종가 유지.
+			if (!regular && Number.isFinite(i.price)) return i;
 
 			const { prevClose, prevCloseDate } = resolvePrevClose(i, prevCloseMap, date);
 			const rate = calcRate(price, prevClose, prevCloseDate, date);
@@ -102,14 +129,17 @@ const _arrangeKRInvestmemt = () => _arrangeInvestment({
 		const n = parseFloat(v);
 		return Number.isFinite(n) ? Math.round(n) : NaN;
 	},
-	fetchPrevClose: getTossKrPreviousClose
+	fetchPrevClose: getTossKrPreviousClose,
+	isRegularSession: isKrRegularSession,
+	label: 'arrangeKRInvestmemt'
 });
 
 const _arrangeUSInvestmemt = () => _arrangeInvestment({
 	stockId: 'us',
 	marketTz: 'America/Los_Angeles',
 	parsePrice: (v) => parseFloat(v),
-	fetchPrevClose: (symbol) => getTossPreviousClose(symbol, 'America/Los_Angeles')
+	fetchPrevClose: getTossPreviousClose,
+	label: 'arrangeUSInvestmemt'
 });
 
 const arrangeKRInvestmemt = singleFlight('arrangeKRInvestmemt', _arrangeKRInvestmemt);
