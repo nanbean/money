@@ -64,15 +64,18 @@ describe('reportService', () => {
 		jest.restoreAllMocks();
 	});
 
+	// spreadSheet.getLifetimeFlowList 는 배열이 아니라 { data, events } 를 준다.
+	// reportService 가 구조분해로 받으므로 배열을 물리면 data/events 가 undefined 가 된다.
 	describe('updateLifeTimePlanner', () => {
 		test('should fetch data from spreadsheet and update an existing report', async () => {
 			// Arrange
 			const mockLifetimeData = [{ event: 'Retirement', age: 65 }];
+			const mockEvents = [{ year: 2040, note: 'Retire' }];
 			const mockAccounts = [{ name: 'My Account' }];
 			const mockOldReport = { _id: 'lifetimeplanner', _rev: '1-abc' };
 
 			accountService.getAllAccounts.mockResolvedValue(mockAccounts);
-			spreadSheet.getLifetimeFlowList.mockResolvedValue(mockLifetimeData);
+			spreadSheet.getLifetimeFlowList.mockResolvedValue({ data: mockLifetimeData, events: mockEvents });
 			reportDB.getReport.mockResolvedValue(mockOldReport);
 
 			// Act
@@ -88,14 +91,16 @@ describe('reportService', () => {
 			expect(insertedDoc._id).toBe('lifetimeplanner');
 			expect(insertedDoc._rev).toBe('1-abc'); // Should have the _rev from the old report
 			expect(insertedDoc.data).toEqual(mockLifetimeData);
+			expect(insertedDoc.events).toEqual(mockEvents);
 			expect(insertedDoc.date).toBeInstanceOf(Date);
 		});
 
 		test('should create a new report if one does not exist', async () => {
 			// Arrange
 			const mockLifetimeData = [{ event: 'New Goal', age: 40 }];
+			const mockEvents = [{ year: 2030, note: 'Move' }];
 			accountService.getAllAccounts.mockResolvedValue([]);
-			spreadSheet.getLifetimeFlowList.mockResolvedValue(mockLifetimeData);
+			spreadSheet.getLifetimeFlowList.mockResolvedValue({ data: mockLifetimeData, events: mockEvents });
 			reportDB.getReport.mockRejectedValue({ status: 404 }); // Simulate "not found"
 
 			// Act
@@ -107,6 +112,7 @@ describe('reportService', () => {
 			expect(insertedDoc._id).toBe('lifetimeplanner');
 			expect(insertedDoc._rev).toBeUndefined(); // Should be a new doc
 			expect(insertedDoc.data).toEqual(mockLifetimeData);
+			expect(insertedDoc.events).toEqual(mockEvents);
 		});
 
 		test('should log an error if fetching the old report fails with a non-404 error', async () => {
@@ -114,7 +120,7 @@ describe('reportService', () => {
 			const dbError = new Error('DB connection failed');
 			reportDB.getReport.mockRejectedValue(dbError);
 			accountService.getAllAccounts.mockResolvedValue([]);
-			spreadSheet.getLifetimeFlowList.mockResolvedValue([]);
+			spreadSheet.getLifetimeFlowList.mockResolvedValue({ data: [], events: [] });
 
 			// Act
 			await reportService.updateLifeTimePlanner();
