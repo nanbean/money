@@ -1,10 +1,15 @@
 const config = require('../config');
 const PouchDB = require('pouchdb');
+const { createStringPool } = require('../utils/stringPool');
 
 const transactionsDB = new PouchDB('transactions');
 
 // In-memory transaction cache
 let allTransactions = [];
+// 캐시가 문서 28,000건을 그대로 들고 있어서 문자열 중복이 컸다. 같은 값을 공유해
+// 보유량을 12.6MB -> 8.6MB 로 줄인다. 자세한 배경은 utils/stringPool.js 주석 참고.
+// 프로세스가 매일 04:00 에 재시작되므로(ecosystem cron_restart) 풀은 하루마다 비워진다.
+const stringPool = createStringPool();
 // A Promise to track if the cache is being initialized or has been completed
 let isCacheInitialized = null;
 
@@ -29,11 +34,11 @@ const updateCacheIncrementally = (change) => {
 		}
 	} else if (index !== -1) {
 		// Update existing document
-		allTransactions[index] = change.doc;
+		allTransactions[index] = stringPool.intern(change.doc);
 		// console.log(`Cache updated: updated transaction ${change.id}`);
 	} else {
 		// Add new document
-		allTransactions.push(change.doc);
+		allTransactions.push(stringPool.intern(change.doc));
 		// console.log(`Cache updated: added transaction ${change.id}`);
 	}
 };
@@ -44,7 +49,7 @@ const initPouchDB = () => {
 	// Set up the cache initialization Promise
 	isCacheInitialized = transactionsDB.allDocs({ include_docs: true })
 		.then(response => {
-			allTransactions = response.rows.map(row => row.doc);
+			allTransactions = response.rows.map(row => stringPool.intern(row.doc));
 			// console.log(`Transaction cache initialized with ${allTransactions.length} documents.`);
 		})
 		.catch(err => {
