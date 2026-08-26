@@ -110,15 +110,21 @@ describe('api 라우터', () => {
 			expect(requireAuth).toHaveBeenCalled();
 		});
 
-		// 우회 판정이 startsWith 라서 '/auth' · '/api/auth' 로 시작하는 모든 경로가
-		// 무인증이 된다. 지금은 그런 라우트가 없어 404 로 끝나지만, 나중에
-		// '/authorize' 같은 이름을 붙이면 인증 없이 열린다.
+		// 접두사만 같은 경로는 우회되면 안 된다. startsWith 로 판정하던 때는
+		// 아래 경로들이 모두 무인증이었다.
 		test.each([
 			['/authenticate'],
 			['/api/authorize'],
-			['/authXYZ']
-		])('%s 도 우회된다 (startsWith 프리픽스 매칭의 부작용)', async (path) => {
+			['/authXYZ'],
+			['/api/authorization/token'],
+			['/api/auths']
+		])('%s 는 우회되지 않는다 (접두사만 일치)', async (path) => {
 			await runAuthMiddleware(path);
+			expect(requireAuth).toHaveBeenCalled();
+		});
+
+		test('경로 세그먼트가 정확히 auth 일 때만 우회한다', async () => {
+			await runAuthMiddleware('/api/auth');
 			expect(requireAuth).not.toHaveBeenCalled();
 		});
 

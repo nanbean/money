@@ -17,8 +17,15 @@ const api = new Router();
 const auth = require('./auth');
 const stock = require('./stock');
 
+// 로그인/로그아웃은 세션이 없는 상태로 들어오므로 인증을 건너뛴다.
+// startsWith 로 판정하면 '/authenticate', '/api/authorize' 처럼 접두사만 같은 경로까지
+// 무인증이 된다. 지금은 그런 라우트가 없어 404 로 끝나지만, 나중에 '/authorize' 를
+// 추가하면 인증 없이 열린다. 그래서 'auth' 를 완전한 경로 세그먼트로만 인정한다.
+// (이 라우터는 /api 에 마운트되지만 과거 경로 호환을 위해 /auth 도 함께 허용한다.)
+const AUTH_PATH = /^\/(?:api\/)?auth(?:\/|$)/;
+
 api.use(async (ctx, next) => {
-	if (ctx.path.startsWith('/auth') || ctx.path.startsWith('/api/auth')) return next();
+	if (AUTH_PATH.test(ctx.path)) return next();
 	return requireAuth(ctx, next);
 });
 
