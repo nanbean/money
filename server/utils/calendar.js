@@ -190,4 +190,7 @@ exports.isUsHoliday = () => {
 if (process.env.NODE_ENV === 'test') {
 	exports.setHolidays = (newHolidays) => { holidays = newHolidays; };
 	exports.setUsHolidays = (newUsHolidays) => { usHolidays = newUsHolidays; };
+	// 휴일 생성 로직 자체를 검증하기 위한 test-only export.
+	exports.getKrxHolidays = getKrxHolidays;
+	exports.getNyseHolidays = getNyseHolidays;
 }
