@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -13,6 +13,7 @@ import moment from 'moment';
 
 import FilterMenu from '../../components/FilterMenu';
 import MonthlyExpenseGrid from './MonthlyExpenseGrid';
+import TransactionListDialog from '../../components/TransactionListDialog';
 import SortMenuButton from '../../components/SortMenuButton';
 import MonthlyComparisonChart from './MonthlyComparisonChart';
 
@@ -49,6 +50,8 @@ const MonthlyExpense = () => {
 		return filtersParam ? filtersParam.split(',') : [];
 	});
 	const [view, setView] = useState('grid');
+	// { startDate, endDate, category, kind } — 클릭한 셀. 팝업으로 내역을 보여준다.
+	const [drill, setDrill] = useState(null);
 
 	const reportView = filters.includes('category') ? 'category' : 'subcategory';
 	const usd = currency === 'USD';
@@ -62,6 +65,50 @@ const MonthlyExpense = () => {
 	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView, livingExpenseExempt);
 	const reportData = useMonthlyExpense(incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year);
 	const { sankeyData } = useSankeyData(incomeReport, expenseReport, totalIncomeSum, totalExpenseSum);
+
+	const accountCurrencyMap = useMemo(() => {
+		const map = {};
+		(accountList || []).forEach(a => { map[a._id] = a.currency || 'KRW'; });
+		return map;
+	}, [accountList]);
+
+	const drillTransactions = useMemo(() => {
+		if (!drill) return [];
+
+		// 그리드 행의 키는 reportView 에 따라 'category' 또는 'category:subcategory' 다.
+		// 서브카테고리 뷰에서 콜론이 없는 행은 서브카테고리가 없는 거래만 가리킨다.
+		const matchesCategory = (tx, key) => {
+			if (!key) return true;
+			if (key.includes(':')) {
+				const [parent, child] = key.split(':');
+				return tx.category === parent && tx.subcategory === child;
+			}
+			if (reportView === 'subcategory') return tx.category === key && !tx.subcategory;
+			return tx.category === key;
+		};
+
+		const pool = drill.kind === 'income' ? incomeTransactions
+			: drill.kind === 'expense' ? expenseTransactions
+				// 월 헤더처럼 kind 가 없는 셀은 수입·지출을 함께 보여준다.
+				: [...incomeTransactions, ...expenseTransactions];
+		return pool
+			.filter(tx => tx.date >= drill.startDate && tx.date <= drill.endDate)
+			.filter(tx => matchesCategory(tx, drill.category))
+			.sort((a, b) => b.date.localeCompare(a.date));
+	}, [drill, incomeTransactions, expenseTransactions, reportView]);
+
+	const drillTotal = useMemo(() => {
+		const rate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
+		return Math.round(drillTransactions.reduce((sum, tx) => {
+			const txCur = accountCurrencyMap[tx.accountId] || 'KRW';
+			if (txCur === currency) return sum + tx.amount;
+			return sum + (txCur === 'KRW' ? tx.amount / rate : tx.amount * rate);
+		}, 0));
+	}, [drillTransactions, accountCurrencyMap, currency, exchangeRate]);
+
+	const drillTitle = drill
+		? (drill.category || `${moment(drill.startDate).format('YYYY-MM')} 전체`)
+		: '';
 
 	const chartData = MONTH_LIST.map((_, index) => ({
 		month: moment().month(index).format('MMM'),
@@ -206,7 +253,7 @@ const MonthlyExpense = () => {
 					height: { xs: 600, md: 'auto' }
 				}}>
 					{view === 'grid' && reportData.length > 1 && (
-						<MonthlyExpenseGrid reportData={reportData} />
+						<MonthlyExpenseGrid reportData={reportData} onCellClick={setDrill} />
 					)}
 					{view === 'sankey' && (
 						<Box sx={{ height: '100%', minHeight: 480 }}>
@@ -220,6 +267,18 @@ const MonthlyExpense = () => {
 					)}
 				</Box>
 			</Box>
+
+			{/* 셀 드릴다운 — 페이지를 떠나지 않고 내역을 보여준다 (Spending 과 동일) */}
+			<TransactionListDialog
+				open={!!drill}
+				onClose={() => setDrill(null)}
+				title={drillTitle}
+				iconCategory={drill?.category ? drill.category.split(':')[0] : undefined}
+				transactions={drillTransactions}
+				accountCurrencyMap={accountCurrencyMap}
+				currency={currency}
+				total={drillTotal}
+			/>
 		</Stack>
 	);
 };

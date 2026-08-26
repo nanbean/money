@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
@@ -15,19 +14,9 @@ const FIRST_COL_WIDTH = 140;
 const OTHER_COL_MIN_WIDTH = 94;
 const ROW_HEIGHT = 45;
 
-const buildSearchPath = (item) => {
-	if (item.startDate && item.endDate && item.category) {
-		if (item.category.includes(':')) {
-			const [parent, child] = item.category.split(':');
-			return `/search?startDate=${item.startDate}&endDate=${item.endDate}&category=${encodeURIComponent(parent)}&subcategory=${encodeURIComponent(child)}`;
-		}
-		return `/search?startDate=${item.startDate}&endDate=${item.endDate}&category=${encodeURIComponent(item.category)}`;
-	}
-	if (item.startDate && item.endDate) {
-		return `/search?startDate=${item.startDate}&endDate=${item.endDate}`;
-	}
-	return null;
-};
+// 기간이 붙은 셀만 드릴다운할 수 있다. 카테고리는 없어도 되고(월 헤더),
+// 있으면 그 카테고리로 좁힌다.
+const isDrillable = (item) => !!(item.startDate && item.endDate);
 
 const renderCellContent = (item) => {
 	if (item.type === 'label') {
@@ -47,12 +36,12 @@ const renderCellContent = (item) => {
 /**
  * MonthlyExpense report grid.
  * - Categories on rows × months on columns.
- * - Cells carry { startDate, endDate, category } so clicking a row drills
- *   into the Search page filtered by that period and category.
+ * - Cells carry { startDate, endDate, category, kind } so clicking one drills
+ *   into that period and category. onCellClick opens a dialog in place — it
+ *   used to navigate to the Search page, which lost the report you were reading.
  * - cellColor=true marks emphasized rows (e.g., totals).
  */
-export function MonthlyExpenseGrid ({ reportData }) {
-	const navigate = useNavigate();
+export function MonthlyExpenseGrid ({ reportData, onCellClick }) {
 	const T = useT();
 	const { categoryColors = {} } = useSelector((state) => state.settings || {});
 
@@ -162,14 +151,14 @@ export function MonthlyExpenseGrid ({ reportData }) {
 					<tr>
 						{headerRow.map((item, colIdx) => {
 							const isFirstCol = colIdx === 0;
-							const path = buildSearchPath(item);
-							const handleClick = path ? () => navigate(path) : undefined;
+							const drillable = isDrillable(item);
+							const handleClick = drillable ? () => onCellClick(item) : undefined;
 							return (
 								<Box
 									component="th"
 									key={colIdx}
 									onClick={handleClick}
-									sx={cellSx({ item, isHeader: true, isFirstCol, clickable: !!path })}
+									sx={cellSx({ item, isHeader: true, isFirstCol, clickable: drillable })}
 								>
 									{renderCellContent(item)}
 								</Box>
@@ -182,8 +171,8 @@ export function MonthlyExpenseGrid ({ reportData }) {
 						<tr key={rowIdx}>
 							{row.map((item, colIdx) => {
 								const isFirstCol = colIdx === 0;
-								const path = buildSearchPath(item);
-								const handleClick = path ? () => navigate(path) : undefined;
+								const drillable = isDrillable(item);
+								const handleClick = drillable ? () => onCellClick(item) : undefined;
 								const renderedContent = isFirstCol && item.type === 'label'
 									? renderLabelWithDot(item)
 									: renderCellContent(item);
@@ -192,7 +181,7 @@ export function MonthlyExpenseGrid ({ reportData }) {
 										component="td"
 										key={colIdx}
 										onClick={handleClick}
-										sx={cellSx({ item, isHeader: false, isFirstCol, clickable: !!path })}
+										sx={cellSx({ item, isHeader: false, isFirstCol, clickable: drillable })}
 									>
 										{renderedContent}
 									</Box>
@@ -207,6 +196,7 @@ export function MonthlyExpenseGrid ({ reportData }) {
 }
 
 MonthlyExpenseGrid.propTypes = {
+	onCellClick: PropTypes.func.isRequired,
 	reportData: PropTypes.array.isRequired
 };
 

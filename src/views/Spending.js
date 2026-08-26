@@ -18,18 +18,13 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Collapse from '@mui/material/Collapse';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
-
-import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 import DesignPage from '../components/DesignPage';
 import SpendingHeatmap from '../components/SpendingHeatmap';
 import BankTransactionModal from '../components/BankTransactionModal';
+import TransactionListDialog from '../components/TransactionListDialog';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
 import { getCategoryColor } from '../utils/categoryColor';
 import { getCategoryIcon } from '../utils/categoryIcon';
@@ -986,94 +981,16 @@ function Spending () {
 			<BankTransactionModal transactions={uncategorizedTxs} />
 
 			{/* Category / Payee transactions dialog */}
-			<Dialog
+			<TransactionListDialog
 				open={!!txDialog}
 				onClose={() => setTxDialog(null)}
-				maxWidth="sm"
-				fullWidth
-				PaperProps={{
-					style: {
-						background: T.surf,
-						color: T.ink,
-						border: `1px solid ${T.rule}`,
-						borderRadius: 16,
-						backgroundImage: 'none'
-					}
-				}}
-			>
-				<DialogTitle sx={{ paddingY: 1.5 }}>
-					<Stack direction="row" alignItems="center" justifyContent="space-between">
-						<Stack direction="row" alignItems="center" spacing={1}>
-							{txDialog?.mode === 'category' && (
-								<Box sx={{ color: getCategoryColor(txDialog.key) || T.acc.hero, display: 'flex' }}>
-									{getCategoryIcon(txDialog.key, 20)}
-								</Box>
-							)}
-							{txDialog?.mode === 'payee' && dialogTopCat && (
-								<Box sx={{ color: getCategoryColor(dialogTopCat) || T.acc.hero, display: 'flex' }}>
-									{getCategoryIcon(dialogTopCat, 20)}
-								</Box>
-							)}
-							<Typography sx={{ ...sDisplay, fontSize: 16, fontWeight: 700, color: T.ink }}>
-								{txDialog?.mode === 'payee' ? (dialogTopCat || txDialog?.key) : txDialog?.key}
-							</Typography>
-							<Typography sx={{ fontSize: 12, color: T.ink2 }}>({dialogTxns.length})</Typography>
-						</Stack>
-						<Stack direction="row" alignItems="center" spacing={0.5}>
-							<Typography sx={{ ...sMono, fontSize: 14, fontWeight: 700, color: T.ink }}>
-								{fmtCurrencyFull(Math.round(dialogTxns.reduce((s, tx) => s + toDisplayAmount(tx), 0)), currency)}
-							</Typography>
-							<IconButton size="small" onClick={() => setTxDialog(null)} sx={{ color: T.ink2 }}>
-								<CloseIcon fontSize="small" />
-							</IconButton>
-						</Stack>
-					</Stack>
-				</DialogTitle>
-				<DialogContent sx={{ padding: 0, borderTop: `1px solid ${T.rule}` }}>
-					{dialogTxns.map(tx => {
-						const type = tx.accountId ? tx.accountId.split(':')[1] : null;
-						const TypeIcon = TYPE_ICON_MAP[type];
-						const txCur = accountCurrencyMap[tx.accountId] || 'KRW';
-						return (
-							<Box
-								key={tx._id}
-								sx={{
-									display: 'flex',
-									alignItems: 'center',
-									paddingX: 2,
-									paddingY: 1,
-									borderBottom: `1px solid ${T.rule}`,
-									'&:last-child': { borderBottom: 'none' }
-								}}
-							>
-								<Box sx={{ flex: 1, overflow: 'hidden' }}>
-									<Typography sx={{
-										fontSize: 13,
-										color: T.ink,
-										overflow: 'hidden',
-										textOverflow: 'ellipsis',
-										whiteSpace: 'nowrap'
-									}}>
-										{tx.payee || '(none)'}
-									</Typography>
-									<Stack direction="row" alignItems="center" spacing={0.5} sx={{ marginTop: '2px' }}>
-										{TypeIcon && <TypeIcon sx={{ fontSize: 12, color: T.ink3 }} />}
-										<Typography sx={{ fontSize: 11, color: T.ink3 }}>
-											{tx.account || tx.accountId?.split(':')[2] || ''}
-										</Typography>
-									</Stack>
-								</Box>
-								<Stack alignItems="flex-end" spacing={0}>
-									<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: T.neg }}>
-										{fmtCurrencyFull(tx.amount, txCur)}
-									</Typography>
-									<Typography sx={{ ...sMono, fontSize: 11, color: T.ink3 }}>{tx.date}</Typography>
-								</Stack>
-							</Box>
-						);
-					})}
-				</DialogContent>
-			</Dialog>
+				title={txDialog?.mode === 'payee' ? (dialogTopCat || txDialog?.key) : txDialog?.key}
+				iconCategory={txDialog?.mode === 'payee' ? dialogTopCat : txDialog?.key}
+				transactions={dialogTxns}
+				accountCurrencyMap={accountCurrencyMap}
+				currency={currency}
+				total={Math.round(dialogTxns.reduce((s, tx) => s + toDisplayAmount(tx), 0))}
+			/>
 		</DesignPage>
 	);
 }

@@ -40,13 +40,16 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 					{
 						value: i.category
 					},
+					// kind: 드릴다운 팝업이 수입/지출 중 어느 거래 목록에서 찾을지 판단한다.
 					...i.month.map((j, index) => ({
+						kind: 'income',
 						category: i.category,
 						value: j,
 						startDate: getStartDate(year, index + 1),
 						endDate: getEndDate(year, index + 1)
 					})),
 					{
+						kind: 'income',
 						category: i.category,
 						value: i.sum,
 						startDate: getStartDate(year, 1),
@@ -80,12 +83,14 @@ const useMonthlyExpense = (incomeReport, expenseReport, totalMonthIncomeSum, tot
 						value: i.category
 					},
 					...i.month.map((j, index) => ({
+						kind: 'expense',
 						category: i.category,
 						value: j,
 						startDate: getStartDate(year, index + 1),
 						endDate: getEndDate(year, index + 1)
 					})),
 					{
+						kind: 'expense',
 						category: i.category,
 						value: i.sum,
 						startDate: getStartDate(year, 1),

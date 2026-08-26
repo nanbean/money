@@ -1,11 +1,13 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+
+import TransactionListDialog from '../TransactionListDialog';
+import { flattenExpenseRows } from '../../utils/expense';
 
 const INTENSITY_COLORS = ['#ebedf0', '#c6e48b', '#7bc96f', '#239a3b', '#196127'];
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
@@ -14,13 +16,13 @@ const COLS = 13;
 const ROWS = 7;
 
 export default function SpendingHeatmap () {
-	const navigate = useNavigate();
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const accountList = useSelector((state) => state.accountList);
 	const { currency, exchangeRate } = useSelector((state) => state.settings);
 
 	const containerRef = useRef(null);
 	const [containerWidth, setContainerWidth] = useState(300);
+	const [dialogDate, setDialogDate] = useState(null);
 
 	useEffect(() => {
 		const el = containerRef.current;
@@ -37,31 +39,44 @@ export default function SpendingHeatmap () {
 	const TOP_LABEL_HEIGHT = fontSize + CELL_GAP * 4;
 	const dynSvgHeight = TOP_LABEL_HEIGHT + ROWS * cellStep;
 
-	const accountMap = useMemo(
-		() => new Map(accountList.map(a => [a._id, a])),
-		[accountList]
-	);
+	const accountCurrencyMap = useMemo(() => {
+		const map = {};
+		accountList.forEach(a => { map[a._id] = a.currency || 'KRW'; });
+		return map;
+	}, [accountList]);
+
+	const validExchangeRate = (typeof exchangeRate === 'number' && exchangeRate !== 0) ? exchangeRate : 1;
+
+	const toDisplayAmount = (tx) => {
+		const abs = Math.abs(tx.amount);
+		const txCurrency = accountCurrencyMap[tx.accountId] || 'KRW';
+		if (txCurrency === currency) return abs;
+		if (txCurrency === 'KRW') return abs / validExchangeRate;
+		return abs * validExchangeRate;
+	};
+
+	// 분할 거래를 펼쳐야 급여에서 원천 공제된 지출이 빠지지 않는다. 계좌 종류·부호·
+	// 계좌간 이체 판정은 Spending 과 같은 유틸을 쓴다 (같은 페이지에서 숫자가 어긋나면 안 된다).
+	const dailyRows = useMemo(() => {
+		const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
+		const byDate = {};
+		flattenExpenseRows(allAccountsTransactions)
+			.filter(t => t.date >= threeMonthsAgo)
+			.forEach(t => {
+				if (!byDate[t.date]) byDate[t.date] = [];
+				byDate[t.date].push(t);
+			});
+		return byDate;
+	}, [allAccountsTransactions]);
 
 	const heatmapData = useMemo(() => {
-		const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 		const dailyMap = {};
-
-		const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
-		allAccountsTransactions
-			.filter(t => t.date >= threeMonthsAgo && t.amount < 0 && !isInternalTransfer(t))
-			.forEach(t => {
-				const acc = accountMap.get(t.accountId);
-				let amount = Math.abs(t.amount);
-				if (acc && acc.currency !== currency) {
-					amount = currency === 'KRW'
-						? amount * exchangeRate
-						: amount / exchangeRate;
-				}
-				dailyMap[t.date] = (dailyMap[t.date] || 0) + amount;
-			});
-
+		Object.entries(dailyRows).forEach(([date, rows]) => {
+			dailyMap[date] = rows.reduce((sum, t) => sum + toDisplayAmount(t), 0);
+		});
 		return dailyMap;
-	}, [allAccountsTransactions, accountMap, currency, exchangeRate]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dailyRows, accountCurrencyMap, currency, validExchangeRate]);
 
 	const { p25, p50, p75 } = useMemo(() => {
 		const values = Object.values(heatmapData).filter(v => v > 0).sort((a, b) => a - b);
@@ -94,9 +109,13 @@ export default function SpendingHeatmap () {
 		return labels;
 	}, [startDate]);
 
-	const handleCellClick = (dateStr) => {
-		navigate(`/search?startDate=${dateStr}&endDate=${dateStr}`);
-	};
+	// 페이지를 떠나지 않고 그 날의 내역을 팝업으로 보여준다 (Spending 의 다른 드릴다운과 동일).
+	const handleCellClick = (dateStr) => setDialogDate(dateStr);
+
+	const dialogTransactions = useMemo(
+		() => [...(dailyRows[dialogDate] || [])].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)),
+		[dailyRows, dialogDate]
+	);
 
 	return (
 		<Box>
@@ -161,6 +180,16 @@ export default function SpendingHeatmap () {
 				))}
 				<Typography variant="caption" color="text.secondary">많음</Typography>
 			</Stack>
+
+			<TransactionListDialog
+				open={!!dialogDate}
+				onClose={() => setDialogDate(null)}
+				title={dialogDate || ''}
+				transactions={dialogTransactions}
+				accountCurrencyMap={accountCurrencyMap}
+				currency={currency}
+				total={Math.round(dialogTransactions.reduce((s, tx) => s + toDisplayAmount(tx), 0))}
+			/>
 		</Box>
 	);
 }
