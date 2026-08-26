@@ -9,12 +9,12 @@ import Typography from '@mui/material/Typography';
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
 import { NON_EXPENSE_CATEGORY } from '../../constants';
+import { flattenExpenseRows, isLivingExpenseExempt } from '../../utils/expense';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 // Match Spending page's monthly projection blend (src/views/Spending.js).
 const INFLATION_RATE = 1.025;
-const EXPENSE_TYPES = ['Bank', 'CCard', 'Cash'];
 
 export default function HomeCashFlow () {
 	const T = useT();
@@ -42,21 +42,19 @@ export default function HomeCashFlow () {
 		// Cash flow = every outflow this month (e.g. insurance, loan interest).
 		const exp = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + conv(t), 0);
 		// Living expense = budget-relevant outflows only. Mirrors Spending's
-		// isExpenseTx (livingExpenseOnly=true): expense-type accounts only,
-		// drop NON_EXPENSE_CATEGORY / uncategorized / internal transfers,
-		// and match livingExpenseExempt against `category:subcategory`.
+		// isExpenseTx (livingExpenseOnly=true): drop NON_EXPENSE_CATEGORY and
+		// uncategorized rows, and match livingExpenseExempt against
+		// `category:subcategory`. Account type, sign and internal transfers are
+		// already handled by flattenExpenseRows, which also splits division
+		// transactions so payroll-withheld outflows are not lost.
 		const isLivingExpense = (t) => {
-			if (!t.amount || t.amount >= 0) return false;
-			const type = t.accountId ? t.accountId.split(':')[1] : null;
-			if (!EXPENSE_TYPES.includes(type)) return false;
 			if (!t.category) return false;
 			if (t.category === NON_EXPENSE_CATEGORY) return false;
-			if (isInternalTransfer(t)) return false;
-			const fullCategory = t.subcategory ? `${t.category}:${t.subcategory}` : t.category;
-			if (livingExpenseExempt.some(e => fullCategory.startsWith(e))) return false;
+			if (isLivingExpenseExempt(t, livingExpenseExempt)) return false;
 			return true;
 		};
-		const livingExp = monthTxns.filter(isLivingExpense).reduce((s, t) => s + conv(t), 0);
+		const livingExp = flattenExpenseRows(monthTxns).filter(isLivingExpense)
+			.reduce((s, t) => s + conv(t), 0);
 
 		// Budget = month-end projection of living expense (matches Spending's
 		// per-month projection: blend current pace with last-year same-month
@@ -66,11 +64,12 @@ export default function HomeCashFlow () {
 		const daysInCurrentMonth = todayM.daysInMonth();
 		const lastYearMonthStart = todayM.clone().subtract(1, 'year').startOf('month').format('YYYY-MM-DD');
 		const lastYearMonthEnd = todayM.clone().subtract(1, 'year').endOf('month').format('YYYY-MM-DD');
-		const lastYearLivingExp = (allAccountsTransactions || []).filter(t =>
+		const lastYearMonthTxns = (allAccountsTransactions || []).filter(t =>
 			t.date >= lastYearMonthStart && t.date <= lastYearMonthEnd
 			&& !isInternalTransfer(t) && !isInvestmentTxn(t)
-			&& isLivingExpense(t)
-		).reduce((s, t) => s + conv(t), 0);
+		);
+		const lastYearLivingExp = flattenExpenseRows(lastYearMonthTxns).filter(isLivingExpense)
+			.reduce((s, t) => s + conv(t), 0);
 		const weight = days / daysInCurrentMonth;
 		const currentPace = days > 0 ? (livingExp / days) * daysInCurrentMonth : 0;
 		const historical = lastYearLivingExp * INFLATION_RATE;

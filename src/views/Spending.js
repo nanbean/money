@@ -36,9 +36,10 @@ import { getCategoryIcon } from '../utils/categoryIcon';
 import useT from '../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../utils/designTokens';
 import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
+import { EXPENSE_ACCOUNT_TYPES, flattenExpenseRows, isLivingExpenseExempt } from '../utils/expense';
 
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
-const EXPENSE_TYPES = ['Bank', 'CCard', 'Cash'];
+const EXPENSE_TYPES = EXPENSE_ACCOUNT_TYPES;
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const INFLATION_RATE = 1.025;
 
@@ -261,44 +262,47 @@ function Spending () {
 		return abs * validExchangeRate;
 	}, [accountCurrencyMap, currency, validExchangeRate]);
 
+	// 분할 거래를 하위 항목으로 펼친다. 이걸 하지 않으면 급여에서 원천 공제된
+	// 급식비·통신비·회비 같은 지출이 집계에서 빠진다 (Reports>Expense 는 예전부터
+	// 펼쳐서 계산했고, 그래서 같은 달 합계가 서로 달랐다).
+	const expenseRows = useMemo(
+		() => flattenExpenseRows(allAccountsTransactions),
+		[allAccountsTransactions]
+	);
+
+	// 금액 부호·계좌 종류·계좌간 이체는 flattenExpenseRows 가 이미 걸러냈다.
+	// 여기서는 이 화면에서만 쓰는 조건만 본다.
 	const isExpenseTx = useCallback((tx) => {
-		if (!tx.amount || tx.amount >= 0) return false;
-		const type = tx.accountId ? tx.accountId.split(':')[1] : null;
-		if (!EXPENSE_TYPES.includes(type)) return false;
 		if (!tx.category) return false;
 		if (tx.category === NON_EXPENSE_CATEGORY) return false;
-		if (tx.category.startsWith('[') && tx.category.endsWith(']')) return false;
-		if (livingExpenseOnly) {
-			const fullCategory = tx.subcategory ? `${tx.category}:${tx.subcategory}` : tx.category;
-			if (livingExpenseExempt.some(j => fullCategory.startsWith(j))) return false;
-		}
+		if (livingExpenseOnly && isLivingExpenseExempt(tx, livingExpenseExempt)) return false;
 		return true;
 	}, [livingExpenseOnly, livingExpenseExempt]);
 
 	const spendingTransactions = useMemo(() => {
 		const startMonthStr = getStartMonthStr(range);
-		return allAccountsTransactions.filter(tx => {
+		return expenseRows.filter(tx => {
 			if (!isExpenseTx(tx)) return false;
 			if (startMonthStr && tx.date.substring(0, 7) < startMonthStr) return false;
 			return true;
 		});
-	}, [allAccountsTransactions, range, isExpenseTx]);
+	}, [expenseRows, range, isExpenseTx]);
 
 	const currentYear = new Date().getFullYear();
 	const thisYearPrefix = `${currentYear}-`;
 	const lastYearPrefix = `${currentYear - 1}-`;
 
 	const lastYearTotal = useMemo(() => {
-		return allAccountsTransactions
+		return expenseRows
 			.filter(tx => isExpenseTx(tx) && tx.date.startsWith(lastYearPrefix))
 			.reduce((sum, tx) => sum + toDisplayAmount(tx), 0);
-	}, [allAccountsTransactions, isExpenseTx, toDisplayAmount, lastYearPrefix]);
+	}, [expenseRows, isExpenseTx, toDisplayAmount, lastYearPrefix]);
 
 	const ytdTotal = useMemo(() => {
-		return allAccountsTransactions
+		return expenseRows
 			.filter(tx => isExpenseTx(tx) && tx.date.startsWith(thisYearPrefix))
 			.reduce((sum, tx) => sum + toDisplayAmount(tx), 0);
-	}, [allAccountsTransactions, isExpenseTx, toDisplayAmount, thisYearPrefix]);
+	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix]);
 
 	const annualMonthlyData = useMemo(() => {
 		const today = new Date();
@@ -308,7 +312,7 @@ function Spending () {
 
 		const thisYearMonthly = {};
 		const lastYearMonthly = {};
-		allAccountsTransactions.forEach(tx => {
+		expenseRows.forEach(tx => {
 			if (!isExpenseTx(tx)) return;
 			const m = parseInt(tx.date.substring(5, 7)) - 1;
 			if (tx.date.startsWith(thisYearPrefix)) {
@@ -332,7 +336,7 @@ function Spending () {
 			}
 			return { month: label, lastYear, actual, projected };
 		});
-	}, [allAccountsTransactions, isExpenseTx, toDisplayAmount, thisYearPrefix, lastYearPrefix, currentYear]);
+	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix, lastYearPrefix, currentYear]);
 
 	const projectedAnnual = useMemo(() => {
 		return Math.round(annualMonthlyData.reduce((sum, d) => sum + d.actual + d.projected, 0));
