@@ -12,75 +12,67 @@ const lunarToSolar = (lunarYear, lunarMonth, lunarDay) => {
 	);
 };
 
-// 한국 대체공휴일: 토 → 다음 월, 일 → 다음 월
-const krSubstitute = (d) => {
-	const day = d.day();
-	if (day === 0) return d.clone().add(1, 'day');
-	if (day === 6) return d.clone().add(2, 'days');
-	return null;
-};
+const SUNDAY = 0;
+const SATURDAY = 6;
 
+// 관공서의 공휴일에 관한 규정 제3조. 대체공휴일 규칙이 공휴일마다 다르다.
+//   - 신정·현충일: 대체공휴일 대상이 아니다 (규정 목록에 없음)
+//   - 삼일절·부처님오신날·광복절·개천절·한글날·기독탄신일: 토·일과 겹치면 생긴다
+//   - 어린이날: 토·일 또는 다른 공휴일과 겹치면 생긴다
+//   - 설날·추석 연휴: 일요일 또는 다른 공휴일과 겹친 일수만큼 생긴다
+//
+// 대체공휴일은 '그 공휴일 다음의 첫 번째 비공휴일'이다. 일요일 자체가 공휴일이라
+// 건너뛰고, 토요일은 공휴일이 아니지만 토요일 공휴일의 다음날은 항상 일요일이므로
+// 결과적으로 월요일로 밀린다.
 const getKrxHolidays = (year) => {
-	const dates = new Set();
-	const add = (d) => dates.add(d.format('YYYY-MM-DD'));
-	const addWithSubstitute = (d) => {
-		add(d);
-		const sub = krSubstitute(d);
-		if (sub) add(sub);
+	const fmt = (d) => d.format('YYYY-MM-DD');
+	const seoul = (monthDay) => moment.tz(`${year}-${monthDay}`, 'Asia/Seoul');
+	const consecutive3 = (center) => [-1, 0, 1].map(offset => center.clone().add(offset, 'day'));
+
+	const buddha = lunarToSolar(year, 4, 8);
+	const childrensDay = seoul('05-05');
+	const seollalDays = consecutive3(lunarToSolar(year, 1, 1));
+	const chuseokDays = consecutive3(lunarToSolar(year, 8, 15));
+
+	const noSubstitute = [seoul('01-01'), seoul('06-06')];
+	const weekendSubstitute = [
+		seoul('03-01'), buddha, seoul('08-15'), seoul('10-03'), seoul('10-09'), seoul('12-25')
+	];
+
+	// 1단계: 대체공휴일을 붙이기 전의 공휴일 집합.
+	const holidays = new Set(
+		[...noSubstitute, ...weekendSubstitute, childrensDay, ...seollalDays, ...chuseokDays].map(fmt)
+	);
+
+	// 2단계: 대체공휴일. 이미 잡힌 공휴일 위에 겹치지 않도록 순차로 채운다.
+	const addSubstituteAfter = (day) => {
+		const cursor = day.clone();
+		do {
+			cursor.add(1, 'day');
+		} while (cursor.day() === SUNDAY || holidays.has(fmt(cursor)));
+		holidays.add(fmt(cursor));
+		return cursor;
 	};
+	const isWeekend = (d) => d.day() === SUNDAY || d.day() === SATURDAY;
 
-	// 신정
-	addWithSubstitute(moment.tz(`${year}-01-01`, 'Asia/Seoul'));
+	weekendSubstitute.filter(isWeekend).forEach(addSubstituteAfter);
 
-	// 설날 (음력 1/1 전후 3일)
-	const seollal = lunarToSolar(year, 1, 1);
-	const seollalDays = [seollal.clone().subtract(1, 'day'), seollal.clone(), seollal.clone().add(1, 'day')];
-	seollalDays.forEach(d => add(d));
-	// 설날 연휴 중 일요일 겹치면 대체공휴일
-	seollalDays.forEach(d => { if (d.day() === 0) add(d.clone().add(1, 'day')); });
-	// 다른 공휴일과 겹치는 경우(신정 등) 추가 대체
-	seollalDays.forEach(d => {
-		if (d.format('MM-DD') === '01-01') add(seollal.clone().add(2, 'days'));
-	});
-
-	// 3·1절
-	addWithSubstitute(moment.tz(`${year}-03-01`, 'Asia/Seoul'));
-
-	// 어린이날
-	addWithSubstitute(moment.tz(`${year}-05-05`, 'Asia/Seoul'));
-
-	// 부처님오신날 (음력 4/8)
-	addWithSubstitute(lunarToSolar(year, 4, 8));
-
-	// 현충일 (2021년부터 대체공휴일)
-	addWithSubstitute(moment.tz(`${year}-06-06`, 'Asia/Seoul'));
-
-	// 광복절
-	addWithSubstitute(moment.tz(`${year}-08-15`, 'Asia/Seoul'));
-
-	// 추석 (음력 8/15 전후 3일)
-	const chuseok = lunarToSolar(year, 8, 15);
-	const chuseokDays = [chuseok.clone().subtract(1, 'day'), chuseok.clone(), chuseok.clone().add(1, 'day')];
-	chuseokDays.forEach(d => add(d));
-	// 추석 연휴 중 일요일 또는 개천절(10/3) 겹치면 대체공휴일
-	let chuseokSubNeeded = 0;
-	chuseokDays.forEach(d => {
-		if (d.day() === 0 || d.format('MM-DD') === '10-03') chuseokSubNeeded++;
-	});
-	for (let i = 1; i <= chuseokSubNeeded; i++) {
-		add(chuseok.clone().add(1 + i, 'days'));
+	// 어린이날은 다른 공휴일과 겹칠 때도 대체공휴일이 생긴다
+	// (예: 2025년은 부처님오신날과 같은 날이라 5/6 이 대체공휴일).
+	const otherFixed = [...noSubstitute, ...weekendSubstitute].map(fmt);
+	if (isWeekend(childrensDay) || otherFixed.includes(fmt(childrensDay))) {
+		addSubstituteAfter(childrensDay);
 	}
 
-	// 개천절
-	addWithSubstitute(moment.tz(`${year}-10-03`, 'Asia/Seoul'));
+	// 설날·추석 연휴는 일요일 또는 다른 공휴일과 겹친 일수만큼 뒤로 붙는다.
+	const otherThanLunar = new Set([...otherFixed, fmt(childrensDay)]);
+	for (const holidayRun of [seollalDays, chuseokDays]) {
+		const clashes = holidayRun.filter(d => d.day() === SUNDAY || otherThanLunar.has(fmt(d))).length;
+		let cursor = holidayRun[holidayRun.length - 1];
+		for (let i = 0; i < clashes; i++) cursor = addSubstituteAfter(cursor);
+	}
 
-	// 한글날
-	addWithSubstitute(moment.tz(`${year}-10-09`, 'Asia/Seoul'));
-
-	// 크리스마스
-	addWithSubstitute(moment.tz(`${year}-12-25`, 'Asia/Seoul'));
-
-	return [...dates].sort();
+	return [...holidays].sort();
 };
 
 let holidays = [];
@@ -138,7 +130,7 @@ const getNyseHolidays = (year) => {
 		observed(moment.tz(`${year}-07-04`, 'America/New_York')),   // Independence Day
 		nthWeekday(year, 9, 1, 1),                                  // Labor Day (1st Mon Sep)
 		nthWeekday(year, 11, 4, 4),                                 // Thanksgiving (4th Thu Nov)
-		observed(moment.tz(`${year}-12-25`, 'America/New_York')),   // Christmas
+		observed(moment.tz(`${year}-12-25`, 'America/New_York'))    // Christmas
 	];
 	// Juneteenth (2022년부터)
 	if (year >= 2022) {

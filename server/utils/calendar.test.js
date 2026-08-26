@@ -225,23 +225,63 @@ describe('getKrxHolidays', () => {
 		expect(list).not.toContain('2027-03-02');
 	});
 
-	// ── 아래 2건은 현행 구현이 관공서 공휴일 규정과 어긋나 보이는 지점이다.
-	//    확인 후 구현을 고치고 skip 을 해제할 것. 지금 통과하도록 단언을 뒤집으면
-	//    잘못된 동작을 정답으로 굳히게 되므로 skip 으로 남긴다.
-
-	// 규정 제3조의 대체공휴일 대상은 삼일절·어린이날·부처님오신날·광복절·개천절·
-	// 한글날·기독탄신일·설날·추석이다. 현충일은 목록에 없어 대체공휴일이 없다.
-	// 그런데 구현은 addWithSubstitute 를 써서 2026-06-08, 2027-06-07 을 만든다.
-	test.skip('현충일에는 대체공휴일이 없어야 한다', () => {
-		expect(getKrxHolidays(2026)).not.toContain('2026-06-08'); // 06-06 토
-		expect(getKrxHolidays(2027)).not.toContain('2027-06-07'); // 06-06 일
+	// 규정 제3조의 대체공휴일 대상에 신정과 현충일은 없다.
+	test('신정과 현충일에는 대체공휴일이 없다', () => {
+		expect(getKrxHolidays(2026)).not.toContain('2026-06-08'); // 현충일 06-06 토
+		expect(getKrxHolidays(2027)).not.toContain('2027-06-07'); // 현충일 06-06 일
+		expect(isWeekend('2028-01-01')).toBe(true);               // 신정이 토요일
+		expect(getKrxHolidays(2028)).not.toContain('2028-01-03');
 	});
 
-	// 2027 설날 연휴는 02-06(토)·02-07(일)·02-08(월)이고 일요일이 겹치므로
-	// 대체공휴일 1일이 붙어야 한다. 구현은 '일요일 + 1일'을 더하는데 그 날짜가
-	// 이미 연휴(02-08)라서 Set 에서 흡수되고 대체공휴일이 사라진다.
-	// 실제로는 연휴 다음 평일인 02-09 가 되어야 한다.
-	test.skip('설날 연휴가 주말과 겹치면 연휴 다음 평일이 대체공휴일이 된다', () => {
-		expect(getKrxHolidays(2027)).toContain('2027-02-09');
+	describe('설날·추석 연휴 대체공휴일', () => {
+		// 연휴가 일요일과 겹치면 연휴 다음 첫 비공휴일이 대체공휴일이 된다.
+		test.each([
+			['2024 설날 (금·토·일)', 2024, '2024-02-12'],
+			['2025 추석 (일·월·화)', 2025, '2025-10-08'],
+			['2027 설날 (토·일·월)', 2027, '2027-02-09']
+		])('%s → %s', (_label, year, substitute) => {
+			expect(getKrxHolidays(year)).toContain(substitute);
+		});
+
+		// 토요일은 공휴일이 아니라서 설날·추석 연휴에는 대체공휴일을 만들지 않는다
+		// (어린이날 등 제3조 목록과 다른 점).
+		test('연휴가 토요일과만 겹치면 대체공휴일이 없다', () => {
+			const list = getKrxHolidays(2026);
+			// 2026 추석 연휴 = 09-24(목)·09-25(금)·09-26(토)
+			expect(isWeekend('2026-09-26')).toBe(true);
+			expect(dayOf('2026-09-26')).toBe(6);
+			expect(list).not.toContain('2026-09-28');
+		});
+
+		test('연휴가 다른 공휴일과 겹치면 대체공휴일이 생긴다', () => {
+			// 2028 추석 연휴 = 10-02·10-03·10-04 이고 10-03 은 개천절이다
+			const list = getKrxHolidays(2028);
+			expect(list).toContain('2028-10-03');
+			expect(list).toContain('2028-10-05');
+		});
+	});
+
+	// 어린이날은 토·일 외에 '다른 공휴일과 겹치는 경우'에도 대체공휴일이 생긴다.
+	test('어린이날이 부처님오신날과 겹치면 대체공휴일이 생긴다', () => {
+		// 2025-05-05 는 어린이날이면서 부처님오신날(음력 4/8)이다
+		const list = getKrxHolidays(2025);
+		expect(list).toContain('2025-05-05');
+		expect(dayOf('2025-05-05')).toBe(1); // 월요일 — 주말 규칙으로는 안 생긴다
+		expect(list).toContain('2025-05-06');
+	});
+
+	// 대체공휴일은 '그 다음의 첫 번째 비공휴일'을 찾아 들어간다. 후보를 찾는 루프가
+	// 끝나지 않거나 이미 공휴일인 날 위에 겹치면 여기서 드러난다.
+	// (기저 공휴일 자체는 일요일일 수 있으므로 요일은 단언하지 않는다.)
+	test('넓은 연도 범위에서 중복 없이 종료된다', () => {
+		for (let year = 2020; year <= 2035; year++) {
+			const list = getKrxHolidays(year);
+			expect(new Set(list).size).toBe(list.length);
+			expect(list).toEqual([...list].sort());
+			// 신정·설날 3일·삼일절·어린이날·부처님오신날·현충일·광복절·추석 3일·
+			// 개천절·한글날·크리스마스 = 최소 14일
+			expect(list.length).toBeGreaterThanOrEqual(14);
+			list.forEach(d => expect(d.startsWith(String(year))).toBe(true));
+		}
 	});
 });
