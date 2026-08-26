@@ -309,6 +309,53 @@ describe('getWeeklyRecap', () => {
 			expect((await getWeeklyRecap()).spent).toBe(1000);
 		});
 
+		// 부모 amount 는 하위 합계(순액)다. 부모만 세면 급여에서 원천 공제된 지출이
+		// 통째로 빠지고 수입도 순액이 된다. saved 만 우연히 맞고 spent/topCategory 가
+		// 어긋났던 문제.
+		test('급여 분할의 공제 지출을 집계에 포함한다', async () => {
+			accountDB.listAccounts.mockResolvedValue([{ _id: 'acc1', currency: 'KRW', type: 'Bank' }]);
+			transactionDB.getAllTransactions.mockResolvedValue([{
+				date: inWeek,
+				accountId: 'acc1',
+				category: '월급&보너스',
+				amount: 4085150, // = 하위 합계
+				division: [
+					{ category: '월급&보너스', subcategory: '월급', description: '월급', amount: 5415960 },
+					{ category: '월급&보너스', subcategory: '기타', description: '수당', amount: 986260 },
+					{ category: '세금', subcategory: '소득세', description: '소득세', amount: -2000000 },
+					{ category: '식비', subcategory: '외식', description: '급식비', amount: -300000 },
+					{ category: '회비', description: '공제회비', amount: -17070 }
+				]
+			}]);
+
+			const r = await getWeeklyRecap();
+
+			// 공제분이 지출로 잡힌다 (예전에는 0)
+			expect(r.spent).toBe(2317070);
+			// 순액은 부모 금액과 같아야 한다
+			expect(r.saved).toBe(4085150);
+			// 최상위 지출 카테고리가 드러난다 (예전에는 null)
+			expect(r.topCategory).toEqual({ name: '세금', value: 2000000, pct: 86 });
+		});
+
+		test('분할 부모 금액을 이중으로 세지 않는다', async () => {
+			accountDB.listAccounts.mockResolvedValue([{ _id: 'acc1', currency: 'KRW', type: 'Bank' }]);
+			transactionDB.getAllTransactions.mockResolvedValue([{
+				date: inWeek,
+				accountId: 'acc1',
+				category: '식비',
+				amount: -50000,
+				division: [
+					{ category: '식비', subcategory: '외식', description: '점심', amount: -30000 },
+					{ category: '식비', subcategory: '장보기', description: '마트', amount: -20000 }
+				]
+			}]);
+
+			const r = await getWeeklyRecap();
+
+			expect(r.spent).toBe(50000); // 100,000 이면 이중 계산
+		});
+
 		test('지출이 없으면 topCategory 는 null', async () => {
 			expect((await getWeeklyRecap()).topCategory).toBeNull();
 		});

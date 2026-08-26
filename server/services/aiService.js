@@ -6,6 +6,7 @@ const accountDB = require('../db/accountDB');
 const stockDB = require('../db/stockDB');
 const { singleFlight } = require('../utils/singleFlight');
 const { retryWithBackoff } = require('../utils/retry');
+const { flattenSplitTransactions } = require('../utils/transactionSplit');
 const { getExchangeRate } = require('./settingService');
 const { getKisToken, getKisWeeklyPriceUS, getKisWeeklyPriceKorea } = require('./kisConnector');
 
@@ -133,15 +134,21 @@ const _getWeeklyRecap = async ({ dry = false, retryOptions = {} } = {}) => {
 			&& !(t.category && t.category.startsWith('[') && t.category.endsWith(']')))
 		.sort((a, b) => b.date.localeCompare(a.date));
 
+	// 금액 집계는 분할 거래를 하위 항목으로 펼친 뒤에 한다. 부모 amount 가 하위 합계
+	// (순액)라서 부모만 세면 급여에서 원천 공제된 지출이 통째로 빠지고 수입도 순액이
+	// 된다. saved 는 순액이라 결과가 같지만 spent 와 topCategory 가 어긋난다.
+	// (프롬프트의 '주요 거래 내역'은 서술이 읽히도록 부모 단위를 그대로 쓴다.)
+	const weeklyRows = flattenSplitTransactions(weeklyTransactions);
+
 	// NON_INCOME_CATEGORY('실제수입아님'): 차량 매각 등 자산→현금 유입은 실제 수입이
 	// 아니므로 income/saved 집계에서 제외 (client FinancialHealthScore와 동일 취지)
-	const incomeTotal = weeklyTransactions.filter(t => t.amount > 0 && t.category !== '실제수입아님').reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
-	const expenseTotal = weeklyTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
+	const incomeTotal = weeklyRows.filter(t => t.amount > 0 && t.category !== '실제수입아님').reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
+	const expenseTotal = weeklyRows.filter(t => t.amount < 0).reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
 
 	// Pre-computed metrics for client (Spent / Saved / Top category)
 	const spent = Math.abs(expenseTotal);
 	const saved = incomeTotal + expenseTotal; // expenseTotal is negative
-	const expenseByCategory = weeklyTransactions
+	const expenseByCategory = weeklyRows
 		.filter(t => t.amount < 0)
 		.reduce((map, t) => {
 			const key = (t.category || 'Other').split(':')[0];
