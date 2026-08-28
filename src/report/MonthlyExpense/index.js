@@ -12,12 +12,13 @@ import MenuItem from '@mui/material/MenuItem';
 import moment from 'moment';
 
 import FilterMenu from '../../components/FilterMenu';
-import MonthlyExpenseGrid from './MonthlyExpenseGrid';
+import MonthlyExpenseGrid, { FIRST_COL_WIDTH, VALUE_COLUMN_COUNT } from './MonthlyExpenseGrid';
 import TransactionListDialog from '../../components/TransactionListDialog';
 import SortMenuButton from '../../components/SortMenuButton';
 import MonthlyComparisonChart from './MonthlyComparisonChart';
 
 import useMonthlyExpense from './useMonthlyExpense';
+import withParentTotals from './withParentTotals';
 import useTransactions from './useTransactions';
 import useIncomeReport from './useIncomeReport';
 import useExpenseReport from './useExpenseReport';
@@ -63,7 +64,11 @@ const MonthlyExpense = () => {
 	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
 	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate, reportView);
 	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView, livingExpenseExempt);
-	const reportData = useMonthlyExpense(incomeReport, expenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year);
+	// 합계 행은 그리드에만 넣는다. 리포트 배열을 그대로 늘리면 totalIncomeSum /
+	// totalExpenseSum 과 Sankey 가 같은 금액을 두 번 세게 된다.
+	const gridIncomeReport = useMemo(() => withParentTotals(incomeReport, reportView), [incomeReport, reportView]);
+	const gridExpenseReport = useMemo(() => withParentTotals(expenseReport, reportView), [expenseReport, reportView]);
+	const reportData = useMonthlyExpense(gridIncomeReport, gridExpenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year);
 	const { sankeyData } = useSankeyData(incomeReport, expenseReport, totalIncomeSum, totalExpenseSum);
 
 	const accountCurrencyMap = useMemo(() => {
@@ -77,12 +82,14 @@ const MonthlyExpense = () => {
 
 		// 그리드 행의 키는 reportView 에 따라 'category' 또는 'category:subcategory' 다.
 		// 서브카테고리 뷰에서 콜론이 없는 행은 서브카테고리가 없는 거래만 가리킨다.
+		// 단, 상위 카테고리 합계 행은 서브카테고리 전체를 포함해야 한다.
 		const matchesCategory = (tx, key) => {
 			if (!key) return true;
 			if (key.includes(':')) {
 				const [parent, child] = key.split(':');
 				return tx.category === parent && tx.subcategory === child;
 			}
+			if (drill.isParentTotal) return tx.category === key;
 			if (reportView === 'subcategory') return tx.category === key && !tx.subcategory;
 			return tx.category === key;
 		};
@@ -179,8 +186,10 @@ const MonthlyExpense = () => {
 			}}
 		>
 			{/* Top controls + chart panel */}
-			<Box sx={panelSx}>
-				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1, marginBottom: 1.5 }}>
+			{/* 좌우 패딩을 패널에서 빼고 내부 행에 준다. 그래야 차트 래퍼의 100% 가
+				아래 표와 같은 폭(패널 content width)을 가리켜 정렬 계산이 맞는다. */}
+			<Box sx={{ ...panelSx, padding: { xs: '14px 0', md: '18px 0' } }}>
+				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1, marginBottom: 1.5, paddingX: { xs: '14px', md: '18px' } }}>
 					<Stack direction="row" alignItems="center" spacing={1.5}>
 						<Typography sx={lab}>Year</Typography>
 						<FormControl size="small" sx={yearSelectSx}>
@@ -216,7 +225,16 @@ const MonthlyExpense = () => {
 						/>
 					</Stack>
 				</Stack>
-				<MonthlyComparisonChart chartData={chartData} />
+				{/* 차트 월 위치를 아래 표의 월 열과 맞춘다.
+					왼쪽: 표의 첫 열(Category) 폭만큼 비운다.
+					오른쪽: Total 열 폭 = (전체 - 첫 열) / 13 만큼 비운다.
+					모바일은 표가 가로 스크롤이라 정렬이 불가능해 일반 패딩을 쓴다. */}
+				<Box sx={{
+					paddingLeft: { xs: '14px', md: `${FIRST_COL_WIDTH}px` },
+					paddingRight: { xs: '14px', md: `calc((100% - ${FIRST_COL_WIDTH}px) / ${VALUE_COLUMN_COUNT})` }
+				}}>
+					<MonthlyComparisonChart chartData={chartData} />
+				</Box>
 			</Box>
 
 			{/* Grid / Sankey panel — fills remaining vertical space */}
