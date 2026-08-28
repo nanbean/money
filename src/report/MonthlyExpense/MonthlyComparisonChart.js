@@ -58,7 +58,9 @@ const MonthlyComparisonChart = ({ chartData }) => {
 
 	return (
 		<ResponsiveContainer width="100%" height="15%" minHeight={80} maxHeight={100}>
-			<ComposedChart data={dataWithCurrency} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
+			{/* 좌우 마진 0 — 정렬은 감싸는 Box 의 패딩이 담당한다. 마진을 px 로 주면
+				화면 폭이 바뀔 때마다 표의 월 열과 어긋난다 (표는 열 폭이 유동). */}
+			<ComposedChart data={dataWithCurrency} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
 				<XAxis dataKey="month" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
 				<Tooltip content={<CustomTooltip />} />
 				<Bar dataKey="income" fill={isDarkMode ? POSITIVE_AMOUNT_DARK_COLOR : POSITIVE_AMOUNT_LIGHT_COLOR} name="Income" radius={[4, 4, 0, 0]} />

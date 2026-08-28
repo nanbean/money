@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 
 import { toCurrencyFormat, toCurrencyFormatWithSymbol } from '../utils/formatting';
+import { fmtCurrency } from '../utils/designTokens';
 
 import	{
 	POSITIVE_AMOUNT_DARK_COLOR,
@@ -14,6 +15,9 @@ import	{
 } from '../constants';
 
 function Amount ({
+	// 만/억 단위로 줄여서 표시한다 (₩1,475만, ₩1.47억). 열이 좁은 표에서 쓴다.
+	// 홈·Spending 화면이 이미 같은 포맷(fmtCurrency)을 쓴다.
+	compact = false,
 	currency = 'KRW',
 	ignoreDisplayCurrency = false,
 	negativeColor = false,
@@ -44,7 +48,10 @@ function Amount ({
 	let amountText;
 	const currencyForDisplaySymbol = ignoreDisplayCurrency ? currency : displayCurrency;
 
-	if (showSymbol) {
+	if (compact) {
+		// fmtCurrency 는 0 도 '₩0' 로 내므로 빈 셀과 구분된다.
+		amountText = fmtCurrency(displayValue, currencyForDisplaySymbol);
+	} else if (showSymbol) {
 		amountText = toCurrencyFormatWithSymbol(displayValue, currencyForDisplaySymbol);
 		if (showOriginal && displayValue !== value) {
 			amountText += ` (${toCurrencyFormatWithSymbol(value, currency)})`;
@@ -78,6 +85,7 @@ function Amount ({
 }
 
 Amount.propTypes = {
+	compact: PropTypes.bool,
 	currency: PropTypes.string,
 	ignoreDisplayCurrency: PropTypes.bool,
 	negativeColor: PropTypes.bool,
