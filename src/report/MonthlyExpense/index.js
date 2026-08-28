@@ -63,13 +63,13 @@ const MonthlyExpense = () => {
 
 	const { incomeTransactions, expenseTransactions } = useTransactions(allAccountsTransactions, livingExpenseCardOnly, boAOnly);
 	const { incomeReport, totalMonthIncomeSum, totalIncomeSum } = useIncomeReport(accountList, incomeTransactions, year, usd, exchangeRate, reportView);
-	const { expenseReport, totalMonthExpenseSum, totalExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView, livingExpenseExempt);
+	const { expenseReport, totalMonthExpenseSum, totalExpenseSum, exemptExpenseSum } = useExpenseReport(accountList, expenseTransactions, year, livingExpenseOnly, usd, exchangeRate, reportView, livingExpenseExempt);
 	// 합계 행은 그리드에만 넣는다. 리포트 배열을 그대로 늘리면 totalIncomeSum /
 	// totalExpenseSum 과 Sankey 가 같은 금액을 두 번 세게 된다.
 	const gridIncomeReport = useMemo(() => withParentTotals(incomeReport, reportView), [incomeReport, reportView]);
 	const gridExpenseReport = useMemo(() => withParentTotals(expenseReport, reportView), [expenseReport, reportView]);
 	const reportData = useMonthlyExpense(gridIncomeReport, gridExpenseReport, totalMonthIncomeSum, totalIncomeSum, totalMonthExpenseSum, totalExpenseSum, year);
-	const { sankeyData } = useSankeyData(incomeReport, expenseReport, totalIncomeSum, totalExpenseSum);
+	const { sankeyData } = useSankeyData(incomeReport, expenseReport, totalIncomeSum, totalExpenseSum, exemptExpenseSum);
 
 	const accountCurrencyMap = useMemo(() => {
 		const map = {};

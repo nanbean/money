@@ -10,6 +10,9 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 	let expenseReport = [];
 	let totalMonthExpenseSum = [];
 	let totalExpenseSum = 0;
+	// livingExpenseOnly 로 걸러낸 '생활비 외 지출'(세금·보험·대출이자 등) 총액.
+	// 화면에서 뺐다고 그 돈이 저축된 것은 아니므로 Sankey 가 별도 흐름으로 그린다.
+	let exemptExpenseSum = 0;
 
 	const isUsdAccount = (account) => {
 		const accountItem = accountList.find(i => i.name === account);
@@ -37,6 +40,13 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 	const scopedTransactions = livingExpenseOnly
 		? expenseTransactions.filter(i => !isLivingExpenseExempt(i, livingExpenseExempt))
 		: expenseTransactions;
+
+	if (livingExpenseOnly) {
+		exemptExpenseSum = expenseTransactions
+			.filter(i => isLivingExpenseExempt(i, livingExpenseExempt))
+			.filter(i => i.date >= startDate && i.date <= endDate)
+			.reduce((sum, i) => sum + (isUsdAccount(i.account) ? (i.amount * exchangeRate) : i.amount), 0);
+	}
 
 	if (scopedTransactions.length > 0) {
 		const groupedExpenseData = _
@@ -77,7 +87,7 @@ const useExpenseReport = (accountList, expenseTransactions, year, livingExpenseO
 		}
 	}
     
-	return { expenseReport, totalMonthExpenseSum, totalExpenseSum };
+	return { expenseReport, totalMonthExpenseSum, totalExpenseSum, exemptExpenseSum };
 };
 
 export default useExpenseReport;
