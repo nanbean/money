@@ -193,26 +193,37 @@ async function getTossKrPreviousClose (symbol) {
 	return (upper + lower) / 2;
 }
 
-// 미국 종목의 전일 종가. 미국장은 NXT 같은 별도 세션 이슈가 없어 일봉 종가가
-// KIS 등락률과 소수점 둘째 자리까지 일치한다. 장중에는 당일 봉이 섞여 오므로
-// 당일 봉을 제외하고 가장 최근 봉의 종가를 쓴다.
+// 미국 종목의 직전 세션 종가. 미국장은 NXT 같은 별도 세션 이슈가 없어 일봉 종가가
+// KIS 등락률과 소수점 둘째 자리까지 일치한다.
 //
-// 세션 날짜는 반드시 America/New_York 로 판정한다. 토스는 미국 일봉을 KST 13:00 으로
-// 스탬프하는데(예: 08-25 세션 → 2026-08-25T13:00:00+09:00), 이걸 America/Los_Angeles
-// 로 변환하면 08-24 21:00 이 되어 하루 밀린다. 그 상태로 '오늘 봉'을 걸러내면 당일 봉이
-// 안 걸러지고 당일 종가가 전일 종가로 들어와, 등락률이 '전일대비'가 아니라 '당일 종가
-// 대비 장외 변동'(≈0%)이 된다. ET 로 보면 08-25 00:00 이라 세션 날짜와 정확히 맞는다.
+// 현재 세션을 달력 날짜로 판정하지 않고 봉에서 읽는다. 토스는 야간 세션(20:00 ET 이후)
+// 을 다음 거래일로 집계하기 때문이다 — 실측: ET 2026-08-27 21:28 에 lastPrice(354.55)
+// 가 08-28 봉과 정확히 일치했다. 달력 날짜(08-27)로 '오늘 봉'을 걸러내면 08-26 종가를
+// 집어, 등락률에 08-27 정규장 전체(+2.60%)가 섞여 정규장 값에 붙어버린다.
+//
+// 가장 최신 봉이 진행 중인 세션이고, 그 직전 봉의 종가가 기준이 된다. 시간대 상수를
+// 두지 않으므로 주말·휴장일에도 맞는다(토요일이면 금요일 봉이 최신 → 목요일 종가
+// 대비 = 금요일 등락률).
+//
+// 반환: { close, sessionDate } — sessionDate 는 현재 가격이 속한 거래일(ET 표기).
 const CANDLE_SESSION_TZ = 'America/New_York';
 
 async function getTossPreviousClose (symbol) {
 	const candles = await getTossDailyCandles(symbol, 3);
-	const today = moment().tz(CANDLE_SESSION_TZ).format('YYYY-MM-DD');
-	const past = candles
-		.filter(c => c && c.timestamp && moment(c.timestamp).tz(CANDLE_SESSION_TZ).format('YYYY-MM-DD') < today)
+	const sorted = (candles || [])
+		.filter(c => c && c.timestamp && Number.isFinite(parseFloat(c.closePrice)))
 		.sort((a, b) => moment(a.timestamp).valueOf() - moment(b.timestamp).valueOf());
-	const last = past[past.length - 1];
-	const close = parseFloat(last?.closePrice);
-	return Number.isFinite(close) ? close : null;
+
+	// 진행 중인 세션과 그 직전 세션이 둘 다 있어야 '직전 종가'를 정할 수 있다.
+	if (sorted.length < 2) return null;
+
+	const current = sorted[sorted.length - 1];
+	const previous = sorted[sorted.length - 2];
+
+	return {
+		close: parseFloat(previous.closePrice),
+		sessionDate: moment(current.timestamp).tz(CANDLE_SESSION_TZ).format('YYYY-MM-DD')
+	};
 }
 
 // Rate limit 대응용 순차 실행기. MARKET_DATA_CHART 는 초당 5회라

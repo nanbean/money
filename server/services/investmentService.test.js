@@ -219,9 +219,11 @@ describe('investmentService', () => {
 				['AAPL', { symbol: 'AAPL', lastPrice: 175.50, currency: 'USD' }],
 				['TSLA', { symbol: 'TSLA', lastPrice: 245.25, currency: 'USD' }]
 			]));
+			// 이제 { close, sessionDate } 를 돌려준다.
+			const etToday = moment().tz('America/New_York').format('YYYY-MM-DD');
 			tossConnector.getTossPreviousClose.mockImplementation(async (symbol) => {
-				if (symbol === 'AAPL') return 170.00;
-				if (symbol === 'TSLA') return 250.00;
+				if (symbol === 'AAPL') return { close: 170.00, sessionDate: etToday };
+				if (symbol === 'TSLA') return { close: 250.00, sessionDate: etToday };
 				return null;
 			});
 
@@ -237,7 +239,9 @@ describe('investmentService', () => {
 			expect(stocksDB.insert).toHaveBeenCalledTimes(1);
 			const insertedData = stocksDB.insert.mock.calls[0][0];
 
-			expect(insertedData.date).toBe(moment().tz('America/Los_Angeles').format('YYYY-MM-DD'));
+			// 기준일은 거래소 시간대(ET)다. getTossPreviousClose 가 일봉 세션일을
+			// ET 로 판정하므로 여기서도 맞춰야 한다.
+			expect(insertedData.date).toBe(moment().tz('America/New_York').format('YYYY-MM-DD'));
 			expect(insertedData.data).toHaveLength(3);
 
 			// 3. Verify the prices were updated correctly (fractional prices preserved)
@@ -254,6 +258,177 @@ describe('investmentService', () => {
 			expect(tossConnector.getTossKrPreviousClose).not.toHaveBeenCalled();
 		});
 
+		// ET 자정은 지났지만 PT 자정은 아직 안 온 3시간(21:00~24:00 PT).
+		// 기준일을 PT 로 잡던 때는 이 구간에서 저장된 prevCloseDate 가 '오늘'로
+		// 판정되어 전일 종가를 다시 받지 않았다. 가격만 새 세션 값으로 갱신되고
+		// prevClose 는 이틀 전 종가에 묶여, 등락률이 이틀치를 섞어 나왔다.
+		describe('ET 는 넘어갔지만 PT 는 안 넘어간 시각', () => {
+			// 2026-08-27 00:02 ET = 2026-08-26 21:02 PT
+			const atGapWindow = () => {
+				jest.useFakeTimers();
+				jest.setSystemTime(moment.tz('2026-08-27 00:02', 'America/New_York').valueOf());
+			};
+
+			afterEach(() => {
+				jest.useRealTimers();
+			});
+
+			const storedTsla = (prevCloseDate) => ({
+				_rev: '1-xyz',
+				data: [{
+					name: 'TSLA',
+					googleSymbol: 'NASDAQ:TSLA',
+					price: 346.8,
+					rate: -0.99,
+					prevClose: 350.25,       // 08-25 종가
+					prevCloseDate
+				}]
+			});
+
+			beforeEach(() => {
+				accountsDB.list.mockResolvedValue({
+					rows: [{ doc: { investments: [{ name: 'TSLA', quantity: 10 }] } }]
+				});
+				tossConnector.getTossPrices.mockResolvedValue(new Map([
+					['TSLA', { symbol: 'TSLA', lastPrice: 346.55, currency: 'USD' }]
+				]));
+				// 08-26 종가 · 진행 중인 세션은 08-27
+				tossConnector.getTossPreviousClose.mockResolvedValue({
+					close: 345.82,
+					sessionDate: '2026-08-27'
+				});
+			});
+
+			test('기준일은 ET 날짜다', async () => {
+				atGapWindow();
+				stocksDB.get.mockResolvedValue(storedTsla('2026-08-26'));
+
+				await arrangeUSInvestmemt();
+
+				expect(stocksDB.insert.mock.calls[0][0].date).toBe('2026-08-27');
+			});
+
+			test('전일 종가를 다시 받아 등락률을 새 기준으로 계산한다', async () => {
+				atGapWindow();
+				stocksDB.get.mockResolvedValue(storedTsla('2026-08-26'));
+
+				await arrangeUSInvestmemt();
+
+				// PT 기준이던 때는 '오늘 것'으로 보고 건너뛰었다
+				expect(tossConnector.getTossPreviousClose).toHaveBeenCalledWith('TSLA');
+
+				const tsla = stocksDB.insert.mock.calls[0][0].data[0];
+				expect(tsla.prevClose).toBe(345.82);
+				expect(tsla.prevCloseDate).toBe('2026-08-27');
+				// (346.55 - 345.82) / 345.82 = +0.21%  (예전에는 350.25 대비 -1.06%)
+				expect(tsla.rate).toBe(0.21);
+			});
+
+			// US 는 캐시하지 않는다. 야간에는 세션일이 달력 날짜보다 앞서서 날짜 비교로
+			// 신선도를 판정할 수 없기 때문이다 — 캐시했을 때 등락률이 멈추던 원인.
+			test('prevCloseDate 가 오늘이어도 다시 받는다', async () => {
+				atGapWindow();
+				stocksDB.get.mockResolvedValue(storedTsla('2026-08-27'));
+
+				await arrangeUSInvestmemt();
+
+				expect(tossConnector.getTossPreviousClose).toHaveBeenCalledWith('TSLA');
+				const tsla = stocksDB.insert.mock.calls[0][0].data[0];
+				expect(tsla.prevClose).toBe(345.82);
+				expect(tsla.rate).toBe(0.21);
+			});
+
+			test('weeklyPrices 는 ET 세션일로 기록한다', async () => {
+				atGapWindow();
+				stocksDB.get.mockResolvedValue(storedTsla('2026-08-26'));
+
+				await arrangeUSInvestmemt();
+
+				const tsla = stocksDB.insert.mock.calls[0][0].data[0];
+				// 야간 세션 가격이 전날(08-26) 종가 칸을 덮어쓰면 안 된다
+				expect(tsla.weeklyPrices).toEqual([{ date: '2026-08-27', price: 346.55 }]);
+			});
+		});
+
+		// 토스는 야간 세션(20:00 ET~)을 다음 거래일로 집계한다. 달력 날짜로 기준을
+		// 잡던 때는 이 구간에서 prevClose 가 한 세션 뒤져, 등락률이 직전 정규장
+		// 등락률에 붙어 움직이지 않는 것처럼 보였다. 실측 재현 케이스.
+		describe('야간 세션 (세션일이 달력 날짜보다 앞선 시각)', () => {
+			// 2026-08-27 21:28 ET — 달력은 08-27, 진행 중인 세션은 08-28
+			const atOvernight = () => {
+				jest.useFakeTimers();
+				jest.setSystemTime(moment.tz('2026-08-27 21:28', 'America/New_York').valueOf());
+			};
+
+			afterEach(() => {
+				jest.useRealTimers();
+			});
+
+			beforeEach(() => {
+				accountsDB.list.mockResolvedValue({
+					rows: [{ doc: { investments: [{ name: 'TSLA', quantity: 10 }] } }]
+				});
+				stocksDB.get.mockResolvedValue({
+					_rev: '1-xyz',
+					data: [{
+						name: 'TSLA',
+						googleSymbol: 'NASDAQ:TSLA',
+						price: 354.86,
+						rate: 2.61,            // 08-27 정규장 등락률
+						prevClose: 345.82,     // 08-26 종가
+						prevCloseDate: '2026-08-27'
+					}]
+				});
+				tossConnector.getTossPrices.mockResolvedValue(new Map([
+					['TSLA', { symbol: 'TSLA', lastPrice: 354.55, currency: 'USD' }]
+				]));
+				// 진행 중인 세션은 08-28, 그 직전 종가는 08-27 의 354.81
+				tossConnector.getTossPreviousClose.mockResolvedValue({
+					close: 354.81,
+					sessionDate: '2026-08-28'
+				});
+			});
+
+			test('직전 거래일 종가를 기준으로 야간 등락률을 계산한다', async () => {
+				atOvernight();
+
+				await arrangeUSInvestmemt();
+
+				const tsla = stocksDB.insert.mock.calls[0][0].data[0];
+				expect(tsla.price).toBe(354.55);
+				expect(tsla.prevClose).toBe(354.81);
+				// (354.55 - 354.81) / 354.81 = -0.07%
+				// 예전에는 345.82 를 기준으로 잡아 +2.52% (= 정규장 값 +2.60% 에 붙음)
+				expect(tsla.rate).toBe(-0.07);
+			});
+
+			test('prevCloseDate 는 진행 중인 세션일을 담는다', async () => {
+				atOvernight();
+
+				await arrangeUSInvestmemt();
+
+				const tsla = stocksDB.insert.mock.calls[0][0].data[0];
+				expect(tsla.prevCloseDate).toBe('2026-08-28');
+			});
+
+			test('weeklyPrices 는 세션일(08-28)에 기록해 전날 종가를 덮지 않는다', async () => {
+				atOvernight();
+
+				await arrangeUSInvestmemt();
+
+				const tsla = stocksDB.insert.mock.calls[0][0].data[0];
+				expect(tsla.weeklyPrices).toEqual([{ date: '2026-08-28', price: 354.55 }]);
+			});
+
+			test('문서 date 는 달력 날짜(ET)를 유지한다', async () => {
+				atOvernight();
+
+				await arrangeUSInvestmemt();
+
+				expect(stocksDB.insert.mock.calls[0][0].date).toBe('2026-08-27');
+			});
+		});
+
 		// 한국장 마감 크론이 미국 종목도 함께 갱신한다. 그때 미국은 닫혀 있어
 		// 애프터마켓 값이 들어오는데, 이는 의도된 동작이므로 게이트하지 않는다.
 		test('미국장이 닫혀 있어도 갱신한다 (장외 등락률 허용)', async () => {
@@ -267,7 +442,10 @@ describe('investmentService', () => {
 			tossConnector.getTossPrices.mockResolvedValue(new Map([
 				['AAPL', { symbol: 'AAPL', lastPrice: 176.2, currency: 'USD' }]
 			]));
-			tossConnector.getTossPreviousClose.mockResolvedValue(170.0);
+			tossConnector.getTossPreviousClose.mockResolvedValue({
+				close: 170.0,
+				sessionDate: moment().tz('America/New_York').format('YYYY-MM-DD')
+			});
 
 			await arrangeUSInvestmemt();
 

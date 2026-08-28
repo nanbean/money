@@ -64,9 +64,8 @@ describe('getTossPreviousClose', () => {
 		jest.setSystemTime(moment.tz(isoEt, 'America/New_York').valueOf());
 	};
 
-	// 이 버그가 미국 등락률을 전부 ≈0% 로 만들었다. 당일 봉이 LA 기준으로 전날로
-	// 밀려 필터를 통과하면서 '전일 종가'가 당일 종가가 됐다.
-	test('당일 봉을 전일 종가로 쓰지 않는다 (장 종료 후)', async () => {
+	// 현재 세션은 가장 최신 봉이고, 그 직전 봉의 종가가 기준이 된다.
+	test('진행 중인 세션 봉을 기준으로 쓰지 않는다 (장 종료 후)', async () => {
 		atEt('2026-08-25 19:26'); // 08-25 정규장 종료 후
 		candles = [
 			candle('2026-08-25', 350.12),
@@ -74,40 +73,73 @@ describe('getTossPreviousClose', () => {
 			candle('2026-08-21', 362.86)
 		];
 
-		// 08-25 세션의 '전일'은 08-24 종가여야 한다. 350.12(당일 종가)면 버그.
-		await expect(getTossPreviousClose('TSLA')).resolves.toBe(348.95);
+		// 08-25 세션의 기준은 08-24 종가다. 350.12(진행 중 세션의 종가)면 버그.
+		await expect(getTossPreviousClose('TSLA')).resolves.toEqual({
+			close: 348.95,
+			sessionDate: '2026-08-25'
+		});
 	});
 
-	test('장중에도 당일 봉을 제외한다', async () => {
+	test('장중에도 진행 중인 세션 봉을 제외한다', async () => {
 		atEt('2026-08-25 11:00');
 		candles = [
 			candle('2026-08-25', 349.5), // 미완성 당일 봉
 			candle('2026-08-24', 348.95)
 		];
 
-		await expect(getTossPreviousClose('TSLA')).resolves.toBe(348.95);
+		await expect(getTossPreviousClose('TSLA')).resolves.toEqual({
+			close: 348.95,
+			sessionDate: '2026-08-25'
+		});
 	});
 
-	// 한국장 마감 크론(15:30 KST)은 ET 로 다음날 새벽이다. 그때는 직전 세션이
-	// '전일'이 되고 lastPrice 는 애프터마켓 값이라 장외 등락률이 나온다 — 의도된 동작.
-	test('다음 세션 개장 전에는 직전 세션 종가가 전일 종가가 된다', async () => {
-		atEt('2026-08-26 02:30'); // = 15:30 KST 08-26
+	// 토스는 야간 세션(20:00 ET~)을 다음 거래일로 집계한다. 실측: ET 08-27 21:28 에
+	// lastPrice(354.55)가 08-28 봉과 일치했다. 달력 날짜(08-27)로 걸러내던 때는
+	// 08-26 종가를 집어 08-27 정규장 전체가 등락률에 섞였다.
+	test('야간 세션에는 직전 거래일 종가가 기준이 된다', async () => {
+		atEt('2026-08-27 21:28');
 		candles = [
-			candle('2026-08-25', 350.12),
-			candle('2026-08-24', 348.95)
+			candle('2026-08-26', 345.82),
+			candle('2026-08-27', 354.81), // 08-27 정규장 종가
+			candle('2026-08-28', 354.55)  // 진행 중인 야간 세션
 		];
 
-		await expect(getTossPreviousClose('TSLA')).resolves.toBe(350.12);
+		await expect(getTossPreviousClose('TSLA')).resolves.toEqual({
+			close: 354.81,
+			sessionDate: '2026-08-28'
+		});
 	});
 
-	test('과거 봉이 없으면 null', async () => {
+	// 세션을 봉에서 읽으므로 벽시계와 무관하다 — 시간대 경계 버그가 생길 여지가 없다.
+	test('같은 봉이면 호출 시각이 달라도 같은 결과다', async () => {
+		candles = [
+			candle('2026-08-26', 345.82),
+			candle('2026-08-27', 354.81),
+			candle('2026-08-28', 354.55)
+		];
+		const expected = { close: 354.81, sessionDate: '2026-08-28' };
+
+		for (const at of ['2026-08-27 21:28', '2026-08-28 02:00', '2026-08-28 10:00', '2026-08-26 23:59']) {
+			atEt(at);
+			await expect(getTossPreviousClose('TSLA')).resolves.toEqual(expected);
+		}
+	});
+
+	test('봉이 하나뿐이면 null (직전 세션을 정할 수 없다)', async () => {
 		atEt('2026-08-25 19:26');
 		candles = [candle('2026-08-25', 350.12)];
 
 		await expect(getTossPreviousClose('TSLA')).resolves.toBeNull();
 	});
 
-	test('응답 순서가 뒤섞여도 가장 최근 과거 봉을 고른다', async () => {
+	test('봉이 없으면 null', async () => {
+		atEt('2026-08-25 19:26');
+		candles = [];
+
+		await expect(getTossPreviousClose('TSLA')).resolves.toBeNull();
+	});
+
+	test('응답 순서가 뒤섞여도 세션 순으로 고른다', async () => {
 		atEt('2026-08-25 19:26');
 		candles = [
 			candle('2026-08-21', 362.86),
@@ -115,7 +147,25 @@ describe('getTossPreviousClose', () => {
 			candle('2026-08-24', 348.95)
 		];
 
-		await expect(getTossPreviousClose('TSLA')).resolves.toBe(348.95);
+		await expect(getTossPreviousClose('TSLA')).resolves.toEqual({
+			close: 348.95,
+			sessionDate: '2026-08-25'
+		});
+	});
+
+	test('종가가 없는 봉은 무시한다', async () => {
+		atEt('2026-08-25 19:26');
+		candles = [
+			candle('2026-08-23', 340.00),
+			candle('2026-08-24', 348.95),
+			{ timestamp: '2026-08-25T13:00:00.000+09:00' } // closePrice 누락
+		];
+
+		// 유효한 봉만 남으면 08-24 가 진행 중 세션, 08-23 이 기준이 된다.
+		await expect(getTossPreviousClose('TSLA')).resolves.toEqual({
+			close: 340.00,
+			sessionDate: '2026-08-24'
+		});
 	});
 });
 
