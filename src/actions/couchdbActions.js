@@ -182,17 +182,31 @@ const getAllTransactions = async () => {
 	return allTransactions;
 };
 
-const getAllInvestments = async () => {
-	const kospi = await stocksDB.get('kospi'); // eslint-disable-line camelcase
-	const kosdaq = await stocksDB.get('kosdaq'); // eslint-disable-line camelcase
-	const us = await stocksDB.get('us'); // eslint-disable-line camelcase
-	const allInvestments = [
-		...kospi.data,
-		...kosdaq.data,
-		...us.data
-	];
+const STOCK_DOC_IDS = ['kospi', 'kosdaq', 'us'];
 
-	return allInvestments;
+// 잔고 계산용. 문서 하나라도 없으면 던진다.
+//
+// 여기서 관용적으로 넘어가면 안 된다. getInvestmentList 는 종목을 못 찾으면 평가액을
+// 매입가로 계산하고, updateAccount 가 그 값을 accountsDB 에 그대로 저장한다.
+// 즉 일부 문서가 아직 복제되지 않은 순간에 호출되면 틀린 잔고가 영구히 기록된다.
+const getAllInvestments = async () => {
+	const docs = await Promise.all(STOCK_DOC_IDS.map(id => stocksDB.get(id)));
+
+	return docs.flatMap(doc => doc.data || []);
+};
+
+// 표시용. 있는 문서만으로 목록을 만든다.
+//
+// 최초 로딩에는 로컬 PouchDB 가 비어 있어 get() 이 404 로 던졌고, 그 예외가 조용히
+// 삼켜져서 Stock list 의 가격이 복제 완료까지(거래 28,000건 복제와 대역폭을 나눠 쓰며)
+// 아무것도 뜨지 않았다. 재방문 시에는 지난 세션 데이터로 즉시 그리고, 복제가 끝나면
+// 다시 디스패치되어 최신 값으로 바뀐다.
+const readAvailableInvestments = async () => {
+	const docs = await Promise.all(
+		STOCK_DOC_IDS.map(id => stocksDB.get(id).catch(() => null))
+	);
+
+	return docs.filter(Boolean).flatMap(doc => doc.data || []);
 };
 
 const getAllHistories = async () => {
@@ -431,7 +445,11 @@ export const initCouchdbAction = username => {
 			batch_size: 500,
 			batches_limit: 2
 		}).on('complete', function () {
-			updateAllInvestmentsDebounce(dispatch);
+			// 최초 복제 완료는 곧바로 반영한다. debounce 는 live sync 에서 연속으로
+			// 들어오는 가격 변경을 묶기 위한 것인데, 여기에도 걸려 있어서 Stock list 가
+			// 이유 없이 1초 더 비어 있었다.
+			updateAllInvestmentsDebounce.cancel();
+			updateAllInvestments(dispatch);
 			// Phase 2: live sync for stock price updates
 			stocksSync = stocksDB.sync(remoteStocksDB, { live: true, retry: true })
 				.on('change', function () {
@@ -783,7 +801,7 @@ export const getAllAccountsTransactionsAction = () => {
 
 const getAllInvestmentsList = () => {
 	return async dispatch => {
-		const allInvestments = await getAllInvestments();
+		const allInvestments = await readAvailableInvestments();
 
 		dispatch({
 			type: SET_ALL_INVESTMENTS,
