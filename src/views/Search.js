@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import MuiChip from '@mui/material/Chip';
+import ListSubheader from '@mui/material/ListSubheader';
 
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
@@ -18,8 +19,20 @@ import BankTransactionModal from '../components/BankTransactionModal';
 
 import useT from '../hooks/useT';
 import { sDisplay, labelStyle, fmtCurrency } from '../utils/designTokens';
+import { orderCategories, makeCategoryGroupBy, childLabelOf } from '../utils/categoryOrder';
 
 const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
+
+// MUI 기본 ListSubheader 는 배경이 흰색이라 다크 모드 목록에서 흰 줄로 튄다.
+const categoryGroupSx = (T) => ({
+	background: T.surf,
+	color: T.ink2,
+	fontSize: 11,
+	fontWeight: 700,
+	lineHeight: '28px',
+	letterSpacing: '0.04em',
+	borderTop: `1px solid ${T.rule}`
+});
 
 const TYPE_OPTIONS = [
 	{ value: 'all', en: 'All', ko: '전체' },
@@ -82,6 +95,13 @@ export function Search () {
 	const amtMax = searchParams.get('amtMax') || '';
 	const type = searchParams.get('type') || 'all';
 	const accountsParam = searchParams.get('accounts') || '';
+
+	// 저장된 정렬이 '[' 때문에 이체 카테고리를 앞으로 몰아둔다 — 뒤로 미룬다.
+	const orderedCategories = useMemo(() => orderCategories(categoryList), [categoryList]);
+
+	// 부모('세금')를 그룹 머리글로 올린다. 그룹이 없는 항목은 빈 문자열을 받아
+	// renderGroup 에서 머리글 없이 렌더된다.
+	const categoryGroupBy = useMemo(() => makeCategoryGroupBy(categoryList), [categoryList]);
 
 	const selectedCategories = useMemo(
 		() => (categoriesParam ? categoriesParam.split(',').filter(Boolean) : []),
@@ -530,7 +550,30 @@ export function Search () {
 								<Autocomplete
 									multiple
 									size="small"
-									options={categoryList}
+									options={orderedCategories}
+									groupBy={categoryGroupBy}
+									renderGroup={(params) => (
+										<li key={params.key}>
+											{params.group && (
+												<ListSubheader sx={categoryGroupSx(T)}>{params.group}</ListSubheader>
+											)}
+											<Box component="ul" sx={{ padding: 0, margin: 0 }}>{params.children}</Box>
+										</li>
+									)}
+									renderOption={(props, option) => {
+										const { key, ...rest } = props;
+										const grouped = childLabelOf(option) !== option && !!categoryGroupBy(option);
+										return (
+											<Box
+												component="li"
+												key={key}
+												{...rest}
+												sx={grouped ? { paddingLeft: '28px !important' } : undefined}
+											>
+												{grouped ? childLabelOf(option) : option}
+											</Box>
+										);
+									}}
 									value={selectedCategories}
 									onChange={(_, val) => setCategories(val)}
 									disableCloseOnSelect

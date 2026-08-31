@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import { evaluate } from 'mathjs';
@@ -12,6 +12,7 @@ import IconButton from '@mui/material/IconButton';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
+import ListSubheader from '@mui/material/ListSubheader';
 
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
@@ -23,6 +24,7 @@ import MemoTagPreview from '../MemoTagPreview';
 
 import useT from '../../hooks/useT';
 import { sMono } from '../../utils/designTokens';
+import { buildCategoryMenu } from '../../utils/categoryOrder';
 
 import {
 	addTransactionAction,
@@ -79,6 +81,21 @@ const dateInputSx = (T) => ({
 	display: 'block'
 });
 
+// 하위 카테고리 들여쓰기. MenuItem 기본 좌측 여백이 16px 이라 그 두 배로 둔다.
+const CHILD_INDENT = '32px';
+
+// MUI 기본 ListSubheader 는 배경이 흰색이라 다크 모드 메뉴에서 흰 줄로 튄다.
+const categoryGroupSx = (T) => ({
+	background: T.surf,
+	color: T.ink2,
+	fontSize: 11,
+	fontWeight: 700,
+	lineHeight: '30px',
+	letterSpacing: '0.04em',
+	borderTop: `1px solid ${T.rule}`,
+	marginTop: '4px'
+});
+
 const selectSx = (T) => ({
 	width: '100%',
 	background: T.bg,
@@ -100,6 +117,9 @@ export function BankTransactionForm ({
 	const T = useT();
 
 	const { categoryList } = useSelector((state) => state.settings);
+	// 이체 카테고리는 뒤로 미룬다 — 저장된 정렬이 '[' 때문에 이체를 앞으로 몰아둔다.
+	// 이체는 뒤로, 하위 카테고리는 부모 머리글 아래로 들여쓴다.
+	const categoryMenu = useMemo(() => buildCategoryMenu(categoryList), [categoryList]);
 	const dropPayeeList = useSelector((state) => state.dropPayeeList);
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const form = useSelector((state) => state.ui.form.bankTransaction);
@@ -455,15 +475,27 @@ export function BankTransactionForm ({
 										value={division.category}
 										onChange={(e) => onDivisionChange(index, 'category', e.target.value)}
 										displayEmpty
+										// 메뉴 라벨은 '소득세' 로 짧지만 접힌 필드에는 '세금:소득세' 전체를
+										// 보여준다. 기본 동작은 선택된 MenuItem 의 자식을 그대로 렌더해서
+										// 부모가 사라진다.
+										renderValue={(selected) => selected || <Box component="em" sx={{ color: T.ink3 }}>Category</Box>}
 										sx={selectSx(T)}
 										MenuProps={{ PaperProps: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } } }}
 									>
 										<MenuItem value="" disabled>
 											<em>Category</em>
 										</MenuItem>
-										{categoryList.map(i => (
-											<MenuItem key={i} value={i}>{i}</MenuItem>
-										))}
+										{categoryMenu.map((entry) => (entry.kind === 'group' ? (
+											<ListSubheader key={`g-${entry.label}`} sx={categoryGroupSx(T)}>{entry.label}</ListSubheader>
+										) : (
+											<MenuItem
+												key={entry.value}
+												value={entry.value}
+												sx={entry.indent ? { paddingLeft: CHILD_INDENT } : undefined}
+											>
+												{entry.label}
+											</MenuItem>
+										)))}
 									</Select>
 								</FormControl>
 								<Box
@@ -539,15 +571,24 @@ export function BankTransactionForm ({
 								onChange={onChange(changeCategory)}
 								displayEmpty
 								required
+								renderValue={(selected) => selected || <Box component="em" sx={{ color: T.ink3 }}>Select a category</Box>}
 								sx={selectSx(T)}
 								MenuProps={{ PaperProps: { sx: { background: T.surf, color: T.ink, border: `1px solid ${T.rule}` } } }}
 							>
 								<MenuItem value="" disabled>
 									<em>Select a category</em>
 								</MenuItem>
-								{categoryList.map(i => (
-									<MenuItem key={i} value={i}>{i}</MenuItem>
-								))}
+								{categoryMenu.map((entry) => (entry.kind === 'group' ? (
+									<ListSubheader key={`g-${entry.label}`} sx={categoryGroupSx(T)}>{entry.label}</ListSubheader>
+								) : (
+									<MenuItem
+										key={entry.value}
+										value={entry.value}
+										sx={entry.indent ? { paddingLeft: CHILD_INDENT } : undefined}
+									>
+										{entry.label}
+									</MenuItem>
+								)))}
 							</Select>
 						</FormControl>
 					</Box>
