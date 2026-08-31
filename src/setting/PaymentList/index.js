@@ -21,6 +21,8 @@ import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
+import { isTransferPayment, monthlyAmountKrw, splitPaymentTotals } from './paymentTotals';
+import { buildCategoryMenu } from '../../utils/categoryOrder';
 
 import {
 	addPaymentAction,
@@ -102,14 +104,14 @@ export default function PaymentList () {
 	const enriched = useMemo(() => paymentList.map((p, idx) => {
 		const acct = accountList.find(a => a._id === p.accountId);
 		const interval = Number(p.interval) || 1;
-		const monthly = (Number(p.amount) || 0) / interval;
-		const monthlyKrw = (p.currency === 'USD' ? monthly * validRate : monthly);
 		return {
 			...p,
 			originalIndex: idx,
 			interval,
 			accountName: (acct && acct.name) || p.account,
-			monthlyKrw,
+			monthlyKrw: monthlyAmountKrw(p, validRate),
+			// 계좌 간 이체는 순자산을 깎지 않는다 — IRP·연금저축 적립과 부채 상환.
+			isTransfer: isTransferPayment(p),
 			due: nextDueDate(Number(p.day) || 1, interval)
 		};
 	}), [paymentList, accountList, validRate]);
@@ -120,9 +122,21 @@ export default function PaymentList () {
 		return true;
 	}), [enriched, filter]);
 
-	const totalMonthlyKrw = useMemo(() => enriched
-		.filter(p => p.valid)
-		.reduce((s, p) => s + p.monthlyKrw, 0), [enriched]);
+	const totals = useMemo(() => splitPaymentTotals(paymentList, validRate), [paymentList, validRate]);
+
+	// 저장된 정렬이 '[' 때문에 이체 카테고리를 앞으로 몰아둔다 — 뒤로 미루고,
+	// 하위 카테고리는 부모 optgroup 아래로 모은다. 네이티브 optgroup 은 중첩이
+	// 안 되므로 이체 구분과 부모 그룹이 같은 레벨로 펼쳐진다.
+	const categoryGroups = useMemo(() => {
+		const groups = [];
+		buildCategoryMenu(categoryList).forEach((entry) => {
+			if (entry.kind !== 'item') return;
+			const last = groups[groups.length - 1];
+			if (last && last.label === entry.group) last.items.push(entry.value);
+			else groups.push({ label: entry.group, items: [entry.value] });
+		});
+		return groups;
+	}, [categoryList]);
 
 	const upcoming = useMemo(() => enriched
 		.filter(p => p.valid)
@@ -254,6 +268,19 @@ export default function PaymentList () {
 						<Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
 							{p.payee || '(no payee)'}
 						</Box>
+						{p.isTransfer && (
+							<Box component="span" sx={{
+								fontSize: 9,
+								padding: '1px 6px',
+								borderRadius: '4px',
+								background: '#3b82f628',
+								// Paused 배지(#a16207)는 라이트 모드 기준 색이다. 여기는
+								// 다크 모드에서 읽히도록 두 값을 나눠 쓴다.
+								color: T.dark ? '#93c5fd' : '#1d4ed8',
+								fontWeight: 700,
+								flexShrink: 0
+							}}>이체</Box>
+						)}
 						{!p.valid && (
 							<Box component="span" sx={{
 								fontSize: 9,
@@ -356,13 +383,30 @@ export default function PaymentList () {
 							Recurring payments · 정기 지불
 						</Typography>
 						<Typography sx={{ ...sDisplay, fontSize: { xs: 28, md: 36 }, fontWeight: 700, marginTop: '8px', lineHeight: 1.05 }}>
-							{fmtCurrency(totalMonthlyKrw, appCurrency)}
+							{fmtCurrency(totals.all, appCurrency)}
 							<Box component="span" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 400, fontSize: 14, marginLeft: '8px' }}>
 								/ month
 							</Box>
 						</Typography>
-						<Stack direction="row" spacing={1.5} sx={{ marginTop: '10px', fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap' }}>
-							<span>≈ {fmtCurrency(totalMonthlyKrw * 12, appCurrency)} / year</span>
+						{/* 이체가 섞여 있을 때만 분해한다 — 전부 비용이면 같은 값을 두 번 읽히게 할 뿐이다. */}
+						{totals.transfer !== 0 && (
+							<Typography component="div" sx={{
+								marginTop: '10px',
+								fontSize: 13,
+								display: 'flex',
+								alignItems: 'baseline',
+								gap: '8px',
+								flexWrap: 'wrap'
+							}}>
+								<Box component="span" sx={{ color: 'rgba(255,255,255,0.7)' }}>비용</Box>
+								<Box component="span" sx={{ ...sMono, fontWeight: 600 }}>{fmtCurrency(totals.expense, appCurrency)}</Box>
+								<Box component="span" sx={{ color: 'rgba(255,255,255,0.35)' }}>·</Box>
+								<Box component="span" sx={{ color: 'rgba(255,255,255,0.7)' }}>이체</Box>
+								<Box component="span" sx={{ ...sMono, fontWeight: 600 }}>{fmtCurrency(totals.transfer, appCurrency)}</Box>
+							</Typography>
+						)}
+						<Stack direction="row" spacing={1.5} sx={{ marginTop: '8px', fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap' }}>
+							<span>≈ {fmtCurrency(totals.all * 12, appCurrency)} / year</span>
 							<span>·</span>
 							<span>{counts.active} active</span>
 							<span>·</span>
@@ -685,9 +729,20 @@ export default function PaymentList () {
 								sx={inputSx(T)}
 							>
 								<option value="">Uncategorized</option>
-								{categoryList.map(c => (
-									<option key={c} value={c}>{c}</option>
-								))}
+								{categoryGroups.map((group, idx) => (group.label ? (
+									<optgroup key={group.label} label={group.label}>
+										{group.items.map(c => (
+											<option key={c} value={c}>{c}</option>
+										))}
+									</optgroup>
+								) : (
+									// 부모가 없는 카테고리는 그룹 밖에 그대로 둔다.
+									<React.Fragment key={`flat-${idx}`}>
+										{group.items.map(c => (
+											<option key={c} value={c}>{c}</option>
+										))}
+									</React.Fragment>
+								)))}
 							</Box>
 						</Box>
 
