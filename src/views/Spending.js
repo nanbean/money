@@ -32,30 +32,12 @@ import useT from '../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../utils/designTokens';
 import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
 import { EXPENSE_ACCOUNT_TYPES, flattenExpenseRows, isLivingExpenseExempt } from '../utils/expense';
+import { monthsAgoStr, thisMonthStr, isMonthInRange } from '../utils/spendingRange';
 
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
 const EXPENSE_TYPES = EXPENSE_ACCOUNT_TYPES;
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const INFLATION_RATE = 1.025;
-
-const monthsAgoStr = (monthsBack) => {
-	const d = new Date();
-	d.setDate(1);
-	d.setMonth(d.getMonth() - monthsBack);
-	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
-
-const getStartMonthStr = (range) => {
-	const year = new Date().getFullYear();
-	switch (range) {
-	case '1M': return monthsAgoStr(0);
-	case '3M': return monthsAgoStr(2);
-	case '6M': return monthsAgoStr(5);
-	case 'YTD': return `${year}-01`;
-	case '1Y': return monthsAgoStr(12);
-	default: return null;
-	}
-};
 
 const makeFormatYAxis = (currency) => (value) => {
 	if (currency === 'USD') {
@@ -275,12 +257,11 @@ function Spending () {
 	}, [livingExpenseOnly, livingExpenseExempt]);
 
 	const spendingTransactions = useMemo(() => {
-		const startMonthStr = getStartMonthStr(range);
-		return expenseRows.filter(tx => {
-			if (!isExpenseTx(tx)) return false;
-			if (startMonthStr && tx.date.substring(0, 7) < startMonthStr) return false;
-			return true;
-		});
+		// 범위 판정은 utils/spendingRange 로 모았다. 상한이 없던 동안 미래 날짜
+		// 거래가 합계·Top payees·Top categories·월별 차트에 모두 섞였다.
+		return expenseRows.filter(tx =>
+			isExpenseTx(tx) && isMonthInRange(tx.date.substring(0, 7), range)
+		);
 	}, [expenseRows, range, isExpenseTx]);
 
 	const currentYear = new Date().getFullYear();
@@ -294,8 +275,11 @@ function Spending () {
 	}, [expenseRows, isExpenseTx, toDisplayAmount, lastYearPrefix]);
 
 	const ytdTotal = useMemo(() => {
+		const endMonthStr = thisMonthStr();
 		return expenseRows
 			.filter(tx => isExpenseTx(tx) && tx.date.startsWith(thisYearPrefix))
+			// 올해 안에도 미래 달이 있을 수 있다 (연말까지 예정된 거래).
+			.filter(tx => tx.date.substring(0, 7) <= endMonthStr)
 			.reduce((sum, tx) => sum + toDisplayAmount(tx), 0);
 	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix]);
 
@@ -311,6 +295,9 @@ function Spending () {
 			if (!isExpenseTx(tx)) return;
 			const m = parseInt(tx.date.substring(5, 7)) - 1;
 			if (tx.date.startsWith(thisYearPrefix)) {
+				// 미래 달은 아래에서 projected 로 그린다. actual 에도 넣으면 한 달이
+				// 실적과 전망 두 막대로 동시에 표시된다.
+				if (m > month) return;
 				thisYearMonthly[m] = (thisYearMonthly[m] || 0) + toDisplayAmount(tx);
 			} else if (tx.date.startsWith(lastYearPrefix)) {
 				lastYearMonthly[m] = (lastYearMonthly[m] || 0) + toDisplayAmount(tx);
@@ -461,18 +448,16 @@ function Spending () {
 		return Math.round(totalSpending / monthlyData.length);
 	}, [totalSpending, monthlyData]);
 
+	// 월 키는 로컬 연·월로 만든다. toISOString() 은 UTC 라서 KST 에서는 매월 1일
+	// 오전 9시까지 지난달을 가리켰다. prevMonthTotal 은 범위 find 였던 탓에
+	// 3M 이상에서 지지난달을 집어오기도 했다.
 	const prevMonthTotal = useMemo(() => {
-		const now = new Date();
-		const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
-		const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 7);
-		const entry = monthlyData.find(d => d.month >= prevStart && d.month <= prevEnd);
+		const entry = monthlyData.find(d => d.month === monthsAgoStr(1));
 		return entry ? entry.actual : 0;
 	}, [monthlyData]);
 
 	const thisMonthTotal = useMemo(() => {
-		const now = new Date();
-		const thisMonth = now.toISOString().slice(0, 7);
-		const entry = monthlyData.find(d => d.month === thisMonth);
+		const entry = monthlyData.find(d => d.month === thisMonthStr());
 		return entry ? entry.actual : 0;
 	}, [monthlyData]);
 

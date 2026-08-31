@@ -59,9 +59,12 @@ export default function SpendingHeatmap () {
 	// 계좌간 이체 판정은 Spending 과 같은 유틸을 쓴다 (같은 페이지에서 숫자가 어긋나면 안 된다).
 	const dailyRows = useMemo(() => {
 		const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
+		// 미래 날짜 거래(카드 결제 예정분 등)는 제외한다. 격자에는 오늘까지만 그려지지만
+		// 색 농도 기준(p25/p50/p75)이 그 값들까지 포함해 계산되어 전체가 흐려진다.
+		const today = moment().format('YYYY-MM-DD');
 		const byDate = {};
 		flattenExpenseRows(allAccountsTransactions)
-			.filter(t => t.date >= threeMonthsAgo)
+			.filter(t => t.date >= threeMonthsAgo && t.date <= today)
 			.forEach(t => {
 				if (!byDate[t.date]) byDate[t.date] = [];
 				byDate[t.date].push(t);
