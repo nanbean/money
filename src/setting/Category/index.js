@@ -17,6 +17,8 @@ import useT from '../../hooks/useT';
 import { sDisplay, labelStyle } from '../../utils/designTokens';
 import { CATEGORY_ICON_OPTIONS, resolveCategoryIcon } from '../../utils/categoryIcon';
 import { CATEGORY_COLOR_OPTIONS, resolveCategoryColor } from '../../utils/categoryColor';
+import { TRANSFER_GROUP } from '../../utils/categoryOrder';
+import { buildCategoryRows, exemptStateOf, groupExemptSummary, collapseToParent, toggleExempt } from './exemptTree';
 
 import {
 	addCategoryAction,
@@ -70,16 +72,15 @@ export function Category () {
 	const [editIndex, setEditIndex] = useState(-1);
 	const [form, setForm] = useState({ name: '', icon: '', color: '', exempt: false });
 
-	const filteredList = useMemo(() => {
-		const items = categoryList.map((name, idx) => ({ idx, name }));
-		if (filter === 'exempt') {
-			return items.filter(i => livingExpenseExempt.includes(i.name));
-		}
-		return items;
-	}, [categoryList, filter, livingExpenseExempt]);
+	// 저장된 목록은 107행이 평평하고 '[' 정렬 탓에 이체 46건이 맨 앞에 온다.
+	// 거래 입력 드롭다운과 같은 규칙으로 부모 그룹 아래에 접는다.
+	const rows = useMemo(
+		() => buildCategoryRows(categoryList, filter, livingExpenseExempt),
+		[categoryList, filter, livingExpenseExempt]
+	);
 
 	const exemptCount = useMemo(
-		() => categoryList.filter(c => livingExpenseExempt.includes(c)).length,
+		() => categoryList.filter(c => exemptStateOf(c, livingExpenseExempt) !== 'none').length,
 		[categoryList, livingExpenseExempt]
 	);
 
@@ -169,6 +170,192 @@ export function Category () {
 
 	const toggleFilter = (value) => () => setFilter(value);
 
+	// 부모 머리글. 부모는 categoryList 에 없는 가상 노드라 편집/삭제 대상이 아니다.
+	// 면제만 걸 수 있다 — livingExpenseExempt 는 categoryList 의 부분집합이 아니다.
+	const renderGroupHeader = (entry) => {
+		const isTransferGroup = entry.label === TRANSFER_GROUP;
+		const Icon = resolveCategoryIcon(entry.label);
+		const color = resolveCategoryColor(entry.label);
+		const { parentExempt, ownCount, total, collapsible } = groupExemptSummary(
+			entry.label, entry.children, livingExpenseExempt
+		);
+
+		return (
+			<Stack
+				key={`group-${entry.label}`}
+				direction="row"
+				alignItems="center"
+				spacing={1.25}
+				sx={{
+					marginTop: '10px',
+					paddingBottom: '6px',
+					borderBottom: `1px solid ${T.rule}`
+				}}
+			>
+				{!isTransferGroup && (
+					<Box sx={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+				)}
+				{isTransferGroup && <Icon sx={{ fontSize: 14, color: T.ink3 }} />}
+				<Typography sx={{
+					fontSize: 11,
+					fontWeight: 700,
+					color: T.ink2,
+					letterSpacing: '0.04em',
+					flex: 1,
+					minWidth: 0,
+					overflow: 'hidden',
+					textOverflow: 'ellipsis',
+					whiteSpace: 'nowrap'
+				}}>
+					{entry.label}
+					<Box component="span" sx={{ color: T.ink3, fontWeight: 400, marginLeft: '6px' }}>
+						{total}
+					</Box>
+				</Typography>
+
+				{/* 자식이 전부 개별 등재면 부모 한 줄로 대신할 수 있다 — 실제 설정의
+				    '세금' 이 9/9 로 등재돼 있어 토글을 9번 해야 했다. */}
+				{!isTransferGroup && collapsible && (
+					<Box
+						onClick={() => dispatch(updateGeneralAction(
+							'livingExpenseExempt',
+							collapseToParent(entry.label, entry.children, livingExpenseExempt)
+						))}
+						sx={{
+							fontSize: 10,
+							fontWeight: 600,
+							color: T.acc.hero,
+							cursor: 'pointer',
+							whiteSpace: 'nowrap',
+							flexShrink: 0
+						}}
+					>
+						{ownCount}/{total} · 부모로 접기
+					</Box>
+				)}
+
+				{/* 이체는 지출이 아니라 면제 개념이 없다. */}
+				{!isTransferGroup && (
+					<Box
+						onClick={() => dispatch(updateGeneralAction(
+							'livingExpenseExempt',
+							parentExempt
+								? toggleExempt(entry.label, livingExpenseExempt)
+								: collapseToParent(entry.label, entry.children, livingExpenseExempt)
+						))}
+						sx={{
+							display: { xs: 'none', md: 'inline-flex' },
+							alignItems: 'center',
+							justifyContent: 'center',
+							padding: '2px 10px',
+							fontSize: 10,
+							fontWeight: 600,
+							borderRadius: '999px',
+							background: parentExempt ? T.acc.bg : 'transparent',
+							color: parentExempt ? T.acc.deep : T.ink3,
+							border: parentExempt ? 'none' : `1px solid ${T.rule}`,
+							cursor: 'pointer',
+							flexShrink: 0,
+							transition: 'all 0.15s'
+						}}
+					>
+						{parentExempt ? 'Exempt (all)' : 'Exempt all'}
+					</Box>
+				)}
+			</Stack>
+		);
+	};
+
+	const renderRow = (item) => {
+		const Icon = resolveCategoryIcon(item.name, categoryIcons[item.name]);
+		const rowColor = resolveCategoryColor(item.name, categoryColors[item.name]);
+		// 'inherited' 는 부모가 덮고 있다는 뜻이다. 자기 이름이 목록에 없으니
+		// 예전 UI 는 'Include' 로 보여줬는데 집계에서는 면제였다.
+		const state = exemptStateOf(item.name, livingExpenseExempt);
+		const inherited = state === 'inherited';
+		const isExempt = state === 'own';
+
+		return (
+			<Box
+				key={item.idx}
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: '40px 1fr auto', md: '40px 1fr 90px auto' },
+					gap: 1.5,
+					alignItems: 'center',
+					padding: '12px',
+					paddingLeft: item.indent ? '24px' : '12px',
+					borderRadius: '10px',
+					background: T.dark ? 'rgba(255,255,255,0.02)' : T.surf2,
+					border: `1px solid ${T.rule}`
+				}}
+			>
+				<Box sx={{
+					width: 40,
+					height: 40,
+					borderRadius: '12px',
+					background: tint(rowColor, '22'),
+					color: rowColor,
+					display: 'inline-flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					flexShrink: 0
+				}}>
+					<Icon sx={{ fontSize: 18 }} />
+				</Box>
+				<Typography sx={{ fontSize: 13, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+					{item.label}
+				</Typography>
+				<Box
+					onClick={inherited
+						? undefined
+						: () => dispatch(updateGeneralAction(
+							'livingExpenseExempt',
+							toggleExempt(item.name, livingExpenseExempt)
+						))}
+					title={inherited ? `${item.group} 이(가) 면제로 지정돼 상속됩니다` : undefined}
+					sx={{
+						display: { xs: 'none', md: 'inline-flex' },
+						alignItems: 'center',
+						justifyContent: 'center',
+						padding: '4px 10px',
+						fontSize: 11,
+						fontWeight: 600,
+						borderRadius: '999px',
+						background: isExempt ? T.acc.bg : 'transparent',
+						color: isExempt ? T.acc.deep : T.ink2,
+						border: isExempt ? 'none' : `1px dashed ${T.rule}`,
+						// 부모가 덮은 항목은 개별 해제가 불가능하다 — 읽기 전용으로 둔다.
+						cursor: inherited ? 'default' : 'pointer',
+						opacity: inherited ? 0.65 : 1,
+						transition: 'all 0.15s'
+					}}
+				>
+					{isExempt ? 'Exempt' : inherited ? '상속' : 'Include'}
+				</Box>
+				<Button
+					onClick={() => openEdit(item)}
+					size="small"
+					startIcon={<EditOutlinedIcon sx={{ fontSize: 14 }} />}
+					sx={{
+						background: 'transparent',
+						border: `1px solid ${T.rule}`,
+						color: T.ink,
+						borderRadius: '999px',
+						padding: '4px 10px',
+						fontSize: 11,
+						fontWeight: 600,
+						textTransform: 'none',
+						minWidth: 0,
+						'&:hover': { background: T.surf, borderColor: T.acc.hero, color: T.acc.hero }
+					}}
+				>
+					Edit
+				</Button>
+			</Box>
+		);
+	};
+
 	const previewName = form.name || '(name)';
 	const PreviewIcon = resolveCategoryIcon(form.name, form.icon);
 	const previewColor = resolveCategoryColor(form.name, form.color);
@@ -233,90 +420,14 @@ export function Category () {
 
 			{/* Category rows */}
 			<Stack spacing={0.75}>
-				{filteredList.length === 0 && (
+				{rows.length === 0 && (
 					<Box sx={{ padding: 3, textAlign: 'center', color: T.ink2, border: `1px dashed ${T.rule}`, borderRadius: '12px' }}>
 						<Typography sx={{ fontSize: 13 }}>No categories</Typography>
 					</Box>
 				)}
-				{filteredList.map(item => {
-					const Icon = resolveCategoryIcon(item.name, categoryIcons[item.name]);
-					const rowColor = resolveCategoryColor(item.name, categoryColors[item.name]);
-					const isExempt = livingExpenseExempt.includes(item.name);
-					return (
-						<Box
-							key={item.idx}
-							sx={{
-								display: 'grid',
-								gridTemplateColumns: { xs: '40px 1fr auto', md: '40px 1fr 90px auto' },
-								gap: 1.5,
-								alignItems: 'center',
-								padding: '12px',
-								borderRadius: '10px',
-								background: T.dark ? 'rgba(255,255,255,0.02)' : T.surf2,
-								border: `1px solid ${T.rule}`
-							}}
-						>
-							<Box sx={{
-								width: 40,
-								height: 40,
-								borderRadius: '12px',
-								background: tint(rowColor, '22'),
-								color: rowColor,
-								display: 'inline-flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								flexShrink: 0
-							}}>
-								<Icon sx={{ fontSize: 18 }} />
-							</Box>
-							<Typography sx={{ fontSize: 13, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-								{item.name}
-							</Typography>
-							<Box
-								onClick={() => {
-									const next = isExempt
-										? livingExpenseExempt.filter(c => c !== item.name)
-										: [...livingExpenseExempt, item.name].sort();
-									dispatch(updateGeneralAction('livingExpenseExempt', next));
-								}}
-								sx={{
-									display: { xs: 'none', md: 'inline-flex' },
-									alignItems: 'center',
-									justifyContent: 'center',
-									padding: '4px 10px',
-									fontSize: 11,
-									fontWeight: 600,
-									borderRadius: '999px',
-									background: isExempt ? T.acc.bg : 'transparent',
-									color: isExempt ? T.acc.deep : T.ink2,
-									border: isExempt ? 'none' : `1px solid ${T.rule}`,
-									cursor: 'pointer',
-									transition: 'all 0.15s'
-								}}
-							>
-								{isExempt ? 'Exempt' : 'Include'}
-							</Box>
-							<Button
-								onClick={() => openEdit(item)}
-								size="small"
-								startIcon={<EditOutlinedIcon sx={{ fontSize: 14 }} />}
-								sx={{
-									background: 'transparent',
-									border: `1px solid ${T.rule}`,
-									color: T.ink,
-									borderRadius: '999px',
-									padding: '4px 10px',
-									fontSize: 11,
-									fontWeight: 600,
-									textTransform: 'none',
-									minWidth: 0,
-									'&:hover': { background: T.surf, borderColor: T.acc.hero, color: T.acc.hero }
-								}}
-							>
-								Edit
-							</Button>
-						</Box>
-					);
+				{rows.map(entry => {
+					if (entry.kind === 'group') return renderGroupHeader(entry);
+					return renderRow(entry);
 				})}
 			</Stack>
 
