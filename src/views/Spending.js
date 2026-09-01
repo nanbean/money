@@ -188,7 +188,7 @@ function Spending () {
 	const T = useT();
 
 	const dispatch = useDispatch();
-	const [range, setRange] = useState('3M');
+	const [range, setRange] = useState('1M');
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(true);
 	const [projectionExpanded, setProjectionExpanded] = useState(false);
 	const [txDialog, setTxDialog] = useState(null); // { mode: 'category'|'payee', key: string }
