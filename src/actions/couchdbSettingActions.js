@@ -5,6 +5,7 @@ import {
 } from './actionTypes';
 
 import { COUCHDB_URL } from '../constants';
+import { missingTransferCategories } from '../utils/transferCategory';
 
 let settingsDB = new PouchDB('settings');
 let settingsSync;
@@ -72,8 +73,28 @@ export const updateGeneralAction = (key, value) => {
 export const addCategoryAction = (value) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
+		// 같은 이름이 두 번 들어가면 모든 드롭다운에 두 번 나오고, 편집·삭제가
+		// 인덱스로 동작하기 때문에 어느 쪽을 고른 건지 알 수 없게 된다.
+		if (categoryList.value.includes(value)) return;
 		categoryList.value.push(value);
 		categoryList.value.sort();
+		await settingsDB.put(categoryList);
+		dispatch(getSettingsAction());
+	};
+};
+
+// 계좌 생성 시 '[계좌명]' 이체 카테고리를 채운다. 손으로 추가해야 했던 탓에
+// 계좌는 있는데 이체 카테고리가 없는 계좌가 생겼다 (RobinhoodMargin_Cash).
+//
+// 계좌 삭제 때는 지우지 않는다 — 과거 거래가 그 이름을 참조하고 있어서, 지우면
+// 그 이체 내역이 목록·리포트에서 분류 없는 항목이 된다.
+export const ensureTransferCategoriesAction = (accounts) => {
+	return async dispatch => {
+		const categoryList = await settingsDB.get('categoryList');
+		const missing = missingTransferCategories(accounts, categoryList.value);
+		if (missing.length === 0) return;
+
+		categoryList.value = [...categoryList.value, ...missing].sort();
 		await settingsDB.put(categoryList);
 		dispatch(getSettingsAction());
 	};

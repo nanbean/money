@@ -7,6 +7,7 @@ import {
 } from './actionTypes';
 
 import { COUCHDB_URL } from '../constants';
+import { ensureTransferCategoriesAction } from './couchdbSettingActions';
 
 export let accountsDB = new PouchDB('accounts');
 let accountsSync;
@@ -57,6 +58,11 @@ export const finalizeCouchdbAccountAction = () => {
 export const addAccountAction = (account) => {
 	return async dispatch => {
 		try {
+			// 만들어진 계좌 문서를 모아 이체 카테고리를 채운다. Invst 는 자기
+			// 이름으로 만들지 않고 동반 _Cash 계좌 쪽으로 생긴다 — 규칙은
+			// utils/transferCategory 에 있다.
+			const created = [];
+
 			if (account.type === 'Invst') {
 				const cashAccountName = `${account.name}_Cash`;
 				const cashAccountId = `account:Bank:${cashAccountName}`;
@@ -68,9 +74,13 @@ export const addAccountAction = (account) => {
 				};
 				await accountsDB.put(cashAccount);
 				account.cashAccountId = cashAccountId;
+				created.push(cashAccount);
 			}
 			await accountsDB.put(account);
+			created.push(account);
+
 			dispatch(getAccountListAction());
+			await dispatch(ensureTransferCategoriesAction(created));
 		} catch (e) {
 			console.log(e); // eslint-disable-line no-console
 		}
