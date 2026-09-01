@@ -63,8 +63,15 @@ export const flattenExpenseRows = (transactions = []) => {
 // 생활비 면제 판정. 면제 목록에는 '세금:소득세' 처럼 서브카테고리까지 지정된
 // 항목이 많으므로 반드시 'category:subcategory' 로 맞춰봐야 한다. 카테고리만으로
 // 비교하면 그런 항목이 하나도 걸러지지 않는다.
+//
+// 비교는 경로 단위다 — '세금' 은 '세금' 자신과 '세금:...' 만 덮는다. 순수
+// 문자열 startsWith 였을 때는 '보험' 이 '보험료' 까지 덮었다. 지금 목록에서는
+// 두 방식의 결과가 같지만(그렇게 겹치는 짝이 없다) 카테고리를 하나 추가하는
+// 순간 조용히 어긋난다.
 export const isLivingExpenseExempt = (tx, livingExpenseExempt = []) => {
 	const full = fullCategoryOf(tx);
 	if (!full) return false;
-	return livingExpenseExempt.some((exempt) => full.startsWith(exempt));
+	return (livingExpenseExempt || []).some(
+		(exempt) => full === exempt || full.startsWith(`${exempt}:`)
+	);
 };
