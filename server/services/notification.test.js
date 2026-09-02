@@ -205,6 +205,89 @@ describe('notification service', () => {
 				});
 			});
 
+			// 필드가 어긋난 요청도 로그로 보여야 한다. 그러지 않으면 "요청이
+			// 안 왔다" 와 "형식이 다르다" 가 로그에서 똑같이 아무것도 아니다.
+			describe('형식이 어긋난 요청', () => {
+				test.each([
+					['text 없음', { packageName: 'ios.NHPay' }],
+					['필드 이름 다름', { packageName: 'ios.NHPay', message: 'NH카드6*4*승인' }],
+					['packageName 없음', { text: 'NH카드6*4*승인' }],
+					['빈 본문', { packageName: 'ios.NHPay', text: '' }],
+					['빈 객체', {}]
+				])('%s 을 거부하고 로그를 남긴다', async (_label, body) => {
+					// Arrange
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					const result = await addTransaction(body);
+
+					// Assert
+					expect(result).toBe(false);
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(log.mock.calls.some(([first]) => String(first).includes('[notify] rejected')))
+						.toBe(true);
+
+					log.mockRestore();
+				});
+			});
+
+			// 회귀 방지. 예전에는 ios.* 만 남겨서, 안드로이드·SMS 알림은 거래가
+			// 기록돼도 어느 앱이 보냈는지 로그에서 알 수 없었다.
+			describe('알림 로그', () => {
+				const capture = async (body) => {
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+					await addTransaction(body);
+					const lines = log.mock.calls.map((c) => c.map(String).join(' '));
+					log.mockRestore();
+					return lines;
+				};
+
+				test.each([
+					['안드로이드 KB', {
+						packageName: 'com.kbcard.kbkookmincard',
+						text: 'KB국민카드\n승인\n14,160원\n09/02\n11번가'
+					}],
+					['SMS (packageName 이 메시지앱)', {
+						packageName: 'com.google.android.apps.messaging',
+						text: '[Web발신]\nNH카드6*4*승인\n김*심\n52,000원\n08/28 14:16\n최선도'
+					}],
+					['iOS NH Pay', {
+						packageName: 'ios.NHPay',
+						text: 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도'
+					}]
+				])('%s 의 packageName 을 남긴다', async (_label, body) => {
+					// Act
+					const lines = await capture(body);
+
+					// Assert
+					const received = lines.find((l) => l.includes('[notify] received'));
+					expect(received).toBeDefined();
+					expect(received).toContain(body.packageName);
+				});
+
+				// 어느 파서가 잡았는지 알아야 잘못 잡힌 경우를 추적할 수 있다.
+				it('기록 시 파서 인덱스를 남긴다', async () => {
+					// Act
+					const lines = await capture({
+						packageName: 'ios.NHPay',
+						text: 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도'
+					});
+
+					// Assert
+					const recorded = lines.find((l) => l.includes('[notify] recorded'));
+					expect(recorded).toContain('"parserIndex"');
+					expect(recorded).toContain('"payee":"최선도"');
+				});
+
+				it('파서가 없으면 no-parser 를 남긴다', async () => {
+					// Act
+					const lines = await capture({ packageName: 'com.unknown.app', text: '알 수 없는 알림' });
+
+					// Assert
+					expect(lines.some((l) => l.includes('[notify] no-parser'))).toBe(true);
+				});
+			});
+
 			// iOS NH Pay. 급여계좌로 기록한다 — SMS 로 오는 같은 카드(6*4*)와 같다.
 			//
 			// 줄바꿈으로 오는지 공백으로 오는지 확실하지 않아 둘 다 받는다.

@@ -309,7 +309,7 @@ const parsers = [
 
 			// 'NH카드<번호>승인|취소 <이름> <금액>원 [일시불] <MM/DD> <HH:mm> <상호> [누적...]'
 			const m = line.match(
-				/NH카드[0-9*]+(승인|취소)\s+\S+\s+([\d,]+)원(?:\s+(?!\d{2}\/\d{2})\S+)*\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+(.+?)(?:\s+누적\S*)?\s*$/
+				/NH카드[0-9*]+(승인|취소)\s+\S+\s+([\d,]+)원(?:\s+(?!\d{2}\/\d{2})\S+)*\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+(.+?)(?:\s+누적[\d,]+원?)?\s*$/
 			);
 			if (!m) return {};
 
@@ -627,36 +627,45 @@ const parsers = [
 	}
 ];
 
-// ios.* 는 최근에 붙인 경로다 (ios.KBPay · ios.lottecard). 두 앱 모두 알림 이력이
-// 없어 메시지 형식을 실제 수신값을 보고서야 맞췄고, 롯데는 세 번 고쳤다. 그래서
-// 당분간 원문과 파싱 결과를 함께 남긴다 — 둘이 같이 있어야 안 맞을 때 어디가
-// 어긋났는지 알 수 있다.
+// 모든 알림을 남긴다. 앱을 가리지 않는 게 중요하다 — 예전에는 ios.* 만 남겼고,
+// 그래서 거래가 기록됐는데도 어느 앱이 보낸 것인지, 어느 파서가 잡은 것인지
+// 로그에서 전혀 알 수 없었다. packageName 을 모르면 매처를 고칠 수가 없다.
+//
+// 하루 수십 건이라 전부 남겨도 부담이 없고 logrotate 가 매일 정리한다.
 //
 // text 는 여러 줄이라 JSON.stringify 로 한 줄로 남긴다. 로그에서 grep 이 된다.
-// 형식이 안정되면 지운다.
-const logIosNotification = (body, stage, detail) => {
-	if (!/^ios\./i.test(body.packageName || '')) return;
-	console.log(`[ios] ${stage}`, JSON.stringify({ packageName: body.packageName, ...detail }));
+const logNotification = (stage, detail) => {
+	console.log(`[notify] ${stage}`, JSON.stringify(detail));
 };
 
 exports.addTransaction = async function (body) {
+	// 가드보다 먼저 찍는다. 뒤에 두면 필드 이름이 다르거나 본문이 빈 요청이
+	// 로그 한 줄 없이 끝나서, 요청이 아예 안 온 것과 구분되지 않는다.
 	if (!body || !body.packageName || !body.text) {
+		logNotification('rejected', { keys: body ? Object.keys(body) : null, body });
 		return false;
 	}
 
-	logIosNotification(body, 'received', { title: body.title, text: body.text });
+	logNotification('received', {
+		packageName: body.packageName,
+		title: body.title,
+		text: body.text
+	});
 
 	if (isDuplicatedTransaction(body)) {
-		console.log('duplicated transaction');
-		logIosNotification(body, 'skipped', { reason: 'duplicated' });
+		logNotification('skipped', { packageName: body.packageName, reason: 'duplicated' });
 		return false;
 	}
 	setLastTransaction(body);
 
-	const parser = parsers.find((p) => p.matcher(body));
+	// 인덱스도 남긴다. 여러 파서가 같은 알림을 잡을 수 있고 (텍스트로 매칭하는
+	// 파서가 여럿이다) 순서에 따라 승자가 달라지므로, 누가 잡았는지 알아야
+	// 잘못 잡힌 경우를 추적할 수 있다.
+	const parserIndex = parsers.findIndex((p) => p.matcher(body));
+	const parser = parsers[parserIndex];
 
 	if (!parser) {
-		logIosNotification(body, 'no-parser', {});
+		logNotification('no-parser', { packageName: body.packageName });
 		await messaging.sendNotification('⚠️ Transaction', 'Failed to find parser', 'receipt');
 		return false;
 	}
@@ -677,7 +686,9 @@ exports.addTransaction = async function (body) {
 			transaction: categorizedTransaction
 		});
 
-		logIosNotification(body, 'recorded', {
+		logNotification('recorded', {
+			packageName: body.packageName,
+			parserIndex,
 			accountId: categorizedTransaction.accountId,
 			date: categorizedTransaction.date,
 			amount: categorizedTransaction.amount,
@@ -693,7 +704,12 @@ exports.addTransaction = async function (body) {
 	// 취소나 결제일 안내처럼 거래가 아닌 알림도 여기로 온다. 파서가 일부러
 	// 건너뛴 것인지 형식이 안 맞은 것인지는 바로 위 'received' 줄의 원문을 보고
 	// 판단한다 — 두 경우 모두 파서가 빈 결과를 돌려주므로 여기서는 구분되지 않는다.
-	logIosNotification(body, 'no-transaction', { account: account || null, transaction: transaction || null });
+	logNotification('no-transaction', {
+		packageName: body.packageName,
+		parserIndex,
+		account: account || null,
+		transaction: transaction || null
+	});
 
 	await messaging.sendNotification('⚠️ Transaction', 'Failed to parse transaction', 'receipt');
 	return false;
