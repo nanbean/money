@@ -183,17 +183,29 @@ const parsers = [
 		// 전각 공백('（유）　아웃백')이 뭉개진다.
 		matcher: (body) => body.packageName.match(/^ios\.KBPay$/i),
 		parser: (body) => {
+			// 카드번호로 계좌를 가른다. 한 앱에서 여러 사람의 카드 알림이 온다.
+			// 모르는 번호는 거래를 만들지 않는다 — 엉뚱한 계좌에 기록하는 것보다
+			// 알림만 띄우고 사람이 판단하게 두는 편이 낫다.
+			const ACCOUNT_BY_CARD = {
+				6036: 'KB카드',
+				8031: 'KB카드',
+				8033: 'KB카드오은미'
+			};
+
 			const line = body.text.replace(/\r?\n/g, ' ').trim();
 
 			// '[KB Pay 사용 알림] 신용|체크 <번호> <MM/DD> <HH:mm> <금액>원 <상호> 승인'
 			// 취소 문구의 실제 샘플을 본 적이 없어 승인만 거래로 만든다.
 			const pay = line.match(
-				/\]\s*(?:신용|체크)\s+\d{4}\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+([\d,]+)원\s+(.+?)\s*승인\s*$/
+				/\]\s*(?:신용|체크)\s+(\d{4})\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+([\d,]+)원\s+(.+?)\s*승인\s*$/
 			);
 			if (pay) {
-				const [, dateText, amountText, payee] = pay;
+				const [, cardNumber, dateText, amountText, payee] = pay;
+				const account = ACCOUNT_BY_CARD[cardNumber];
+				if (!account) return {};
+
 				return {
-					account: 'KB카드',
+					account,
 					transaction: {
 						date: moment(dateText, 'MM/DD').format('YYYY-MM-DD'),
 						amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10) * -1,
@@ -205,15 +217,18 @@ const parsers = [
 
 			// 'KB국민카드<번호>승인|취소 <이름> <금액>원 [일시불] <MM/DD> <HH:mm> <상호> [누적...]'
 			const card = line.match(
-				/KB국민카드[0-9*]+(승인|취소)\s+\S+\s+([\d,]+)원(?:\s+(?!\d{2}\/\d{2})\S+)*\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+(.+?)(?:\s+누적[\d,]+원?)?\s*$/
+				/KB국민카드([0-9*]+)(승인|취소)\s+\S+\s+([\d,]+)원(?:\s+(?!\d{2}\/\d{2})\S+)*\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+(.+?)(?:\s+누적[\d,]+원?)?\s*$/
 			);
 			if (card) {
-				const [, kind, amountText, dateText, payee] = card;
+				const [, cardNumber, kind, amountText, dateText, payee] = card;
 				// 취소는 거래를 만들지 않는다 — 안드로이드 파서 주석 참고.
 				if (kind === '취소') return {};
 
+				const account = ACCOUNT_BY_CARD[cardNumber];
+				if (!account) return {};
+
 				return {
-					account: 'KB카드',
+					account,
 					transaction: {
 						date: moment(dateText, 'MM/DD').format('YYYY-MM-DD'),
 						amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10) * -1,
@@ -224,6 +239,56 @@ const parsers = [
 			}
 
 			return {};
+		}
+	},
+	{
+		// iOS 롯데카드. 전부 생활비카드로 기록한다.
+		//
+		//   '\n십일번가 주식회사\n13,050원 승인\nLOCA LIKIT 2.0(7*2*)\n일시불, 09/02 22:08\n누적금액 880,801원'
+		//   '\n십일번가 주식회사\n13,050원 승인취소\nLOCA LIKIT 2.0(7*2*)\n일시불, 09/02 22:08\n누적금액 880,801원'
+		//
+		// KB 와 순서가 반대다 — 상호가 첫 줄이고 금액·상태가 둘째 줄이다. 앞에
+		// 개행이 붙고, 마지막에 '누적금액' 줄이 온다.
+		//
+		// 상태는 정확히 '승인' 일 때만 거래를 만든다. '승인취소' 는 배열 맨 앞
+		// 파서도 잡지만 여기서도 독립적으로 걸러 순서에 의존하지 않게 한다.
+		// 모르는 상태 문구('부분취소' 등)도 같이 막힌다.
+		matcher: (body) => body.packageName.match(/^ios\.lottecard$/i),
+		parser: (body) => {
+			const lines = body.text.split('\n').map((l) => l.trim()).filter(Boolean);
+
+			// '13,050원 승인' / '13,050원 승인취소'
+			// '누적금액 880,801원' 은 숫자로 시작하지 않아 걸리지 않는다.
+			let amount = null;
+			let status = null;
+			lines.some((line) => {
+				const m = line.match(/^([\d,]+)원\s*(.+)$/);
+				if (!m) return false;
+				amount = parseInt(m[1].replace(/[^0-9]/g, ''), 10);
+				status = m[2].trim();
+				return true;
+			});
+
+			// '일시불, 09/02 22:08' — 줄 구성이 달라질 수 있어 전문에서 찾는다.
+			const dateMatch = body.text.match(/(\d{2}\/\d{2})\s+\d{1,2}:\d{2}/);
+			// 상호는 첫 줄이다.
+			const payee = lines[0];
+
+			if (!amount || !status || !dateMatch || !payee) return {};
+			// 금액 줄이 첫 줄이면 상호가 없는 다른 형태다.
+			if (/^[\d,]+원/.test(payee)) return {};
+			// 취소는 거래를 만들지 않는다 — 안드로이드 KB 파서 주석 참고.
+			if (status !== '승인') return {};
+
+			return {
+				account: '생활비카드',
+				transaction: {
+					date: moment(dateMatch[1], 'MM/DD').format('YYYY-MM-DD'),
+					amount: amount * -1,
+					payee,
+					category: '분류없음'
+				}
+			};
 		}
 	},
 	{

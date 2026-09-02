@@ -205,6 +205,157 @@ describe('notification service', () => {
 				});
 			});
 
+			// iOS 롯데카드. 전부 생활비카드로 기록한다.
+			//
+			// KB 와 순서가 반대다 — 상호가 첫 줄, 금액·상태가 둘째 줄이다.
+			describe('iOS 롯데카드', () => {
+				const lotte = (text) => ({ packageName: 'ios.lottecard', text });
+				// 실제 수신 문구
+				const REAL = '\n십일번가 주식회사\n13,050원 승인\nLOCA LIKIT 2.0(7*2*)\n일시불, 09/02 22:08\n누적금액 880,801원';
+
+				it('실제 문구를 생활비카드로 기록한다', async () => {
+					// Act
+					await addTransaction(lotte(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						date: moment('09/02', 'MM/DD').format('YYYY-MM-DD'),
+						amount: -13050,
+						payee: '십일번가 주식회사',
+						accountId: 'account:CCard:생활비카드'
+					});
+				});
+
+				// 상호에 공백이 들어간다 — 첫 줄을 통째로 쓴다.
+				it('상호의 공백을 유지한다', async () => {
+					// Act
+					await addTransaction(lotte('이마트 에브리데이 동탄호수점\n4,980원 승인\nLOCA LIKIT 2.0(7*2*)\n일시불, 09/02 20:25'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -4980, payee: '이마트 에브리데이 동탄호수점' });
+				});
+
+				it('할부도 받는다', async () => {
+					// Act
+					await addTransaction(lotte('\n쿠팡\n120,000원 승인\nLOCA\n3개월, 09/02 20:25\n누적금액 1원'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -120000, payee: '쿠팡' });
+				});
+
+				// '누적금액 880,801원' 은 숫자로 시작하지 않아 금액 줄로 오인되지 않는다.
+				it('누적금액 줄을 금액으로 읽지 않는다', async () => {
+					// Act
+					await addTransaction(lotte(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].amount).toBe(-13050);
+				});
+
+				// 상태가 정확히 '승인' 이 아니면 거래를 만들지 않는다. 배열 맨 앞
+				// 파서에 의존하지 않고 여기서 독립적으로 막는다.
+				test.each(['승인취소', '취소', '부분취소', '거절'])('상태가 %s 면 거래를 만들지 않는다', async (status) => {
+					// Act
+					await addTransaction(lotte(REAL.replace('13,050원 승인', `13,050원 ${status}`)));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 결제 알림이 아닌 메시지는 금액·상태 줄이나 날짜가 없다.
+				test.each([
+					['결제예정 안내', '[롯데카드] 9월 결제예정금액은 1,234,000원입니다'],
+					['날짜 없음', '\n이마트\n4,980원 승인\nLOCA'],
+					['금액 줄이 첫 줄', '\n4,980원 승인\nLOCA\n일시불, 09/02 20:25']
+				])('%s 는 거래를 만들지 않는다', async (_label, text) => {
+					// Act
+					await addTransaction(lotte(text));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				it('ios.lettecard 는 이 파서가 잡지 않는다', async () => {
+					// Act
+					await addTransaction({ packageName: 'ios.lettecard', text: REAL });
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// KB 카드 알림이 롯데 파서로 새면 안 된다.
+				it('KB 카드 알림은 KB 계좌로 간다', async () => {
+					// Act
+					await addTransaction({
+						packageName: 'ios.KBPay',
+						text: 'KB국민카드6036승인 김*심님 5,000원 일시불 09/02 16:13 쿠팡 누적50,000'
+					});
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].accountId)
+						.toBe('account:CCard:KB카드');
+				});
+			});
+
+			// 한 앱에서 여러 사람의 카드 알림이 온다. 카드번호로 계좌를 가른다.
+			describe('KB Pay 카드번호별 계좌', () => {
+				const payBody = (card) => ({
+					packageName: 'ios.KBPay',
+					text: `\n[KB Pay 사용 알림] 신용 ${card} 09/02 16:13 5,000원 쿠팡 승인 `
+				});
+				const cardBody = (card) => ({
+					packageName: 'ios.KBPay',
+					text: `KB국민카드${card}승인 김*심님 5,000원 일시불 09/02 16:13 쿠팡 누적50,000`
+				});
+
+				test.each([
+					['6036', 'account:CCard:KB카드'],
+					['8031', 'account:CCard:KB카드'],
+					['8033', 'account:CCard:KB카드오은미']
+				])('KB Pay 형식 %s -> %s', async (card, accountId) => {
+					// Act
+					await addTransaction(payBody(card));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -5000, payee: '쿠팡', accountId });
+				});
+
+				test.each([
+					['6036', 'account:CCard:KB카드'],
+					['8031', 'account:CCard:KB카드'],
+					['8033', 'account:CCard:KB카드오은미']
+				])('국민카드 형식 %s -> %s', async (card, accountId) => {
+					// Act
+					await addTransaction(cardBody(card));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -5000, payee: '쿠팡', accountId });
+				});
+
+				// 엉뚱한 계좌에 기록하는 것보다 알림만 띄우는 편이 낫다.
+				it('모르는 카드번호는 거래를 만들지 않는다', async () => {
+					// Act
+					await addTransaction(payBody('9999'));
+					await addTransaction(cardBody('7777'));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 마스킹된 번호는 안드로이드 알림 형식이다. iOS 로 오면 특정할 수 없다.
+				it('마스킹된 번호는 거래를 만들지 않는다', async () => {
+					// Act
+					await addTransaction(cardBody('1*8*'));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+			});
+
 			// 취소는 거래를 만들지 않는다. 원본을 자동으로 찾아 고치려면 상호·금액·
 			// 날짜로 지목해야 하는데, 실측 재생에서 같은 상호의 다른 결제를 집는
 			// 경우가 나왔다. 사람이 판단한다.
@@ -293,7 +444,7 @@ describe('notification service', () => {
 				// Arrange
 				const body = {
 					packageName: 'ios.KBPay',
-					text: 'KB국민카드1*8*승인 김*심 100,000원 일시불 05/24 14:27 셀렉토커피 동탄 누적1,000원'
+					text: 'KB국민카드6036승인 김*심 100,000원 일시불 05/24 14:27 셀렉토커피 동탄 누적1,000원'
 				};
 
 				// Act
@@ -362,7 +513,7 @@ describe('notification service', () => {
 				// Arrange
 				const body = {
 					packageName: 'ios.KBPay',
-					text: '\n[KB Pay 사용 알림] 체크 1234 03/31 14:38 11,500원 텐퍼센트 레이크 승인 '
+					text: '\n[KB Pay 사용 알림] 체크 8031 03/31 14:38 11,500원 텐퍼센트 레이크 승인 '
 				};
 
 				// Act
