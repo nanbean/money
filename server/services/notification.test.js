@@ -293,6 +293,9 @@ describe('notification service', () => {
 			// 줄바꿈으로 오는지 공백으로 오는지 확실하지 않아 둘 다 받는다.
 			describe('iOS NH Pay', () => {
 				const nh = (text) => ({ packageName: 'ios.NHPay', text });
+				// 2026-09-03 실측. 앱 이름 줄이 앞에 붙고 이후 줄은 \r\n 이며
+				// 마지막이 '총누적135,486원' 이다.
+				const REAL = 'NH농협카드\nNH카드6*4*승인\r\n김*심\r\n11,500원 일시불\r\n09/03 04:49\r\n11번가\r\n총누적135,486원';
 				const NEWLINE = 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도';
 				const SPACED = 'NH카드6*4*승인 김*심 52,000원 일시불 08/28 12:03 최선도';
 
@@ -313,10 +316,27 @@ describe('notification service', () => {
 					});
 				});
 
+				// 실측 원문. '총누적' 을 못 떼서 payee 가
+				// '11번가 총누적135,486원' 으로 기록된 적이 있다.
+				it('실측 원문의 총누적 필드를 떼어낸다', async () => {
+					// Act
+					await addTransaction(nh(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						date: '2026-09-03',
+						amount: -11500,
+						payee: '11번가',
+						accountId: 'account:Bank:급여계좌'
+					});
+				});
+
 				test.each([
 					['이름에 님', 'NH카드6*4*승인\n김*심님\n52,000원 일시불\n08/28 12:03\n최선도'],
 					['일시불 없음', 'NH카드6*4*승인\n김*심\n52,000원\n08/28 12:03\n최선도'],
-					['누적 붙음', 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도\n누적880,801원']
+					['누적 붙음', 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도\n누적880,801원'],
+					['총누적 붙음', 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도\n총누적880,801원'],
+					['누적금액 붙음', 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도\n당월누적880,801']
 				])('%s 도 받는다', async (_label, text) => {
 					// Act
 					await addTransaction(nh(text));
@@ -623,6 +643,18 @@ describe('notification service', () => {
 				// Assert
 				expect(transactionService.addTransaction.mock.calls[0][0])
 					.toMatchObject({ amount: -100000, payee: '셀렉토커피 동탄' });
+			});
+
+			// NH 에서 '총누적' 으로 실측됐다. KB 도 같은 형식군이라 함께 받는다.
+			it('총누적 접두어가 붙어도 상호만 남긴다', async () => {
+				// Act
+				await addTransaction({
+					packageName: 'ios.KBPay',
+					text: 'KB국민카드6036승인 김*심님 14,160원 일시불 09/02 16:13 11번가 총누적120,830원'
+				});
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0].payee).toBe('11번가');
 			});
 
 			// 전각 공백(U+3000)이 상호에 들어온다. 공백 전체를 정규화하면 뭉개진다.
