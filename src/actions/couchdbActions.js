@@ -26,6 +26,7 @@ import {
 import { COUCHDB_URL } from '../constants';
 import { applyMemoTags } from '../utils/memoTags';
 import { isInvestmentCashName, invstAccountNameFor } from '../utils/investmentCash';
+import { renameInTransaction } from '../utils/categoryRename';
 
 import {
 	SET_ADD_TRANSACTION_FETCHING,
@@ -859,6 +860,35 @@ export const getPayeeListAction = () => {
 			type: SET_PAYEE_LIST,
 			payload: _.uniq(payees.sort())
 		});
+	};
+};
+
+// 카테고리 이름 변경을 거래에도 반영한다.
+//
+// 예전에는 목록의 문자열만 바꿨다. 거래는 category/subcategory 두 필드로 이름을
+// 들고 있고 분할 항목도 같으므로, 옮기지 않으면 거래가 목록에 없는 이름에 남는다.
+// 리포트는 거래에서 카테고리를 뽑기 때문에 옛 이름과 새 이름이 나란히 뜬다 —
+// 이름 변경이 아니라 이력 분기다.
+//
+// '식비:군것질' 처럼 4,000건 넘게 걸린 이름도 있어서 bulkDocs 로 한 번에 쓴다.
+// 바뀐 문서만 골라 보낸다.
+export const renameCategoryInTransactionsAction = (oldName, newName) => {
+	return async dispatch => {
+		const allTransactions = await getAllTransactions();
+		const changed = allTransactions
+			.map(transaction => renameInTransaction(transaction, oldName, newName))
+			.filter(Boolean);
+
+		if (changed.length === 0) return 0;
+
+		const results = await transactionsDB.bulkDocs(changed);
+		const failed = results.filter(r => r && r.error);
+		if (failed.length > 0) {
+			console.log(`renameCategoryInTransactions: ${failed.length} failed`, failed[0]); // eslint-disable-line no-console
+		}
+
+		dispatch(getAllAccountsTransactionsAction());
+		return changed.length - failed.length;
 	};
 };
 

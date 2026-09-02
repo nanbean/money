@@ -19,14 +19,17 @@ import { CATEGORY_ICON_OPTIONS, resolveCategoryIcon } from '../../utils/category
 import { CATEGORY_COLOR_OPTIONS, resolveCategoryColor } from '../../utils/categoryColor';
 import { TRANSFER_GROUP } from '../../utils/categoryOrder';
 import { buildCategoryRows, exemptStateOf, groupExemptSummary, collapseToParent, toggleExempt } from './exemptTree';
+import { categoryImpact } from '../../utils/categoryRename';
 
+import { renameCategoryInTransactionsAction } from '../../actions/couchdbActions';
 import {
 	addCategoryAction,
 	deleteCategoryAction,
 	updateCategoryAction,
 	updateGeneralAction,
 	updateCategoryIconAction,
-	updateCategoryColorAction
+	updateCategoryColorAction,
+	renameCategoryInPaymentsAction
 } from '../../actions/couchdbSettingActions';
 
 // Hex + opacity helper (`#rrggbb` + alpha hex pair, e.g. '22' for ~13%, 'ff' = 100%)
@@ -62,15 +65,18 @@ export function Category () {
 	const T = useT();
 	const lab = labelStyle(T);
 
-	const { categoryList = [], livingExpenseExempt = [], categoryIcons = {}, categoryColors = {} } = useSelector(
+	const { categoryList = [], livingExpenseExempt = [], categoryIcons = {}, categoryColors = {}, paymentList = [] } = useSelector(
 		(state) => state.settings
 	);
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions || []);
 
 	const [filter, setFilter] = useState('all'); // all | exempt
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [isEdit, setIsEdit] = useState(false);
 	const [editIndex, setEditIndex] = useState(-1);
 	const [form, setForm] = useState({ name: '', icon: '', color: '', exempt: false });
+	// 삭제와 이름 변경은 거래 참조 수를 보여주고 확인을 받는다.
+	const [pending, setPending] = useState(null);
 
 	// 저장된 목록은 107행이 평평하고 '[' 정렬 탓에 이체 46건이 맨 앞에 온다.
 	// 거래 입력 드롭다운과 같은 규칙으로 부모 그룹 아래에 접는다.
@@ -107,6 +113,42 @@ export function Category () {
 
 	const closeDialog = () => setDialogOpen(false);
 
+	// 이름 변경·삭제 외의 부수 설정(면제·아이콘·색상)만 적용한다.
+	const applyMeta = (oldName, trimmed) => {
+		const wasExempt = livingExpenseExempt.includes(oldName);
+		if (form.exempt !== wasExempt || trimmed !== oldName) {
+			let next = livingExpenseExempt.filter(c => c !== oldName);
+			if (form.exempt) next = [...next, trimmed].sort();
+			dispatch(updateGeneralAction('livingExpenseExempt', next));
+		}
+		if ((categoryIcons[oldName] || '') !== form.icon) {
+			dispatch(updateCategoryIconAction(trimmed, form.icon));
+		}
+		const defaultColor = resolveCategoryColor(trimmed) || '';
+		const targetColor = form.color === defaultColor ? '' : form.color;
+		if ((categoryColors[oldName] || '') !== targetColor) {
+			dispatch(updateCategoryColorAction(trimmed, targetColor));
+		}
+	};
+
+	// 이름 변경은 항상 거래와 정기지불까지 옮긴다.
+	//
+	// 예전에는 목록의 문자열만 바꿨고, 그걸 '목록만 바꾸기' 선택지로 남겨 뒀었다.
+	// 그런데 그 결과가 바로 우리가 결함이라 부른 상태다 — 옛 이름이 목록에서
+	// 사라져 선택·편집·면제 설정이 모두 불가능해지는데, 리포트는 거래에서
+	// 카테고리를 뽑으므로 계속 나온다 (지금 데이터의 '자본 수익:배당' 5건,
+	// '식비' 2건이 그 흔적이다). 정합성 판단을 대화상자에서 고르게 할 일이 아니다.
+	//
+	// migrate 는 참조가 있을 때만 true 다. 참조가 없으면 옮길 것도 없으므로
+	// 거래 28,029건을 훑는 두 번의 스캔을 건너뛴다.
+	const renameCategory = async (oldName, trimmed, migrate) => {
+		dispatch(updateCategoryAction(oldName, trimmed));
+		applyMeta(oldName, trimmed);
+		if (!migrate) return;
+		await dispatch(renameCategoryInPaymentsAction(oldName, trimmed));
+		await dispatch(renameCategoryInTransactionsAction(oldName, trimmed));
+	};
+
 	const handleSubmit = async (e) => {
 		if (e) e.preventDefault();
 		const trimmed = form.name.trim();
@@ -115,25 +157,17 @@ export function Category () {
 		if (isEdit) {
 			const oldName = categoryList[editIndex];
 			if (trimmed !== oldName) {
-				dispatch(updateCategoryAction(editIndex, trimmed));
+				// 참조가 있으면 무엇이 옮겨지는지 보여주고 고르게 한다.
+				const impact = categoryImpact(oldName, allAccountsTransactions, paymentList);
+				if (impact.transactionCount > 0 || impact.paymentCount > 0) {
+					setPending({ mode: 'rename', oldName, newName: trimmed, ...impact });
+					return;
+				}
+				renameCategory(oldName, trimmed, false);
+				closeDialog();
+				return;
 			}
-			// Update exempt membership
-			const wasExempt = livingExpenseExempt.includes(oldName);
-			if (form.exempt !== wasExempt || trimmed !== oldName) {
-				let next = livingExpenseExempt.filter(c => c !== oldName);
-				if (form.exempt) next = [...next, trimmed].sort();
-				dispatch(updateGeneralAction('livingExpenseExempt', next));
-			}
-			// Update icon (use trimmed since rename above will migrate the key)
-			if ((categoryIcons[oldName] || '') !== form.icon) {
-				dispatch(updateCategoryIconAction(trimmed, form.icon));
-			}
-			// Persist color override only when it differs from the project default mapping
-			const defaultColor = resolveCategoryColor(trimmed) || '';
-			const targetColor = form.color === defaultColor ? '' : form.color;
-			if ((categoryColors[oldName] || '') !== targetColor) {
-				dispatch(updateCategoryColorAction(trimmed, targetColor));
-			}
+			applyMeta(oldName, trimmed);
 		} else {
 			dispatch(addCategoryAction(trimmed));
 			if (form.exempt) {
@@ -151,10 +185,8 @@ export function Category () {
 		closeDialog();
 	};
 
-	const handleDelete = () => {
-		if (editIndex < 0) return;
-		const name = categoryList[editIndex];
-		dispatch(deleteCategoryAction(editIndex));
+	const removeCategory = (name) => {
+		dispatch(deleteCategoryAction(name));
 		if (livingExpenseExempt.includes(name)) {
 			const next = livingExpenseExempt.filter(c => c !== name);
 			dispatch(updateGeneralAction('livingExpenseExempt', next));
@@ -165,6 +197,27 @@ export function Category () {
 		if (categoryColors[name]) {
 			dispatch(updateCategoryColorAction(name, null));
 		}
+	};
+
+	const handleDelete = () => {
+		if (editIndex < 0) return;
+		const name = categoryList[editIndex];
+		const impact = categoryImpact(name, allAccountsTransactions, paymentList);
+		if (impact.transactionCount > 0 || impact.paymentCount > 0) {
+			setPending({ mode: 'delete', oldName: name, ...impact });
+			return;
+		}
+		removeCategory(name);
+		closeDialog();
+	};
+
+	const closePending = () => setPending(null);
+
+	const runPending = async () => {
+		const { mode, oldName, newName } = pending;
+		closePending();
+		if (mode === 'delete') removeCategory(oldName);
+		else await renameCategory(oldName, newName, true);
 		closeDialog();
 	};
 
@@ -430,6 +483,117 @@ export function Category () {
 					return renderRow(entry);
 				})}
 			</Stack>
+
+			{/* 삭제·이름변경 확인. 예전에는 둘 다 경고 없이 즉시 실행됐고, 이름
+			    변경은 거래를 옮기지 않아 이력이 두 갈래로 갈렸다. */}
+			<Dialog
+				open={!!pending}
+				onClose={closePending}
+				fullWidth
+				maxWidth="xs"
+				PaperProps={{
+					sx: {
+						background: T.surf,
+						border: `1px solid ${T.rule}`,
+						borderRadius: '20px',
+						color: T.ink
+					}
+				}}
+			>
+				{pending && (
+					<Box sx={{ padding: { xs: '20px', md: '28px' } }}>
+						<Typography sx={{
+							fontSize: 11,
+							color: T.ink3,
+							textTransform: 'uppercase',
+							letterSpacing: '0.08em',
+							fontWeight: 600
+						}}>
+							{pending.mode === 'delete' ? 'Delete category' : 'Rename category'}
+						</Typography>
+						<Typography sx={{ ...sDisplay, fontSize: 19, fontWeight: 700, marginTop: '4px', color: T.ink }}>
+							{pending.mode === 'delete'
+								? pending.oldName
+								: `${pending.oldName} → ${pending.newName}`}
+						</Typography>
+
+						<Box sx={{
+							marginTop: 2,
+							padding: 1.5,
+							borderRadius: '10px',
+							border: `1px solid ${T.rule}`,
+							background: T.dark ? 'rgba(255,255,255,0.02)' : T.surf2
+						}}>
+							<Typography sx={{ fontSize: 12, color: T.ink2 }}>
+								이 이름을 참조하는 것
+							</Typography>
+							<Typography sx={{ fontSize: 13, color: T.ink, marginTop: '6px' }}>
+								거래 <b>{pending.transactionCount.toLocaleString()}</b>건
+								{pending.paymentCount > 0 && <> · 정기지불 <b>{pending.paymentCount}</b>건</>}
+							</Typography>
+						</Box>
+
+						{pending.mode === 'delete' ? (
+							<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: 1.5, lineHeight: 1.6 }}>
+								목록에서만 지워집니다. 거래는 이 이름을 계속 들고 있어서 리포트에는
+								그대로 나오지만, 앞으로 이 카테고리를 고를 수는 없습니다.
+							</Typography>
+						) : (
+							<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: 1.5, lineHeight: 1.6 }}>
+								거래와 정기지불의 이름도 함께 바뀝니다. 되돌릴 수 없습니다.
+							</Typography>
+						)}
+
+						<Stack direction="row" spacing={1} sx={{ marginTop: 3, justifyContent: 'flex-end', flexWrap: 'wrap', rowGap: 1 }}>
+							<Button
+								onClick={closePending}
+								sx={{
+									background: 'transparent',
+									border: `1px solid ${T.rule}`,
+									color: T.ink,
+									borderRadius: '999px',
+									padding: '8px 14px',
+									fontSize: 12,
+									fontWeight: 600,
+									textTransform: 'none',
+									'&:hover': { background: T.surf2 }
+								}}
+							>
+								돌아가기
+							</Button>
+							<Button
+								onClick={runPending}
+								startIcon={pending.mode === 'delete' ? <DeleteOutlineIcon sx={{ fontSize: 14 }} /> : undefined}
+								sx={pending.mode === 'delete'
+									? {
+										background: 'transparent',
+										border: `1px solid ${T.neg}`,
+										color: T.neg,
+										borderRadius: '999px',
+										padding: '8px 14px',
+										fontSize: 12,
+										fontWeight: 700,
+										textTransform: 'none',
+										'&:hover': { background: `${T.neg}11` }
+									}
+									: {
+										background: T.acc.bright,
+										color: T.acc.deep,
+										border: 'none',
+										borderRadius: '999px',
+										padding: '8px 14px',
+										fontSize: 12,
+										fontWeight: 700,
+										textTransform: 'none',
+										'&:hover': { background: T.acc.bright, opacity: 0.9 }
+									}}
+							>
+								{pending.mode === 'delete' ? '삭제' : '이름 바꾸기'}
+							</Button>
+						</Stack>
+					</Box>
+				)}
+			</Dialog>
 
 			{/* Edit / Add Modal */}
 			<Dialog

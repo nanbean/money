@@ -6,6 +6,7 @@ import {
 
 import { COUCHDB_URL } from '../constants';
 import { missingTransferCategories } from '../utils/transferCategory';
+import { renameInPayment } from '../utils/categoryRename';
 
 let settingsDB = new PouchDB('settings');
 let settingsSync;
@@ -88,6 +89,34 @@ export const addCategoryAction = (value) => {
 //
 // 계좌 삭제 때는 지우지 않는다 — 과거 거래가 그 이름을 참조하고 있어서, 지우면
 // 그 이체 내역이 목록·리포트에서 분류 없는 항목이 된다.
+// 카테고리 이름 변경을 정기지불에도 반영한다. 예전에는 옮기지 않아서 이름을
+// 바꾸면 그 정기지불이 죽은 이름을 가리켰다.
+export const renameCategoryInPaymentsAction = (oldName, newName) => {
+	return async dispatch => {
+		let doc;
+		try {
+			doc = await settingsDB.get('paymentList');
+		} catch (e) {
+			if (e.name === 'not_found') return 0;
+			throw e;
+		}
+
+		let changed = 0;
+		doc.value = (doc.value || []).map((payment) => {
+			const next = renameInPayment(payment, oldName, newName);
+			if (!next) return payment;
+			changed += 1;
+			return next;
+		});
+
+		if (changed > 0) {
+			await settingsDB.put(doc);
+			dispatch(getSettingsAction());
+		}
+		return changed;
+	};
+};
+
 export const ensureTransferCategoriesAction = (accounts) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
@@ -100,20 +129,33 @@ export const ensureTransferCategoriesAction = (accounts) => {
 	};
 };
 
-export const deleteCategoryAction = (index) => {
+// 인덱스가 아니라 이름으로 지목한다.
+//
+// 예전에는 splice(index, 1) 이었다. addCategoryAction 이 push 후 정렬하기 때문에
+// 카테고리가 하나 추가되면 그 뒤 인덱스가 전부 밀린다 ('[가상계좌]' 를 넣으면
+// 95개가 +1). PouchDB 동기화 환경에서 다른 기기나 서버 AI 분류가 카테고리를
+// 추가하면, 열어둔 대화상자의 낡은 인덱스가 최신 목록에 적용돼 엉뚱한
+// 카테고리가 조용히 지워진다.
+export const deleteCategoryAction = (name) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
+		const index = categoryList.value.indexOf(name);
+		if (index < 0) return;
 		categoryList.value.splice(index, 1);
 		await settingsDB.put(categoryList);
 		dispatch(getSettingsAction());
 	};
 };
 
-export const updateCategoryAction = (index, value) => {
+// 인덱스가 아니라 옛 이름으로 지목한다 (deleteCategoryAction 과 같은 이유).
+export const updateCategoryAction = (oldName, value) => {
 	return async dispatch => {
 		const categoryList = await settingsDB.get('categoryList');
-		const oldName = categoryList.value[index];
+		const index = categoryList.value.indexOf(oldName);
+		if (index < 0) return;
 		categoryList.value[index] = value;
+		// 이름을 바꾸면 정렬이 깨진다 — 목록은 항상 정렬 상태여야 한다.
+		categoryList.value.sort();
 		await settingsDB.put(categoryList);
 
 		// If renamed, migrate any custom icon/color mapping from old name to new name
