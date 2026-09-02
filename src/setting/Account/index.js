@@ -18,6 +18,7 @@ import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, labelStyle } from '../..
 
 import { TYPE_ICON_MAP, TYPE_NAME_MAP } from '../../constants';
 import { makeIsInvestmentCash } from '../../utils/investmentCash';
+import { accountDeletePlan } from './deleteGuard';
 import {
 	addAccountAction,
 	editAccountAction,
@@ -63,6 +64,8 @@ export default function Account () {
 
 	const [open, setOpen] = useState(false);
 	const [isEdit, setIsEdit] = useState(false);
+	// 삭제는 확인을 거친다. 거래가 남아 있으면 아예 막고 closed 로 유도한다.
+	const [deletePlan, setDeletePlan] = useState(null);
 	const [formData, setFormData] = useState({
 		_id: '',
 		name: '',
@@ -165,7 +168,24 @@ export default function Account () {
 	};
 
 	const handleDelete = () => {
-		dispatch(deleteAccountAction(formData));
+		const account = accountList.find(a => a._id === formData._id) || formData;
+		setDeletePlan(accountDeletePlan(account, accountList, allAccountsTransactions));
+	};
+
+	const closeDeletePlan = () => setDeletePlan(null);
+
+	const confirmDelete = () => {
+		dispatch(deleteAccountAction(deletePlan.targets[0]));
+		closeDeletePlan();
+		handleClose();
+	};
+
+	// 삭제 대신 닫기. 이력과 순자산을 보존하면서 목록에서만 내린다.
+	const closeAccountInstead = () => {
+		deletePlan.targets.forEach(target => {
+			dispatch(editAccountAction({ ...target, closed: true }));
+		});
+		closeDeletePlan();
 		handleClose();
 	};
 
@@ -331,6 +351,126 @@ export default function Account () {
 			})}
 
 			{/* Edit / Add Modal — design-aligned with chip selectors */}
+			{/* 삭제 확인. 예전에는 Delete 클릭이 곧바로 dispatch 였고 되돌릴 수도
+			    없었다. '토지주택' 한 번으로 순자산에서 ₩17.3억이 사라진다. */}
+			<Dialog
+				open={!!deletePlan}
+				onClose={closeDeletePlan}
+				fullWidth
+				maxWidth="xs"
+				PaperProps={{
+					sx: {
+						background: T.surf,
+						border: `1px solid ${T.rule}`,
+						borderRadius: '20px',
+						color: T.ink
+					}
+				}}
+			>
+				{deletePlan && (
+					<Box sx={{ padding: { xs: '20px', md: '28px' } }}>
+						<Typography sx={{
+							fontSize: 11,
+							color: T.ink3,
+							textTransform: 'uppercase',
+							letterSpacing: '0.08em',
+							fontWeight: 600
+						}}>
+							{deletePlan.blocked ? 'Cannot delete' : 'Delete account'}
+						</Typography>
+						<Typography sx={{ ...sDisplay, fontSize: 20, fontWeight: 700, marginTop: '4px', color: T.ink }}>
+							{deletePlan.targets.map(a => a.name).join(' + ')}
+						</Typography>
+
+						{deletePlan.blocked ? (
+							<>
+								<Typography sx={{ fontSize: 13, color: T.ink, marginTop: 2, lineHeight: 1.6 }}>
+									거래 <Box component="span" sx={{ ...sMono, fontWeight: 700 }}>{deletePlan.transactionCount.toLocaleString()}</Box>건이
+									이 계좌를 참조하고 있어 삭제할 수 없습니다.
+								</Typography>
+								<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: 1.25, lineHeight: 1.6 }}>
+									계좌를 지워도 거래는 남습니다. 그러면 잔액
+									<Box component="span" sx={{ ...sMono, color: T.ink, fontWeight: 600 }}> {fmtCurrency(deletePlan.balance, currency)}</Box>
+									이 순자산에서 사라지는데 지출 집계에는 그대로 남아 숫자가 어긋납니다.
+								</Typography>
+								<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: 1.25, lineHeight: 1.6 }}>
+									대신 <b>닫기</b>를 쓰면 목록에서만 내려가고 이력과 순자산은 보존됩니다.
+								</Typography>
+							</>
+						) : (
+							<>
+								<Typography sx={{ fontSize: 13, color: T.ink, marginTop: 2, lineHeight: 1.6 }}>
+									참조하는 거래가 없어 삭제할 수 있습니다.
+								</Typography>
+								{deletePlan.cascade && (
+									<Typography sx={{ fontSize: 12, color: T.neg, marginTop: 1.25, lineHeight: 1.6 }}>
+										동반 계좌 <b>{deletePlan.cascade.name}</b> 도 함께 삭제됩니다 (계좌 문서 {deletePlan.targets.length}개).
+									</Typography>
+								)}
+								<Typography sx={{ fontSize: 12, color: T.ink2, marginTop: 1.25, lineHeight: 1.6 }}>
+									이체 카테고리 <b>[{deletePlan.targets[0].name}]</b> 는 남습니다 — 과거 거래가 이 이름을 참조합니다.
+								</Typography>
+							</>
+						)}
+
+						<Stack direction="row" spacing={1} sx={{ marginTop: 3, justifyContent: 'flex-end', flexWrap: 'wrap', rowGap: 1 }}>
+							<Button
+								onClick={closeDeletePlan}
+								sx={{
+									background: 'transparent',
+									border: `1px solid ${T.rule}`,
+									color: T.ink,
+									borderRadius: '999px',
+									padding: '8px 16px',
+									fontSize: 12,
+									fontWeight: 600,
+									textTransform: 'none',
+									'&:hover': { background: T.surf2 }
+								}}
+							>
+								돌아가기
+							</Button>
+							{deletePlan.blocked ? (
+								<Button
+									onClick={closeAccountInstead}
+									sx={{
+										background: T.acc.bright,
+										color: T.acc.deep,
+										border: 'none',
+										borderRadius: '999px',
+										padding: '8px 16px',
+										fontSize: 12,
+										fontWeight: 700,
+										textTransform: 'none',
+										'&:hover': { background: T.acc.bright, opacity: 0.9 }
+									}}
+								>
+									닫기로 전환
+								</Button>
+							) : (
+								<Button
+									onClick={confirmDelete}
+									startIcon={<DeleteOutlineIcon sx={{ fontSize: 14 }} />}
+									sx={{
+										background: 'transparent',
+										border: `1px solid ${T.neg}`,
+										color: T.neg,
+										borderRadius: '999px',
+										padding: '8px 16px',
+										fontSize: 12,
+										fontWeight: 700,
+										textTransform: 'none',
+										'&:hover': { background: `${T.neg}11` }
+									}}
+								>
+									삭제
+								</Button>
+							)}
+						</Stack>
+					</Box>
+				)}
+			</Dialog>
+
 			<Dialog
 				open={open}
 				onClose={handleClose}
