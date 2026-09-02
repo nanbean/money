@@ -1,5 +1,5 @@
 const fs = require('fs').promises;
-const admin = require('firebase-admin');
+const { getMessaging } = require('firebase-admin/messaging');
 const { addToken, removeToken, sendNotification } = require('./messaging');
 
 // Mock dependencies
@@ -10,15 +10,16 @@ jest.mock('fs', () => ({
 	}
 }));
 
+// 모킹도 실제 서브패스를 따라가야 한다. 예전 모킹은 firebase-admin 14 에서
+// 사라진 admin.messaging() 을 흉내내고 있었고, 그래서 실제 코드가 깨져도
+// 이 테스트는 통과했다.
 const mockSend = jest.fn();
-jest.mock('firebase-admin', () => ({
+jest.mock('firebase-admin/app', () => ({
 	initializeApp: jest.fn(),
-	credential: {
-		cert: jest.fn()
-	},
-	messaging: jest.fn(() => ({
-		send: mockSend
-	}))
+	cert: jest.fn()
+}));
+jest.mock('firebase-admin/messaging', () => ({
+	getMessaging: jest.fn(() => ({ send: mockSend }))
 }));
 
 // Mock the credential file
@@ -102,7 +103,7 @@ describe('messaging service', () => {
 			// Arrange
 			const tokens = ['token1', 'token2'];
 			fs.readFile.mockResolvedValue(JSON.stringify({ tokens }));
-			const mockSend = admin.messaging().send;
+			const mockSend = getMessaging().send;
 			mockSend.mockResolvedValue({ success: true });
 
 			const title = 'Test Title';
@@ -140,7 +141,7 @@ describe('messaging service', () => {
 		it('should handle the case with no tokens', async () => {
 			// Arrange
 			fs.readFile.mockResolvedValue(JSON.stringify({ tokens: [] }));
-			const mockSend = admin.messaging().send;
+			const mockSend = getMessaging().send;
 
 			// Act
 			await sendNotification('Test Title', 'Test Body');

@@ -4,7 +4,9 @@ import pouchdbAuthentication from 'pouchdb-authentication';
 import pouchdbFind from 'pouchdb-find';
 import _ from 'lodash';
 import debounce from 'lodash.debounce';
-import uuidv1 from 'uuid/v1';
+// uuid v3 의 'uuid/v1' 서브패스는 v7 부터 없어졌다. 이름 있는 내보내기로 바뀌었다.
+// v11 을 쓴다 — v12+ 는 ESM 전용이고 server/ 가 CommonJS 라 require 할 수 없다.
+import { v1 as uuidv1 } from 'uuid';
 import moment from 'moment';
 
 import {

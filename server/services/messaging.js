@@ -1,13 +1,16 @@
 const path = require('path');
 const fs = require('fs').promises;
-const admin = require('firebase-admin');
+// firebase-admin 13 부터 기본 export 의 네임스페이스가 서브패스로 갈렸다.
+// credential 과 messaging() 은 이제 각 서브패스에서 가져온다.
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 
 const serviceAccount = require('../firebase-credential.json');
 
 const filePath = path.resolve(__dirname, 'messaging.json');
 
-admin.initializeApp({
-	credential: admin.credential.cert(serviceAccount)
+initializeApp({
+	credential: cert(serviceAccount)
 });
 
 const readMessagingFile = async () => {
@@ -75,7 +78,7 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 	const invalidTokens = [];
 	const settledPromises = await Promise.allSettled(tokens.map(token => {
 		const tokenMessage = { ...message, token };
-		return admin.messaging().send(tokenMessage)
+		return getMessaging().send(tokenMessage)
 			.catch(error => {
 				if (INVALID_TOKEN_CODES.includes(error.code)) {
 					invalidTokens.push(token);
