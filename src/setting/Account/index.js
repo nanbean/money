@@ -152,7 +152,13 @@ export default function Account () {
 
 	const handleSubmit = (e) => {
 		if (e) e.preventDefault();
-		const newData = { ...formData, _id: `account:${formData.type}:${formData.name}` };
+		// 편집에서는 _id 를 그대로 둔다. CouchDB _id 는 불변인데 이름과 종류가 그
+		// 안에 들어 있어서, 새로 조립하면 editAccountAction 이 존재하지 않는 문서를
+		// get() 해 404 -> catch -> console.log 로 빠진다. 저장을 눌러도 아무 일도
+		// 일어나지 않고 오류도 보이지 않는다.
+		const newData = isEdit
+			? formData
+			: { ...formData, _id: `account:${formData.type}:${formData.name}` };
 		if (isEdit) dispatch(editAccountAction(newData));
 		else dispatch(addAccountAction(newData));
 		handleClose();
@@ -380,6 +386,15 @@ export default function Account () {
 								sx={inputSx(T)}
 								autoFocus
 							/>
+							{/* 이름과 종류는 _id 에 들어가고 _id 는 불변이다. 이름 하나를
+							    바꾸면 거래 accountId·거래 _id 접두어·이체 카테고리까지
+							    2만 건 넘는 참조를 함께 고쳐야 한다. 잠그는 것이 맞지만
+							    이유는 보여야 한다. */}
+							{isEdit && (
+								<Typography sx={{ fontSize: 11, color: T.ink3, marginTop: '6px' }}>
+									이름과 종류는 생성 후 변경할 수 없습니다 — 거래 내역이 이 값으로 계좌를 참조합니다.
+								</Typography>
+							)}
 						</Box>
 
 						{/* Type — chip selector */}

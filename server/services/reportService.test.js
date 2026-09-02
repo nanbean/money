@@ -160,13 +160,16 @@ describe('reportService', () => {
 		// This test is complex because it validates the core calculation logic.
 		test('should calculate net worth correctly for various account types and currencies', async () => {
 			// Arrange
+			// 실제 계좌 문서는 항상 _id 를 갖고, 거래의 accountId 가 그것을 가리킨다.
+			// _id 없는 픽스처는 type+name 조립에만 맞아 떨어져서, 조립을 없애자마자
+			// 거래를 못 찾는 것으로 드러났다.
 			const mockAccounts = [
-				{ type: 'Cash', name: 'Wallet', currency: 'KRW' },
-				{ type: 'Bank', name: 'MyBank', currency: 'USD' },
-				{ type: 'Invst', name: 'Broker', currency: 'USD' },
-				{ type: 'Oth L', name: 'Loan', currency: 'KRW' },
-				{ type: 'Oth A', name: 'RealEstate', currency: 'KRW' },
-				{ type: 'Bank', name: 'Broker_Cash', currency: 'USD' }
+				{ _id: 'account:Cash:Wallet', type: 'Cash', name: 'Wallet', currency: 'KRW' },
+				{ _id: 'account:Bank:MyBank', type: 'Bank', name: 'MyBank', currency: 'USD' },
+				{ _id: 'account:Invst:Broker', type: 'Invst', name: 'Broker', currency: 'USD' },
+				{ _id: 'account:Oth L:Loan', type: 'Oth L', name: 'Loan', currency: 'KRW' },
+				{ _id: 'account:Oth A:RealEstate', type: 'Oth A', name: 'RealEstate', currency: 'KRW' },
+				{ _id: 'account:Bank:Broker_Cash', type: 'Bank', name: 'Broker_Cash', currency: 'USD' }
 			];
 			const date = '2023-10-31';
 			const mockTransactionsByAccount = {
@@ -233,7 +236,7 @@ describe('reportService', () => {
 
 		test('should correctly filter transactions by date', async () => {
 			// Arrange
-			const mockAccounts = [{ type: 'Cash', name: 'Wallet', currency: 'KRW' }];
+			const mockAccounts = [{ _id: 'account:Cash:Wallet', type: 'Cash', name: 'Wallet', currency: 'KRW' }];
 			const date = '2023-01-31';
 			const mockTransactionsByAccount = {
 				'account:Cash:Wallet': [

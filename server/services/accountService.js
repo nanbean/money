@@ -26,8 +26,8 @@ const _updateAccountList = async () => {
 		for (let i = 0; i < allAccounts.length; i++) {
 			const account = allAccounts[i];
 			const type = account.type;
-			const accountId = `account:${type}:${account.name}`;
-			const accountTransactions = transactionsByAccount[accountId] || [];
+			// _id 로 직접 찾는다. type+name 조립은 어긋나는 순간 조용히 빈 배열이 된다.
+			const accountTransactions = transactionsByAccount[account._id] || [];
 
 			let balance = 0;
 			let investments = [];

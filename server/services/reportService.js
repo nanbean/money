@@ -78,7 +78,10 @@ const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, 
 	}
 
 	for (const account of allAccounts) {
-		const accountTransactions = transactionsByAccount[`account:${account.type}:${account.name}`] || [];
+		// 거래의 accountId 는 계좌 문서의 _id 를 그대로 가리킨다. type+name 으로 다시
+		// 조립하면, 이름이나 종류가 _id 와 어긋나는 순간 || [] 로 빠져 잔액이 조용히
+		// 0이 된다 — 예외도 로그도 없이 순자산만 틀린다.
+		const accountTransactions = transactionsByAccount[account._id] || [];
 		const transactions = accountTransactions.filter(i => i.date <= date);
 		if (account.type === 'Invst') {
 			const investments = getInvestmentList(allInvestments, allTransactions, transactions);
