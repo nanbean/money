@@ -205,6 +205,93 @@ describe('notification service', () => {
 				});
 			});
 
+			// iOS NH Pay. 급여계좌로 기록한다 — SMS 로 오는 같은 카드(6*4*)와 같다.
+			//
+			// 줄바꿈으로 오는지 공백으로 오는지 확실하지 않아 둘 다 받는다.
+			describe('iOS NH Pay', () => {
+				const nh = (text) => ({ packageName: 'ios.NHPay', text });
+				const NEWLINE = 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도';
+				const SPACED = 'NH카드6*4*승인 김*심 52,000원 일시불 08/28 12:03 최선도';
+
+				test.each([
+					['줄바꿈 구분', NEWLINE],
+					['공백 구분', SPACED],
+					['앞에 개행', `\n${NEWLINE}`]
+				])('%s 를 급여계좌로 기록한다', async (_label, text) => {
+					// Act
+					await addTransaction(nh(text));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						date: moment('08/28', 'MM/DD').format('YYYY-MM-DD'),
+						amount: -52000,
+						payee: '최선도',
+						accountId: 'account:Bank:급여계좌'
+					});
+				});
+
+				test.each([
+					['이름에 님', 'NH카드6*4*승인\n김*심님\n52,000원 일시불\n08/28 12:03\n최선도'],
+					['일시불 없음', 'NH카드6*4*승인\n김*심\n52,000원\n08/28 12:03\n최선도'],
+					['누적 붙음', 'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도\n누적880,801원']
+				])('%s 도 받는다', async (_label, text) => {
+					// Act
+					await addTransaction(nh(text));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -52000, payee: '최선도' });
+				});
+
+				// 상호가 마지막이고 공백이 들어갈 수 있다 — 뒤에서부터 최소 일치시킨다.
+				it('상호의 공백을 유지한다', async () => {
+					// Act
+					await addTransaction(nh('NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n이마트 에브리데이 동탄호수점'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].payee)
+						.toBe('이마트 에브리데이 동탄호수점');
+				});
+
+				// 카드번호 마스킹은 자리마다 다르고 숫자만 오는 경우도 있다.
+				it('마스킹되지 않은 카드번호도 받는다', async () => {
+					// Act
+					await addTransaction(nh('NH카드6042승인\n김*심\n7,900원 일시불\n01/03 09:05\n스타벅스'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -7900, payee: '스타벅스' });
+				});
+
+				test.each([
+					['취소', 'NH카드6*4*취소\n김*심\n52,000원 일시불\n08/28 12:03\n최선도'],
+					['형식 다름', '[NH카드] 9월 결제예정금액은 1,234,000원입니다']
+				])('%s 는 거래를 만들지 않는다', async (_label, text) => {
+					// Act
+					await addTransaction(nh(text));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// SMS 파서는 텍스트로 매칭한다. ios 를 claim 하지 않아야 순서와
+				// 무관하게 각자 자기 알림만 처리한다.
+				it('SMS NH 알림은 여전히 SMS 파서가 처리한다', async () => {
+					// Act
+					await addTransaction({
+						packageName: 'com.google.android.apps.messaging',
+						text: '[Web발신]\nNH카드6*4*승인\n김*심\n52,000원\n08/28 14:16\n최선도'
+					});
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						amount: -52000,
+						payee: '최선도',
+						accountId: 'account:Bank:급여계좌'
+					});
+				});
+			});
+
 			// iOS 롯데카드. 전부 생활비카드로 기록한다.
 			//
 			// KB 와 순서가 반대다 — 상호가 첫 줄, 금액·상태가 둘째 줄이다.

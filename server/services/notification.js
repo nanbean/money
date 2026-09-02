@@ -292,6 +292,43 @@ const parsers = [
 		}
 	},
 	{
+		// iOS NH Pay. 급여계좌로 기록한다 — SMS 로 오는 같은 카드(6*4*)와 같다.
+		//
+		// 아직 줄바꿈으로 오는지 공백으로 오는지 확실하지 않아 둘 다 받는다.
+		// 개행만 공백으로 바꾸면 두 형태가 같아진다 (KB국민카드에서 쓴 방식).
+		//
+		//   'NH카드6*4*승인\n김*심\n52,000원 일시불\n08/28 12:03\n최선도'
+		//   'NH카드6*4*승인 김*심 52,000원 일시불 08/28 12:03 최선도'
+		//
+		// 공백 전체를 정규화하지 않는 이유는 상호에 든 전각 공백이 뭉개지기
+		// 때문이다. 상호가 마지막이고 공백이 들어갈 수 있어 뒤에서부터 최소
+		// 일치시킨다.
+		matcher: (body) => body.packageName.match(/^ios\.NHPay$/i),
+		parser: (body) => {
+			const line = body.text.replace(/\r?\n/g, ' ').trim();
+
+			// 'NH카드<번호>승인|취소 <이름> <금액>원 [일시불] <MM/DD> <HH:mm> <상호> [누적...]'
+			const m = line.match(
+				/NH카드[0-9*]+(승인|취소)\s+\S+\s+([\d,]+)원(?:\s+(?!\d{2}\/\d{2})\S+)*\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+(.+?)(?:\s+누적\S*)?\s*$/
+			);
+			if (!m) return {};
+
+			const [, kind, amountText, dateText, payee] = m;
+			// 취소는 거래를 만들지 않는다 — 안드로이드 KB 파서 주석 참고.
+			if (kind !== '승인') return {};
+
+			return {
+				account: '급여계좌',
+				transaction: {
+					date: moment(dateText, 'MM/DD').format('YYYY-MM-DD'),
+					amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10) * -1,
+					payee,
+					category: '분류없음'
+				}
+			};
+		}
+	},
+	{
 		matcher: (body) => body.packageName.match(/com\.wooricard\.smartapp/i),
 		parser: (body) => {
 			const items = body.text.split('\n');
@@ -490,7 +527,11 @@ const parsers = [
 		// SC은행BC·우리·현대카드와 같은 6줄 SMS 형식이라 인덱스가 그대로다.
 		// 카드번호 마스킹이 '6*4*' 처럼 자리마다 달라서 숫자와 * 를 함께 받는다.
 		// 즉시 인출되는 체크카드라 급여계좌로 기록한다 (본인 카드 관례).
-		matcher: (body) => body.text.match(/NH카드[0-9*]*승인/g),
+		// 텍스트로 매칭하므로 ios.NHPay 알림까지 잡아 버린다. 그쪽은 [Web발신]
+		// 줄이 없어 인덱스가 하나씩 밀리고, 전용 파서가 따로 있다.
+		matcher: (body) =>
+			!/^ios\./i.test(body.packageName || '')
+			&& body.text.match(/NH카드[0-9*]*승인/g),
 		parser: (body) => {
 			const items = body.text.split('\n');
 			const amountMatch = items[3] && items[3].replace(/,/g, '').match(/\d{1,10}원/);
@@ -586,13 +627,28 @@ const parsers = [
 	}
 ];
 
+// ios.* 는 최근에 붙인 경로다 (ios.KBPay · ios.lottecard). 두 앱 모두 알림 이력이
+// 없어 메시지 형식을 실제 수신값을 보고서야 맞췄고, 롯데는 세 번 고쳤다. 그래서
+// 당분간 원문과 파싱 결과를 함께 남긴다 — 둘이 같이 있어야 안 맞을 때 어디가
+// 어긋났는지 알 수 있다.
+//
+// text 는 여러 줄이라 JSON.stringify 로 한 줄로 남긴다. 로그에서 grep 이 된다.
+// 형식이 안정되면 지운다.
+const logIosNotification = (body, stage, detail) => {
+	if (!/^ios\./i.test(body.packageName || '')) return;
+	console.log(`[ios] ${stage}`, JSON.stringify({ packageName: body.packageName, ...detail }));
+};
+
 exports.addTransaction = async function (body) {
 	if (!body || !body.packageName || !body.text) {
 		return false;
 	}
 
+	logIosNotification(body, 'received', { title: body.title, text: body.text });
+
 	if (isDuplicatedTransaction(body)) {
 		console.log('duplicated transaction');
+		logIosNotification(body, 'skipped', { reason: 'duplicated' });
 		return false;
 	}
 	setLastTransaction(body);
@@ -600,6 +656,7 @@ exports.addTransaction = async function (body) {
 	const parser = parsers.find((p) => p.matcher(body));
 
 	if (!parser) {
+		logIosNotification(body, 'no-parser', {});
 		await messaging.sendNotification('⚠️ Transaction', 'Failed to find parser', 'receipt');
 		return false;
 	}
@@ -620,9 +677,23 @@ exports.addTransaction = async function (body) {
 			transaction: categorizedTransaction
 		});
 
+		logIosNotification(body, 'recorded', {
+			accountId: categorizedTransaction.accountId,
+			date: categorizedTransaction.date,
+			amount: categorizedTransaction.amount,
+			payee: categorizedTransaction.payee,
+			category: categorizedTransaction.category,
+			subcategory: categorizedTransaction.subcategory
+		});
+
 		await messaging.sendNotification('👍 Transaction', formatNotification(categorizedTransaction), 'receipt', 'transactions');
 		return true;
 	}
+
+	// 취소나 결제일 안내처럼 거래가 아닌 알림도 여기로 온다. 파서가 일부러
+	// 건너뛴 것인지 형식이 안 맞은 것인지는 바로 위 'received' 줄의 원문을 보고
+	// 판단한다 — 두 경우 모두 파서가 빈 결과를 돌려주므로 여기서는 구분되지 않는다.
+	logIosNotification(body, 'no-transaction', { account: account || null, transaction: transaction || null });
 
 	await messaging.sendNotification('⚠️ Transaction', 'Failed to parse transaction', 'receipt');
 	return false;
