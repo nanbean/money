@@ -1,5 +1,6 @@
 const moment = require('moment-timezone');
-const uuidv1 = require('uuid/v1');
+// uuid v3 의 'uuid/v1' 서브패스는 v7 부터 없어졌다.
+const { v1: uuidv1 } = require('uuid');
 const messaging = require('./messaging');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { retryWithBackoff } = require('../utils/retry');
@@ -151,6 +152,15 @@ const parsers = [
 			const items = body.text.split('\n');
 			const amountMatch = items[2] && items[2].replace(/,/g, '').match(/\d{1,10}원/);
 			if (!amountMatch) return {};
+			// 첫 줄이 'KB국민카드1*8*승인' 또는 '...취소' 다.
+			// '승인취소' 문구는 배열 맨 앞 파서가 먼저 잡아 여기까지 오지 않는다.
+			//
+			// 취소는 거래를 만들지 않는다. 원본을 자동으로 찾아 고치려면 상호·금액·
+			// 날짜로 지목해야 하는데, 실측 재생에서 같은 상호의 다른 결제를 집는
+			// 경우가 나왔다 (취소 6,000 이 -6,500 결제를, 취소 11,600 이 -17,900
+			// 결제를 골랐다). 사람이 판단하는 편이 안전하다.
+			if ((items[0] || '').trim().endsWith('취소')) return {};
+
 			return {
 				account: 'KB카드',
 				transaction: {
@@ -160,6 +170,60 @@ const parsers = [
 					category: '분류없음'
 				}
 			};
+		}
+	},
+	{
+		// iOS KB Pay. 두 형식으로 온다.
+		//   '\n[KB Pay 사용 알림] 신용 6036 09/02 16:13 14,160원 11번가 승인 '
+		//   'KB국민카드6036승인 김*심님 14,160원 일시불 09/02 16:13 11번가 누적120,830'
+		//
+		// 둘 다 한 줄이고 앞뒤에 개행·공백이 붙는다. 상호 위치가 고정되지 않고
+		// 공백도 들어가므로('셀렉토커피 동탄') 인덱스 분할 대신 뒤에서부터 최소
+		// 일치시킨다. 개행만 공백으로 바꾼다 — 공백 전체를 정규화하면 상호에 든
+		// 전각 공백('（유）　아웃백')이 뭉개진다.
+		matcher: (body) => body.packageName.match(/^ios\.KBPay$/i),
+		parser: (body) => {
+			const line = body.text.replace(/\r?\n/g, ' ').trim();
+
+			// '[KB Pay 사용 알림] 신용|체크 <번호> <MM/DD> <HH:mm> <금액>원 <상호> 승인'
+			// 취소 문구의 실제 샘플을 본 적이 없어 승인만 거래로 만든다.
+			const pay = line.match(
+				/\]\s*(?:신용|체크)\s+\d{4}\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+([\d,]+)원\s+(.+?)\s*승인\s*$/
+			);
+			if (pay) {
+				const [, dateText, amountText, payee] = pay;
+				return {
+					account: 'KB카드',
+					transaction: {
+						date: moment(dateText, 'MM/DD').format('YYYY-MM-DD'),
+						amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10) * -1,
+						payee,
+						category: '분류없음'
+					}
+				};
+			}
+
+			// 'KB국민카드<번호>승인|취소 <이름> <금액>원 [일시불] <MM/DD> <HH:mm> <상호> [누적...]'
+			const card = line.match(
+				/KB국민카드[0-9*]+(승인|취소)\s+\S+\s+([\d,]+)원(?:\s+(?!\d{2}\/\d{2})\S+)*\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+(.+?)(?:\s+누적[\d,]+원?)?\s*$/
+			);
+			if (card) {
+				const [, kind, amountText, dateText, payee] = card;
+				// 취소는 거래를 만들지 않는다 — 안드로이드 파서 주석 참고.
+				if (kind === '취소') return {};
+
+				return {
+					account: 'KB카드',
+					transaction: {
+						date: moment(dateText, 'MM/DD').format('YYYY-MM-DD'),
+						amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10) * -1,
+						payee,
+						category: '분류없음'
+					}
+				};
+			}
+
+			return {};
 		}
 	},
 	{
@@ -346,6 +410,28 @@ const parsers = [
 			if (!amountMatch) return {};
 			return {
 				account: '생활비카드',
+				transaction: {
+					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
+					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
+					payee: items[5],
+					category: '분류없음'
+				}
+			};
+		}
+	},
+	{
+		// [Web발신] / NH카드6*4*승인 / 김*심 / 52,000원 / 08/28 14:16 / 최선도
+		//
+		// SC은행BC·우리·현대카드와 같은 6줄 SMS 형식이라 인덱스가 그대로다.
+		// 카드번호 마스킹이 '6*4*' 처럼 자리마다 달라서 숫자와 * 를 함께 받는다.
+		// 즉시 인출되는 체크카드라 급여계좌로 기록한다 (본인 카드 관례).
+		matcher: (body) => body.text.match(/NH카드[0-9*]*승인/g),
+		parser: (body) => {
+			const items = body.text.split('\n');
+			const amountMatch = items[3] && items[3].replace(/,/g, '').match(/\d{1,10}원/);
+			if (!amountMatch) return {};
+			return {
+				account: '급여계좌',
 				transaction: {
 					date: items[4] && moment(items[4], 'MM/DD').format('YYYY-MM-DD'),
 					amount: parseInt(amountMatch[0].replace(/[^0-9]/g, ''), 10) * -1,
