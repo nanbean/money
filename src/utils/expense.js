@@ -1,3 +1,5 @@
+import { isInvestmentCashAccountId } from './investmentCash';
+
 // 지출 집계의 공통 전처리. Spending / HomeCashFlow / Reports>Expense 가 각자
 // 거래를 훑고 있었고, 그중 분할(division) 처리가 갈려서 같은 달 합계가 어긋났다.
 export const EXPENSE_ACCOUNT_TYPES = ['Bank', 'CCard', 'Cash'];
@@ -27,6 +29,11 @@ export const flattenExpenseRows = (transactions = []) => {
 	(transactions || []).forEach((tx) => {
 		if (!tx) return;
 		if (!EXPENSE_ACCOUNT_TYPES.includes(accountTypeOf(tx))) return;
+		// 투자현금 계좌는 타입이 Bank 라 위 검사를 통과한다. 매수·매도는 별도
+		// investmentTransactions 로 기록되지만 수수료·기타 지출 같은 일반 거래가
+		// 남아 있어서 지출로 새고 있었다 — 과거 12건, '기타 지출' -2,760,603 과
+		// '수수료' -500. 여기는 생활 지출을 세는 자리다.
+		if (isInvestmentCashAccountId(tx.accountId)) return;
 
 		if (tx.division && tx.division.length > 0) {
 			tx.division.forEach((item) => {
