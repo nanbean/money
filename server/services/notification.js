@@ -646,6 +646,18 @@ const logNotification = (stage, detail) => {
 	console.log(`[notify] ${stage}`, JSON.stringify(detail));
 };
 
+// 광고 알림은 조용히 버린다. 거래로 파싱되지 않으면 ⚠️ 푸시를 보내는데,
+// 카드사 광고는 하루에도 여러 번 와서 그게 다 알림으로 뜬다.
+//
+// 정보통신망법이 광고성 정보 맨 앞에 '(광고)' 를 붙이도록 정해 두었고 실측
+// 알림도 그 형태다. 그래서 앱을 가리지 않고 이 표시 하나만 본다. SMS 로 오면
+// 앞에 '[Web발신]' 이 붙는다.
+//
+// 맨 앞만 본다. 어디에 있든 걸러 버리면 거래 알림 뒤에 광고 문구가 붙어 오는
+// 경우에 거래를 조용히 잃는다 — 가계부에서는 그게 더 나쁘다. 그런 형식을 실제로
+// 본 적은 없고, 온다면 상호에 광고 문구가 붙어 기록되므로 파서에서 떼야 한다.
+const isAdvertisement = (text) => /^\s*(?:\[Web발신\]\s*)?\(광고\)/.test(text);
+
 exports.addTransaction = async function (body) {
 	// 가드보다 먼저 찍는다. 뒤에 두면 필드 이름이 다르거나 본문이 빈 요청이
 	// 로그 한 줄 없이 끝나서, 요청이 아예 안 온 것과 구분되지 않는다.
@@ -659,6 +671,13 @@ exports.addTransaction = async function (body) {
 		title: body.title,
 		text: body.text
 	});
+
+	// 파서 조회보다 앞에 둔다. 롯데카드 광고는 상호가 앞에 오는 형식과 겹쳐
+	// parserIndex 4 까지 흘러가고 있었다.
+	if (isAdvertisement(body.text)) {
+		logNotification('skipped', { packageName: body.packageName, reason: 'advertisement' });
+		return false;
+	}
 
 	if (isDuplicatedTransaction(body)) {
 		logNotification('skipped', { packageName: body.packageName, reason: 'duplicated' });

@@ -288,6 +288,50 @@ describe('notification service', () => {
 				});
 			});
 
+			// 광고는 거래도 만들지 않고 ⚠️ 푸시도 보내지 않는다. 예전에는 롯데
+			// 파서(#4)까지 흘러가서 파싱 실패 알림이 떴다.
+			describe('광고 알림', () => {
+				// 2026-09-03 실측 원문 두 건.
+				const ADS = [
+					['룰렛 광고', 'ios.lottecard', '(광고)100% 당첨되는 행운 룰렛 돌려요\n최대 1만 띵코인 획득 찬스\r\n\r\n※ 수신거부: 전체메뉴-내 카드 정보-알림 설정'],
+					// 본문에 '65,365원' 이 들어 있다. 금액처럼 보이는 광고도 버려야 한다.
+					['특가 광고', 'ios.lottecard', '(광고)[~15%쿠폰]단 하루 하기스 띵샵 특가\n[29%]보송보송 팬티형 2팩*2박스 65,365원\r\n\r\n※ 수신거부: 전체메뉴-내 카드 정보-알림 설정'],
+					['SMS 광고', 'com.google.android.apps.messaging', '[Web발신](광고)NH카드 이벤트 안내'],
+					['앞에 개행', 'ios.KBPay', '\n(광고)KB Pay 첫 결제 이벤트']
+				];
+
+				test.each(ADS)('%s 를 거래 없이 버린다', async (_label, packageName, text) => {
+					// Act
+					const result = await addTransaction({ packageName, text });
+
+					// Assert
+					expect(result).toBe(false);
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				test.each(ADS)('%s 는 푸시를 보내지 않는다', async (_label, packageName, text) => {
+					// Act
+					await addTransaction({ packageName, text });
+
+					// Assert
+					expect(messaging.sendNotification).not.toHaveBeenCalled();
+				});
+
+				it('광고로 버린 것을 로그에 남긴다', async () => {
+					// Arrange
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					await addTransaction({ packageName: 'ios.lottecard', text: ADS[0][2] });
+					const lines = log.mock.calls.map((c) => c.map(String).join(' '));
+					log.mockRestore();
+
+					// Assert
+					expect(lines.some((l) => l.includes('[notify] skipped') && l.includes('advertisement')))
+						.toBe(true);
+				});
+			});
+
 			// iOS NH Pay. 급여계좌로 기록한다 — SMS 로 오는 같은 카드(6*4*)와 같다.
 			//
 			// 줄바꿈으로 오는지 공백으로 오는지 확실하지 않아 둘 다 받는다.
