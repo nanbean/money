@@ -15,8 +15,8 @@ import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 import { openTransactionInModal } from '../../actions/ui/form/bankTransaction';
 import BankTransactionModal from '../../components/BankTransactionModal';
+import { isInternalTransfer } from '../../utils/expense';
 
-const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 const tint = (hex, alphaHex = '22') => `${hex}${alphaHex}`;
 

@@ -16,8 +16,8 @@ import BankTransactionModal from '../components/BankTransactionModal';
 
 import useT from '../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../utils/designTokens';
+import { isInternalTransfer } from '../utils/expense';
 
-const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 
 const RANGE_OPTIONS = [
 	{ value: '1m', label: '1M', months: 1 },

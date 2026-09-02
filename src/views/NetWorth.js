@@ -28,12 +28,12 @@ import {
 	calcEmergencyScore,
 	calcDebtScore,
 	healthGrade,
-	toDisplay,
-	isInternalTransfer
+	toDisplay
 } from '../home/FinancialHealthScore/utils';
 
 import moment from 'moment';
 import { makeIsInvestmentCash } from '../utils/investmentCash';
+import { isInternalTransfer } from '../utils/expense';
 
 
 // Color palette (dedicated semantics — distinct from accent)

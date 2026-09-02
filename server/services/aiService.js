@@ -6,7 +6,7 @@ const accountDB = require('../db/accountDB');
 const stockDB = require('../db/stockDB');
 const { singleFlight } = require('../utils/singleFlight');
 const { retryWithBackoff } = require('../utils/retry');
-const { flattenSplitTransactions } = require('../utils/transactionSplit');
+const { flattenSplitTransactions, isInternalTransferCategory } = require('../utils/transactionSplit');
 const { getExchangeRate } = require('./settingService');
 const { getKisToken, getKisWeeklyPriceUS, getKisWeeklyPriceKorea } = require('./kisConnector');
 const { isInvestmentCash } = require('../utils/account');
@@ -132,7 +132,7 @@ const _getWeeklyRecap = async ({ dry = false, retryOptions = {} } = {}) => {
 	// Weekly transactions (exclude investment buy/sell and account transfers)
 	const weeklyTransactions = allTransactions
 		.filter(t => t.date >= weekAgo && t.date <= today && !t.activity
-			&& !(t.category && t.category.startsWith('[') && t.category.endsWith(']')))
+			&& !isInternalTransferCategory(t.category))
 		.sort((a, b) => b.date.localeCompare(a.date));
 
 	// 금액 집계는 분할 거래를 하위 항목으로 펼친 뒤에 한다. 부모 amount 가 하위 합계
@@ -172,7 +172,7 @@ const _getWeeklyRecap = async ({ dry = false, retryOptions = {} } = {}) => {
 	const netInvestmentDeposit = allTransactions
 		.filter(t => t.date >= weekAgo && t.date <= today
 			&& investmentRelatedIds.has(t.accountId)
-			&& t.category && t.category.startsWith('[') && t.category.endsWith(']'))
+			&& isInternalTransferCategory(t.category))
 		.reduce((sum, t) => sum + toKRW(t.amount, t.accountId), 0);
 	const investmentGainLoss = investmentChange - netInvestmentDeposit;
 

@@ -8,10 +8,10 @@ import Typography from '@mui/material/Typography';
 
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
+import { isInternalTransfer } from '../../utils/expense';
 
 const PALETTE = ['#818cf8', '#f59e0b', '#34d399', '#f472b6', '#22d3ee', '#a78bfa', '#fb7185', '#facc15'];
 
-const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 
 function Donut ({ data, total, T, currency }) {

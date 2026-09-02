@@ -27,6 +27,7 @@ import { COUCHDB_URL } from '../constants';
 import { applyMemoTags } from '../utils/memoTags';
 import { isInvestmentCashName, invstAccountNameFor } from '../utils/investmentCash';
 import { renameInTransaction } from '../utils/categoryRename';
+import { isInternalTransferCategory } from '../utils/expense';
 
 import {
 	SET_ADD_TRANSACTION_FETCHING,
@@ -69,7 +70,6 @@ const normalizeTransaction = (doc) => ({
 	account: doc.accountId ? doc.accountId.split(':')[2] : undefined
 });
 
-const isInternalTransferCategory = (cat) => !!cat && /^\[.*\]$/.test(cat);
 
 // Locate the doubleEntry pair for an internal transfer transaction.
 // Strict match: same date, opposite-sign amount, counterpart accountId, and

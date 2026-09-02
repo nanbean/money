@@ -16,8 +16,8 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 import { NON_INCOME_CATEGORY } from '../../constants';
+import { isInternalTransfer } from '../../utils/expense';
 
-const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 
 export const getISOWeekKey = () => {

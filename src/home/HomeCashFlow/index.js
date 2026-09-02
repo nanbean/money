@@ -9,9 +9,8 @@ import Typography from '@mui/material/Typography';
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
 import { NON_EXPENSE_CATEGORY } from '../../constants';
-import { flattenExpenseRows, isLivingExpenseExempt } from '../../utils/expense';
+import { flattenExpenseRows, isInternalTransfer, isLivingExpenseExempt } from '../../utils/expense';
 
-const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 // Match Spending page's monthly projection blend (src/views/Spending.js).
 const INFLATION_RATE = 1.025;

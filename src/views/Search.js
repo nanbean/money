@@ -20,8 +20,8 @@ import BankTransactionModal from '../components/BankTransactionModal';
 import useT from '../hooks/useT';
 import { sDisplay, labelStyle, fmtCurrency } from '../utils/designTokens';
 import { orderCategories, makeCategoryGroupBy, childLabelOf } from '../utils/categoryOrder';
+import { isInternalTransfer } from '../utils/expense';
 
-const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
 
 // MUI 기본 ListSubheader 는 배경이 흰색이라 다크 모드 목록에서 흰 줄로 튄다.
 const categoryGroupSx = (T) => ({
