@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { NON_EXPENSE_CATEGORY, NON_INCOME_CATEGORY } from '../../constants';
 import { makeIsInvestmentCash } from '../../utils/investmentCash';
+import { flattenTransactionRows, fullCategoryOf, isInternalTransfer, isLivingExpenseExempt } from '../../utils/expense';
 
 // 통화 변환 헬퍼 — calcInvestmentScore, calcEmergencyScore, calcDebtScore 공통 사용
 export const toDisplay = (acc, exchangeRate, currency) => {
@@ -10,45 +11,52 @@ export const toDisplay = (acc, exchangeRate, currency) => {
 		: acc.balance;
 };
 
-// [계좌명] 형식의 category는 내부 이체
-export const isInternalTransfer = (t) => /^\[.*\]$/.test(t.category || '');
-
-// 저축률 income/expense 집계에 포함할 계좌 타입 — 투자(Invst)·부채(Oth L) 등은 제외
-// (주식 매수가 expense로, 매도가 income으로 잡혀 cash flow 왜곡되는 문제 방지)
-const CASH_ACCOUNT_TYPES = ['Bank', 'CCard', 'Cash'];
-
 // 1. 저축률 — 최근 3개월(완성된 달 기준) 평균 저축률 (25점 만점)
-//    당월은 부분 데이터이므로 제외하고, 직전 3개월 합산으로 계산
-//    income/expense는 cash 계좌(Bank/CCard/Cash) 한정, 내부이체·NON_EXPENSE_CATEGORY·
-//    livingExpenseExempt 카테고리 제외, USD 거래는 표시 통화로 환산.
-//    income은 NON_INCOME_CATEGORY(차량 매각 등 자산→현금 유입)도 제외 — 일회성
-//    자산 매각이 수입으로 잡혀 저축률이 왜곡되는 문제 방지(투자 매도 제외와 동일 취지).
+//    당월은 부분 데이터이므로 제외하고, 직전 3개월 합산으로 계산.
+//
+// 집계는 utils/expense 의 flattenTransactionRows 를 쓴다. 계좌 종류(Bank/CCard/
+// Cash), 계좌 간 이체, 대출 원금, 투자현금 제외가 거기 모여 있다. 투자 계좌를
+// 빼는 이유는 주식 매수가 지출로, 매도가 수입으로 잡혀 현금 흐름이 왜곡되기
+// 때문이다.
+//
+// 예전에는 이 함수가 거래를 직접 훑었고 — 거래를 훑는 네 번째 사본이었다 —
+// 그 사본에 결함이 둘 있었다. 실측 기준(2026-06~08)으로:
+//
+//   * livingExpenseExempt 를 t.category 접두어로만 비교했다. 거래는 category 와
+//     subcategory 를 나눠 갖는데 면제 목록에는 '세금:소득세' 처럼 서브카테고리
+//     까지 지정된 항목이 많아서, 그런 항목이 하나도 걸러지지 않았다 —
+//     8건 ₩29,364,318 이 생활비로 잡혔다.
+//   * 분할(division)을 펼치지 않고 부모 금액만 봤다 — 창 안에 분할 거래 6건
+//     (항목 43개)이 있었다.
+//
+// 두 결함 탓에 저축률이 -33.7% 로 나와 점수가 0이었다. 바로잡으면 +42.1% 다.
+//
+// income 은 NON_INCOME_CATEGORY(차량 매각 등 자산→현금 유입)도 제외한다 —
+// 일회성 자산 매각이 수입으로 잡혀 저축률이 왜곡되는 문제 방지.
 export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExempt, exchangeRate, currency) => {
 	const accountMap = new Map((accountList || []).map(a => [a._id, a]));
-	const accountType = (t) => t.accountId ? t.accountId.split(':')[1] : null;
-	const toAmount = (t) => {
-		const acc = accountMap.get(t.accountId);
+	const toAmount = (row) => {
+		const acc = accountMap.get(row.accountId);
 		const txCur = acc?.currency || 'KRW';
-		const amt = t.amount;
-		if (txCur === currency) return amt;
-		return currency === 'KRW' ? amt * exchangeRate : amt / exchangeRate;
+		if (txCur === currency) return row.amount;
+		return currency === 'KRW' ? row.amount * exchangeRate : row.amount / exchangeRate;
 	};
 
 	const threeMonthsStart = moment().subtract(3, 'months').startOf('month').format('YYYY-MM-DD');
 	const lastMonthEnd = moment().subtract(1, 'months').endOf('month').format('YYYY-MM-DD');
-	const pastTxns = transactions.filter(t =>
-		t.date >= threeMonthsStart && t.date <= lastMonthEnd
-		&& CASH_ACCOUNT_TYPES.includes(accountType(t))
-		&& !isInternalTransfer(t)
-		&& t.category !== NON_EXPENSE_CATEGORY
-	);
 
-	const income = pastTxns
-		.filter(t => t.amount > 0 && t.category !== NON_INCOME_CATEGORY)
-		.reduce((sum, t) => sum + toAmount(t), 0);
-	const expense = pastTxns
-		.filter(t => t.amount < 0 && !livingExpenseExempt.some(e => t.category?.startsWith(e)))
-		.reduce((sum, t) => sum + Math.abs(toAmount(t)), 0);
+	// 분할 항목은 부모의 date 를 물려받으므로 펼치기 전에 창을 잘라도 결과가 같다.
+	const inWindow = (transactions || [])
+		.filter(t => t && t.date >= threeMonthsStart && t.date <= lastMonthEnd);
+	const rows = flattenTransactionRows(inWindow)
+		.filter(row => fullCategoryOf(row) !== NON_EXPENSE_CATEGORY);
+
+	const income = rows
+		.filter(row => row.amount > 0 && fullCategoryOf(row) !== NON_INCOME_CATEGORY)
+		.reduce((sum, row) => sum + toAmount(row), 0);
+	const expense = rows
+		.filter(row => row.amount < 0 && !isLivingExpenseExempt(row, livingExpenseExempt))
+		.reduce((sum, row) => sum + Math.abs(toAmount(row)), 0);
 
 	const savingsRate = income > 0 ? (income - expense) / income : 0;
 	return { income, expense, savingsRate };

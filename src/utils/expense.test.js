@@ -1,6 +1,8 @@
 import {
 	EXPENSE_ACCOUNT_TYPES,
 	accountTypeOf,
+	isInternalTransfer,
+	flattenTransactionRows,
 	fullCategoryOf,
 	isInternalTransferCategory,
 	flattenExpenseRows,
@@ -49,6 +51,89 @@ describe('isInternalTransferCategory', () => {
 		[undefined, false]
 	])('%p → %s', (category, expected) => {
 		expect(isInternalTransferCategory(category)).toBe(expected);
+	});
+});
+
+describe('flattenTransactionRows', () => {
+	// flattenExpenseRows 는 이 함수의 음수 필터다. 부호를 가리지 않는 진입점이
+	// 필요했던 이유는 저축률이 수입도 세야 하는데, 예전에는 그 화면이 거래를
+	// 따로 훑으면서 분할·면제 처리가 갈렸기 때문이다.
+	const base = { _id: 't', accountId: 'account:Bank:급여계좌', date: '2026-01-01' };
+
+	test('수입과 지출을 모두 낸다', () => {
+		const rows = flattenTransactionRows([
+			{ ...base, category: '기타 수입', amount: 1000 },
+			{ ...base, category: '식비', subcategory: '외식', amount: -500 }
+		]);
+
+		expect(rows.map(r => r.amount)).toEqual([1000, -500]);
+	});
+
+	test('flattenExpenseRows 는 여기서 음수만 걸러낸 것과 같다', () => {
+		const input = [
+			{ ...base, category: '기타 수입', amount: 1000 },
+			{ ...base, category: '식비', subcategory: '외식', amount: -500 }
+		];
+
+		expect(flattenExpenseRows(input))
+			.toEqual(flattenTransactionRows(input).filter(r => r.amount < 0));
+	});
+
+	test('분할은 양쪽 부호를 모두 펼친다', () => {
+		const rows = flattenTransactionRows([{
+			...base,
+			category: '월급&보너스',
+			amount: 700,
+			division: [
+				{ category: '월급&보너스', subcategory: '월급', amount: 1000, description: '월급' },
+				{ category: '세금', subcategory: '소득세', amount: -300, description: '소득세' }
+			]
+		}]);
+
+		expect(rows.map(r => r.amount)).toEqual([1000, -300]);
+	});
+
+	test('이체·대출원금·투자현금은 부호와 무관하게 제외한다', () => {
+		const rows = flattenTransactionRows([
+			{ ...base, category: '[비자금]', amount: 5000 },
+			{ ...base, accountId: 'account:Bank:키움증권_Cash', category: '기타 수입', amount: 5000 },
+			{ ...base, category: '대출이자', amount: -100, division: [
+				{ category: '대출이자', amount: -100, description: '원금', payee: 'Principal' }
+			] }
+		]);
+
+		expect(rows).toEqual([]);
+	});
+});
+
+describe('isInternalTransfer', () => {
+	const tx = (category) => ({ _id: 'a', accountId: 'account:Bank:급여계좌', category, amount: -1 });
+
+	test('거래의 카테고리로 판정한다', () => {
+		expect(isInternalTransfer(tx('[급여계좌]'))).toBe(true);
+		expect(isInternalTransfer(tx('식비'))).toBe(false);
+	});
+
+	test('카테고리가 없으면 false', () => {
+		expect(isInternalTransfer(tx(undefined))).toBe(false);
+		expect(isInternalTransfer(tx(''))).toBe(false);
+		expect(isInternalTransfer(undefined)).toBe(false);
+		expect(isInternalTransfer(null)).toBe(false);
+	});
+
+	// 7개 파일에 흩어져 있던 지역 사본은 /^\[.*\]$/ 였다. 결과가 갈리는 것은
+	// 개행이 든 카테고리뿐이고(정규식의 . 은 개행을 넘지 못한다), 실제 거래에
+	// 나타나는 카테고리 77개 중 그런 이름은 없었다.
+	test.each([
+		['[]', true],
+		['[', false],
+		['a]', false],
+		['[a]', true],
+		['a[b]', false],
+		['[a]b]', true]
+	])('%s → %s (옛 정규식과 같은 결과)', (category, expected) => {
+		expect(isInternalTransfer(tx(category))).toBe(expected);
+		expect(/^\[.*\]$/.test(category)).toBe(expected);
 	});
 });
 
