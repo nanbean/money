@@ -1,8 +1,24 @@
+const fs = require('fs');
+const path = require('path');
 const config = require('../config');
 const PouchDB = require('pouchdb');
 const { createStringPool } = require('../utils/stringPool');
 
-const transactionsDB = new PouchDB('transactions');
+// PouchDB 는 브라우저에서 IndexedDB 를 쓰지만 Node 에서는 leveldb 로 떨어지고,
+// DB 이름 그대로 현재 디렉토리에 폴더를 만든다. 그래서 리포지토리 루트에
+// 'transactions/' 가 생겨 git 변경점으로 떴다.
+//
+// 한 곳에 모아 둔다. __dirname 기준 절대 경로여야 한다 — pm2 가 ecosystem 의
+// cwd(/home/ubuntu/money)로 띄우지만, 도구나 스크립트를 다른 위치에서 실행하면
+// 상대 경로는 폴더를 여기저기 흩뿌린다.
+//
+// prefix 는 leveldb 경로의 접두어로 쓰이고, PouchDB 는 상위 폴더를 만들어 주지
+// 않는다 (없으면 'IO error: ... LOCK: No such file or directory').
+const POUCH_DIR = path.resolve(__dirname, '..', '.pouchdb') + path.sep;
+fs.mkdirSync(POUCH_DIR, { recursive: true });
+
+// 이 폴더는 CouchDB 복제본 캐시다. 지워도 다음 기동에 다시 채워진다.
+const transactionsDB = new PouchDB('transactions', { prefix: POUCH_DIR });
 
 // In-memory transaction cache
 let allTransactions = [];

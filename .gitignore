@@ -36,8 +36,16 @@ yarn-error.log*
 # 기존 추적 파일은 git 동작상 영향받지 않음. 새 파일을 커밋해야 하면 git add -f 사용.
 /server/tools/*
 server/tools/transaction_bulk_edit.js
-/transactions
 .gstack/
+
+# PouchDB 는 Node 에서 leveldb 로 떨어져 DB 이름대로 폴더를 만든다. 서버가 여는
+# 것은 server/db/pouchdb.js 에서 여기로 모아 둔다 (CouchDB 복제본 캐시라 지워도
+# 다시 채워진다).
+#
+# DB 이름별 폴더(/transactions, /reports ...)는 일부러 ignore 하지 않는다.
+# 루트에 그런 폴더가 생겼다는 것은 클라이언트 모듈이 Node 에서 실제 leveldb 를
+# 열었다는 뜻이고, git status 에 뜨는 것이 그걸 알아채는 유일한 신호였다.
+/server/.pouchdb/
 
 # node-persist runtime cache (KIS API tokens etc.) — machine-local
 .node-persist/
