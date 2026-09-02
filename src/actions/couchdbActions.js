@@ -761,13 +761,29 @@ export const deleteTransactionAction = params => {
 	};
 };
 
+// 거래 _id 는 'YYYY-MM-DD:계좌명:uuid' 라서 날짜 prefix 로 범위를 좁힐 수 있다.
+// CouchDB 에서 _id 는 공짜로 인덱싱되는 유일한 필드라 이 자체는 정당하다.
+//
+// 다만 _id 는 불변인데 거래 날짜는 편집 가능하다. 그래서 이미 132건(0.5%)의
+// _id 날짜가 date 필드와 어긋나 있다 — 최대 90일, 최근 건은 ±1~2일.
+//
+// 소비하는 두 리듀서(weeklyTransactions, latestTransactions)가 date 필드로 다시
+// 거르므로 넓게 적재하는 것은 무해하다. 위험은 반대쪽이다 — date 는 범위 안인데
+// _id 가 밖이면 리듀서가 볼 기회조차 없이 누락된다. 주 경계에 ±1~2일 어긋난
+// 거래가 정확히 이 경우다. 그래서 양쪽으로 여유를 둔다.
+//
+// 이 조회는 전체 적재(SET_ALL_ACCOUNTS_TRANSACTIONS)가 도착하기 전에 홈을 빨리
+// 그리기 위한 빠른 경로다. 전체 적재가 오면 같은 리듀서가 상태를 교정하므로,
+// 여유분은 그 사이 구간만 덮으면 된다. 관측된 최대 어긋남(90일)을 감싼다.
+const ID_DATE_DRIFT_MARGIN_DAYS = 100;
+
 const getWeeklyTransactions = async () => {
 	const transactionsResponse = await transactionsDB.allDocs({
 		include_docs: true, // eslint-disable-line camelcase
-		startkey: moment().subtract(1, 'weeks').format('YYYY-MM-DD'),
-		endkey: `${moment().format('YYYY-MM-DD')}\ufff0`
+		startkey: moment().subtract(1, 'weeks').subtract(ID_DATE_DRIFT_MARGIN_DAYS, 'days').format('YYYY-MM-DD'),
+		endkey: `${moment().add(ID_DATE_DRIFT_MARGIN_DAYS, 'days').format('YYYY-MM-DD')}\ufff0`
 	});
-	const allTransactions = transactionsResponse.rows.map(i => i.doc);
+	const allTransactions = transactionsResponse.rows.map(i => i.doc).filter(Boolean);
 
 	return allTransactions;
 };
