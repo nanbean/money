@@ -33,6 +33,7 @@ import {
 } from '../home/FinancialHealthScore/utils';
 
 import moment from 'moment';
+import { makeIsInvestmentCash } from '../utils/investmentCash';
 
 
 // Color palette (dedicated semantics — distinct from accent)
@@ -151,7 +152,9 @@ function NetWorth () {
 
 	// Current breakdown from accountList for the right-now snapshot
 	const breakdown = useMemo(() => {
-		const list = (accountList || []).filter(a => !a.closed && !a.name.match(/_Cash/i));
+		// 투자현금은 타입이 Bank 라 따로 걸러야 한다. 판정은 cashAccountId 링크로 한다.
+		const isInvCash = makeIsInvestmentCash(accountList);
+		const list = (accountList || []).filter(a => !a.closed && !isInvCash(a));
 		const groupBy = (predicate) => list
 			.filter(predicate)
 			.reduce((s, a) => s + toDisplay(a, exchangeRate, displayCurrency), 0);
@@ -197,15 +200,17 @@ function NetWorth () {
 		const sym = displayCurrency === 'USD' ? '$' : '₩';
 		const fmt = (n) => Math.round(n).toLocaleString();
 
+		const isInvCash = makeIsInvestmentCash(accountList);
+
 		const { income, expense, savingsRate: savingsRateFrac } =
 			calcSavingsBreakdown(allAccountsTransactions || [], accountList, livingExpenseExempt, exchangeRate, displayCurrency);
 		const savingsRate = savingsRateFrac * 100;
 
 		const totalNet = accountList
-			.filter(a => !a.closed && !a.name.match(/_Cash/i))
+			.filter(a => !a.closed && !isInvCash(a))
 			.reduce((s, a) => s + toDisplay(a, exchangeRate, displayCurrency), 0);
 		const invTotal = accountList
-			.filter(a => !a.closed && !a.name.match(/_Cash/i) && a.type === 'Invst')
+			.filter(a => !a.closed && !isInvCash(a) && a.type === 'Invst')
 			.reduce((s, a) => s + toDisplay(a, exchangeRate, displayCurrency), 0);
 		const invRatio = totalNet > 0 ? (invTotal / totalNet) * 100 : 0;
 
@@ -218,7 +223,7 @@ function NetWorth () {
 			return displayCurrency === 'KRW' ? abs * exchangeRate : abs / exchangeRate;
 		};
 		const liquidAssets = accountList
-			.filter(a => !a.closed && (a.type === 'Bank' || a.type === 'Cash') && !a.name.match(/_Cash/i))
+			.filter(a => !a.closed && (a.type === 'Bank' || a.type === 'Cash') && !isInvCash(a))
 			.reduce((s, a) => s + toDisplay(a, exchangeRate, displayCurrency), 0);
 		const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 		const expenseTxns = (allAccountsTransactions || []).filter(t =>
@@ -231,10 +236,10 @@ function NetWorth () {
 		const liquidMonths = monthlyAvg > 0 ? liquidAssets / monthlyAvg : 0;
 
 		const assetTotal = accountList
-			.filter(a => !a.closed && !a.name.match(/_Cash/i) && a.type !== 'Oth L')
+			.filter(a => !a.closed && !isInvCash(a) && a.type !== 'Oth L')
 			.reduce((s, a) => s + toDisplay(a, exchangeRate, displayCurrency), 0);
 		const debtTotal = accountList
-			.filter(a => !a.closed && !a.name.match(/_Cash/i) && a.type === 'Oth L')
+			.filter(a => !a.closed && !isInvCash(a) && a.type === 'Oth L')
 			.reduce((s, a) => s + Math.abs(toDisplay(a, exchangeRate, displayCurrency)), 0);
 		const debtRatio = assetTotal > 0 ? (debtTotal / assetTotal) * 100 : 0;
 

@@ -21,10 +21,16 @@ import {
 } from '../FinancialHealthScore/utils';
 import { getNetWorthFlowAction } from '../../actions/couchdbReportActions';
 import { updateInvestmentPriceAction } from '../../actions/priceActions';
+import { makeIsInvestmentCash } from '../../utils/investmentCash';
 
-const groupBalance = (accountList, predicate, exchangeRate, currency) => accountList
-	.filter(a => !a.closed && !a.name.match(/_Cash/i) && predicate(a))
-	.reduce((sum, a) => sum + toDisplay(a, exchangeRate, currency), 0);
+const groupBalance = (accountList, predicate, exchangeRate, currency) => {
+	// 투자현금은 타입이 Bank 라 따로 걸러야 한다. 판정은 cashAccountId 링크로 한다.
+	const isInvCash = makeIsInvestmentCash(accountList);
+
+	return accountList
+		.filter(a => !a.closed && !isInvCash(a) && predicate(a))
+		.reduce((sum, a) => sum + toDisplay(a, exchangeRate, currency), 0);
+};
 
 function Stat ({ label, value, delta, deltaColor, T, divider }) {
 	const dividerColor = T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)';

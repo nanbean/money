@@ -2,6 +2,7 @@ const notificationDB = require('../db/notificationDB');
 const messaging = require('./messaging');
 const { getAllAccounts } = require('./accountService');
 const { getExchangeRate, getCurrency } = require('./settingService');
+const { isInvestmentCash } = require('../utils/account');
 
 const addNotification = async (notification) => {
 	await notificationDB.addNotification(notification);
@@ -21,7 +22,7 @@ const sendBalanceUpdateNotification = async () => {
 	const exchangeRate = await getExchangeRate();
 	const displayCurrency = await getCurrency();
 	const balance = allAccounts
-		.filter(account => account?.name && !account.name.match(/_Cash/i))
+		.filter(account => account?.name && !isInvestmentCash(account))
 		.reduce((sum, account) => {
 			const accountBalance = account.balance || 0;
 			const accountCurrency = account.currency || 'KRW';

@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { isInvestmentCashName } from './investmentCash';
 
 export const getBalance = (name, allTransactions, transactions, date) => {
 	let balance = 0;
@@ -10,7 +11,7 @@ export const getBalance = (name, allTransactions, transactions, date) => {
 	}
 
 	// We have to subtract ivestment in investment cash account
-	if (name.match(/_Cash/i)) {
+	if (isInvestmentCashName(name)) {
 		const accountId = `account:Invst:${name.split('_')[0]}`;
 		const investmemtTransaction = date ? allTransactions.filter(i => i.accountId === accountId && i.date <= date) : allTransactions.filter(i => i.accountId === accountId);
 

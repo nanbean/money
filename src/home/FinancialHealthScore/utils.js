@@ -1,5 +1,6 @@
 import moment from 'moment';
 import { NON_EXPENSE_CATEGORY, NON_INCOME_CATEGORY } from '../../constants';
+import { makeIsInvestmentCash } from '../../utils/investmentCash';
 
 // 통화 변환 헬퍼 — calcInvestmentScore, calcEmergencyScore, calcDebtScore 공통 사용
 export const toDisplay = (acc, exchangeRate, currency) => {
@@ -64,12 +65,14 @@ export const calcSavingsScore = (transactions, accountList, livingExpenseExempt,
 
 // 2. 투자 비중 — type === 'Invst' 계정 잔액 합 ÷ 전체 순자산 (25점 만점)
 export const calcInvestmentScore = (accountList, exchangeRate, currency) => {
+	const isInvCash = makeIsInvestmentCash(accountList);
+
 	const totalNetWorth = accountList
-		.filter(a => !a.closed && !a.name.match(/_Cash/i))
+		.filter(a => !a.closed && !isInvCash(a))
 		.reduce((sum, a) => sum + toDisplay(a, exchangeRate, currency), 0);
 
 	const investmentTotal = accountList
-		.filter(a => !a.closed && !a.name.match(/_Cash/i) && a.type === 'Invst')
+		.filter(a => !a.closed && !isInvCash(a) && a.type === 'Invst')
 		.reduce((sum, a) => sum + toDisplay(a, exchangeRate, currency), 0);
 
 	if (totalNetWorth <= 0) return 0;
@@ -82,8 +85,10 @@ export const calcInvestmentScore = (accountList, exchangeRate, currency) => {
 
 // 3. 비상금 — 유동자산(Bank + Cash만, CCard 제외) ÷ 최근 3개월 월평균 지출 (25점 만점)
 export const calcEmergencyScore = (accountList, transactions, exchangeRate, currency) => {
+	const isInvCash = makeIsInvestmentCash(accountList);
+
 	const liquidAssets = accountList
-		.filter(a => !a.closed && (a.type === 'Bank' || a.type === 'Cash') && !a.name.match(/_Cash/i))
+		.filter(a => !a.closed && (a.type === 'Bank' || a.type === 'Cash') && !isInvCash(a))
 		.reduce((sum, a) => sum + toDisplay(a, exchangeRate, currency), 0);
 
 	const accountMap = new Map(accountList.map(a => [a._id, a]));
@@ -118,12 +123,14 @@ export const calcEmergencyScore = (accountList, transactions, exchangeRate, curr
 
 // 4. 부채 비율 — type === 'Oth L' 절댓값 합 ÷ Oth L 제외 계좌 합 (25점 만점)
 export const calcDebtScore = (accountList, exchangeRate, currency) => {
+	const isInvCash = makeIsInvestmentCash(accountList);
+
 	const assetTotal = accountList
-		.filter(a => !a.closed && !a.name.match(/_Cash/i) && a.type !== 'Oth L')
+		.filter(a => !a.closed && !isInvCash(a) && a.type !== 'Oth L')
 		.reduce((sum, a) => sum + toDisplay(a, exchangeRate, currency), 0);
 
 	const debtTotal = accountList
-		.filter(a => !a.closed && !a.name.match(/_Cash/i) && a.type === 'Oth L')
+		.filter(a => !a.closed && !isInvCash(a) && a.type === 'Oth L')
 		.reduce((sum, a) => sum + Math.abs(toDisplay(a, exchangeRate, currency)), 0);
 
 	if (assetTotal <= 0) return 0;

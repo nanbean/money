@@ -9,6 +9,7 @@ const { retryWithBackoff } = require('../utils/retry');
 const { flattenSplitTransactions } = require('../utils/transactionSplit');
 const { getExchangeRate } = require('./settingService');
 const { getKisToken, getKisWeeklyPriceUS, getKisWeeklyPriceKorea } = require('./kisConnector');
+const { isInvestmentCash } = require('../utils/account');
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -165,7 +166,7 @@ const _getWeeklyRecap = async ({ dry = false, retryOptions = {} } = {}) => {
 	// Investment-related accounts: Invst type + _Cash accounts (Bank type, e.g. KB증권_Cash)
 	const investmentRelatedIds = new Set(
 		allAccounts
-			.filter(a => a.type === 'Invst' || (a.name && /_Cash$/i.test(a.name)))
+			.filter(a => a.type === 'Invst' || isInvestmentCash(a))
 			.map(a => a._id)
 	);
 	const netInvestmentDeposit = allTransactions

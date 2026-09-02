@@ -10,6 +10,7 @@ import DesignPage from '../components/DesignPage';
 import useT from '../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../utils/designTokens';
 import { TYPE_ICON_MAP, TYPE_NAME_MAP, BANK_TYPE, INVEST_TYPE } from '../constants';
+import { makeIsInvestmentCash } from '../utils/investmentCash';
 
 const TYPE_KO = {
 	'Bank': '은행',
@@ -30,7 +31,9 @@ export function Accounts () {
 
 	const { groups, totalAccounts, totalAssets, totalLiabilities, netWorth } = useMemo(() => {
 		const validRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
-		const filtered = (accountList || []).filter(a => !a.closed && !a.name.match(/_Cash/i));
+		// 투자현금은 타입이 Bank 라 따로 걸러야 한다. 판정은 cashAccountId 링크로 한다.
+		const isInvCash = makeIsInvestmentCash(accountList);
+		const filtered = (accountList || []).filter(a => !a.closed && !isInvCash(a));
 
 		let assets = 0;
 		let liab = 0;

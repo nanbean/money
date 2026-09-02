@@ -26,6 +26,7 @@ import { getInvestmentPerformance, computeChainLinkedTwr } from '../utils/perfor
 import { toCurrencyFormatWithSymbol } from '../utils/formatting';
 import useT from '../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, fmtQty, colorFor } from '../utils/designTokens';
+import { isInvestmentCashAccountId } from '../utils/investmentCash';
 
 const RANGES = ['1W', '2M', '3M', 'YTD', '1Y', 'All'];
 const DAILY_RANGES = ['1W', '2M', '3M'];
@@ -384,7 +385,7 @@ export function Investments () {
 	}, [allAccountsTransactions, allInvestmentsPrice, exchangeRate, currency]);
 
 	const cashTxns = useMemo(() =>
-		allAccountsTransactions.filter(t => t.accountId?.split(':')[2]?.match(/_Cash/)),
+		allAccountsTransactions.filter(t => isInvestmentCashAccountId(t.accountId)),
 	[allAccountsTransactions]);
 
 	const cagrData = useMemo(() => {
@@ -803,7 +804,8 @@ export function Investments () {
 							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 13 }}> · 계좌</Box>
 						</Typography>
 						{accountList
-							.filter(a => a.type === 'Invst' && !a.closed && !a.name.match(/_Cash/i))
+							// 투자현금 계좌는 타입이 Bank 라 type 검사만으로 이미 빠진다.
+							.filter(a => a.type === 'Invst' && !a.closed)
 							.map((a, idx) => (
 								<Link key={a.name} to={`/Invst/${a.name}`} style={linkStyle}>
 									<Box sx={{

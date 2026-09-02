@@ -25,6 +25,7 @@ import {
 
 import { COUCHDB_URL } from '../constants';
 import { applyMemoTags } from '../utils/memoTags';
+import { isInvestmentCashName, invstAccountNameFor } from '../utils/investmentCash';
 
 import {
 	SET_ADD_TRANSACTION_FETCHING,
@@ -325,7 +326,7 @@ const getBalance = (name, allTransactions, transactions) => {
 	}
 
 	// We have to subtract ivestment in investment cash account
-	if (name.match(/_Cash/i)) {
+	if (isInvestmentCashName(name)) {
 		const accountId = `account:Invst:${name.split('_')[0]}`;
 		const investmemtTransaction = allTransactions.filter(i => i.accountId === accountId);
 		for (let i = 0; i < investmemtTransaction.length; i++) {
@@ -361,9 +362,9 @@ const updateAccount = async (accountId) => {
 		}
 		await accountsDB.put({ ...account, investments, balance });
 
-		// If this is a _Cash account, cascade update to the parent Invst account
-		if (account.name.match(/_Cash$/i)) {
-			const invstName = account.name.replace(/_Cash$/i, '');
+		// 투자현금 계좌면 부모 Invst 계좌까지 갱신을 전파한다.
+		const invstName = invstAccountNameFor(account.name);
+		if (invstName) {
 			await updateAccount(`account:Invst:${invstName}`);
 		}
 	} catch (err) {

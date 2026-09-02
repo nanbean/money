@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../../utils/designTokens';
 import { TYPE_ICON_MAP, TYPE_NAME_MAP } from '../../constants';
+import { makeIsInvestmentCash } from '../../utils/investmentCash';
 
 const TYPE_ORDER = ['Bank', 'CCard', 'Cash', 'Invst', 'Oth A', 'Oth L'];
 
@@ -182,7 +183,9 @@ export default function HomeAccountsGrid () {
 	const validRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
 
 	const grouped = useMemo(() => {
-		const filtered = (accountList || []).filter(a => !a.closed && !a.name.match(/_Cash/i));
+		// 투자현금은 타입이 Bank 라 따로 걸러야 한다. 판정은 cashAccountId 링크로 한다.
+		const isInvCash = makeIsInvestmentCash(accountList);
+		const filtered = (accountList || []).filter(a => !a.closed && !isInvCash(a));
 		const map = {};
 		filtered.forEach(a => {
 			const t = a.type || 'Other';

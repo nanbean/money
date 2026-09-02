@@ -39,7 +39,10 @@ jest.mock('../utils/investment', () => ({
 	getInvestmentBalance: jest.fn()
 }));
 
+// getBalance 만 모킹한다. isInvestmentCash / invstAccountNameFor 는 I/O 없는
+// 순수 이름 판정이라 스텁하면 잘못된 분류가 통과해 버린다.
 jest.mock('../utils/account', () => ({
+	...jest.requireActual('../utils/account'),
 	getBalance: jest.fn()
 }));
 

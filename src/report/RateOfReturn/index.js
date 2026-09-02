@@ -21,6 +21,7 @@ import {
 } from '../../actions/couchdbActions';
 
 import useReturnReport from './useReturnReport';
+import { isInvestmentCashAccountId } from '../../utils/investmentCash';
 
 const ChartTooltip = ({ active, payload, label, T }) => {
 	if (active && payload && payload.length) {
@@ -60,7 +61,7 @@ export function RateOfReturn () {
 	const { exchangeRate, currency = 'KRW' } = useSelector((state) => state.settings);
 	const accountList = useSelector((state) => state.accountList);
 	const investementTransactions = allAccountsTransactions.filter(i => i.accountId?.split(':')[1] === 'Invst');
-	const cashTransactions = allAccountsTransactions.filter(i => i.accountId?.split(':')[2]?.match(/_Cash/));
+	const cashTransactions = allAccountsTransactions.filter(i => isInvestmentCashAccountId(i.accountId));
 	const allInvestments = useSelector((state) => state.allInvestments);
 	const historyList = useSelector((state) => state.historyList);
 	const allInvestmentAccounts = Object.keys(_.groupBy(investementTransactions, 'account')).map(account => account);

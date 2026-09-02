@@ -8,6 +8,7 @@ import {
 
 import { COUCHDB_URL } from '../constants';
 import { ensureTransferCategoriesAction } from './couchdbSettingActions';
+import { cashAccountNameFor } from '../utils/investmentCash';
 
 export let accountsDB = new PouchDB('accounts');
 let accountsSync;
@@ -64,7 +65,7 @@ export const addAccountAction = (account) => {
 			const created = [];
 
 			if (account.type === 'Invst') {
-				const cashAccountName = `${account.name}_Cash`;
+				const cashAccountName = cashAccountNameFor(account.name);
 				const cashAccountId = `account:Bank:${cashAccountName}`;
 				const cashAccount = {
 					_id: cashAccountId,

@@ -8,7 +8,7 @@ const historyDB = require('../db/historyDB');
 const spreadSheet = require('../utils/spreadSheet');
 const { singleFlight } = require('../utils/singleFlight');
 const { getInvestmentList, getInvestmentBalance } = require('../utils/investment');
-const { getBalance } = require('../utils/account');
+const { getBalance, isInvestmentCash, invstAccountNameFor } = require('../utils/account');
 const { getExchangeRate } = require('./settingService');
 const { getAllAccounts } = require('./accountService');
 
@@ -69,6 +69,14 @@ const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, 
 	// Build historiesMap once per getNetWorth call instead of inside every getInvestmentBalance call.
 	const historiesMap = histories && histories.length ? new Map(histories.map(h => [h.name, h.data])) : null;
 
+	// 투자현금 계좌 -> 부모 Invst 계좌. 현금 계좌 문서는 일반 Bank 계좌와 필드가
+	// 같아서 이름 접미사밖에 신호가 없었다. 잔액을 계산하는 자리에서는 이름 대신
+	// cashAccountId 링크를 쓴다 (실제 데이터 17/17 설정됨).
+	const invstByCashId = new Map();
+	for (const a of allAccounts) {
+		if (a && a.type === 'Invst' && a.cashAccountId) invstByCashId.set(a.cashAccountId, a);
+	}
+
 	for (const account of allAccounts) {
 		const accountTransactions = transactionsByAccount[`account:${account.type}:${account.name}`] || [];
 		const transactions = accountTransactions.filter(i => i.date <= date);
@@ -83,8 +91,13 @@ const getNetWorth = async (allAccounts, allTransactions, transactionsByAccount, 
 		} else if (account.type === 'Oth L') {
 			const balance = getBalance(account.name, transactions);
 			loanNetWorth += account.currency === 'USD' ? balance * exchangeRate:balance;
-		} else if (account.name.match(/_Cash/)) {
-			const invAccountId = `account:Invst:${account.name.split('_')[0]}`;
+		} else if (invstByCashId.has(account._id) || isInvestmentCash(account)) {
+			// 링크가 있으면 그것으로, 없으면 이름 규약으로 부모를 찾는다. 예전에는
+			// name.split('_')[0] 이었다 — 이름에 '_' 가 들어가면 부모를 잃는다.
+			const parent = invstByCashId.get(account._id);
+			const invAccountId = parent
+				? parent._id
+				: `account:Invst:${invstAccountNameFor(account.name)}`;
 			const invAllTransactions = transactionsByAccount[invAccountId] || [];
 			const invTransactions = invAllTransactions.filter(i => i.date <= date);
 			const balance = getBalance(account.name, transactions, invTransactions);

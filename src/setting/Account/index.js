@@ -17,6 +17,7 @@ import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, labelStyle } from '../../utils/designTokens';
 
 import { TYPE_ICON_MAP, TYPE_NAME_MAP } from '../../constants';
+import { makeIsInvestmentCash } from '../../utils/investmentCash';
 import {
 	addAccountAction,
 	editAccountAction,
@@ -82,7 +83,9 @@ export default function Account () {
 
 	const { groups, totalAccounts, totals } = useMemo(() => {
 		const validRate = (typeof exchangeRate === 'number' && exchangeRate > 0) ? exchangeRate : 1;
-		const list = (accountList || []).filter(a => !a.name.match(/_Cash/i));
+		// 투자현금 계좌는 목록에 노출하지 않는다 — 부모 투자 계좌로 관리한다.
+		const isInvCash = makeIsInvestmentCash(accountList);
+		const list = (accountList || []).filter(a => !isInvCash(a));
 
 		const grouped = list.reduce((acc, a) => {
 			const t = a.type || 'Other';
