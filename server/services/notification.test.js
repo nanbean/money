@@ -332,6 +332,123 @@ describe('notification service', () => {
 				});
 			});
 
+			// 후불교통 청구 예정액. 탈 때마다 오지 않고 한 건으로 모여서 온다.
+			describe('iOS KB Pay 후불교통', () => {
+				// 2026-09-03 실측 원문.
+				const REAL = '\nKB국민카드\n후불교통(신용)\n28건 51,250원\n09/15 결제예정 ';
+				const transit = (text) => ({ packageName: 'ios.KBPay', text });
+
+				it('결제예정일에 교통비로 기록한다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-09-03T10:20:00+09:00'));
+					mockSendMessage.mockResolvedValue({ response: { text: () => '교통비' } });
+
+					// Act
+					await addTransaction(transit(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						date: '2026-09-15',
+						amount: -51250,
+						payee: '후불교통',
+						accountId: 'account:CCard:KB카드',
+						category: '교통비',
+						subcategory: '대중교통',
+						memo: '28건'
+					});
+				});
+
+				// dedupeKey 가 _id 로 들어가야 같은 청구건이 한 건으로 모인다.
+				it('_id 에 uuid 대신 dedupeKey 를 쓴다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-09-03T10:20:00+09:00'));
+
+					// Act
+					await addTransaction(transit(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]._id)
+						.toBe('2026-09-15:KB카드:후불교통');
+				});
+
+				it('dedupeKey 는 저장하지 않는다', async () => {
+					// Act
+					await addTransaction(transit(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.not.toHaveProperty('dedupeKey');
+				});
+
+				// 건수가 늘어 다시 온다. 새로 쌓으면 지출이 두 배가 된다.
+				describe('같은 청구건이 다시 올 때', () => {
+					const existing = {
+						_id: '2026-09-15:KB카드:후불교통',
+						_rev: '3-abc',
+						date: '2026-09-15',
+						amount: -51250,
+						payee: '후불교통',
+						category: '교통비',
+						subcategory: '대중교통',
+						memo: '28건'
+					};
+
+					beforeEach(() => {
+						jest.setSystemTime(new Date('2026-09-10T10:20:00+09:00'));
+						transactionService.getAllTransactions.mockResolvedValue([existing]);
+					});
+
+					it('_rev 를 실어 갱신한다', async () => {
+						// Act
+						await addTransaction(transit('\nKB국민카드\n후불교통(신용)\n35건 62,400원\n09/15 결제예정 '));
+
+						// Assert
+						expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+							_id: '2026-09-15:KB카드:후불교통',
+							_rev: '3-abc',
+							amount: -62400,
+							memo: '35건'
+						});
+					});
+
+					// 손으로 고친 분류를 알림이 되돌려 놓으면 고칠 방법이 없어진다.
+					it('사용자가 고친 분류를 유지한다', async () => {
+						// Act
+						await addTransaction(transit('\nKB국민카드\n후불교통(신용)\n35건 62,400원\n09/15 결제예정 '));
+
+						// Assert
+						expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+							category: '교통비',
+							subcategory: '대중교통'
+						});
+					});
+				});
+
+				// 결제예정일은 앞을 보는 날짜다. MM/DD 만 오므로 해를 넘길 때
+				// 올해로 떨어진다.
+				it('연말에 오는 다음 해 결제예정일을 넘긴다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-12-20T10:20:00+09:00'));
+
+					// Act
+					await addTransaction(transit('\nKB국민카드\n후불교통(신용)\n12건 21,000원\n01/15 결제예정 '));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].date).toBe('2027-01-15');
+				});
+
+				// 기존 두 형식이 이 분기에 걸려서는 안 된다.
+				it('일반 승인 알림은 그대로 처리한다', async () => {
+					// Act
+					await addTransaction(transit('\n[KB Pay 사용 알림] 신용 6036 09/02 16:13 14,160원 11번가 승인 '));
+
+					// Assert
+					const saved = transactionService.addTransaction.mock.calls[0][0];
+					expect(saved.payee).toBe('11번가');
+					expect(saved._id).not.toContain('후불교통');
+				});
+			});
+
 			// iOS NH Pay. 급여계좌로 기록한다 — SMS 로 오는 같은 카드(6*4*)와 같다.
 			//
 			// 줄바꿈으로 오는지 공백으로 오는지 확실하지 않아 둘 다 받는다.

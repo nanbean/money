@@ -173,9 +173,10 @@ const parsers = [
 		}
 	},
 	{
-		// iOS KB Pay. 두 형식으로 온다.
+		// iOS KB Pay. 세 형식으로 온다.
 		//   '\n[KB Pay 사용 알림] 신용 6036 09/02 16:13 14,160원 11번가 승인 '
 		//   'KB국민카드6036승인 김*심님 14,160원 일시불 09/02 16:13 11번가 누적120,830'
+		//   '\nKB국민카드\n후불교통(신용)\n28건 51,250원\n09/15 결제예정 '
 		//
 		// 둘 다 한 줄이고 앞뒤에 개행·공백이 붙는다. 상호 위치가 고정되지 않고
 		// 공백도 들어가므로('셀렉토커피 동탄') 인덱스 분할 대신 뒤에서부터 최소
@@ -193,6 +194,41 @@ const parsers = [
 			};
 
 			const line = body.text.replace(/\r?\n/g, ' ').trim();
+
+			// 'KB국민카드 후불교통(신용) <건수>건 <금액>원 <MM/DD> 결제예정'
+			//
+			// 후불교통은 탈 때마다 알림이 오지 않고 청구 예정액으로 한 번에 온다.
+			// 카드번호가 본문에 없어 계좌를 가릴 수 없으므로 KB카드로 둔다.
+			//
+			// 날짜는 결제예정일이다. 카드 명세서에 그 날짜로 찍히고, 같은 청구건이
+			// 건수를 늘려 다시 와도 같은 날짜로 모인다 (dedupeKey 참고).
+			const transit = line.match(/후불교통\S*\s+(\d+)건\s+([\d,]+)원\s+(\d{2}\/\d{2})\s*결제예정/);
+			if (transit) {
+				const [, count, amountText, dateText] = transit;
+
+				// 결제예정일은 앞을 보는 날짜다. 12월에 '01/15 결제예정' 이 오면
+				// MM/DD 파싱이 올해 1월로 떨어지므로 한 해를 더한다.
+				const due = moment(dateText, 'MM/DD');
+				if (due.diff(moment(), 'days') < -180) {
+					due.add(1, 'year');
+				}
+
+				return {
+					account: 'KB카드',
+					transaction: {
+						date: due.format('YYYY-MM-DD'),
+						amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10) * -1,
+						payee: '후불교통',
+						// 기존 교통비 거래가 모두 '교통비:대중교통' 이라 맞춰 둔다.
+						category: '교통비',
+						subcategory: '대중교통',
+						// 금액이 왜 바뀌었는지 알 수 있게 건수를 남긴다.
+						memo: `${count}건`,
+						// 같은 청구건은 쌓지 않고 갱신한다.
+						dedupeKey: '후불교통'
+					}
+				};
+			}
 
 			// '[KB Pay 사용 알림] 신용|체크 <번호> <MM/DD> <HH:mm> <금액>원 <상호> 승인'
 			// 취소 문구의 실제 샘플을 본 적이 없어 승인만 거래로 만든다.
@@ -702,8 +738,30 @@ exports.addTransaction = async function (body) {
 	if (account && transaction && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
 		const couchTransactions = await transactionService.getAllTransactions();
 		const categorizedTransaction = await findCategoryByPayee(couchTransactions, transaction);
-		categorizedTransaction._id = `${categorizedTransaction.date}:${account}:${uuidv1()}`;
+
+		// 파서가 dedupeKey 를 주면 _id 를 그 값으로 정한다. 후불교통 청구 예정액
+		// 처럼 같은 건이 금액을 늘려 다시 오는 알림을 쌓지 않고 갱신하기 위한 것이다.
+		// uuid 를 쓰면 알림이 올 때마다 별개의 지출이 된다.
+		const { dedupeKey } = categorizedTransaction;
+		delete categorizedTransaction.dedupeKey;
+
+		categorizedTransaction._id = dedupeKey
+			? `${categorizedTransaction.date}:${account}:${dedupeKey}`
+			: `${categorizedTransaction.date}:${account}:${uuidv1()}`;
 		categorizedTransaction.accountId = (account === '급여계좌' || account === 'BoA') ? `account:Bank:${account}` : `account:CCard:${account}`;
+
+		if (dedupeKey) {
+			// 캐시는 CouchDB 를 실시간 복제한 것이라 _rev 가 현재 값이다.
+			const existing = couchTransactions.find((t) => t._id === categorizedTransaction._id);
+			if (existing) {
+				categorizedTransaction._rev = existing._rev;
+				// 사용자가 고친 분류는 남긴다 — 알림이 다시 올 때마다 되돌려
+				// 놓으면 손으로 고칠 방법이 없어진다.
+				categorizedTransaction.category = existing.category;
+				categorizedTransaction.subcategory = existing.subcategory;
+			}
+		}
+
 		await transactionService.addTransaction(categorizedTransaction);
 		await notificationService.addNotification({
 			_id: `${categorizedTransaction.date}:${uuidv1()}`,
