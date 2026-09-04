@@ -130,7 +130,7 @@ describe('notification service', () => {
 		it('should do nothing for cancellation messages', async () => {
 			// Arrange
 			const body = { packageName: 'com.kbcard.kbkookmincard', text: '승인취소 some text' };
-			
+
 			// Act
 			const result = await addTransaction(body);
 
@@ -332,6 +332,88 @@ describe('notification service', () => {
 				});
 			});
 
+			// 롯데카드 후불교통 이용금액 안내. KB 와 달리 실제 승인일이 온다.
+			describe('iOS 롯데카드 후불교통', () => {
+				// 2026-09-03 10:01 실측 원문.
+				const REAL = '오*미님의 08월 후불교통 이용금액이에요!\n교통카드는 2번 이용해 3,300원이 나왔어요. \r\n이용금액은 09월 02일에 승인되었어요.';
+				const lotte = (text) => ({ packageName: 'ios.lottecard', text });
+
+				it('승인일에 생활비카드 교통비로 기록한다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-09-03T10:01:00+09:00'));
+
+					// Act
+					await addTransaction(lotte(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						_id: '2026-09-02:생활비카드:후불교통',
+						date: '2026-09-02',
+						amount: -3300,
+						payee: '후불교통',
+						accountId: 'account:CCard:생활비카드',
+						category: '교통비',
+						subcategory: '대중교통',
+						memo: '2번'
+					});
+				});
+
+				// 승인일은 지난 날짜다. 연초에 지난해 12월 안내가 오면 올해로 떨어진다.
+				it('연초에 오는 지난해 승인일을 되돌린다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2027-01-05T10:01:00+09:00'));
+
+					// Act
+					await addTransaction(lotte('오*미님의 12월 후불교통 이용금액이에요!\n교통카드는 9번 이용해 12,100원이 나왔어요.\n이용금액은 12월 28일에 승인되었어요.'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].date).toBe('2026-12-28');
+				});
+
+				// KB 와 같은 dedupeKey 를 쓰지만 계좌가 달라 _id 가 겹치지 않는다.
+				it('KB 후불교통과 _id 가 겹치지 않는다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-09-03T10:01:00+09:00'));
+
+					// Act
+					await addTransaction(lotte(REAL));
+					const lotteId = transactionService.addTransaction.mock.calls[0][0]._id;
+					jest.clearAllMocks();
+					transactionService.getAllTransactions.mockResolvedValue([]);
+					await addTransaction({
+						packageName: 'ios.KBPay',
+						text: '\nKB국민카드\n후불교통(신용)\n28건 51,250원\n09/15 결제예정 '
+					});
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]._id).not.toBe(lotteId);
+				});
+
+				// 금액이나 승인일이 없으면 거래를 만들지 않는다.
+				test.each([
+					['금액 없음', '오*미님의 08월 후불교통 이용금액이에요!\n이용금액은 09월 02일에 승인되었어요.'],
+					['승인일 없음', '오*미님의 08월 후불교통 이용금액이에요!\n교통카드는 2번 이용해 3,300원이 나왔어요.']
+				])('%s 이면 거래를 만들지 않는다', async (_label, text) => {
+					// Act
+					await addTransaction(lotte(text));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 일반 승인 알림이 이 분기에 걸려서는 안 된다.
+				it('일반 승인 알림은 그대로 처리한다', async () => {
+					// Act
+					await addTransaction(lotte('\n씨유(CU)동탄지오점\n1,650원 승인\nLOCA LIKIT 2.0(7*2*)\n일시불, 09/03 17:18\n누적금액 882,380원'));
+
+					// Assert
+					const saved = transactionService.addTransaction.mock.calls[0][0];
+					expect(saved.payee).toBe('씨유(CU)동탄지오점');
+					expect(saved.amount).toBe(-1650);
+					expect(saved._id).not.toContain('후불교통');
+				});
+			});
+
 			// 후불교통 청구 예정액. 탈 때마다 오지 않고 한 건으로 모여서 온다.
 			describe('iOS KB Pay 후불교통', () => {
 				// 2026-09-03 실측 원문.
@@ -341,7 +423,6 @@ describe('notification service', () => {
 				it('결제예정일에 교통비로 기록한다', async () => {
 					// Arrange
 					jest.setSystemTime(new Date('2026-09-03T10:20:00+09:00'));
-					mockSendMessage.mockResolvedValue({ response: { text: () => '교통비' } });
 
 					// Act
 					await addTransaction(transit(REAL));
@@ -371,13 +452,33 @@ describe('notification service', () => {
 						.toBe('2026-09-15:KB카드:후불교통');
 				});
 
-				it('dedupeKey 는 저장하지 않는다', async () => {
+				// 제어 값은 transaction 밖(options)에 있어야 문서로 새지 않는다.
+				it('제어 값을 문서에 넣지 않는다', async () => {
 					// Act
 					await addTransaction(transit(REAL));
 
 					// Assert
-					expect(transactionService.addTransaction.mock.calls[0][0])
-						.not.toHaveProperty('dedupeKey');
+					const saved = transactionService.addTransaction.mock.calls[0][0];
+					expect(saved).not.toHaveProperty('dedupeKey');
+					expect(saved).not.toHaveProperty('fixedCategory');
+					expect(saved).not.toHaveProperty('options');
+				});
+
+				// findCategoryByPayee 는 이력이 없으면 Gemini 답으로 파서의 분류를
+				// 덮는다. 후불교통은 확정적이라 물어선 안 된다.
+				it('Gemini 에 묻지 않고 교통비로 둔다', async () => {
+					// Arrange
+					mockSendMessage.mockResolvedValue({ response: { text: () => '식비' } });
+
+					// Act
+					await addTransaction(transit(REAL));
+
+					// Assert
+					expect(mockSendMessage).not.toHaveBeenCalled();
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						category: '교통비',
+						subcategory: '대중교통'
+					});
 				});
 
 				// 건수가 늘어 다시 온다. 새로 쌓으면 지출이 두 배가 된다.

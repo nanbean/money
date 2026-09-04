@@ -223,9 +223,13 @@ const parsers = [
 						category: '교통비',
 						subcategory: '대중교통',
 						// 금액이 왜 바뀌었는지 알 수 있게 건수를 남긴다.
-						memo: `${count}건`,
+						memo: `${count}건`
+					},
+					options: {
 						// 같은 청구건은 쌓지 않고 갱신한다.
-						dedupeKey: '후불교통'
+						dedupeKey: '후불교통',
+						// 분류가 확정적이라 Gemini 에 묻지 않는다.
+						fixedCategory: true
 					}
 				};
 			}
@@ -295,6 +299,49 @@ const parsers = [
 		matcher: (body) => body.packageName.match(/^ios\.lottecard$/i),
 		parser: (body) => {
 			const lines = body.text.split('\n').map((l) => l.trim()).filter(Boolean);
+
+			// 후불교통 이용금액 안내. 아래 승인 로직과 줄 구성이 전혀 달라
+			// (금액 줄이 '3,300원이 나왔어요' 라 '^금액원 상태' 에 안 걸린다)
+			// 먼저 가른다.
+			//
+			//   '오*미님의 08월 후불교통 이용금액이에요!'
+			//   '교통카드는 2번 이용해 3,300원이 나왔어요. '
+			//   '이용금액은 09월 02일에 승인되었어요.'
+			//
+			// KB 와 달리 결제예정일이 아니라 실제 승인일이 온다. 그 날짜로 적는다.
+			const transitLine = body.text.replace(/\r?\n/g, ' ');
+			if (/후불교통/.test(transitLine)) {
+				const countMatch = transitLine.match(/(\d+)번\s*이용/);
+				const amountMatch = transitLine.match(/([\d,]+)원/);
+				const dateMatch = transitLine.match(/(\d{1,2})월\s*(\d{1,2})일에\s*승인/);
+
+				if (!amountMatch || !dateMatch) return {};
+
+				// 승인일은 이미 지난 날짜다. 연초에 지난해 12월 승인 안내가 오면
+				// MM/DD 파싱이 올해 12월로 떨어지므로 한 해를 뺀다.
+				const approved = moment(`${dateMatch[1]}/${dateMatch[2]}`, 'MM/DD');
+				if (approved.diff(moment(), 'days') > 180) {
+					approved.subtract(1, 'year');
+				}
+
+				return {
+					account: '생활비카드',
+					transaction: {
+						date: approved.format('YYYY-MM-DD'),
+						amount: parseInt(amountMatch[1].replace(/[^0-9]/g, ''), 10) * -1,
+						payee: '후불교통',
+						category: '교통비',
+						subcategory: '대중교통',
+						memo: countMatch ? `${countMatch[1]}번` : undefined
+					},
+					options: {
+						// 같은 승인일 건은 쌓지 않고 갱신한다. KB 와 계좌가 달라
+						// _id 가 겹치지 않는다.
+						dedupeKey: '후불교통',
+						fixedCategory: true
+					}
+				};
+			}
 
 			// '13,050원 승인' / '13,050원 승인취소'
 			// '누적금액 880,801원' 은 숫자로 시작하지 않아 걸리지 않는다.
@@ -694,6 +741,7 @@ const logNotification = (stage, detail) => {
 // 본 적은 없고, 온다면 상호에 광고 문구가 붙어 기록되므로 파서에서 떼야 한다.
 const isAdvertisement = (text) => /^\s*(?:\[Web발신\]\s*)?\(광고\)/.test(text);
 
+
 exports.addTransaction = async function (body) {
 	// 가드보다 먼저 찍는다. 뒤에 두면 필드 이름이 다르거나 본문이 빈 요청이
 	// 로그 한 줄 없이 끝나서, 요청이 아예 안 온 것과 구분되지 않는다.
@@ -733,17 +781,24 @@ exports.addTransaction = async function (body) {
 		return false;
 	}
 
-	const { account, transaction } = parser.parser(body);
+	// options 는 저장 대상이 아닌 제어 값이다. transaction 안에 두면 지우는 걸
+	// 잊는 순간 CouchDB 문서에 그대로 들어간다.
+	const { account, transaction, options = {} } = parser.parser(body);
 
 	if (account && transaction && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
 		const couchTransactions = await transactionService.getAllTransactions();
-		const categorizedTransaction = await findCategoryByPayee(couchTransactions, transaction);
 
-		// 파서가 dedupeKey 를 주면 _id 를 그 값으로 정한다. 후불교통 청구 예정액
-		// 처럼 같은 건이 금액을 늘려 다시 오는 알림을 쌓지 않고 갱신하기 위한 것이다.
+		// fixedCategory 면 자동 분류를 건너뛴다. 후불교통처럼 분류가 확정적인
+		// 알림은 이력이나 Gemini 에 물을 이유가 없다 — findCategoryByPayee 는
+		// 이력이 없으면 Gemini 답으로 파서의 분류를 덮어쓴다.
+		const categorizedTransaction = options.fixedCategory
+			? transaction
+			: await findCategoryByPayee(couchTransactions, transaction);
+
+		// dedupeKey 가 있으면 _id 를 그 값으로 정한다. 후불교통 청구 예정액처럼
+		// 같은 건이 금액을 늘려 다시 오는 알림을 쌓지 않고 갱신하기 위한 것이다.
 		// uuid 를 쓰면 알림이 올 때마다 별개의 지출이 된다.
-		const { dedupeKey } = categorizedTransaction;
-		delete categorizedTransaction.dedupeKey;
+		const { dedupeKey } = options;
 
 		categorizedTransaction._id = dedupeKey
 			? `${categorizedTransaction.date}:${account}:${dedupeKey}`
