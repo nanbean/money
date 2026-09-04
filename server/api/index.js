@@ -64,6 +64,23 @@ api.get('/updateKRStockList', async (ctx) => {
 
 api.post('/addTransactionWithNotification', async (ctx) => {
 	const body = ctx.request.body;
+
+	// 본문이 비어 들어오는 요청이 있다. 서비스 쪽 로그로는 두 경우가 구분되지
+	// 않는다 — 클라이언트가 정말 빈 본문을 보낸 것인지, Content-Type 이
+	// json/form 이 아니라서 koa-bodyparser 가 조용히 {} 로 만든 것인지.
+	// 후자면 알림 내용이 있었는데 서버가 버린 것이라 거래를 놓친다.
+	//
+	// 이 라우트는 x-api-key 로도 열려 있어 폰 자동화가 직접 부른다.
+	// user-agent 가 어느 클라이언트인지 가르는 유일한 단서다.
+	if (!body || Object.keys(body).length === 0) {
+		console.log('[notify] empty-request', JSON.stringify({
+			contentType: ctx.headers['content-type'] || null,
+			contentLength: ctx.headers['content-length'] || null,
+			userAgent: ctx.headers['user-agent'] || null,
+			hasApiKey: Boolean(ctx.headers['x-api-key'])
+		}));
+	}
+
 	const result = await notification.addTransaction(body);
 
 	ctx.body = { return: result };

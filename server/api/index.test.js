@@ -52,8 +52,9 @@ const authMiddleware = () => {
 	return layer.stack[layer.stack.length - 1];
 };
 
-const makeCtx = ({ path = '/api/x', query = {}, body = {} } = {}) => ({
+const makeCtx = ({ path = '/api/x', query = {}, body = {}, headers = {} } = {}) => ({
 	path,
+	headers,
 	request: { query, body },
 	status: undefined,
 	body: undefined
@@ -202,6 +203,112 @@ describe('api 라우터', () => {
 
 			expect(notification.addTransaction).toHaveBeenCalledWith(body);
 			expect(ctx.body).toEqual({ return: 'added' });
+		});
+
+		// 본문이 비어 오는 요청이 실제로 있었다 (2026-09-04 01:17).
+		// 서비스 로그로는 '클라이언트가 빈 본문을 보냄' 과 'Content-Type 이
+		// 맞지 않아 파싱에 실패' 가 구분되지 않는다. 후자면 알림 내용이
+		// 있었는데 버린 것이라 거래를 놓친다.
+		describe('POST /addTransactionWithNotification 의 빈 본문', () => {
+			const emptyCases = [
+				['빈 객체', {}],
+				['null', null]
+			];
+
+			test.each(emptyCases)('%s 면 요청 정보를 남긴다', async (_label, body) => {
+				// Arrange
+				const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+				notification.addTransaction.mockResolvedValue(false);
+
+				// Act
+				await runRoute('POST', '/addTransactionWithNotification', makeCtx({
+					body,
+					headers: {
+						'content-type': 'text/plain',
+						'content-length': '182',
+						'user-agent': 'Shortcuts/2620.1',
+						'x-api-key': 'k'
+					}
+				}));
+
+				// Assert
+				const line = log.mock.calls
+					.map((c) => c.map(String).join(' '))
+					.find((l) => l.includes('[notify] empty-request'));
+				expect(line).toBeDefined();
+				expect(line).toContain('text/plain');
+				expect(line).toContain('Shortcuts/2620.1');
+				expect(line).toContain('"hasApiKey":true');
+			});
+
+			test.each(emptyCases)('%s 여도 서비스는 그대로 부른다', async (_label, body) => {
+				// Arrange
+				jest.spyOn(console, 'log').mockImplementation(() => {});
+				notification.addTransaction.mockResolvedValue(false);
+
+				// Act
+				const ctx = await runRoute('POST', '/addTransactionWithNotification', makeCtx({ body }));
+
+				// Assert
+				expect(notification.addTransaction).toHaveBeenCalledWith(body);
+				expect(ctx.body).toEqual({ return: false });
+			});
+
+			// Content-Type 이 맞지 않으면 koa-bodyparser 는 body 를 세팅하지
+			// 않아 undefined 가 온다. makeCtx 의 기본값이 이걸 {} 로 덮으므로
+			// ctx 를 직접 만든다.
+			it('body 가 undefined 여도 남기고 그대로 넘긴다', async () => {
+				// Arrange
+				const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+				notification.addTransaction.mockResolvedValue(false);
+				const ctx = {
+					path: '/api/addTransactionWithNotification',
+					headers: { 'content-type': 'text/plain' },
+					request: { query: {}, body: undefined },
+					status: undefined,
+					body: undefined
+				};
+
+				// Act
+				await runRoute('POST', '/addTransactionWithNotification', ctx);
+
+				// Assert
+				expect(notification.addTransaction).toHaveBeenCalledWith(undefined);
+				expect(log.mock.calls.map((c) => c.map(String).join(' '))
+					.some((l) => l.includes('[notify] empty-request'))).toBe(true);
+			});
+
+			// 헤더가 없어도 죽지 않아야 한다.
+			it('헤더가 비어도 null 로 남긴다', async () => {
+				// Arrange
+				const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+				notification.addTransaction.mockResolvedValue(false);
+
+				// Act
+				await runRoute('POST', '/addTransactionWithNotification', makeCtx({ body: {} }));
+
+				// Assert
+				const line = log.mock.calls
+					.map((c) => c.map(String).join(' '))
+					.find((l) => l.includes('[notify] empty-request'));
+				expect(line).toContain('"contentType":null');
+				expect(line).toContain('"hasApiKey":false');
+			});
+
+			it('본문이 있으면 남기지 않는다', async () => {
+				// Arrange
+				const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+				notification.addTransaction.mockResolvedValue(true);
+
+				// Act
+				await runRoute('POST', '/addTransactionWithNotification', makeCtx({
+					body: { packageName: 'ios.NHPay', text: 'NH카드' }
+				}));
+
+				// Assert
+				expect(log.mock.calls.map((c) => c.map(String).join(' '))
+					.some((l) => l.includes('[notify] empty-request'))).toBe(false);
+			});
 		});
 
 		test('GET /weeklyRecap 은 결과를 그대로 준다', async () => {
