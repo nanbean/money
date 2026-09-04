@@ -116,6 +116,71 @@ const findCategoryByPayee = async (transactions, transaction) => {
 	return transaction;
 };
 
+// 취소 알림의 원거래 후보를 고른다. 고치지는 않는다.
+//
+// 자동 적용은 하지 않기로 했다. 2026년 카드 거래 248건 중 81건(32.7%)이
+// '계좌 + 날짜 + 상호' 가 같은 묶음에 있고 (2026-08-05 쿠팡 −68,400 / −20,750
+// / −20,500 처럼), 부분취소는 취소액이 원금액보다 작아 금액 조건이 상한만
+// 걸어준다. 실측 재생에서 같은 상호의 다른 결제를 집는 일이 실제로 나왔다.
+//
+// 그래서 사람이 고르도록 후보만 추려 알린다.
+const findCancelCandidates = (transactions, cancel) => {
+	const accountId = `account:CCard:${cancel.account}`;
+
+	// 알림의 상호는 거래에 저장된 payee 보다 길게 온다 ('쿠팡(쿠페이)-쿠' vs
+	// '쿠팡'). findCategoryByPayee 가 과거 표본 이름으로 바꿔치기 하기 때문이다.
+	// 어느 쪽이 길지 모르니 양방향 접두어로 본다 — 알림이므로 넓게 잡아도
+	// 데이터가 상하지 않는다.
+	const merchantMatches = (payee) => {
+		const p = String(payee || '');
+		if (!p) return false;
+		return cancel.merchant.startsWith(p) || p.startsWith(cancel.merchant);
+	};
+
+	const pick = (dates) => (transactions || [])
+		.filter((t) => t.accountId === accountId
+			&& dates.includes(t.date)
+			&& merchantMatches(t.payee)
+			// 취소액을 흡수할 수 있어야 원거래다. 이미 0원인 건은 걸러진다.
+			&& Math.abs(t.amount) >= cancel.amount)
+		.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount));
+
+	const exact = pick([cancel.usedDate]);
+	if (exact.length > 0) return { candidates: exact, widened: false };
+
+	// 이용일과 거래 날짜가 어긋나는 경우가 있다 (승인일로 적힌 건, 손 입력).
+	// 후보가 없을 때만 넓힌다.
+	const near = [];
+	for (let d = -3; d <= 3; d += 1) {
+		if (d === 0) continue;
+		near.push(moment(cancel.usedDate, 'YYYY-MM-DD').add(d, 'days').format('YYYY-MM-DD'));
+	}
+	return { candidates: pick(near), widened: true };
+};
+
+const MAX_CANCEL_CANDIDATES = 5;
+
+const formatCancelNotice = (cancel, candidates, widened) => {
+	const won = (n) => n.toLocaleString('en-US');
+	const head = `${cancel.account} · ${cancel.kind} ${won(cancel.amount)}원\n`
+		+ `${cancel.merchant} · ${cancel.usedDate} 이용건`;
+
+	if (candidates.length === 0) {
+		return `${head}\n\n후보를 찾지 못했습니다. 직접 확인이 필요합니다.`;
+	}
+
+	const lines = candidates.slice(0, MAX_CANCEL_CANDIDATES).map((t) => {
+		const after = t.amount + cancel.amount;
+		return `${t.date} ${won(t.amount)} → ${won(after)}`;
+	});
+	const more = candidates.length > MAX_CANCEL_CANDIDATES
+		? `\n… 외 ${candidates.length - MAX_CANCEL_CANDIDATES}건`
+		: '';
+
+	return `${head}\n\n후보 ${candidates.length}건${widened ? ' (이용일 ±3일)' : ''}\n`
+		+ lines.join('\n') + more;
+};
+
 const formatNotification = (transaction) => {
 	if (!transaction) {
 		return '';
@@ -194,6 +259,41 @@ const parsers = [
 			};
 
 			const line = body.text.replace(/\r?\n/g, ' ').trim();
+
+			// '[KB국민카드] <번호> <이름> <상호> <MM/DD> 이용건 <MM/DD> 부분취소(-<금액>원)'
+			//
+			// 취소는 거래를 만들지 않는다. 원거래를 자동으로 지목할 수 없어서다
+			// (findCancelCandidates 주석 참고). 대신 후보를 추려 알린다.
+			//
+			// 전액취소 문구는 샘플을 본 적이 없다. '취소' 로도 받아 두지만,
+			// '승인취소' 로 온다면 배열 맨 앞 파서가 먼저 잡아 여기까지 오지 않는다.
+			const cancel = line.match(
+				/\[KB국민카드\]\s*(\d{4})\s+\S+\s+(.+?)\s+(\d{2}\/\d{2})\s*이용건\s+\d{2}\/\d{2}\s*(부분취소|전체취소|취소)\s*\(\s*-?([\d,]+)원\s*\)/
+			);
+			if (cancel) {
+				const [, cardNumber, merchant, usedText, kind, amountText] = cancel;
+				const account = ACCOUNT_BY_CARD[cardNumber];
+				if (!account) return {};
+
+				// 이용일은 지난 날짜다. 연초에 지난해 12월 이용건 취소가 오면
+				// MM/DD 파싱이 올해 12월로 떨어지므로 한 해를 뺀다.
+				const used = moment(usedText, 'MM/DD');
+				if (used.diff(moment(), 'days') > 180) {
+					used.subtract(1, 'year');
+				}
+
+				return {
+					options: {
+						cancellation: {
+							account,
+							merchant: merchant.trim(),
+							usedDate: used.format('YYYY-MM-DD'),
+							amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10),
+							kind
+						}
+					}
+				};
+			}
 
 			// 'KB국민카드 후불교통(신용) <건수>건 <금액>원 <MM/DD> 결제예정'
 			//
@@ -741,6 +841,19 @@ const logNotification = (stage, detail) => {
 // 본 적은 없고, 온다면 상호에 광고 문구가 붙어 기록되므로 파서에서 떼야 한다.
 const isAdvertisement = (text) => /^\s*(?:\[Web발신\]\s*)?\(광고\)/.test(text);
 
+// 금액이 아예 없으면 거래일 수 없다.
+//
+// 카드사는 거래가 아닌 안내도 보낸다 ('행운박스 이용안내', '모바일교환권
+// 보내드려요'). 광고 표시가 없어 (광고) 필터에 걸리지 않고, 파싱에 실패한
+// 것으로 취급돼 ⚠️ 가 뜬다. 그러면 진짜 파서 고장과 구분이 안 된다.
+//
+// 문구 키워드를 하나씩 막는 대신 금액 유무로 가른다. 실측 문구를 전부
+// 확인했는데 거래 알림에는 예외 없이 '원' 이나 '$' 가 있다.
+//
+// 판정을 넓게 잡아 둔 건 의도다 — 금액이 있다고 잘못 보면 ⚠️ 가 남을 뿐이고,
+// 없다고 잘못 보면 거래를 조용히 잃는다.
+const hasMonetaryAmount = (text) =>
+	/[\d,]+\s*원|[$￦€£]\s*[\d,]+|[\d,]+\.\d{2}/.test(String(text || ''));
 
 exports.addTransaction = async function (body) {
 	// 가드보다 먼저 찍는다. 뒤에 두면 필드 이름이 다르거나 본문이 빈 요청이
@@ -784,6 +897,37 @@ exports.addTransaction = async function (body) {
 	// options 는 저장 대상이 아닌 제어 값이다. transaction 안에 두면 지우는 걸
 	// 잊는 순간 CouchDB 문서에 그대로 들어간다.
 	const { account, transaction, options = {} } = parser.parser(body);
+
+	// 취소 알림. 원장은 건드리지 않고 후보만 알린다 — 어느 거래를 고쳐야
+	// 하는지 찾는 수고를 없애는 것이 목적이다.
+	if (options.cancellation) {
+		const cancel = options.cancellation;
+		const { candidates, widened } = findCancelCandidates(
+			await transactionService.getAllTransactions(),
+			cancel
+		);
+
+		logNotification('skipped', {
+			packageName: body.packageName,
+			reason: 'cancellation',
+			parserIndex,
+			account: cancel.account,
+			merchant: cancel.merchant,
+			usedDate: cancel.usedDate,
+			amount: cancel.amount,
+			kind: cancel.kind,
+			candidates: candidates.map((t) => ({ _id: t._id, amount: t.amount })),
+			widened
+		});
+
+		await messaging.sendNotification(
+			'🔁 취소 확인 필요',
+			formatCancelNotice(cancel, candidates, widened),
+			'receipt',
+			'transactions'
+		);
+		return false;
+	}
 
 	if (account && transaction && transaction.date && transaction.date !== 'Invalid date' && transaction.payee && transaction.amount) {
 		const couchTransactions = await transactionService.getAllTransactions();
@@ -839,6 +983,18 @@ exports.addTransaction = async function (body) {
 
 		await messaging.sendNotification('👍 Transaction', formatNotification(categorizedTransaction), 'receipt', 'transactions');
 		return true;
+	}
+
+	// 금액이 없는 알림은 거래가 아니다. 조용히 버린다 — ⚠️ 를 띄우면 진짜
+	// 파서 고장과 섞인다. 파서를 지난 뒤에 보는 이유는, 먼저 걸러 버리면
+	// 금액 없는 형식을 파싱하는 파서가 생겼을 때 막아 버리기 때문이다.
+	if (!hasMonetaryAmount(body.text)) {
+		logNotification('skipped', {
+			packageName: body.packageName,
+			reason: 'no-amount',
+			parserIndex
+		});
+		return false;
 	}
 
 	// 취소나 결제일 안내처럼 거래가 아닌 알림도 여기로 온다. 파서가 일부러

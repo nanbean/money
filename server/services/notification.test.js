@@ -129,7 +129,12 @@ describe('notification service', () => {
 
 		it('should do nothing for cancellation messages', async () => {
 			// Arrange
-			const body = { packageName: 'com.kbcard.kbkookmincard', text: '승인취소 some text' };
+			// 실제 취소 알림에는 금액이 있다. 금액이 없으면 거래일 수 없어
+			// 조용히 버려지므로(no-amount) 알림 여부를 볼 수 없다.
+			const body = {
+				packageName: 'com.kbcard.kbkookmincard',
+				text: 'KB국민카드1*8*승인취소\n김*심\n9,100원 일시불\n10/30 19:16\n메가엠지씨커피'
+			};
 
 			// Act
 			const result = await addTransaction(body);
@@ -332,6 +337,77 @@ describe('notification service', () => {
 				});
 			});
 
+			// 거래가 아닌 안내 알림. 금액이 아예 없으면 거래일 수 없다.
+			//
+			// 예전에는 ⚠️ '파싱 실패' 로 떠서 진짜 파서 고장과 섞였다.
+			// 문구 키워드로 막으면 카드사가 새 안내를 만들 때마다 새 규칙이
+			// 필요하다. 금액 유무로 가른다.
+			describe('금액 없는 안내 알림', () => {
+				// 2026-09-03 22:24 / 2026-09-04 09:32 실측 원문.
+				const NOTICES = [
+					['행운박스 이용안내', 'ios.lottecard', '행운박스 이용안내\n쿠팡 행운박스 참여가 완료되었습니다.'],
+					['모바일교환권 안내', 'ios.lottecard', '오은미님, 7월 행운박스 모바일교환권 보내드려요.\n참여하신 이벤트: 26년 7월 쿠팡 행운박스 리워드\r\n내가 받은 모바일교환권 확인하기'],
+					['숫자만 있는 안내', 'ios.KBPay', 'KB Pay 앱 업데이트 안내\n버전 26.9 배포']
+				];
+
+				test.each(NOTICES)('%s 는 거래를 만들지 않는다', async (_label, packageName, text) => {
+					// Act
+					const result = await addTransaction({ packageName, text });
+
+					// Assert
+					expect(result).toBe(false);
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				test.each(NOTICES)('%s 는 푸시를 보내지 않는다', async (_label, packageName, text) => {
+					// Act
+					await addTransaction({ packageName, text });
+
+					// Assert
+					expect(messaging.sendNotification).not.toHaveBeenCalled();
+				});
+
+				it('no-amount 로 로그를 남긴다', async () => {
+					// Arrange
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					await addTransaction({ packageName: NOTICES[1][1], text: NOTICES[1][2] });
+					const lines = log.mock.calls.map((c) => c.map(String).join(' '));
+					log.mockRestore();
+
+					// Assert
+					expect(lines.some((l) => l.includes('[notify] skipped') && l.includes('no-amount')))
+						.toBe(true);
+				});
+
+				// 여기가 핵심이다. 금액이 있으면 파서 고장을 계속 알려야 한다.
+				test.each([
+					['원화', 'ios.lottecard', '알 수 없는 형식\n12,345원 뭔가'],
+					['달러', 'com.usbank.mobilebanking', 'SOMETHING WEIRD $44.84 happened'],
+					['소수점', 'ios.KBPay', '이상한 형식 44.84 어쩌구']
+				])('%s 금액이 있으면 ⚠️ 를 그대로 띄운다', async (_label, packageName, text) => {
+					// Act
+					await addTransaction({ packageName, text });
+
+					// Assert
+					expect(messaging.sendNotification.mock.calls
+						.some(([t]) => String(t).includes('⚠️'))).toBe(true);
+				});
+
+				// 실제 거래 알림이 이 규칙에 걸리면 거래를 조용히 잃는다.
+				it('실제 거래 알림은 걸리지 않는다', async () => {
+					// Act
+					await addTransaction({
+						packageName: 'com.usbank.mobilebanking',
+						text: 'PURCHASE SKYPASS Visa Signature® Card 2901 SOME MERCHANT $12.34.'
+					});
+
+					// Assert
+					expect(transactionService.addTransaction).toHaveBeenCalled();
+				});
+			});
+
 			// 롯데카드 후불교통 이용금액 안내. KB 와 달리 실제 승인일이 온다.
 			describe('iOS 롯데카드 후불교통', () => {
 				// 2026-09-03 10:01 실측 원문.
@@ -411,6 +487,178 @@ describe('notification service', () => {
 					expect(saved.payee).toBe('씨유(CU)동탄지오점');
 					expect(saved.amount).toBe(-1650);
 					expect(saved._id).not.toContain('후불교통');
+				});
+			});
+
+			// 취소 알림. 원장은 건드리지 않고 후보만 알린다.
+			//
+			// 자동 적용을 포기한 근거는 실측이다 — 2026년 카드 거래 248건 중
+			// 81건(32.7%)이 '계좌 + 날짜 + 상호' 가 같은 묶음에 있고, 부분취소는
+			// 금액 조건이 상한만 걸어주므로 후보가 안 갈린다.
+			describe('iOS KB Pay 부분취소', () => {
+				// 2026-09-04 09:02 실측 원문.
+				const REAL = '\n[KB국민카드] 8033 오*미님 쿠팡(쿠페이)-쿠 08/31 이용건 09/03 부분취소(-22,900원)';
+				const cancelBody = (text) => ({ packageName: 'ios.KBPay', text });
+
+				// 알림에 저장된 payee 보다 상호가 길게 온다. 08-31 에 쿠팡 결제가
+				// 둘인데 하나는 이미 0원이라 취소액을 흡수할 수 없다.
+				const ORIGINAL = {
+					_id: '2026-08-31:KB카드오은미:fc2c6df0',
+					date: '2026-08-31',
+					accountId: 'account:CCard:KB카드오은미',
+					amount: -42090,
+					payee: '쿠팡'
+				};
+				const ZEROED = {
+					_id: '2026-08-31:KB카드오은미:ac662c00',
+					date: '2026-08-31',
+					accountId: 'account:CCard:KB카드오은미',
+					amount: 0,
+					payee: '쿠팡',
+					memo: '취소:15690'
+				};
+
+				beforeEach(() => {
+					jest.setSystemTime(new Date('2026-09-04T09:02:00+09:00'));
+					transactionService.getAllTransactions.mockResolvedValue([ORIGINAL, ZEROED]);
+				});
+
+				it('거래를 만들지 않는다', async () => {
+					// Act
+					const result = await addTransaction(cancelBody(REAL));
+
+					// Assert
+					expect(result).toBe(false);
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 원장을 자동으로 고치지 않는 것이 이 기능의 핵심이다.
+				it('원거래를 고치지 않는다', async () => {
+					// Act
+					await addTransaction(cancelBody(REAL));
+
+					// Assert
+					expect(ORIGINAL.amount).toBe(-42090);
+					expect(notificationService.addNotification).not.toHaveBeenCalled();
+				});
+
+				it('후보와 취소 후 금액을 푸시로 알린다', async () => {
+					// Act
+					await addTransaction(cancelBody(REAL));
+
+					// Assert
+					const [title, text] = messaging.sendNotification.mock.calls[0];
+					expect(title).toBe('🔁 취소 확인 필요');
+					expect(text).toContain('KB카드오은미');
+					expect(text).toContain('부분취소 22,900원');
+					expect(text).toContain('쿠팡(쿠페이)-쿠');
+					expect(text).toContain('후보 1건');
+					// -42,090 + 22,900 = -19,190
+					expect(text).toContain('-42,090 → -19,190');
+				});
+
+				// 이미 0원인 건은 취소액을 흡수할 수 없다. 푸시 문구로는 가릴 수
+				// 없어(-42,090 → 안에 '0 → ' 가 들어 있다) 로그의 후보 목록을 본다.
+				it('금액이 부족한 건은 후보에서 뺀다', async () => {
+					// Arrange
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					await addTransaction(cancelBody(REAL));
+					const line = log.mock.calls.map((c) => c.map(String).join(' '))
+						.find((l) => l.includes('[notify] skipped'));
+					log.mockRestore();
+
+					// Assert
+					expect(line).toContain(ORIGINAL._id);
+					expect(line).not.toContain(ZEROED._id);
+					expect(messaging.sendNotification.mock.calls[0][1]).toContain('후보 1건');
+				});
+
+				// 파싱 실패와 구분돼야 한다.
+				it('⚠️ 대신 취소로 로그를 남긴다', async () => {
+					// Arrange
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					await addTransaction(cancelBody(REAL));
+					const lines = log.mock.calls.map((c) => c.map(String).join(' '));
+					log.mockRestore();
+
+					// Assert
+					expect(lines.some((l) => l.includes('[notify] skipped') && l.includes('cancellation')))
+						.toBe(true);
+					expect(messaging.sendNotification.mock.calls
+						.some(([t]) => String(t).includes('⚠️'))).toBe(false);
+				});
+
+				it('후보가 여럿이면 모두 보여준다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([
+						{ ...ORIGINAL, _id: 'a', amount: -68400 },
+						{ ...ORIGINAL, _id: 'b', amount: -30750 },
+						{ ...ORIGINAL, _id: 'c', amount: -22950 }
+					]);
+
+					// Act
+					await addTransaction(cancelBody(REAL));
+
+					// Assert
+					const [, text] = messaging.sendNotification.mock.calls[0];
+					expect(text).toContain('후보 3건');
+					// 금액이 작은 것부터 — 순위를 주장하지 않고 나열만 한다.
+					expect(text.indexOf('-22,950')).toBeLessThan(text.indexOf('-68,400'));
+				});
+
+				it('후보가 없으면 그렇다고 알린다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([]);
+
+					// Act
+					await addTransaction(cancelBody(REAL));
+
+					// Assert
+					expect(messaging.sendNotification.mock.calls[0][1])
+						.toContain('후보를 찾지 못했습니다');
+				});
+
+				// 이용일과 거래 날짜가 어긋나는 경우가 있다.
+				it('정확한 날짜에 없으면 ±3일로 넓힌다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([
+						{ ...ORIGINAL, date: '2026-09-01' }
+					]);
+
+					// Act
+					await addTransaction(cancelBody(REAL));
+
+					// Assert
+					const [, text] = messaging.sendNotification.mock.calls[0];
+					expect(text).toContain('이용일 ±3일');
+					expect(text).toContain('2026-09-01');
+				});
+
+				// 모르는 카드번호는 엉뚱한 계좌를 뒤지게 된다.
+				it('모르는 카드번호는 처리하지 않는다', async () => {
+					// Act
+					await addTransaction(cancelBody('\n[KB국민카드] 9999 오*미님 쿠팡 08/31 이용건 09/03 부분취소(-22,900원)'));
+
+					// Assert
+					expect(messaging.sendNotification)
+						.toHaveBeenCalledWith('⚠️ Transaction', 'Failed to parse transaction', 'receipt');
+				});
+
+				// 일반 승인 알림이 이 분기에 걸려서는 안 된다.
+				it('일반 승인 알림은 그대로 처리한다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([]);
+
+					// Act
+					await addTransaction(cancelBody('\nKB국민카드8033승인 오*미님 21,970원 일시불 09/03 22:24 쿠팡(쿠페이) 누적493,185원'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -21970, payee: '쿠팡(쿠페이)' });
 				});
 			});
 
