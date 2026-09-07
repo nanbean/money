@@ -489,14 +489,38 @@ export const initCouchdbAction = username => {
 };
 
 export const finalizeCouchdbAction = () => {
-	return async () => {
+	return async dispatch => {
 		transactionsSync && transactionsSync.cancel();
 		stocksSync && stocksSync.cancel();
 		historiesSync && historiesSync.cancel();
 		currentUsername = null;
-		finalizeCouchdbReportAction();
-		finalizeCouchdbSettingAction();
-		finalizeCouchdbAccountAction();
+		// thunk 라 dispatch 해야 몸통이 돈다. 그냥 호출하면 함수만 만들어지고
+		// reports·settings·accounts 의 live sync 가 취소되지 않는다.
+		await dispatch(finalizeCouchdbReportAction());
+		await dispatch(finalizeCouchdbSettingAction());
+		await dispatch(finalizeCouchdbAccountAction());
+	};
+};
+
+// 앱이 한참 뒤에 다시 열렸을 때 데이터를 다시 붙인다. iOS 홈 화면 PWA 는
+// 새로 고침 수단이 없다 — utils/appResume.js 참고.
+//
+// 끊고 다시 붙이는 이유는 두 가지다. live sync 는 백그라운드에서 연결이
+// 끊긴 뒤 되살아나지 않을 수 있고, histories·reports 는 애초에 일회성
+// 복제라 처음 받은 뒤로는 절대 갱신되지 않는다.
+//
+// 초기화와 같은 경로를 쓴다. 복제는 체크포인트를 이어받으므로 바뀐 게 없으면
+// 거의 공짜고, 콜드 스타트에서 이미 검증된 경로다.
+export const resumeCouchdbAction = () => {
+	return async dispatch => {
+		// 로그인 전이면 할 일이 없다. initCouchdbAction 이 username 을 여기에
+		// 남겨 두므로 Redux 를 거치지 않아도 된다.
+		const username = currentUsername;
+		if (!username) return;
+
+		// 먼저 끊는다. 안 끊으면 복귀할 때마다 live sync 가 하나씩 쌓인다.
+		await dispatch(finalizeCouchdbAction());
+		await dispatch(initCouchdbAction(username));
 	};
 };
 

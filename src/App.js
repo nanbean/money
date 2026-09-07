@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import CssBaseline from '@mui/material/CssBaseline';
@@ -11,7 +11,8 @@ import { getAuthAction } from './actions/authActions';
 import {
 	getAllAccountsTransactionsAction,
 	getAllInvestmentsListAction,
-	getPayeeListAction
+	getPayeeListAction,
+	resumeCouchdbAction
 } from './actions/couchdbActions';
 
 import {
@@ -26,6 +27,7 @@ import {
 	autoRefreshTokenAction
 } from './actions/messagingActions';
 
+import useAppResume from './hooks/useAppResume';
 import useDarkMode from './hooks/useDarkMode';
 
 import theme from './theme';
@@ -46,6 +48,12 @@ function App () {
 		dispatch(getSettingsAction());
 		dispatch(autoRefreshTokenAction());
 	}, [dispatch]);
+
+	// iOS 홈 화면 PWA 에는 새로 고침 수단이 없다. 한참 뒤에 다시 열면
+	// 데이터가 그대로여서, 복귀를 감지해 다시 붙인다.
+	useAppResume(useCallback(() => {
+		dispatch(resumeCouchdbAction());
+	}, [dispatch]));
 
 	useEffect(() => {
 		if (accountList.length > 0 && allAccountsTransactions.length < 1) {
