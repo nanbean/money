@@ -1,4 +1,10 @@
-import { isTransferPayment, monthlyAmountKrw, splitPaymentTotals } from './paymentTotals';
+import {
+	isTransferPayment,
+	monthlyAmountKrw,
+	splitPaymentTotals,
+	comparePaymentsByDay,
+	sortPaymentsByDay
+} from './paymentTotals';
 
 const pay = (over = {}) => ({ amount: -10000, currency: 'KRW', interval: 1, valid: true, category: '통신비', ...over });
 
@@ -120,5 +126,50 @@ describe('splitPaymentTotals', () => {
 		expect(Math.round(totals.all)).toBe(-4887733);
 		expect(Math.round(totals.expense)).toBe(-2927733);
 		expect(Math.round(totals.transfer)).toBe(-1960000);
+	});
+});
+
+describe('sortPaymentsByDay', () => {
+	const p = (day, payee = 'x') => ({ day, payee });
+	const days = (list) => sortPaymentsByDay(list).map(i => i.day);
+
+	test('결제일 오름차순으로 늘어놓는다', () => {
+		expect(days([p(20), p(3), p(11), p(1)])).toEqual([1, 3, 11, 20]);
+	});
+
+	// 문자열로 저장된 값이 있다 — 입력이 type=number 라도 e.target.value 는
+	// 문자열이고, handleSubmit 을 거치지 않은 옛 데이터가 남아 있다.
+	test('문자열 결제일도 숫자로 본다', () => {
+		expect(days([p('20'), p('3'), p(11)])).toEqual(['3', 11, '20']);
+	});
+
+	// 값이 없는 항목이 1일과 섞이면 목록이 날짜순으로 안 읽힌다.
+	test('결제일이 없으면 뒤로 보낸다', () => {
+		expect(days([p(undefined), p(5), p(null), p(1), p(0)]))
+			.toEqual([1, 5, undefined, null, 0]);
+	});
+
+	test('같은 날은 이름순으로 가른다', () => {
+		const sorted = sortPaymentsByDay([p(5, '넷플릭스'), p(5, '가스요금'), p(5, '통신비')]);
+
+		expect(sorted.map(i => i.payee)).toEqual(['가스요금', '넷플릭스', '통신비']);
+	});
+
+	test('원본을 바꾸지 않는다', () => {
+		const list = [p(20), p(3)];
+		sortPaymentsByDay(list);
+
+		expect(list.map(i => i.day)).toEqual([20, 3]);
+	});
+
+	test('빈 입력', () => {
+		expect(sortPaymentsByDay([])).toEqual([]);
+		expect(sortPaymentsByDay(undefined)).toEqual([]);
+	});
+
+	// payee 가 없는 옛 항목이 있다.
+	test('이름이 없어도 죽지 않는다', () => {
+		expect(() => sortPaymentsByDay([{ day: 5 }, { day: 5 }])).not.toThrow();
+		expect(comparePaymentsByDay(undefined, undefined)).toBe(0);
 	});
 });

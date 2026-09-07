@@ -21,6 +21,30 @@ export const monthlyAmountKrw = (payment, exchangeRate = 1) => {
 	return payment.currency === 'USD' ? monthly * rate : monthly;
 };
 
+// 결제일 순으로 늘어놓는다.
+//
+// 다음 결제일(due)이 아니라 day 를 쓴다. due 는 오늘을 기준으로 계산하므로
+// 이번 달이 지난 항목이 다음 달로 밀리고, 그러면 목록 순서가 매일 바뀐다.
+// 설정 화면에서 찾던 항목이 어제와 다른 자리에 있으면 안 된다.
+export const comparePaymentsByDay = (a, b) => {
+	// day 가 없거나 숫자가 아니면 뒤로 보낸다. 값이 없는 항목이 1일과
+	// 섞이면 목록이 날짜순으로 안 읽힌다.
+	const dayOf = (p) => {
+		const n = Number(p && p.day);
+		return Number.isFinite(n) && n > 0 ? n : Number.MAX_SAFE_INTEGER;
+	};
+
+	const diff = dayOf(a) - dayOf(b);
+	if (diff !== 0) return diff;
+
+	// 같은 날이면 이름으로 가른다. 안 그러면 필터를 바꿀 때마다 같은 날짜
+	// 안의 순서가 저장 순서에 따라 달라 보인다.
+	return String((a && a.payee) || '').localeCompare(String((b && b.payee) || ''), 'ko');
+};
+
+export const sortPaymentsByDay = (payments = []) =>
+	[...(payments || [])].sort(comparePaymentsByDay);
+
 // 활성 항목만 집계한다. 일시중지된 건은 지금 나가는 돈이 아니다.
 export const splitPaymentTotals = (payments = [], exchangeRate = 1) => {
 	const totals = { all: 0, expense: 0, transfer: 0 };

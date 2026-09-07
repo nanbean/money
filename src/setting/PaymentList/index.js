@@ -21,7 +21,7 @@ import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../../utils/designTokens';
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
-import { isTransferPayment, monthlyAmountKrw, splitPaymentTotals } from './paymentTotals';
+import { isTransferPayment, monthlyAmountKrw, splitPaymentTotals, sortPaymentsByDay } from './paymentTotals';
 import { buildCategoryMenu } from '../../utils/categoryOrder';
 
 import {
@@ -156,9 +156,11 @@ export default function PaymentList () {
 			if (!map.has(key)) map.set(key, []);
 			map.get(key).push(p);
 		});
+		// 각 주기 안에서 결제일 순으로 늘어놓는다. 저장 순서(추가한 순서)로는
+		// 언제 나가는 돈인지 읽히지 않는다.
 		const ordered = [];
-		INTERVAL_ORDER.forEach(k => { if (map.has(k)) ordered.push([k, map.get(k)]); });
-		if (map.has('custom')) ordered.push(['custom', map.get('custom')]);
+		INTERVAL_ORDER.forEach(k => { if (map.has(k)) ordered.push([k, sortPaymentsByDay(map.get(k))]); });
+		if (map.has('custom')) ordered.push(['custom', sortPaymentsByDay(map.get('custom'))]);
 		return ordered;
 	}, [filtered]);
 
