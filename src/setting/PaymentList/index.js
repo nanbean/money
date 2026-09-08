@@ -9,6 +9,8 @@ import Dialog from '@mui/material/Dialog';
 import IconButton from '@mui/material/IconButton';
 
 import AddIcon from '@mui/icons-material/Add';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import PostAddOutlinedIcon from '@mui/icons-material/PostAddOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -22,6 +24,7 @@ import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../../utils/desig
 import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 import { isTransferPayment, monthlyAmountKrw, splitPaymentTotals, sortPaymentsByDay } from './paymentTotals';
+import { isPaymentPaid, paymentTransactionDraft } from './paymentPaid';
 import { buildCategoryMenu } from '../../utils/categoryOrder';
 
 import {
@@ -29,6 +32,9 @@ import {
 	editPaymentAction,
 	deletePaymentAction
 } from '../../actions/couchdbSettingActions';
+
+import BankTransactionModal from '../../components/BankTransactionModal';
+import { openTransactionInModal } from '../../actions/ui/form/bankTransaction';
 
 const fieldLabelSx = (T) => ({
 	fontSize: 11,
@@ -94,7 +100,11 @@ export default function PaymentList () {
 	const { paymentList = [], categoryList = [], currency: appCurrency = 'KRW', exchangeRate } = useSelector((state) => state.settings || {});
 	const accountList = useSelector((state) => state.accountList);
 
+	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
+
 	const [filter, setFilter] = useState('active'); // active | inactive | all
+	// 거래 폼은 계좌를 prop 으로 받는다. 어느 정기지불에서 열었는지 기억해야 한다.
+	const [txnAccount, setTxnAccount] = useState({ account: '', accountId: '' });
 	const [open, setOpen] = useState(false);
 	const [editIndex, setEditIndex] = useState(-1);
 	const [formData, setFormData] = useState(emptyForm);
@@ -112,9 +122,11 @@ export default function PaymentList () {
 			monthlyKrw: monthlyAmountKrw(p, validRate),
 			// 계좌 간 이체는 순자산을 깎지 않는다 — IRP·연금저축 적립과 부채 상환.
 			isTransfer: isTransferPayment(p),
+			// 서버의 '미납 N건' 푸시와 같은 규칙이다 (paymentPaid.js 주석 참고).
+			isPaid: isPaymentPaid(p, allAccountsTransactions),
 			due: nextDueDate(Number(p.day) || 1, interval)
 		};
-	}), [paymentList, accountList, validRate]);
+	}), [paymentList, accountList, validRate, allAccountsTransactions]);
 
 	const filtered = useMemo(() => enriched.filter(p => {
 		if (filter === 'active') return !!p.valid;
@@ -215,6 +227,15 @@ export default function PaymentList () {
 		handleClose();
 	};
 
+	// 정기지불을 거래로 옮긴다. 바로 저장하지 않고 폼을 채워 연다 — 저장된
+	// 금액은 추정치다. 공과금·통신비는 매달 달라서 그대로 넣으면 틀린다.
+	const handleRecord = (p) => {
+		const draft = paymentTransactionDraft(p);
+		if (!draft) return;
+		setTxnAccount({ account: draft.account, accountId: draft.accountId });
+		dispatch(openTransactionInModal(draft));
+	};
+
 	const handleToggleValid = (originalIndex) => {
 		const item = paymentList[originalIndex];
 		dispatch(editPaymentAction(originalIndex, { ...item, valid: !item.valid }));
@@ -295,6 +316,24 @@ export default function PaymentList () {
 								flexShrink: 0
 							}}>Paused</Box>
 						)}
+						{/* 이번 주기에 이미 나간 항목. 미납 배지는 달 초에 거의 모든 행에
+						    붙어 소음이 되므로 납부한 쪽만 표시한다. */}
+						{p.valid && p.isPaid && (
+							<Box component="span" sx={{
+								fontSize: 9,
+								padding: '1px 6px 1px 4px',
+								borderRadius: '4px',
+								background: '#22c55e28',
+								color: T.dark ? '#86efac' : '#15803d',
+								fontWeight: 700,
+								flexShrink: 0,
+								display: 'inline-flex',
+								alignItems: 'center',
+								gap: '2px'
+							}}>
+								<CheckCircleOutlineIcon sx={{ fontSize: 10 }} />납부
+							</Box>
+						)}
 					</Typography>
 					<Typography sx={{ fontSize: 11, color: T.ink2, marginTop: '2px' }}>
 						{p.accountName || '—'}
@@ -329,6 +368,17 @@ export default function PaymentList () {
 				</Box>
 
 				<Stack direction="row" spacing={0.5} justifyContent="flex-end">
+					{/* 아직 안 나간 항목만. 납부한 행에 두면 중복 기록을 유도한다. */}
+					{p.valid && !p.isPaid && (
+						<IconButton
+							size="small"
+							onClick={() => handleRecord(p)}
+							sx={{ color: T.ink2, '&:hover': { color: T.acc.hero, background: T.surf2 } }}
+							title="거래 등록"
+						>
+							<PostAddOutlinedIcon sx={{ fontSize: 16 }} />
+						</IconButton>
+					)}
 					<IconButton
 						size="small"
 						onClick={() => handleToggleValid(p.originalIndex)}
@@ -859,6 +909,15 @@ export default function PaymentList () {
 					</Box>
 				</Box>
 			</Dialog>
+
+			{/* 기존 거래 입력 폼을 그대로 쓴다. 분할·계산기·payee 자동완성이 딸려
+			    오고, 이체 카테고리면 반대편 거래도 자동으로 생긴다. transactions 는
+			    편집 모드에서만 쓰이므로 비워 둔다. */}
+			<BankTransactionModal
+				account={txnAccount.account}
+				accountId={txnAccount.accountId}
+				transactions={[]}
+			/>
 		</Stack>
 	);
 }

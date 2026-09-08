@@ -3,6 +3,9 @@ const { getSettings } = require('../db/settingDB');
 const { getAllTransactions } = require('./transactionService');
 const { sendNotification } = require('./messaging');
 
+// 이 규칙은 src/setting/PaymentList/paymentPaid.js 의 isPaymentPaid 와 같아야
+// 한다. 화면의 '납부' 표시가 이 판정과 어긋나면, 이미 처리한 항목을 두고
+// '미납 N건' 푸시가 계속 온다. 한쪽을 고치면 다른 쪽도 고쳐야 한다.
 const isPaid = (payment, transactions) => {
 	const interval = payment.interval || 1;
 	const startYearMonth = moment().subtract(interval - 1, 'months').format('YYYY-MM');
@@ -51,3 +54,4 @@ const checkAndSendNotification = async () => {
 };
 
 module.exports = checkAndSendNotification;
+module.exports.isPaid = isPaid;
