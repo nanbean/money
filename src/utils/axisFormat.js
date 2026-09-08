@@ -19,3 +19,21 @@ export const formatUnit = (value, divisor, suffix = '', maxFractionDigits = 2) =
 // 퍼센트 축. 12.5% 가 '13%' 로 찍히던 것과 같은 문제다.
 export const formatPercentTick = (value, maxFractionDigits = 1) =>
 	formatUnit(value, 1, '%', maxFractionDigits);
+
+// 원화 축. 값 표시(designTokens 의 fmtKRW)와 같은 만/억 단위를 쓴다.
+//
+// 축만 M/K 를 쓰면 한 차트 안에서 단위가 갈린다 — 실측: 툴팁이 '₩482만' 인데
+// 눈금은 '4.5M' 이라 매번 환산해야 했다. 만 단위로 바꾸면 격자선이 반값에
+// 놓여도 정수로 떨어진다 (1.5M → 150만).
+//
+// 통화 기호는 붙이지 않는다. 축 폭이 56px 이고 눈금마다 반복돼 읽는 데
+// 도움이 되지 않는다. 부호는 fmtKRW 와 같은 U+2212 를 쓴다.
+export const formatKrwTick = (value) => {
+	const n = Number(value);
+	if (!Number.isFinite(n)) return '';
+	const sign = n < 0 ? '−' : '';
+	const abs = Math.abs(n);
+	if (abs >= 100000000) return `${sign}${formatUnit(abs, 100000000, '억')}`;
+	if (abs >= 10000) return `${sign}${formatUnit(abs, 10000, '만')}`;
+	return `${sign}${Math.round(abs).toLocaleString()}`;
+};

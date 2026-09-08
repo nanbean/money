@@ -26,7 +26,7 @@ import SpendingHeatmap from '../components/SpendingHeatmap';
 import BankTransactionModal from '../components/BankTransactionModal';
 import TransactionListDialog from '../components/TransactionListDialog';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
-import { formatUnit } from '../utils/axisFormat';
+import { formatKrwTick, formatUnit } from '../utils/axisFormat';
 import { getCategoryColor } from '../utils/categoryColor';
 import { getCategoryIcon } from '../utils/categoryIcon';
 import useT from '../hooks/useT';
@@ -46,10 +46,7 @@ const makeFormatYAxis = (currency) => (value) => {
 		if (value >= 1000) return `$${formatUnit(value, 1000, 'K')}`;
 		return `$${value}`;
 	}
-	if (value >= 1000000000) return formatUnit(value, 1000000000, 'B');
-	if (value >= 1000000) return formatUnit(value, 1000000, 'M');
-	if (value >= 1000) return formatUnit(value, 1000, 'K');
-	return value.toLocaleString();
+	return formatKrwTick(value);
 };
 
 const ChartTooltip = ({ active, payload, label, T, currency }) => {

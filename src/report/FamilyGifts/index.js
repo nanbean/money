@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import { formatUnit } from '../../utils/axisFormat';
+import { formatKrwTick } from '../../utils/axisFormat';
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 
@@ -186,7 +186,7 @@ function FamilyGifts () {
 								<CartesianGrid strokeDasharray="3 3" stroke={T.rule} vertical={false}/>
 								<XAxis dataKey="year" tick={{ fontSize: 11, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false}/>
 								<YAxis tick={{ fontSize: 11, fill: T.ink2 }} axisLine={{ stroke: T.rule }} tickLine={false} width={56}
-									tickFormatter={(v) => v >= 1000000 ? formatUnit(v, 1000000, 'M') : v >= 1000 ? formatUnit(v, 1000, 'K') : v}/>
+									tickFormatter={formatKrwTick}/>
 								<Tooltip
 									contentStyle={{ background: T.surf, border: `1px solid ${T.rule}`, borderRadius: 8 }}
 									formatter={(v) => fmtCurrency(v, currency)}

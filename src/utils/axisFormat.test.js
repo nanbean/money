@@ -1,4 +1,4 @@
-import { formatUnit, formatPercentTick } from './axisFormat';
+import { formatUnit, formatPercentTick, formatKrwTick } from './axisFormat';
 
 describe('formatUnit', () => {
 	// 실측 결함. Recharts 는 0..6M 을 5눈금으로 나눠 1.5M 간격을 쓰는데,
@@ -64,5 +64,45 @@ describe('formatPercentTick', () => {
 	// 기본은 한 자리다. 축 폭이 좁아 두 자리는 잘 안 들어간다.
 	test('기본 소수 한 자리', () => {
 		expect(formatPercentTick(12.34)).toBe('12.3%');
+	});
+});
+
+describe('formatKrwTick', () => {
+	// 값 표시는 fmtKRW 로 '₩482만' 인데 축은 '4.5M' 이었다. 같은 차트에서
+	// 단위가 갈려 매번 환산해야 했다.
+	test('만 단위로 눈금을 찍는다', () => {
+		const ticks = [0, 1500000, 3000000, 4500000, 6000000];
+
+		expect(ticks.map(formatKrwTick))
+			.toEqual(['0', '150만', '300만', '450만', '600만']);
+	});
+
+	// M 단위에서는 소수였던 눈금이 만 단위에서는 정수로 떨어진다.
+	test('사분값 눈금도 정수로 떨어진다', () => {
+		expect(formatKrwTick(1250000)).toBe('125만');
+		expect(formatKrwTick(3750000)).toBe('375만');
+	});
+
+	// fmtKRW 와 같은 1억 문턱을 쓴다.
+	test('1억부터 억 단위', () => {
+		expect(formatKrwTick(100000000)).toBe('1억');
+		expect(formatKrwTick(250000000)).toBe('2.5억');
+		expect(formatKrwTick(99990000)).toBe('9999만');
+	});
+
+	test('1만 미만은 그대로', () => {
+		expect(formatKrwTick(7900)).toBe('7,900');
+		expect(formatKrwTick(0)).toBe('0');
+	});
+
+	// 부호는 fmtKRW 와 같은 U+2212 다.
+	test('음수', () => {
+		expect(formatKrwTick(-4500000)).toBe('−450만');
+		expect(formatKrwTick(-7900)).toBe('−7,900');
+	});
+
+	test('숫자가 아니면 빈 문자열', () => {
+		expect(formatKrwTick(NaN)).toBe('');
+		expect(formatKrwTick(undefined)).toBe('');
 	});
 });

@@ -24,7 +24,7 @@ import { getSp500BenchmarkAction } from '../actions/benchmarkActions';
 import { updateGeneralAction } from '../actions/couchdbSettingActions';
 import { getInvestmentPerformance, computeChainLinkedTwr } from '../utils/performance';
 import { toCurrencyFormatWithSymbol } from '../utils/formatting';
-import { formatUnit, formatPercentTick } from '../utils/axisFormat';
+import { formatKrwTick, formatPercentTick, formatUnit } from '../utils/axisFormat';
 import useT from '../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, fmtQty, colorFor } from '../utils/designTokens';
 import { isInvestmentCashAccountId } from '../utils/investmentCash';
@@ -80,10 +80,7 @@ const makeFormatYAxis = (currency) => (value) => {
 		if (value >= 1000) return `$${formatUnit(value, 1000, 'K')}`;
 		return `$${value.toLocaleString()}`;
 	}
-	if (value >= 100000000) return formatUnit(value, 1000000000, 'B');
-	if (value >= 10000000) return formatUnit(value, 1000000, 'M');
-	if (value >= 1000000) return formatUnit(value, 1000, 'K');
-	return value.toLocaleString();
+	return formatKrwTick(value);
 };
 
 const toDateStr = (date) => date.toISOString().slice(0, 10);
