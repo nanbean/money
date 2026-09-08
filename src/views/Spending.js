@@ -26,6 +26,7 @@ import SpendingHeatmap from '../components/SpendingHeatmap';
 import BankTransactionModal from '../components/BankTransactionModal';
 import TransactionListDialog from '../components/TransactionListDialog';
 import { openTransactionInModal } from '../actions/ui/form/bankTransaction';
+import { formatUnit } from '../utils/axisFormat';
 import { getCategoryColor } from '../utils/categoryColor';
 import { getCategoryIcon } from '../utils/categoryIcon';
 import useT from '../hooks/useT';
@@ -41,13 +42,13 @@ const INFLATION_RATE = 1.025;
 
 const makeFormatYAxis = (currency) => (value) => {
 	if (currency === 'USD') {
-		if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-		if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+		if (value >= 1000000) return `$${formatUnit(value, 1000000, 'M')}`;
+		if (value >= 1000) return `$${formatUnit(value, 1000, 'K')}`;
 		return `$${value}`;
 	}
-	if (value >= 1000000000) return `${(value / 1000000000).toFixed(1)}B`;
-	if (value >= 1000000) return `${(value / 1000000).toFixed(0)}M`;
-	if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+	if (value >= 1000000000) return formatUnit(value, 1000000000, 'B');
+	if (value >= 1000000) return formatUnit(value, 1000000, 'M');
+	if (value >= 1000) return formatUnit(value, 1000, 'K');
 	return value.toLocaleString();
 };
 

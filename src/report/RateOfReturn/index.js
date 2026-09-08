@@ -13,6 +13,7 @@ import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tool
 import ReturnYearlyTable from './YearlyTable';
 import AccountFilter from '../../components/AccountFilter';
 
+import { formatPercentTick } from '../../utils/axisFormat';
 import useT from '../../hooks/useT';
 import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 
@@ -243,7 +244,7 @@ export function RateOfReturn () {
 								tickLine={false}
 							/>
 							<YAxis
-								tickFormatter={(tick) => `${(tick * 100).toFixed(0)}%`}
+								tickFormatter={(tick) => formatPercentTick(tick * 100)}
 								tick={{ fontSize: 11, fill: T.ink2 }}
 								axisLine={{ stroke: T.rule }}
 								tickLine={false}

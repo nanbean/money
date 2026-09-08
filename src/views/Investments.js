@@ -24,6 +24,7 @@ import { getSp500BenchmarkAction } from '../actions/benchmarkActions';
 import { updateGeneralAction } from '../actions/couchdbSettingActions';
 import { getInvestmentPerformance, computeChainLinkedTwr } from '../utils/performance';
 import { toCurrencyFormatWithSymbol } from '../utils/formatting';
+import { formatUnit, formatPercentTick } from '../utils/axisFormat';
 import useT from '../hooks/useT';
 import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull, fmtQty, colorFor } from '../utils/designTokens';
 import { isInvestmentCashAccountId } from '../utils/investmentCash';
@@ -75,13 +76,13 @@ const getInvestmentsFromAccounts = (accounts) => {
 
 const makeFormatYAxis = (currency) => (value) => {
 	if (currency === 'USD') {
-		if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
-		if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
+		if (value >= 1000000) return `$${formatUnit(value, 1000000, 'M')}`;
+		if (value >= 1000) return `$${formatUnit(value, 1000, 'K')}`;
 		return `$${value.toLocaleString()}`;
 	}
-	if (value >= 100000000) return `${(value / 1000000000).toFixed(1)}B`;
-	if (value >= 10000000) return `${(value / 1000000).toFixed(0)}M`;
-	if (value >= 1000000) return `${(value / 1000).toFixed(0)}K`;
+	if (value >= 100000000) return formatUnit(value, 1000000000, 'B');
+	if (value >= 10000000) return formatUnit(value, 1000000, 'M');
+	if (value >= 1000000) return formatUnit(value, 1000, 'K');
 	return value.toLocaleString();
 };
 
@@ -634,7 +635,7 @@ export function Investments () {
 												<YAxis
 													orientation="right"
 													domain={['auto', 'auto']}
-													tickFormatter={(v) => `${v.toFixed(0)}%`}
+													tickFormatter={formatPercentTick}
 													tick={{ fontSize: 11, fill: T.ink2 }}
 													tickLine={false}
 													axisLine={false}
