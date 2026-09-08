@@ -1,4 +1,4 @@
-const { getAllAccounts, updateAccountList, repriceAccounts } = require('./accountService');
+const { getAllAccounts, updateAccountList, repriceAccounts, updateAccount } = require('./accountService');
 const { accountsDB, stocksDB } = require('../db');
 const pouchdb = require('../db/pouchdb');
 
@@ -151,6 +151,7 @@ describe('accountService', () => {
 			consoleSpy.mockRestore();
 		});
 	});
+
 	// 시세만 바뀐 경우의 경로. 거래를 읽지 않는 것이 핵심이다.
 	//
 	// 실측(2026-09): 계좌별 재계산은 38ms 인데 거래 전체 읽기가 11.8 MB · 789ms
@@ -352,4 +353,169 @@ describe('accountService', () => {
 		});
 	});
 
+	// 거래 한 건이 들어왔을 때 그 계좌만 다시 계산하는 경로.
+	//
+	// 예전에는 카드 결제 한 건에도 51개 계좌를 전부 다시 계산했다.
+	describe('updateAccount', () => {
+		const CARD = {
+			_id: 'account:CCard:KB카드',
+			name: 'KB카드',
+			type: 'CCard',
+			balance: 0
+		};
+		const CASH = {
+			_id: 'account:Bank:키움증권_Cash',
+			name: '키움증권_Cash',
+			type: 'Bank',
+			balance: 0
+		};
+		const INVST = {
+			_id: 'account:Invst:키움증권',
+			name: '키움증권',
+			type: 'Invst',
+			cashAccountId: 'account:Bank:키움증권_Cash',
+			cashBalance: 0,
+			balance: 0,
+			investments: []
+		};
+
+		const withAccounts = (docs) => {
+			accountsDB.list.mockResolvedValue({ rows: docs.map(doc => ({ doc })) });
+		};
+		const withTransactions = (txs) => {
+			pouchdb.getAllTransactions.mockResolvedValue(txs);
+		};
+
+		beforeEach(() => {
+			stocksDB.get.mockResolvedValue({ data: [] });
+		});
+
+		test('해당 계좌만 다시 계산해서 쓴다', async () => {
+			// Arrange
+			withAccounts([CARD, CASH, INVST]);
+			withTransactions([
+				{ _id: 't1', accountId: CARD._id, amount: -5000 },
+				{ _id: 't2', accountId: CARD._id, amount: -3000 },
+				{ _id: 't3', accountId: 'account:Bank:급여계좌', amount: -9999 }
+			]);
+
+			// Act
+			await updateAccount(CARD._id);
+
+			// Assert
+			const [{ docs }] = accountsDB.bulk.mock.calls[0];
+			expect(docs).toHaveLength(1);
+			expect(docs[0]).toMatchObject({ _id: CARD._id, balance: -8000 });
+		});
+
+		// 알림으로 오는 거래는 거의 다 카드다. 시세를 읽지 않는 쪽이 이 변경의 요점이다.
+		test('비투자 계좌면 시세를 읽지 않는다', async () => {
+			// Arrange
+			withAccounts([CARD, INVST]);
+			withTransactions([{ _id: 't1', accountId: CARD._id, amount: -5000 }]);
+
+			// Act
+			await updateAccount(CARD._id);
+
+			// Assert
+			expect(stocksDB.get).not.toHaveBeenCalled();
+		});
+
+		test('투자 계좌면 시세를 읽는다', async () => {
+			// Arrange
+			withAccounts([CARD, CASH, INVST]);
+			withTransactions([]);
+
+			// Act
+			await updateAccount(INVST._id);
+
+			// Assert
+			expect(stocksDB.get).toHaveBeenCalled();
+			expect(accountsDB.bulk.mock.calls[0][0].docs.map(d => d._id)).toEqual([INVST._id]);
+		});
+
+		// 투자현금 계좌 거래는 부모 Invst 문서의 cashBalance 도 바꾼다.
+		test('투자현금 계좌는 부모 투자 계좌도 함께 쓴다', async () => {
+			// Arrange
+			withAccounts([CARD, CASH, INVST]);
+			withTransactions([{ _id: 't1', accountId: CASH._id, amount: 1000000 }]);
+
+			// Act
+			await updateAccount(CASH._id);
+
+			// Assert
+			const [{ docs }] = accountsDB.bulk.mock.calls[0];
+			expect(docs.map(d => d._id)).toEqual([CASH._id, INVST._id]);
+			// 부모의 cashBalance 에 반영된다
+			expect(docs[1]).toMatchObject({ cashBalance: 1000000, balance: 1000000 });
+		});
+
+		// 계좌 이름이 바뀌어도 부모를 찾아야 한다 — 이름에서 _id 를 조립하지 않는다.
+		test('부모를 cashAccountId 로 찾는다', async () => {
+			// Arrange
+			const renamed = { ...INVST, _id: 'account:Invst:키움증권', name: '키움증권(구)' };
+			withAccounts([CASH, renamed]);
+			withTransactions([{ _id: 't1', accountId: CASH._id, amount: 500 }]);
+
+			// Act
+			await updateAccount(CASH._id);
+
+			// Assert
+			expect(accountsDB.bulk.mock.calls[0][0].docs.map(d => d._id))
+				.toEqual([CASH._id, renamed._id]);
+		});
+
+		// 방금 넣은 거래가 로컬 복제본에 아직 안 왔을 수 있다.
+		test('캐시에 없는 거래를 함께 반영한다', async () => {
+			// Arrange
+			withAccounts([CARD]);
+			withTransactions([{ _id: 't1', accountId: CARD._id, amount: -5000 }]);
+			const fresh = { _id: 't2', accountId: CARD._id, amount: -3000 };
+
+			// Act
+			await updateAccount(CARD._id, [fresh]);
+
+			// Assert
+			expect(accountsDB.bulk.mock.calls[0][0].docs[0].balance).toBe(-8000);
+		});
+
+		// 캐시가 이미 따라왔으면 두 번 세면 안 된다.
+		test('캐시에 있는 거래를 두 번 세지 않는다', async () => {
+			// Arrange
+			const tx = { _id: 't1', accountId: CARD._id, amount: -5000 };
+			withAccounts([CARD]);
+			withTransactions([tx]);
+
+			// Act
+			await updateAccount(CARD._id, [tx]);
+
+			// Assert
+			expect(accountsDB.bulk.mock.calls[0][0].docs[0].balance).toBe(-5000);
+		});
+
+		// 어느 계좌를 고쳐야 할지 모르면 전체를 도는 편이 낫다.
+		test('없는 계좌면 전체 재계산으로 넘긴다', async () => {
+			// Arrange
+			withAccounts([CARD]);
+			withTransactions([{ _id: 't1', accountId: CARD._id, amount: -5000 }]);
+
+			// Act
+			await updateAccount('account:Bank:없는계좌');
+
+			// Assert
+			// 전체 경로는 시세를 읽는다 — 그것으로 폴백을 확인한다.
+			expect(stocksDB.get).toHaveBeenCalled();
+			expect(accountsDB.bulk.mock.calls[0][0].docs.map(d => d._id)).toEqual([CARD._id]);
+		});
+
+		test('읽기 실패를 삼킨다', async () => {
+			// Arrange
+			jest.spyOn(console, 'error').mockImplementation(() => {});
+			accountsDB.list.mockRejectedValue(new Error('boom'));
+
+			// Act & Assert
+			await expect(updateAccount(CARD._id)).resolves.toBeUndefined();
+			expect(accountsDB.bulk).not.toHaveBeenCalled();
+		});
+	});
 });

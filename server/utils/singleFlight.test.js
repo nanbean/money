@@ -1,4 +1,4 @@
-const { singleFlight } = require('./singleFlight');
+const { singleFlight, keyedSingleFlight } = require('./singleFlight');
 
 // 스케줄러와 API 가 동시에 같은 CouchDB 문서를 갱신하는 것을 막는 유일한 장치라
 // dedup 경로와 초기화 경로를 모두 고정해 둔다.
@@ -126,5 +126,98 @@ describe('singleFlight', () => {
 		a();
 		await expect(wrappedB()).resolves.toBe('b-ok');
 		d.resolve();
+	});
+});
+
+describe('keyedSingleFlight', () => {
+	const deferred = () => {
+		let resolve;
+		const promise = new Promise((r) => { resolve = r; });
+		return { promise, resolve };
+	};
+
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	// 이게 keyedSingleFlight 가 필요한 이유다. singleFlight 는 인자를 무시해서
+	// 두 번째 계좌를 부른 쪽이 첫 번째 계좌의 결과를 받고, 자기 계좌는
+	// 갱신되지 않은 채 성공으로 끝난다.
+	it('키가 다르면 각각 실행한다', async () => {
+		// Arrange
+		const fn = jest.fn(async (key) => `${key}-ok`);
+		const wrapped = keyedSingleFlight('t', (k) => k, fn);
+
+		// Act
+		const [a, b] = await Promise.all([wrapped('A'), wrapped('B')]);
+
+		// Assert
+		expect(fn).toHaveBeenCalledTimes(2);
+		expect([a, b]).toEqual(['A-ok', 'B-ok']);
+	});
+
+	// 같은 계좌 문서를 겹쳐 쓰면 _rev 충돌(409)이 난다.
+	it('같은 키의 동시 호출은 하나로 묶는다', async () => {
+		// Arrange
+		const d = deferred();
+		const fn = jest.fn(() => d.promise);
+		const wrapped = keyedSingleFlight('t', (k) => k, fn);
+
+		// Act
+		const first = wrapped('A');
+		const second = wrapped('A');
+		d.resolve('done');
+
+		// Assert
+		expect(second).toBe(first);
+		await expect(first).resolves.toBe('done');
+		expect(fn).toHaveBeenCalledTimes(1);
+	});
+
+	it('끝난 뒤에는 다시 실행한다', async () => {
+		// Arrange
+		const fn = jest.fn(async () => 'ok');
+		const wrapped = keyedSingleFlight('t', (k) => k, fn);
+
+		// Act
+		await wrapped('A');
+		await wrapped('A');
+
+		// Assert
+		expect(fn).toHaveBeenCalledTimes(2);
+	});
+
+	// 실패해도 키가 남으면 그 계좌는 영구히 막힌다.
+	it('실패해도 키를 지운다', async () => {
+		// Arrange
+		const fn = jest.fn()
+			.mockRejectedValueOnce(new Error('boom'))
+			.mockResolvedValueOnce('ok');
+		const wrapped = keyedSingleFlight('t', (k) => k, fn);
+
+		// Act & Assert
+		await expect(wrapped('A')).rejects.toThrow('boom');
+		await expect(wrapped('A')).resolves.toBe('ok');
+	});
+
+	it('키를 문자열로 맞춘다', async () => {
+		// Arrange
+		const d = deferred();
+		const fn = jest.fn(() => d.promise);
+		const wrapped = keyedSingleFlight('t', (k) => k, fn);
+
+		// Act
+		const first = wrapped(1);
+		const second = wrapped('1');
+		d.resolve('ok');
+
+		// Assert
+		expect(second).toBe(first);
+		await first;
+		expect(fn).toHaveBeenCalledTimes(1);
 	});
 });
