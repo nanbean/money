@@ -10,6 +10,7 @@ const { flattenSplitTransactions, isInternalTransferCategory } = require('../uti
 const { getExchangeRate } = require('./settingService');
 const { getKisToken, getKisWeeklyPriceUS, getKisWeeklyPriceKorea } = require('./kisConnector');
 const { isInvestmentCash } = require('../utils/account');
+const config = require('../config');
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -18,7 +19,7 @@ const getPortfolioComment = async (portfolioData) => {
 	const { holdings, totalAppraisedValue, totalReturn, currency, cagrBase, cagr, projections, periodTwr, periodRange } = portfolioData;
 
 	const model = genAI.getGenerativeModel({
-		model: 'gemini-2.5-flash',
+		model: config.geminiModel,
 		systemInstruction: '당신은 투자 포트폴리오 분석 전문가입니다. 간결하고 실용적인 분석을 3-4문장으로 제공합니다. 투자 결정은 본인 판단임을 항상 마지막에 한 문장으로 명시합니다.'
 	});
 
@@ -242,7 +243,7 @@ const _getWeeklyRecap = async ({ dry = false, retryOptions = {} } = {}) => {
 	);
 
 	const model = genAI.getGenerativeModel({
-		model: 'gemini-2.5-flash',
+		model: config.geminiModel,
 		systemInstruction: '당신은 개인 자산관리 분석 전문가입니다. 주간 자산 변동을 분석합니다. 응답은 반드시 다음 두 섹션으로 시작합니다:\n\n[SUMMARY]\n20자 내외의 한국어 한 줄 요약 (이번 주를 한 마디로)\n[/SUMMARY]\n\n그 다음 마크다운 형식(## 헤더, **굵게** 등)으로 한국어 상세 분석을 작성합니다. 전체 분석은 2000자 이내.'
 	});
 

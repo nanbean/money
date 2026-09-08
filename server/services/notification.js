@@ -4,6 +4,7 @@ const { v1: uuidv1 } = require('uuid');
 const messaging = require('./messaging');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { retryWithBackoff } = require('../utils/retry');
+const config = require('../config');
 const settingService = require('./settingService');
 const transactionService = require('./transactionService');
 const notificationService = require('./notificationService');
@@ -28,7 +29,7 @@ const initGeminiModel = async () => {
 	const categoryListString = (categoryList || []).filter((item) => !item.startsWith('[')).join(', ');
 	const systemInstruction = systemInstructionBase + categoryListString;
 	model = genAI.getGenerativeModel({
-		model: 'gemini-2.5-flash',
+		model: config.geminiModel,
 		systemInstruction
 	});
 };

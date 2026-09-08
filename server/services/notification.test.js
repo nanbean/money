@@ -210,6 +210,25 @@ describe('notification service', () => {
 				});
 			});
 
+			// 모델 이름은 config 한 곳에서 와야 한다.
+			//
+			// 2026-09-08: 새 키로 바꾸자 gemini-2.5-flash 가 404('no longer
+			// available to new users')를 냈다. 이름이 세 곳에 하드코딩돼 있어
+			// 한 곳만 고치면 나머지가 조용히 깨진다. 그리고 이 경로는 에러를
+			// 삼키고 '분류없음' 을 쓰므로 깨진 게 로그에만 남는다.
+			it('config 의 모델 이름을 쓴다', async () => {
+				// Act
+				await addTransaction({
+					packageName: 'com.usbank.mobilebanking',
+					text: 'PURCHASE SKYPASS Visa Signature® Card 2901 NEW MERCHANT $1.00.'
+				});
+
+				// Assert
+				expect(mockGetGenerativeModel).toHaveBeenCalledWith(
+					expect.objectContaining({ model: require('../config').geminiModel })
+				);
+			});
+
 			// 필드가 어긋난 요청도 로그로 보여야 한다. 그러지 않으면 "요청이
 			// 안 왔다" 와 "형식이 다르다" 가 로그에서 똑같이 아무것도 아니다.
 			describe('형식이 어긋난 요청', () => {
