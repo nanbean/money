@@ -175,7 +175,14 @@ export function Accounts () {
 			{/* Type summary cards */}
 			<Box sx={{
 				display: 'grid',
-				gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' },
+				// 고정 4열이면 타입이 5개일 때 4 + 1 로 갈라져 한 장이 붕 뜬다.
+				// 타입 수는 계좌 구성에 따라 2~6개로 변한다 (TYPE_NAME_MAP).
+				//
+				// auto-fit 은 들어가는 만큼 트랙을 만들고 빈 트랙은 접는다. 남은
+				// 카드가 1fr 로 늘어나므로, 6개까지는 한 줄에 폭을 나눠 갖는다.
+				// 최소 폭만 정해 두면 좁은 화면에서 알아서 2열로 접힌다 — 중단점을
+				// 따로 둘 필요가 없다.
+				gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
 				gap: 2,
 				marginBottom: '20px'
 			}}>
@@ -186,7 +193,9 @@ export function Accounts () {
 							background: T.surf,
 							border: `1px solid ${T.rule}`,
 							borderRadius: '16px',
-							padding: { xs: '16px', md: '20px' },
+							// 한 줄에 여섯까지 들어가므로 카드가 좁아진다. 여백을
+							// 조금 줄여 금액이 들어갈 자리를 남긴다.
+							padding: { xs: '14px', md: '16px' },
 							color: T.ink
 						}}>
 							<Stack direction="row" alignItems="center" spacing={1}>
@@ -209,9 +218,11 @@ export function Accounts () {
 							</Stack>
 							<Typography sx={{
 								...sDisplay,
-								fontSize: 22,
+								// 타입이 여섯이면 카드가 160px 아래로 좁아진다.
+								// '₩3,162만' 이 22px 에서는 잘리기 시작한다.
+								fontSize: 20,
 								fontWeight: 700,
-								marginTop: '10px',
+								marginTop: '8px',
 								color: data.total < 0 ? T.neg : T.ink,
 								overflow: 'hidden',
 								textOverflow: 'ellipsis',
