@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
 	BarChart,
@@ -189,6 +189,22 @@ function Spending () {
 	const [range, setRange] = useState('1M');
 	const [livingExpenseOnly, setLivingExpenseOnly] = useState(true);
 	const [projectionExpanded, setProjectionExpanded] = useState(false);
+
+	// YTD 를 고르면 연간 예측 패널을 펼친다.
+	//
+	// YTD 는 '올해가 어떻게 끝날까' 를 보려는 선택인데, 창은 정의상 오늘까지라
+	// 남은 달이 안 보인다. 그 정보는 이 패널의 점선(projected)에만 있다.
+	//
+	// range 가 바뀌는 순간에만 손댄다. 매 렌더마다 펼치면 사용자가 접어도 다시
+	// 열려서 접을 수가 없다.
+	//
+	// 나갈 때 접지는 않는다. 직접 펼쳐 둔 것을 range 를 바꾼 이유로 닫으면
+	// 뜬금없다.
+	useEffect(() => {
+		if (range === 'YTD') {
+			setProjectionExpanded(true);
+		}
+	}, [range]);
 	const [txDialog, setTxDialog] = useState(null); // { mode: 'category'|'payee', key: string }
 
 	const uncategorizedTxs = useMemo(() => {
