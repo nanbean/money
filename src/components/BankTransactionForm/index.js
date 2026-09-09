@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
-import { evaluate } from 'mathjs';
+import { isAmountExpression, evaluateAmount } from './amountExpression';
 import { findLastIndex } from 'lodash';
 
 import Box from '@mui/material/Box';
@@ -198,24 +198,12 @@ export function BankTransactionForm ({
 		dispatch(changeAmount(value));
 	};
 
-	const isAmountExpression = (value) => {
-		const hasOperator = /[+\-*/]/.test(value);
-		const numbersFound = String(value).match(/-?\d+(\.\d+)?/g);
-		const hasAtLeastTwoNumbers = numbersFound && numbersFound.length >= 2;
-		return hasOperator && hasAtLeastTwoNumbers;
-	};
-
 	const handleCalculateAmount = () => {
-		if (isAmountExpression(form.amount)) {
-			try {
-				const result = evaluate(form.amount);
-				if (typeof result === 'number' && !isNaN(result)) {
-					const roundedResult = parseFloat(result.toFixed(2));
-					dispatch(changeAmount(roundedResult));
-				}
-			} catch (e) {
-				console.error('Invalid amount expression:', e);
-			}
+		// null 은 '식이 아니거나 계산할 수 없다' 는 뜻이다. 그때는 입력을
+		// 건드리지 않는다 (amountExpression.js 참고).
+		const result = evaluateAmount(form.amount);
+		if (result !== null) {
+			dispatch(changeAmount(result));
 		}
 	};
 
