@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 
@@ -296,7 +296,11 @@ ReviewTimeline.propTypes = { onDelete: PropTypes.func, T: PropTypes.object, thes
 function ThesisCard ({ thesis, T, onAddReview, onDeleteReview }) {
 	const reviews = thesis.reviews || [];
 	const interval = thesis.reviewIntervalDays || 90;
-	const lastReviewDate = useMemo(() => reviews.reduce((max, r) => (r.date > max ? r.date : max), ''), [reviews]);
+	// 리뷰 수십 건에 대한 reduce 다. useMemo 로 감쌌더니 reviews 가
+	// 'thesis.reviews || []' 라서 undefined 일 때 매 렌더 새 배열이 되고,
+	// 의존성이 매번 바뀌어 메모가 아무 일도 하지 않았다 (exhaustive-deps 경고).
+	// 훅을 하나 더 얹어 받치는 대신 없앴다.
+	const lastReviewDate = reviews.reduce((max, r) => (r.date > max ? r.date : max), '');
 	const sinceLast = lastReviewDate ? daysBetween(todayStr(), lastReviewDate) : null;
 	const dueIn = sinceLast === null ? null : interval - sinceLast;
 	const overdue = dueIn !== null && dueIn <= 0;
