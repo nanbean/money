@@ -1,6 +1,5 @@
 // import debounce from 'lodash.debounce';
 import PouchDB from 'pouchdb';
-import pouchdbAuthentication from 'pouchdb-authentication';
 import pouchdbFind from 'pouchdb-find';
 import _ from 'lodash';
 import debounce from 'lodash.debounce';
@@ -48,7 +47,6 @@ import {
 	SET_TRANSACTIONS_FETCHING
 } from './actionTypes';
 
-PouchDB.plugin(pouchdbAuthentication);
 PouchDB.plugin(pouchdbFind);
 
 let transactionsDB = new PouchDB('transactions');
