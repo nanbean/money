@@ -37,17 +37,16 @@ export default function HomeRecentActivity () {
 	const recent = useMemo(() => {
 		// Investment transactions stay excluded; internal transfers come through
 		// only on the outflow side (amount < 0) so each transfer pair shows once.
+		// 원본 문서를 그대로 둔다 — 이 배열이 편집 모달로 넘어가 PouchDB 에 다시
+		// 저장되므로, 표시용 필드를 섞으면 문서를 오염시킨다 (특히 '_' 로 시작하는
+		// 필드는 CouchDB 예약어라 put 이 doc_validation 으로 거부된다).
 		const list = (allAccountsTransactions || [])
 			.filter(t => !isInvestmentTxn(t))
 			.filter(t => !isInternalTransfer(t) || (Number(t.amount) || 0) < 0);
 		return [...list]
 			.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
-			.slice(0, 8)
-			.map(t => ({
-				...t,
-				_currency: accountCurrencyMap[t.accountId] || t.currency || displayCurrency
-			}));
-	}, [allAccountsTransactions, accountCurrencyMap, displayCurrency]);
+			.slice(0, 8);
+	}, [allAccountsTransactions]);
 
 	const onClickRow = (t, idx) => () => {
 		dispatch(openTransactionInModal({
@@ -103,6 +102,7 @@ export default function HomeRecentActivity () {
 				const counterAccount = isTransfer
 					? (t.category || '').replace(/^\[|\]$/g, '')
 					: null;
+				const currency = accountCurrencyMap[t.accountId] || t.currency || displayCurrency;
 				return (
 					<Box
 						key={t._id || idx}
@@ -143,7 +143,7 @@ export default function HomeRecentActivity () {
 						</Box>
 						<Typography sx={{ ...sMono, fontSize: 13, fontWeight: 600, color: amountColor }}>
 							{!isTransfer && (amt > 0 ? '+' : amt < 0 ? '−' : '')}
-							{fmtCurrencyFull(Math.abs(amt), t._currency)}
+							{fmtCurrencyFull(Math.abs(amt), currency)}
 						</Typography>
 					</Box>
 				);
