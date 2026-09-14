@@ -509,6 +509,65 @@ describe('notification service', () => {
 				});
 			});
 
+			// 롯데카드 이용대금 안내. 청구서 확정 안내라 거래가 아니다.
+			describe('iOS 롯데카드 이용대금 안내', () => {
+				// 2026-09-14 13:01 실측 원문.
+				const REAL = '이용대금 안내 (09/10) 기준\n09/21 신한 978,135원 결제 예정입니다.';
+				const lotte = (text) => ({ packageName: 'ios.lottecard', text });
+
+				it('거래를 만들지 않는다', async () => {
+					// Act
+					await addTransaction(lotte(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 이게 이 분기를 만든 이유다. 예전에는 ⚠️ 가 떴다.
+				it('⚠️ 대신 결제 예정 알림을 보낸다', async () => {
+					// Act
+					await addTransaction(lotte(REAL));
+
+					// Assert
+					const [title, text] = messaging.sendNotification.mock.calls[0];
+					expect(title).toBe('💳 결제 예정');
+					expect(text).toContain('생활비카드 9/21 978,135원 결제 예정');
+					expect(text).toContain('신한 출금 · 09/10 기준');
+				});
+
+				// 결제예정일은 앞을 보는 날짜다. 연말에 오면 내년으로 넘어간다.
+				it('연말에 오는 내년 결제예정일을 넘긴다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-12-27T13:01:00+09:00'));
+
+					// Act
+					await addTransaction(lotte('이용대금 안내 (12/24) 기준\n01/21 신한 500,000원 결제 예정입니다.'));
+
+					// Assert
+					expect(messaging.sendNotification.mock.calls[0][1]).toContain('생활비카드 1/21');
+				});
+
+				// 은행명 없이 오는 형태도 받는다.
+				it('은행명이 없어도 알린다', async () => {
+					// Act
+					await addTransaction(lotte('이용대금 안내 (09/10) 기준\n09/21 978,135원 결제 예정입니다.'));
+
+					// Assert
+					const text = messaging.sendNotification.mock.calls[0][1];
+					expect(text).toContain('생활비카드 9/21 978,135원 결제 예정');
+					expect(text).not.toContain('출금');
+				});
+
+				// 일반 승인 알림이 이 분기에 걸려서는 안 된다.
+				it('일반 승인 알림은 그대로 처리한다', async () => {
+					// Act
+					await addTransaction(lotte('\n씨유(CU)동탄지오점\n1,650원 승인\nLOCA LIKIT 2.0(7*2*)\n일시불, 09/03 17:18\n누적금액 882,380원'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].amount).toBe(-1650);
+				});
+			});
+
 			// 취소 알림. 원장은 건드리지 않고 후보만 알린다.
 			//
 			// 자동 적용을 포기한 근거는 실측이다 — 2026년 카드 거래 248건 중

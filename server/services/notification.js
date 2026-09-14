@@ -182,6 +182,18 @@ const formatCancelNotice = (cancel, candidates, widened) => {
 		+ lines.join('\n') + more;
 };
 
+const formatStatementNotice = (statement) => {
+	const due = moment(statement.dueDate, 'YYYY-MM-DD').format('M/D');
+	const head = `${statement.account} ${due} ${statement.amount.toLocaleString('en-US')}원 결제 예정`;
+
+	// 출금 은행과 기준일은 원문에만 있는 정보라 잃지 않게 둘째 줄로 남긴다.
+	const parts = [];
+	if (statement.bank) parts.push(`${statement.bank} 출금`);
+	if (statement.baseDate) parts.push(`${statement.baseDate} 기준`);
+
+	return parts.length > 0 ? `${head}\n${parts.join(' · ')}` : head;
+};
+
 const formatNotification = (transaction) => {
 	if (!transaction) {
 		return '';
@@ -400,6 +412,44 @@ const parsers = [
 		matcher: (body) => body.packageName.match(/^ios\.lottecard$/i),
 		parser: (body) => {
 			const lines = body.text.split('\n').map((l) => l.trim()).filter(Boolean);
+
+			// 이용대금 안내. 청구서가 확정됐다는 안내지 거래가 아니다.
+			//
+			//   '이용대금 안내 (09/10) 기준'
+			//   '09/21 신한 978,135원 결제 예정입니다.'
+			//
+			// 아래 승인 로직은 '<금액>원 <상태>' 로 시작하는 줄을 찾는데 여기엔
+			// 그런 줄이 없어 파싱 실패로 ⚠️ 가 떴다. 카드 결제는 이미 개별 승인
+			// 알림으로 기록돼 있으므로 원장은 건드리지 않고, 언제 얼마가 빠져
+			// 나가는지만 읽기 좋게 알린다.
+			if (/이용대금\s*안내/.test(body.text)) {
+				// 은행명은 없이 올 수도 있어 선택으로 둔다.
+				const due = body.text.match(/(\d{1,2}\/\d{1,2})\s+(?:(\S+)\s+)?([\d,]+)원\s*결제\s*예정/);
+				if (!due) return {};
+
+				const [, dueText, bank, amountText] = due;
+
+				// 결제예정일은 앞을 보는 날짜다. 12월에 '01/21 결제 예정' 이 오면
+				// MM/DD 파싱이 올해 1월로 떨어지므로 한 해를 더한다.
+				const dueDate = moment(dueText, 'MM/DD');
+				if (dueDate.diff(moment(), 'days') < -180) {
+					dueDate.add(1, 'year');
+				}
+
+				const base = body.text.match(/이용대금\s*안내\s*\(\s*(\d{1,2}\/\d{1,2})\s*\)/);
+
+				return {
+					options: {
+						statement: {
+							account: '생활비카드',
+							dueDate: dueDate.format('YYYY-MM-DD'),
+							amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10),
+							bank: bank || null,
+							baseDate: base ? base[1] : null
+						}
+					}
+				};
+			}
 
 			// 후불교통 이용금액 안내. 아래 승인 로직과 줄 구성이 전혀 달라
 			// (금액 줄이 '3,300원이 나왔어요' 라 '^금액원 상태' 에 안 걸린다)
@@ -926,6 +976,30 @@ exports.addTransaction = async function (body) {
 			formatCancelNotice(cancel, candidates, widened),
 			'receipt',
 			'transactions'
+		);
+		return false;
+	}
+
+	// 이용대금 안내. 거래는 이미 승인 알림으로 들어와 있으므로 원장은
+	// 건드리지 않고, 결제 예정일과 금액만 읽기 좋게 알린다.
+	if (options.statement) {
+		const statement = options.statement;
+
+		logNotification('skipped', {
+			packageName: body.packageName,
+			reason: 'statement',
+			parserIndex,
+			account: statement.account,
+			dueDate: statement.dueDate,
+			amount: statement.amount,
+			bank: statement.bank,
+			baseDate: statement.baseDate
+		});
+
+		await messaging.sendNotification(
+			'💳 결제 예정',
+			formatStatementNotice(statement),
+			'receipt'
 		);
 		return false;
 	}
