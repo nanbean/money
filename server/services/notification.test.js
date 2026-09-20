@@ -168,6 +168,92 @@ describe('notification service', () => {
 				});
 			});
 
+			// iOS 알림은 packageName 이 'ios.Amex' 로 온다. 안드로이드 패키지명만
+			// 보던 시절에는 no-parser 로 떨어져 거래를 잃었다. 실측 본문이다.
+			it('should correctly parse an iOS Amex (ios.Amex) notification', async () => {
+				// Arrange
+				const body = {
+					packageName: 'ios.Amex',
+					title: 'Amex',
+					text: '\nYou have a $209.64 charge on your American Express Card ending in 91000 at HILTON GYEONGJU.'
+				};
+				const expectedDate = moment().tz('America/Los_Angeles').format('YYYY-MM-DD');
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
+				expect(transactionArg).toMatchObject({
+					date: expectedDate,
+					amount: -209.64,
+					payee: 'HILTON GYEONGJU',
+					accountId: 'account:Bank:BoA'
+				});
+			});
+
+			// 폰 자동화가 'packagaName' 으로 보내는 알림이 있다. 가드에 걸려
+			// 본문이 통째로 버려졌다.
+			it('should accept the misspelled packagaName field', async () => {
+				// Arrange
+				const body = {
+					packagaName: 'ios.Amex',
+					title: 'Amex',
+					text: '\nYou have a $209.64 charge on your American Express Card ending in 91000 at HILTON GYEONGJU.'
+				};
+
+				// Act
+				const result = await addTransaction(body);
+
+				// Assert
+				expect(result).toBe(true);
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					amount: -209.64,
+					payee: 'HILTON GYEONGJU'
+				});
+			});
+
+			// 신한 신용카드 승인 문자. 체크카드와 형식이 달라 파서가 없었다.
+			it('should correctly parse a Shinhan credit card (신한카드) SMS', async () => {
+				// Arrange
+				const body = {
+					packageName: 'com.google.android.apps.messaging',
+					title: '1544-7200',
+					text: '[Web발신]\n신한카드(5487)승인 김*심 17,500원(일시불)09/20 15:00 키다리식품 ( 누적41,290원'
+				};
+				const expectedDate = moment('09/20', 'MM/DD').format('YYYY-MM-DD');
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				const transactionArg = transactionService.addTransaction.mock.calls[0][0];
+				expect(transactionArg).toMatchObject({
+					date: expectedDate,
+					// 문장 끝 '누적41,290원' 이 아니라 승인 금액을 써야 한다.
+					amount: -17500,
+					payee: '키다리식품',
+					accountId: 'account:Bank:급여계좌'
+				});
+			});
+
+			it('should parse a Shinhan credit card SMS paid in installments', async () => {
+				// Arrange
+				const body = {
+					packageName: 'com.google.android.apps.messaging',
+					text: '[Web발신]\n신한카드(5487)승인 김*심 360,000원(할부3개월)09/20 11:02 이케아광명점 ( 누적401,290원'
+				};
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					amount: -360000,
+					payee: '이케아광명점'
+				});
+			});
+
 			it('should correctly parse a Samsung Check Card (삼성체크) notification', async () => {
 				// Arrange
 				const body = {

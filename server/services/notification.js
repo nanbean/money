@@ -620,7 +620,12 @@ const parsers = [
 		}
 	},
 	{
-		matcher: (body) => body.packageName.match(/com\.americanexpress\.android\.acctsvcs\.us/i),
+		// 안드로이드 앱과 iOS 알림을 같이 받는다. 본문 형식이 같아 파서는 하나다.
+		//   'You have a $209.64 charge on your American Express Card ending in
+		//    91000 at HILTON GYEONGJU.'
+		// iOS 쪽은 packageName 이 'ios.Amex' 로 와서 안드로이드 패키지명만 보던
+		// 매처에 걸리지 않았고, 그대로 no-parser 로 떨어지고 있었다.
+		matcher: (body) => body.packageName.match(/com\.americanexpress\.android\.acctsvcs\.us|^ios\.Amex$/i),
 		parser: (body) => {
 			const amountMatch = body.text.replace(/,/g, '').match(/-?\$[0-9]+[.]*[0-9]*/);
 			const payeeMatch = body.text.match(/ at ([^;]+)/);
@@ -707,6 +712,36 @@ const parsers = [
 					date: items[2] && moment(items[2], 'MM/DD').format('YYYY-MM-DD'),
 					amount: items[4] && parseInt(items[4].replace(/[^0-9]/g, ''), 10) * -1,
 					payee: items[5],
+					category: '분류없음'
+				}
+			};
+		}
+	},
+	{
+		// [Web발신] / 신한카드(5487)승인 김*심 17,500원(일시불)09/20 15:00 키다리식품 ( 누적41,290원
+		//
+		// 신한 체크카드 문자와는 형식이 다르다. 본문이 한 줄에 다 붙어 있고,
+		// 금액 뒤 괄호가 결제 방식이라('일시불', '할부3개월') 공백 없이 날짜가
+		// 이어진다. 줄/공백 인덱스로는 못 뜯어 정규식으로 한 번에 읽는다.
+		//
+		// 금액은 맨 앞의 것만 쓴다. 문장 끝 '누적41,290원' 을 잡으면 그 달 누적
+		// 사용액이 한 건의 지출로 기록된다.
+		//
+		// 승인취소 문자도 이 매처에 걸리지만 배열 맨 앞 파서가 먼저 잡는다.
+		matcher: (body) => body.text.match(/신한카드\([0-9*]+\)승인/g),
+		parser: (body) => {
+			const m = body.text.match(/신한카드\([0-9*]+\)승인\s*(?:\S+\s+)?([\d,]+)원\s*(?:\([^)]*\))?\s*(\d{2}\/\d{2})\s+\d{2}:\d{2}\s+(.+)/);
+			if (!m) return {};
+
+			return {
+				account: '급여계좌',
+				transaction: {
+					date: moment(m[2], 'MM/DD').format('YYYY-MM-DD'),
+					amount: parseInt(m[1].replace(/[^0-9]/g, ''), 10) * -1,
+					// 상호 뒤에 '( 누적41,290원' 이 붙어 온다. 상호 자체에 괄호가
+					// 들어가는 경우가 있어('（유）아웃백') 괄호를 통째로 떼지 않고
+					// 누적 꼬리만 집어서 떼어 낸다.
+					payee: m[3].replace(/\s*\(\s*누적[\d,]*원?.*$/, '').trim(),
 					category: '분류없음'
 				}
 			};
@@ -906,7 +941,22 @@ const isAdvertisement = (text) => /^\s*(?:\[Web발신\]\s*)?\(광고\)/.test(tex
 const hasMonetaryAmount = (text) =>
 	/[\d,]+\s*원|[$￦€£]\s*[\d,]+|[\d,]+\.\d{2}/.test(String(text || ''));
 
-exports.addTransaction = async function (body) {
+// 폰 자동화가 보내는 필드 이름이 'packagaName' 인 경우가 있다 (iOS Amex).
+// 서버는 packageName 이 없다고 보고 본문을 통째로 버렸고, 거래가 조용히 사라졌다.
+//
+// 보내는 쪽을 고치는 게 맞지만 폰 설정은 서버 배포와 따로 움직인다. 오타 하나
+// 때문에 거래를 잃는 것보다는 받아 주는 편이 낫다. 제대로 온 packageName 이
+// 있으면 그쪽이 이긴다.
+const normalizeBody = (body) => {
+	if (!body || body.packageName || !body.packagaName) {
+		return body;
+	}
+	return { ...body, packageName: body.packagaName };
+};
+
+exports.addTransaction = async function (rawBody) {
+	const body = normalizeBody(rawBody);
+
 	// 가드보다 먼저 찍는다. 뒤에 두면 필드 이름이 다르거나 본문이 빈 요청이
 	// 로그 한 줄 없이 끝나서, 요청이 아예 안 온 것과 구분되지 않는다.
 	if (!body || !body.packageName || !body.text) {
