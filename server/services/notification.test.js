@@ -237,6 +237,42 @@ describe('notification service', () => {
 				});
 			});
 
+			// 누적액 앞 여는 괄호가 없는 형식도 온다. 괄호를 필수로 보던 동안
+			// '화성시청 누적47,790원' 이 상호로 기록됐다.
+			it('should strip the running total when it has no parenthesis', async () => {
+				// Arrange
+				const body = {
+					packageName: 'com.google.android.apps.messaging',
+					text: '[Web발신]\n신한카드(5487)승인 김*심 2,000원(일시불)09/21 11:33 화성시청 누적47,790원'
+				};
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					amount: -2000,
+					payee: '화성시청'
+				});
+			});
+
+			it('should keep parentheses that belong to the merchant name', async () => {
+				// Arrange
+				const body = {
+					packageName: 'com.google.android.apps.messaging',
+					text: '[Web발신]\n신한카드(5487)승인 김*심 32,000원(일시불)09/21 19:04 （유）아웃백 동탄점 ( 누적79,790원'
+				};
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					amount: -32000,
+					payee: '（유）아웃백 동탄점'
+				});
+			});
+
 			it('should parse a Shinhan credit card SMS paid in installments', async () => {
 				// Arrange
 				const body = {
