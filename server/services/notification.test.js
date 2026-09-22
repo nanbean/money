@@ -690,6 +690,80 @@ describe('notification service', () => {
 				});
 			});
 
+			// 롯데카드 결제대금 인출 안내. 예고된 청구액이 실제로 빠져나간
+			// 통지지 거래가 아니다.
+			describe('iOS 롯데카드 결제대금 인출 안내', () => {
+				// 2026-09-22 10:11 실측 원문.
+				const REAL = '결제대금 인출 안내\n09월 결제대금 978,135원 중 978,135원 09/21 출금되었습니다.';
+				const lotte = (text) => ({ packageName: 'ios.lottecard', text });
+
+				// 개별 승인이 이미 원장에 있어 여기서 적으면 두 번 세는 셈이 된다.
+				it('거래를 만들지 않는다', async () => {
+					// Act
+					await addTransaction(lotte(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 이게 이 분기를 만든 이유다. 예전에는 ⚠️ 가 떴다.
+				it('⚠️ 대신 출금 알림을 보낸다', async () => {
+					// Act
+					await addTransaction(lotte(REAL));
+
+					// Assert
+					const [title, text] = messaging.sendNotification.mock.calls[0];
+					expect(title).toBe('💸 결제대금 출금');
+					expect(text).toContain('생활비카드 9/21 978,135원 출금');
+					expect(text).toContain('09월 결제대금');
+					// 전액 출금이라 청구액을 따로 보여 줄 이유가 없다.
+					expect(text).not.toContain('청구');
+				});
+
+				// 일부만 빠져나가면 남은 금액이 있다는 뜻이라 청구액도 보여 준다.
+				it('일부만 출금되면 청구액을 함께 알린다', async () => {
+					// Act
+					await addTransaction(lotte('결제대금 인출 안내\n09월 결제대금 978,135원 중 500,000원 09/21 출금되었습니다.'));
+
+					// Assert
+					const text = messaging.sendNotification.mock.calls[0][1];
+					expect(text).toContain('생활비카드 9/21 500,000원 출금');
+					expect(text).toContain('청구 978,135원');
+				});
+
+				// '중' 없이 금액이 한 번만 오는 형태도 받는다.
+				it('청구액 없이 출금액만 와도 알린다', async () => {
+					// Act
+					await addTransaction(lotte('결제대금 인출 안내\n09월 결제대금 978,135원 09/21 출금되었습니다.'));
+
+					// Assert
+					const text = messaging.sendNotification.mock.calls[0][1];
+					expect(text).toContain('생활비카드 9/21 978,135원 출금');
+					expect(text).not.toContain('청구');
+				});
+
+				// 출금일은 이미 지난 날짜다. 연초에 오면 지난해로 돌아간다.
+				it('연초에 오는 지난해 출금일을 되돌린다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2027-01-03T10:11:00+09:00'));
+
+					// Act
+					await addTransaction(lotte('결제대금 인출 안내\n12월 결제대금 500,000원 중 500,000원 12/28 출금되었습니다.'));
+
+					// Assert
+					expect(messaging.sendNotification.mock.calls[0][1]).toContain('생활비카드 12/28');
+				});
+
+				// 이용대금 안내(결제 예정)와 섞이면 안 된다.
+				it('이용대금 안내는 여전히 결제 예정으로 알린다', async () => {
+					// Act
+					await addTransaction(lotte('이용대금 안내 (09/10) 기준\n09/21 신한 978,135원 결제 예정입니다.'));
+
+					// Assert
+					expect(messaging.sendNotification.mock.calls[0][0]).toBe('💳 결제 예정');
+				});
+			});
+
 			// 취소 알림. 원장은 건드리지 않고 후보만 알린다.
 			//
 			// 자동 적용을 포기한 근거는 실측이다 — 2026년 카드 거래 248건 중

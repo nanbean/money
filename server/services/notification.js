@@ -194,6 +194,21 @@ const formatStatementNotice = (statement) => {
 	return parts.length > 0 ? `${head}\n${parts.join(' · ')}` : head;
 };
 
+const formatWithdrawalNotice = (withdrawal) => {
+	const paid = moment(withdrawal.date, 'YYYY-MM-DD').format('M/D');
+	const head = `${withdrawal.account} ${paid} ${withdrawal.amount.toLocaleString('en-US')}원 출금`;
+
+	// 청구액과 출금액이 다르면 일부만 빠져나간 것이다. 남은 금액이 있다는
+	// 뜻이라 원문의 청구액을 같이 보여 준다.
+	const parts = [];
+	if (withdrawal.billed && withdrawal.billed !== withdrawal.amount) {
+		parts.push(`청구 ${withdrawal.billed.toLocaleString('en-US')}원`);
+	}
+	if (withdrawal.month) parts.push(`${withdrawal.month} 결제대금`);
+
+	return parts.length > 0 ? `${head}\n${parts.join(' · ')}` : head;
+};
+
 const formatNotification = (transaction) => {
 	if (!transaction) {
 		return '';
@@ -446,6 +461,48 @@ const parsers = [
 							amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10),
 							bank: bank || null,
 							baseDate: base ? base[1] : null
+						}
+					}
+				};
+			}
+
+			// 결제대금 인출 안내. 위 '이용대금 안내' 로 예고된 돈이 실제로
+			// 빠져나갔다는 통지다.
+			//
+			//   '결제대금 인출 안내'
+			//   '09월 결제대금 978,135원 중 978,135원 09/21 출금되었습니다.'
+			//
+			// '이용대금' 이 아니라 '결제대금' 이라 위 분기에 걸리지 않고, 금액 줄이
+			// '<금액>원 <상태>' 로 시작하지도 않아 승인 로직까지 흘러가 ⚠️ 가 떴다.
+			//
+			// 개별 승인은 이미 원장에 있고 이 출금은 카드값을 갚은 계좌 이체라
+			// 지출로 적으면 두 번 세는 셈이 된다. 원장은 건드리지 않고 얼마가
+			// 언제 빠져나갔는지만 알린다.
+			if (/결제대금\s*인출/.test(body.text)) {
+				// '978,135원 중 978,135원' — 앞이 청구액, 뒤가 실제 출금액이다.
+				// 전액 출금이면 '중' 없이 한 번만 올 수 있어 앞쪽을 선택으로 둔다.
+				const paid = body.text.match(/(?:([\d,]+)원\s*중\s*)?([\d,]+)원\s*(\d{1,2}\/\d{1,2})\s*출금/);
+				if (!paid) return {};
+
+				const [, billedText, amountText, dateText] = paid;
+
+				// 출금일은 이미 지난 날짜다. 연초에 지난해 12월 출금 안내가 오면
+				// MM/DD 파싱이 올해 12월로 떨어지므로 한 해를 뺀다.
+				const date = moment(dateText, 'MM/DD');
+				if (date.diff(moment(), 'days') > 180) {
+					date.subtract(1, 'year');
+				}
+
+				const month = body.text.match(/(\d{1,2}월)\s*결제대금/);
+
+				return {
+					options: {
+						withdrawal: {
+							account: '생활비카드',
+							date: date.format('YYYY-MM-DD'),
+							amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10),
+							billed: billedText ? parseInt(billedText.replace(/[^0-9]/g, ''), 10) : null,
+							month: month ? month[1] : null
 						}
 					}
 				};
@@ -1054,6 +1111,30 @@ exports.addTransaction = async function (rawBody) {
 		await messaging.sendNotification(
 			'💳 결제 예정',
 			formatStatementNotice(statement),
+			'receipt'
+		);
+		return false;
+	}
+
+	// 결제대금 인출 안내. 예고된 청구액이 실제로 빠져나간 통지다. 지출은 개별
+	// 승인으로 이미 기록돼 있어 원장은 건드리지 않고 사실만 알린다.
+	if (options.withdrawal) {
+		const withdrawal = options.withdrawal;
+
+		logNotification('skipped', {
+			packageName: body.packageName,
+			reason: 'withdrawal',
+			parserIndex,
+			account: withdrawal.account,
+			date: withdrawal.date,
+			amount: withdrawal.amount,
+			billed: withdrawal.billed,
+			month: withdrawal.month
+		});
+
+		await messaging.sendNotification(
+			'💸 결제대금 출금',
+			formatWithdrawalNotice(withdrawal),
 			'receipt'
 		);
 		return false;
