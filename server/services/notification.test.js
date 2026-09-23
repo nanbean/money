@@ -1472,6 +1472,59 @@ describe('notification service', () => {
 					.toMatchObject({ amount: -5000, payee: '편의점' });
 			});
 
+			// 2026-09-23 10:21 실측 원문. 카드번호와 '승인' 사이에 공백이 있고
+			// 시각이 없다. 둘 다 필수로 보던 동안 no-transaction 으로 떨어졌다.
+			it('should parse a KB card approval with a space and no time', async () => {
+				// Arrange
+				const body = {
+					packageName: 'ios.KBPay',
+					title: 'KBPay',
+					text: '\nKB국민카드8031 승인\n김*심\n25,790원 09/22\n삼천리(주) '
+				};
+				const expectedDate = moment('09/22', 'MM/DD').format('YYYY-MM-DD');
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					date: expectedDate,
+					amount: -25790,
+					payee: '삼천리(주)',
+					accountId: 'account:CCard:KB카드'
+				});
+			});
+
+			// 시각을 선택으로 둔 뒤에도 상호 앞에 붙어서는 안 된다.
+			it('should not take the time as part of the merchant name', async () => {
+				// Arrange
+				const body = {
+					packageName: 'ios.KBPay',
+					text: 'KB국민카드6036승인 김*심님 14,160원 일시불 09/02 16:13 11번가 누적120,830'
+				};
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0].payee).toBe('11번가');
+			});
+
+			// 공백이 붙은 형식도 취소는 거래를 만들지 않는다.
+			it('should not record a spaced KB card cancellation', async () => {
+				// Arrange
+				const body = {
+					packageName: 'ios.KBPay',
+					text: '\nKB국민카드8031 취소\n김*심\n25,790원 09/22\n삼천리(주) '
+				};
+
+				// Act
+				await addTransaction(body);
+
+				// Assert
+				expect(transactionService.addTransaction).not.toHaveBeenCalled();
+			});
+
 			// iOS KB Pay 는 한 줄 공백 구분이고 앞에 \n, 뒤에 공백이 붙는다.
 			// 안드로이드 KB국민카드 알림과 같은 카드라 KB카드로 기록한다.
 			it('should correctly parse an iOS KB Pay (ios.KBPay) notification', async () => {
