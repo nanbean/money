@@ -240,6 +240,46 @@ const parsers = [
 		}
 	},
 	{
+		// iOS 고속도로 하이패스 알림.
+		//
+		//   '하이패스카드 사용내역 알림'
+		//   '2026/09/25 07:14:45 기흥-서울 0원'
+		//
+		// 안드로이드 하이패스 알림(com.ex.plus_hipasscard)과 달리 본문에 날짜가
+		// 있어 추측하지 않는다. 구간은 상호가 아니라 메모로 남긴다 — 상호를
+		// '도로비' 로 고정해야 이력 분류와 리포트에서 한 항목으로 모인다.
+		matcher: (body) => body.packageName.match(/^ios\.ex$/i),
+		parser: (body) => {
+			const m = body.text.match(/(\d{4}\/\d{2}\/\d{2})\s+\d{2}:\d{2}:\d{2}\s+(.+?)\s+([\d,]+)\s*원/);
+			if (!m) return {};
+
+			const [, dateText, section, amountText] = m;
+			const amount = parseInt(amountText.replace(/[^0-9]/g, ''), 10);
+
+			// 0원 통행은 지출이 아니다. 원장에 넣어도 리포트에 빈 줄만 늘고,
+			// 그냥 두면 금액이 0 이라 기록 조건에 걸려 ⚠️ 가 뜬다 — 파서 고장과
+			// 구분이 안 되므로 버리는 것을 명시한다.
+			if (amount === 0) {
+				return { options: { ignored: 'zero-amount' } };
+			}
+
+			return {
+				account: 'KB카드',
+				transaction: {
+					date: moment(dateText, 'YYYY/MM/DD').format('YYYY-MM-DD'),
+					amount: amount * -1,
+					payee: '도로비',
+					category: '교통비',
+					subcategory: '도로비&주차비',
+					// 어느 구간인지는 원문에만 있는 정보다.
+					memo: section.trim()
+				},
+				// 분류가 확정적이라 Gemini 에 묻지 않는다.
+				options: { fixedCategory: true }
+			};
+		}
+	},
+	{
 		matcher: (body) => body.packageName.match(/com\.kbcard\.kbkookmincard/i),
 		parser: (body) => {
 			const items = body.text.split('\n');
@@ -1124,6 +1164,18 @@ exports.addTransaction = async function (rawBody) {
 			formatStatementNotice(statement),
 			'receipt'
 		);
+		return false;
+	}
+
+	// 파서가 형식은 읽었지만 기록할 게 없다고 판단한 알림. 형식이 안 맞아
+	// 실패한 것과 달리 ⚠️ 를 띄우지 않는다 — 둘이 섞이면 진짜 파서 고장을
+	// 로그에서 못 가려낸다. 이유는 로그로 남는다.
+	if (options.ignored) {
+		logNotification('skipped', {
+			packageName: body.packageName,
+			reason: options.ignored,
+			parserIndex
+		});
 		return false;
 	}
 

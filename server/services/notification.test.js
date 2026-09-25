@@ -937,6 +937,98 @@ describe('notification service', () => {
 			});
 
 			// 후불교통 청구 예정액. 탈 때마다 오지 않고 한 건으로 모여서 온다.
+			// iOS 하이패스 알림. 구간은 상호가 아니라 메모로 남긴다.
+			describe('iOS 하이패스', () => {
+				// 2026-09-25 07:17 실측 원문. 이 건은 0원이다.
+				const REAL = '하이패스카드 사용내역 알림\n2026/09/25 07:14:45 기흥-서울 0원';
+				const ex = (text) => ({ packageName: 'ios.ex', title: 'EX', text });
+
+				it('KB카드에 도로비로 기록하고 구간을 메모에 남긴다', async () => {
+					// Act
+					await addTransaction(ex('하이패스카드 사용내역 알림\n2026/09/25 07:14:45 기흥-서울 1,100원'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						date: '2026-09-25',
+						amount: -1100,
+						payee: '도로비',
+						accountId: 'account:CCard:KB카드',
+						category: '교통비',
+						subcategory: '도로비&주차비',
+						memo: '기흥-서울'
+					});
+				});
+
+				// 본문에 날짜가 있으므로 시스템 날짜를 쓰면 안 된다. 새벽 통행이
+				// 다음 날 알림으로 오면 하루가 밀린다.
+				it('시스템 날짜가 아니라 본문 날짜로 적는다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-09-26T09:00:00+09:00'));
+
+					// Act
+					await addTransaction(ex('하이패스카드 사용내역 알림\n2026/09/25 23:58:01 서울-기흥 1,100원'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].date).toBe('2026-09-25');
+				});
+
+				// 분류가 확정적이라 Gemini 가 덮어써선 안 된다.
+				it('Gemini 에 묻지 않는다', async () => {
+					// Arrange
+					mockSendMessage.mockResolvedValue({ response: { text: () => '식비' } });
+
+					// Act
+					await addTransaction(ex('하이패스카드 사용내역 알림\n2026/09/25 07:14:45 기흥-서울 1,100원'));
+
+					// Assert
+					expect(mockSendMessage).not.toHaveBeenCalled();
+				});
+
+				// 0원 통행은 지출이 아니다.
+				it('0원이면 거래를 만들지 않는다', async () => {
+					// Act
+					const result = await addTransaction(ex(REAL));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(result).toBe(false);
+				});
+
+				// 파서 고장과 섞이면 안 되므로 ⚠️ 를 띄우지 않고 로그만 남긴다.
+				it('0원이어도 ⚠️ 를 띄우지 않는다', async () => {
+					// Arrange
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					await addTransaction(ex(REAL));
+
+					// Assert
+					expect(messaging.sendNotification).not.toHaveBeenCalled();
+					expect(log.mock.calls.map((c) => c.map(String).join(' '))
+						.some((l) => l.includes('[notify] skipped') && l.includes('zero-amount'))).toBe(true);
+				});
+
+				// 제어 값이 문서로 새면 안 된다.
+				it('제어 값을 문서에 넣지 않는다', async () => {
+					// Act
+					await addTransaction(ex('하이패스카드 사용내역 알림\n2026/09/25 07:14:45 기흥-서울 1,100원'));
+
+					// Assert
+					const saved = transactionService.addTransaction.mock.calls[0][0];
+					expect(saved).not.toHaveProperty('fixedCategory');
+					expect(saved).not.toHaveProperty('options');
+				});
+
+				// 형식이 아예 다르면 파싱하지 않는다 — 안내 문구가 올 수 있다.
+				it('날짜와 금액이 없으면 거래를 만들지 않는다', async () => {
+					// Act
+					await addTransaction(ex('하이패스카드 사용내역 알림\n조회 서비스 점검 안내'));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+			});
+
 			describe('iOS KB Pay 후불교통', () => {
 				// 2026-09-03 실측 원문.
 				const REAL = '\nKB국민카드\n후불교통(신용)\n28건 51,250원\n09/15 결제예정 ';
