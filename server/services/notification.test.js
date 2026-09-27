@@ -1782,6 +1782,93 @@ describe('notification service', () => {
 				expect(transactionService.addTransaction).not.toHaveBeenCalled();
 			});
 
+			describe('iOS Robinhood', () => {
+				it('실제 문구를 BoA 계좌로 기록한다', async () => {
+					// Arrange
+					// 실측 본문이다. 안드로이드가 title 에 주던 상호가 iOS 에서는 본문
+					// 첫 줄로 내려온다. title 은 앱 이름 'Banking' 으로 고정이다.
+					const body = {
+						packageName: 'ios.Banking',
+						title: 'Banking',
+						text: 'Aliexpress\n$9.85 (+30 Points)'
+					};
+					const expectedDate = moment().tz('America/Los_Angeles').format('YYYY-MM-DD');
+
+					// Act
+					await addTransaction(body);
+
+					// Assert
+					const transactionArg = transactionService.addTransaction.mock.calls[0][0];
+					expect(transactionArg).toMatchObject({
+						date: expectedDate,
+						amount: -9.85,
+						payee: 'Aliexpress',
+						accountId: 'account:Bank:BoA'
+					});
+				});
+
+				it('적립 포인트를 금액으로 읽지 않는다', async () => {
+					// Arrange
+					// '(+30 Points)' 의 30 이 금액으로 잡히면 지출이 통째로 틀어진다.
+					const body = {
+						packageName: 'ios.Banking',
+						title: 'Banking',
+						text: 'Costco\n$1,234.56 (+3700 Points)'
+					};
+
+					// Act
+					await addTransaction(body);
+
+					// Assert
+					const transactionArg = transactionService.addTransaction.mock.calls[0][0];
+					expect(transactionArg).toMatchObject({
+						amount: -1234.56,
+						payee: 'Costco'
+					});
+				});
+
+				// 안드로이드에서 title 로 걸러내던 문구들이 iOS 에서는 첫 줄에 실려 온다.
+				// 거르지 않으면 'Upcoming payment' 가 그대로 상호로 기록된다.
+				it.each([
+					['Upcoming payment'],
+					['Refund: Metromile'],
+					['Important notice'],
+					['Your transfer is complete'],
+					['Your withdrawal is complete'],
+					['Your monthly interest deposit']
+				])('%s 는 거래를 만들지 않는다', async (firstLine) => {
+					// Arrange
+					const body = {
+						packageName: 'ios.Banking',
+						title: 'Banking',
+						text: `${firstLine}\n$3000`
+					};
+
+					// Act
+					await addTransaction(body);
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				it('한 줄짜리 안내는 거래를 만들지 않는다', async () => {
+					// Arrange
+					// 금액은 있지만 '상호\n$금액' 형식이 아닌 알림이다. 첫 줄을 무조건
+					// 상호로 쓰면 안내 문구가 그대로 가계부에 상호로 남는다.
+					const body = {
+						packageName: 'ios.Banking',
+						title: 'Banking',
+						text: 'Your statement balance of $1,234.56 is due soon'
+					};
+
+					// Act
+					await addTransaction(body);
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+			});
+
 			it('should correctly parse a US Bank (com.usbank.mobilebanking) notification', async () => {
 				// Arrange
 				const body = {

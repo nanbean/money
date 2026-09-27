@@ -217,6 +217,24 @@ const formatNotification = (transaction) => {
 	return `amount: ${amount},\npayee: ${payee},\ncategory: ${category}${subcategory ? `:${subcategory}` : ''}`;
 };
 
+// Robinhood 가 보내는 거래 아닌 알림. 상호 자리에 이 문구가 그대로 실려 와서,
+// 거르지 않으면 'Upcoming payment' 가 가계부에 상호로 남는다.
+//
+// 안드로이드와 iOS 파서가 같이 쓴다. 상호가 오는 자리만 다를 뿐 (title / 본문 첫 줄)
+// 알림 종류는 같은 서비스라 동일하다.
+const ROBINHOOD_NON_TRANSACTION_TITLES = [
+	'Refund: ',
+	'Upcoming payment',
+	'Important notice',
+	'Your transfer is complete',
+	'Your withdrawal is complete',
+	'Your monthly interest deposit',
+	'Your monthly interest deposits'
+];
+
+const isRobinhoodNonTransaction = (title) =>
+	ROBINHOOD_NON_TRANSACTION_TITLES.some((t) => title.startsWith(t));
+
 const parsers = [
 	{
 		matcher: (body) => body.text.match(/승인취소/g),
@@ -758,20 +776,41 @@ const parsers = [
 		parser: (body) => {
 			const dollorMatch = body.text.replace(/,/g, '').match(/\$(\d+(?:\.\d+)?)/);
 			let transaction = {};
-			const excludedTitles = [
-				'Refund: ',
-				'Upcoming payment',
-				'Important notice',
-				'Your transfer is complete',
-				'Your withdrawal is complete',
-				'Your monthly interest deposit',
-				'Your monthly interest deposits'
-			];
-			if (body.title && !excludedTitles.some(t => body.title.startsWith(t)) && dollorMatch) {
+			if (body.title && !isRobinhoodNonTransaction(body.title) && dollorMatch) {
 				transaction = {
 					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 					amount: dollorMatch[1] * -1,
 					payee: body.title,
+					category: '분류없음'
+				};
+			}
+			return { account: 'BoA', transaction };
+		}
+	},
+	{
+		// 같은 Robinhood 인데 iOS 알림은 상호가 오는 자리가 다르다.
+		//   안드로이드: title 'Metromile'  / text '$140.78 (+422 Points)'
+		//   iOS:        title 'Banking'    / text 'Aliexpress\n$9.85 (+30 Points)'
+		// iOS 는 title 이 앱 이름 'Banking' 으로 고정이라 상호로 쓸 수 없고, 안드로이드가
+		// title 에 주던 값이 본문 첫 줄로 내려온다. 그래서 파서를 따로 둔다.
+		//
+		// packageName 이 'ios.Banking' 으로 와서 안드로이드 패키지명만 보던 매처에
+		// 걸리지 않았고, 그대로 no-parser 로 떨어지고 있었다. iOS Amex 와 같은 일이다.
+		matcher: (body) => body.packageName.match(/^ios\.Banking$/i),
+		parser: (body) => {
+			const dollorMatch = body.text.replace(/,/g, '').match(/\$(\d+(?:\.\d+)?)/);
+			// 둘째 줄이 '$' 로 시작하는 것까지 본다. 첫 줄만 보면 '상호\n$금액' 형식이
+			// 아닌 알림의 문구가 그대로 상호로 들어간다.
+			const payeeMatch = body.text.match(/^(.+)\n\s*\$/);
+			const payee = payeeMatch ? payeeMatch[1].trim() : '';
+			let transaction = {};
+			// 거래가 아닌 알림은 안드로이드와 같은 종류가 오고, 그 문구가 title 대신
+			// 첫 줄에 실린다. 그래서 같은 목록을 첫 줄에 적용한다.
+			if (payee && !isRobinhoodNonTransaction(payee) && dollorMatch) {
+				transaction = {
+					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+					amount: dollorMatch[1] * -1,
+					payee,
 					category: '분류없음'
 				};
 			}
