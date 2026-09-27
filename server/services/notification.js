@@ -774,9 +774,15 @@ const parsers = [
 	{
 		matcher: (body) => body.packageName.match(/com\.robinhood\.money/i),
 		parser: (body) => {
+			// 거래가 아닌 알림은 버리는 것을 명시한다. 그냥 빈 결과를 돌려주면
+			// ⚠️ 가 떠서 진짜 파서 고장과 구분이 안 된다.
+			if (body.title && isRobinhoodNonTransaction(body.title)) {
+				return { options: { ignored: 'non-transaction' } };
+			}
+
 			const dollorMatch = body.text.replace(/,/g, '').match(/\$(\d+(?:\.\d+)?)/);
 			let transaction = {};
-			if (body.title && !isRobinhoodNonTransaction(body.title) && dollorMatch) {
+			if (body.title && dollorMatch) {
 				transaction = {
 					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 					amount: dollorMatch[1] * -1,
@@ -798,15 +804,21 @@ const parsers = [
 		// 걸리지 않았고, 그대로 no-parser 로 떨어지고 있었다. iOS Amex 와 같은 일이다.
 		matcher: (body) => body.packageName.match(/^ios\.Banking$/i),
 		parser: (body) => {
+			// 첫 줄이 안드로이드의 title 자리다. 거래가 아닌 알림은 같은 종류가
+			// 오고 그 문구도 여기에 실리므로, 같은 목록을 첫 줄에 적용한다.
+			//   'Upcoming payment\nYour upcoming payment of $400.83 is scheduled...'
+			const firstLine = body.text.split('\n')[0].trim();
+			if (isRobinhoodNonTransaction(firstLine)) {
+				return { options: { ignored: 'non-transaction' } };
+			}
+
 			const dollorMatch = body.text.replace(/,/g, '').match(/\$(\d+(?:\.\d+)?)/);
 			// 둘째 줄이 '$' 로 시작하는 것까지 본다. 첫 줄만 보면 '상호\n$금액' 형식이
 			// 아닌 알림의 문구가 그대로 상호로 들어간다.
 			const payeeMatch = body.text.match(/^(.+)\n\s*\$/);
 			const payee = payeeMatch ? payeeMatch[1].trim() : '';
 			let transaction = {};
-			// 거래가 아닌 알림은 안드로이드와 같은 종류가 오고, 그 문구가 title 대신
-			// 첫 줄에 실린다. 그래서 같은 목록을 첫 줄에 적용한다.
-			if (payee && !isRobinhoodNonTransaction(payee) && dollorMatch) {
+			if (payee && dollorMatch) {
 				transaction = {
 					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
 					amount: dollorMatch[1] * -1,

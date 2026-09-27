@@ -1849,6 +1849,26 @@ describe('notification service', () => {
 
 					// Assert
 					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					// 일부러 버린 알림이다. ⚠️ 가 뜨면 진짜 파서 고장과 섞인다.
+					expect(messaging.sendNotification).not.toHaveBeenCalled();
+				});
+
+				it('결제 예정 안내는 조용히 버린다', async () => {
+					// Arrange
+					// 실측 본문이다. 둘째 줄이 '$' 로 시작하지 않아 형식 검사에도
+					// 걸리지만, 그 경로로 가면 ⚠️ 가 뜬다. 제외 목록이 먼저 잡아야 한다.
+					const body = {
+						packageName: 'ios.Banking',
+						title: 'Banking',
+						text: 'Upcoming payment\nYour upcoming payment of $400.83 is scheduled for tomorrow.'
+					};
+
+					// Act
+					await addTransaction(body);
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(messaging.sendNotification).not.toHaveBeenCalled();
 				});
 
 				it('한 줄짜리 안내는 거래를 만들지 않는다', async () => {
