@@ -12,6 +12,7 @@ import InvestmentHistory from '../InvestmentHistory';
 import InvestmentPortfolio from '../InvestmentPortfolio';
 import RateOfReturn from '../RateOfReturn';
 import AmexTracker from '../AmexTracker';
+import TaxTracker from '../TaxTracker';
 import { AllPerformance } from '../../views/AllPerformance';
 
 import useT from '../../hooks/useT';
@@ -44,6 +45,14 @@ const SECTIONS = [
 		ko: '카드',
 		subs: [
 			{ id: 'amex', label: 'Amex', ko: 'Amex', component: <AmexTracker /> }
+		]
+	},
+	{
+		id: 'tax',
+		label: 'Tax',
+		ko: '세금',
+		subs: [
+			{ id: 'tax', label: 'Deduction', ko: '소득공제', component: <TaxTracker /> }
 		]
 	}
 ];
