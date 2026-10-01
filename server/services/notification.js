@@ -633,15 +633,48 @@ const parsers = [
 			});
 
 			// '일시불, 09/02 22:08' — 줄 구성이 달라질 수 있어 전문에서 찾는다.
-			const dateMatch = body.text.match(/(\d{2}\/\d{2})\s+\d{1,2}:\d{2}/);
+			//
+			// 취소 알림은 시각 없이 날짜만 온다 ('09/26'). 시각을 필수로 두면
+			// 취소가 날짜를 못 찾아 통째로 파싱 실패로 떨어지고 ⚠️ 가 뜬다.
+			const dateMatch = body.text.match(/(\d{2}\/\d{2})(?:\s+\d{1,2}:\d{2})?/);
 			// 상호는 첫 줄이다.
 			const payee = lines[0];
 
 			if (!amount || !status || !dateMatch || !payee) return {};
 			// 금액 줄이 첫 줄이면 상호가 없는 다른 형태다.
 			if (/^[\d,]+원/.test(payee)) return {};
-			// 취소는 거래를 만들지 않는다 — 안드로이드 KB 파서 주석 참고.
-			if (status !== '승인') return {};
+
+			// 취소는 원장을 건드리지 않는다. 어느 거래를 고쳐야 하는지 찾는 수고를
+			// 덜어 주려고 후보만 알린다 — KB 취소와 같은 방식이다.
+			//
+			//   '(주)지앤미\n64,072원 취소완료\nLOCA LIKIT 2.0(7*2*)\n09/26'
+			//
+			// '승인취소' 는 배열 맨 앞 파서가 먼저 잡지만 '취소완료' 는 거기 걸리지
+			// 않아 여기까지 온다.
+			if (/취소/.test(status)) {
+				// 이용일은 지난 날짜다. 연초에 지난해 12월 이용건 취소가 오면
+				// MM/DD 파싱이 올해 12월로 떨어지므로 한 해를 뺀다.
+				const used = moment(dateMatch[1], 'MM/DD');
+				if (used.diff(moment(), 'days') > 180) {
+					used.subtract(1, 'year');
+				}
+
+				return {
+					options: {
+						cancellation: {
+							account: '생활비카드',
+							merchant: payee,
+							usedDate: used.format('YYYY-MM-DD'),
+							amount,
+							kind: status
+						}
+					}
+				};
+			}
+
+			// 거절·한도초과처럼 애초에 원장에 없는 상태다. 취소 후보를 찾아 봐야
+			// 나올 게 없으므로 조용히 버린다.
+			if (status !== '승인') return { options: { ignored: `status:${status}` } };
 
 			return {
 				account: '생활비카드',

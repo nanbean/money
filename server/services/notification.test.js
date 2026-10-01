@@ -1322,12 +1322,43 @@ describe('notification service', () => {
 
 				// 상태가 정확히 '승인' 이 아니면 거래를 만들지 않는다. 배열 맨 앞
 				// 파서에 의존하지 않고 여기서 독립적으로 막는다.
-				test.each(['승인취소', '취소', '부분취소', '거절'])('상태가 %s 면 거래를 만들지 않는다', async (status) => {
+				test.each(['승인취소', '취소', '부분취소', '취소완료', '거절'])('상태가 %s 면 거래를 만들지 않는다', async (status) => {
 					// Act
 					await addTransaction(lotte(REAL.replace('13,050원 승인', `13,050원 ${status}`)));
 
 					// Assert
 					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 실측 본문이다. 승인과 달리 시각 없이 날짜만 온다 ('09/26').
+				// 시각을 필수로 두던 시절에는 날짜를 못 찾아 파싱 실패로 떨어졌고,
+				// 취소인데 ⚠️ 가 떠서 진짜 파서 고장과 구분되지 않았다.
+				it('취소완료는 시각이 없어도 취소 후보를 알린다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([]);
+
+					// Act
+					await addTransaction(lotte('(주)지앤미\n64,072원 취소완료\r\nLOCA LIKIT 2.0(7*2*)\r\n09/26'));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(messaging.sendNotification).toHaveBeenCalledWith(
+						'🔁 취소 확인 필요',
+						expect.stringContaining('(주)지앤미'),
+						'receipt',
+						'transactions'
+					);
+				});
+
+				// 거절은 애초에 원장에 없다. 취소 후보를 뒤져 봐야 나올 게 없어
+				// 조용히 버린다 — ⚠️ 도 🔁 도 띄우지 않는다.
+				it('거절은 조용히 버린다', async () => {
+					// Act
+					await addTransaction(lotte(REAL.replace('13,050원 승인', '13,050원 거절')));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(messaging.sendNotification).not.toHaveBeenCalled();
 				});
 
 				// 결제 알림이 아닌 메시지는 금액·상태 줄이나 날짜가 없다.
