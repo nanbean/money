@@ -131,13 +131,19 @@ const updateInvestmentPrice = async () => {
 		console.log('30 00 13 daily dailyArrangeInvestmemtjob ended');
 	}, true, 'America/Los_Angeles');
 
+	/*
+	 * 미납 항목 알림. 한국 카드·공과금을 보는 것이라 서울 기준 09:00 에 돈다.
+	 *
+	 * 전에는 America/Los_Angeles 로 걸려 있어 서울 시간 새벽 1시에 울렸다 —
+	 * 시각은 09 로 맞았는데 타임존이 달라 아무도 보지 않는 때에 알림이 갔다.
+	 */
 	new CronJob('00 00 09 * * *', async () => {
 		console.log('payment 00 00 09 daily checkAndSendNotification started');
 		await safeRun('checkAndSendNotification', checkAndSendNotification);
 	}, () => {
 		/* This function is executed when the job stops */
 		console.log('00 00 09 daily checkAndSendNotification ended');
-	}, true, 'America/Los_Angeles');
+	}, true, 'Asia/Seoul');
 
 	new CronJob('00 00 04 1 * *', async () => {
 		/*
