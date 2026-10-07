@@ -12,10 +12,9 @@ const notificationService = require('./notificationService');
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
+// temperature·topP·topK 는 두지 않는다. 3.6 Flash 부터 무시되고, 다음 모델부터는
+// 400 INVALID_ARGUMENT 를 낸다 (2026-10 Gemini API 공지).
 const generationConfig = {
-	temperature: 1,
-	topP: 0.95,
-	topK: 64,
 	maxOutputTokens: 8192,
 	responseMimeType: 'text/plain'
 };
