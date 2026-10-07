@@ -1330,6 +1330,26 @@ describe('notification service', () => {
 					expect(transactionService.addTransaction).not.toHaveBeenCalled();
 				});
 
+				// 실측 본문이다. '승인취소' 는 배열 맨 앞 안전망 파서도 잡는 문구라
+				// 그쪽이 먼저 빈 결과를 내면 ⚠️ 가 떴다. 롯데는 상호·이용일·금액을
+				// 다 읽을 수 있으므로 안전망이 양보하고 여기서 후보를 알린다.
+				it('승인취소도 취소 후보를 알린다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([]);
+
+					// Act
+					await addTransaction(lotte('\n(주)지앤미\n59,470원 승인취소\nLOCA LIKIT 2.0(7*2*)\n일시불, 10/01 17:45\n누적금액 904,423원'));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(messaging.sendNotification).toHaveBeenCalledWith(
+						'🔁 취소 확인 필요',
+						expect.stringContaining('(주)지앤미'),
+						'receipt',
+						'transactions'
+					);
+				});
+
 				// 실측 본문이다. 승인과 달리 시각 없이 날짜만 온다 ('09/26').
 				// 시각을 필수로 두던 시절에는 날짜를 못 찾아 파싱 실패로 떨어졌고,
 				// 취소인데 ⚠️ 가 떠서 진짜 파서 고장과 구분되지 않았다.

@@ -236,7 +236,13 @@ const isRobinhoodNonTransaction = (title) =>
 
 const parsers = [
 	{
-		matcher: (body) => body.text.match(/승인취소/g),
+		// 카드사를 가리지 않는 취소 안전망. 승인취소를 거래로 만들지 않는다.
+		//
+		// 카드사별 파서가 취소를 따로 처리하면 상호·이용일·금액까지 담아 취소
+		// 후보를 알릴 수 있으므로 그쪽에 양보한다. 여기서 먼저 잡으면 그 정보가
+		// 통째로 버려지고 ⚠️ 만 남는다 — 롯데카드 '승인취소' 가 실제로 그랬다.
+		matcher: (body) =>
+			body.text.match(/승인취소/g) && !/^ios\.lottecard$/i.test(body.packageName || ''),
 		parser: () => ({})
 	},
 	{
