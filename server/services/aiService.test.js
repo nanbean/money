@@ -198,6 +198,31 @@ describe('getWeeklyRecap', () => {
 		});
 	});
 
+	describe('순자산 기간', () => {
+		// 미국 마감 갱신은 13:00 PT 라 미국 금요일 종가가 KST 토요일 날짜로 찍힌다.
+		// 금요일에서 자르면 그 장이 빠져 홈 화면 순자산보다 하루 뒤처졌다 (2026-10-10).
+		test('주말 순자산은 미국 금요일 종가가 담긴 KST 토요일 항목이다', async () => {
+			atPt('2026-10-09 17:00');
+			const entry = (date, netWorth) => ({ date, netWorth, cashNetWorth: 0, investmentsNetWorth: netWorth });
+			reportDB.getReport.mockImplementation(async (id) => {
+				if (id !== 'netWorthDaily') return null;
+				return {
+					data: [
+						entry('2026-10-03', 2982250000),
+						entry('2026-10-09', 3012090000),
+						entry('2026-10-10', 3041870000),
+						entry('2026-10-12', 3100000000)
+					]
+				};
+			});
+
+			const prompt = await getWeeklyRecap({ dry: true });
+
+			expect(prompt).toContain('29.82억원 → 30.42억원');
+			expect(prompt).not.toContain('31.00억원');
+		});
+	});
+
 	describe('[SUMMARY] 파싱', () => {
 		beforeEach(() => {
 			atPt('2026-08-22 10:00');

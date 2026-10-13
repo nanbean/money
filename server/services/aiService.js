@@ -111,9 +111,13 @@ const _getWeeklyRecap = async ({ dry = false, retryOptions = {} } = {}) => {
 		return currency === 'USD' ? amount * exchangeRate : amount;
 	};
 
-	// Net worth daily trend (Mon ~ Fri of the analysis week — bound by `today` so
-	// post-Friday entries don't sneak in and skew "end of week" net worth.)
-	const netWorthDailyData = (netWorthDailyDoc?.data || []).filter(d => d.date >= weekAgo && d.date <= today);
+	// Net worth daily trend, bound by the close's KST date (Saturday) rather than `today`.
+	// The US close job runs at 13:00 PT, so the US Friday close is stamped with Saturday's
+	// KST date. Stopping at Friday dropped that session and left the recap a day behind the
+	// home screen (2026-10-10: 30.12억 vs 30.42억). The baseline below is already a
+	// Saturday entry, so both ends now include the US Friday close.
+	const netWorthEndDate = lastCloseKST.format('YYYY-MM-DD');
+	const netWorthDailyData = (netWorthDailyDoc?.data || []).filter(d => d.date >= weekAgo && d.date <= netWorthEndDate);
 
 	// Start baseline: last entry on or before last Sat/Sun (day before this week's Monday)
 	const netWorthBaselineDate = weekStartMoment.clone().subtract(1, 'days').format('YYYY-MM-DD');
