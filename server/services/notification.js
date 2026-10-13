@@ -347,7 +347,9 @@ const parsers = [
 			const ACCOUNT_BY_CARD = {
 				6036: 'KB카드',
 				8031: 'KB카드',
-				8033: 'KB카드오은미'
+				8033: 'KB카드오은미',
+				// 0 으로 시작하므로 문자열 키로 둔다. 숫자로 쓰면 89 가 된다.
+				'0089': 'KB카드오은미'
 			};
 
 			const line = body.text.replace(/\r?\n/g, ' ').trim();

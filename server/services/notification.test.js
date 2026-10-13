@@ -1430,7 +1430,8 @@ describe('notification service', () => {
 				test.each([
 					['6036', 'account:CCard:KB카드'],
 					['8031', 'account:CCard:KB카드'],
-					['8033', 'account:CCard:KB카드오은미']
+					['8033', 'account:CCard:KB카드오은미'],
+					['0089', 'account:CCard:KB카드오은미']
 				])('KB Pay 형식 %s -> %s', async (card, accountId) => {
 					// Act
 					await addTransaction(payBody(card));
@@ -1443,7 +1444,8 @@ describe('notification service', () => {
 				test.each([
 					['6036', 'account:CCard:KB카드'],
 					['8031', 'account:CCard:KB카드'],
-					['8033', 'account:CCard:KB카드오은미']
+					['8033', 'account:CCard:KB카드오은미'],
+					['0089', 'account:CCard:KB카드오은미']
 				])('국민카드 형식 %s -> %s', async (card, accountId) => {
 					// Act
 					await addTransaction(cardBody(card));
@@ -1451,6 +1453,18 @@ describe('notification service', () => {
 					// Assert
 					expect(transactionService.addTransaction.mock.calls[0][0])
 						.toMatchObject({ amount: -5000, payee: '쿠팡', accountId });
+				});
+
+				it('실측 0089 자동납부 알림을 KB카드오은미로 기록한다', async () => {
+					// Act
+					await addTransaction({
+						packageName: 'ios.KBPay',
+						text: '\nKB국민카드0089 승인\n오*미\n35,100원 10/12\nSK텔레콤-자동납부 '
+					});
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0])
+						.toMatchObject({ amount: -35100, payee: 'SK텔레콤-자동납부', accountId: 'account:CCard:KB카드오은미' });
 				});
 
 				// 엉뚱한 계좌에 기록하는 것보다 알림만 띄우는 편이 낫다.
