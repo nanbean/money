@@ -3,6 +3,7 @@ const { notificationsDB } = require('../db');
 const messaging = require('./messaging');
 const accountService = require('./accountService');
 const settingService = require('./settingService');
+const stockDB = require('../db/stockDB');
 
 // Mock all external dependencies to isolate the service for unit testing.
 jest.mock('../db', () => ({
@@ -14,6 +15,10 @@ jest.mock('../db', () => ({
 
 jest.mock('./messaging', () => ({
 	sendNotification: jest.fn()
+}));
+
+jest.mock('../db/stockDB', () => ({
+	getStock: jest.fn()
 }));
 
 jest.mock('./accountService', () => ({
@@ -140,6 +145,99 @@ describe('notificationService', () => {
 			// Assert: The net worth should be '0' and the notification sent correctly.
 			const expectedNetWorth = (0).toLocaleString('ko-KR', { style: 'currency', currency: 'KRW' });
 			expect(messaging.sendNotification).toHaveBeenCalledWith('NetWorth Update', `Today's NetWorth is ${expectedNetWorth}`, 'graph');
+		});
+	
+		describe('장 마감 상위 종목', () => {
+			const STOCKS = {
+				kospi: [
+					{ name: '삼성전자', price: 72000, rate: 1.25 },
+					{ name: 'SK하이닉스', price: 180000, rate: -0.5 },
+					{ name: '카카오', price: 40000, rate: 0 }
+				],
+				kosdaq: [
+					{ name: '에코프로', price: 100000, rate: 3.1 }
+				],
+				us: [
+					{ name: 'TSLA', price: 250.12, rate: 0.21 },
+					{ name: 'AAPL', price: 230, rate: -0.1 },
+					{ name: 'NVDA', price: 140.5, rate: 2 }
+				]
+			};
+
+			// 평가금액: 삼성전자 7,200,000 / SK하이닉스 3,600,000 / 카카오 4,000,000 / 에코프로 1,000,000
+			//          TSLA 2,501.2 / AAPL 4,600 / NVDA 1,405
+			const ACCOUNTS = [
+				{ name: '키움', type: 'Invst', balance: 0, currency: 'KRW', investments: [
+					{ name: '삼성전자', quantity: 60 },
+					{ name: 'SK하이닉스', quantity: 20 },
+					{ name: '카카오', quantity: 100 },
+					{ name: '에코프로', quantity: 10 }
+				] },
+				{ name: 'NH', type: 'Invst', balance: 0, currency: 'KRW', investments: [
+					{ name: '삼성전자', quantity: 40 }
+				] },
+				{ name: 'Schwab', type: 'Invst', balance: 0, currency: 'USD', investments: [
+					{ name: 'TSLA', quantity: 10 },
+					{ name: 'AAPL', quantity: 20 },
+					{ name: 'NVDA', quantity: 10 }
+				] },
+				{ name: 'Wallet', type: 'Cash', balance: 1000, currency: 'KRW' }
+			];
+
+			const body = () => messaging.sendNotification.mock.calls[0][1];
+
+			beforeEach(() => {
+				accountService.getAllAccounts.mockResolvedValue(ACCOUNTS);
+				settingService.getExchangeRate.mockResolvedValue(1300);
+				settingService.getCurrency.mockResolvedValue('KRW');
+				stockDB.getStock.mockImplementation(async (id) => ({ data: STOCKS[id] }));
+			});
+
+			test('한국장 마감에는 국내 종목 중 평가금액 상위 2개를 붙인다', async () => {
+				// Act
+				await sendBalanceUpdateNotification('KR');
+
+				// Assert: 계좌를 합산한 평가금액 순 — 삼성전자(100주), 카카오
+				const lines = body().split('\n');
+				expect(lines).toHaveLength(3);
+				expect(lines[0]).toMatch(/^Today's NetWorth is /);
+				expect(lines[1]).toBe(`삼성전자 ${(72000).toLocaleString('ko-KR', { style: 'currency', currency: 'KRW' })} (+1.25%)`);
+				expect(lines[2]).toBe(`카카오 ${(40000).toLocaleString('ko-KR', { style: 'currency', currency: 'KRW' })} (0.00%)`);
+				expect(stockDB.getStock).not.toHaveBeenCalledWith('us');
+			});
+
+			test('미국장 마감에는 미국 종목을 달러 종가로 붙인다', async () => {
+				// Act
+				await sendBalanceUpdateNotification('US');
+
+				// Assert
+				const lines = body().split('\n');
+				expect(lines.slice(1)).toEqual(['AAPL $230.00 (-0.10%)', 'TSLA $250.12 (+0.21%)']);
+			});
+
+			test('등락률이 없으면 종가만 붙인다', async () => {
+				// Arrange
+				stockDB.getStock.mockImplementation(async () => ({ data: [{ name: 'TSLA', price: 250.12 }] }));
+
+				// Act
+				await sendBalanceUpdateNotification('US');
+
+				// Assert
+				expect(body().split('\n').slice(1)).toEqual(['TSLA $250.12']);
+			});
+
+			test('시세를 못 읽어도 자산 알림은 보낸다', async () => {
+				// Arrange
+				jest.spyOn(console, 'error').mockImplementation(() => {});
+				stockDB.getStock.mockImplementation(async () => { throw new Error('boom'); });
+
+				// Act
+				await sendBalanceUpdateNotification('KR');
+
+				// Assert: getStock 실패는 빈 시세로 취급되어 종목 줄만 빠진다
+				expect(body().split('\n')).toHaveLength(1);
+				console.error.mockRestore();
+			});
 		});
 	});
 });

@@ -95,7 +95,7 @@ const updateInvestmentPrice = async () => {
 			await safeRun('arrangeKRInvestmemt', arrangeKRInvestmemt);
 			await safeRun('arrangeUSInvestmemt', arrangeUSInvestmemt);
 			await safeRun('updateAccountList', updateAccountList);
-			await safeRun('sendBalanceUpdateNotification', sendBalanceUpdateNotification);
+			await safeRun('sendBalanceUpdateNotification', () => sendBalanceUpdateNotification('KR'));
 			await safeRun('updateLifeTimePlanner', updateLifeTimePlanner);
 			await safeRun('updateNetWorth', updateNetWorth);
 			await safeRun('updateNetWorthDaily', updateNetWorthDaily);
@@ -118,7 +118,7 @@ const updateInvestmentPrice = async () => {
 			await safeRun('arrangeExchangeRate', arrangeExchangeRate);
 			await safeRun('arrangeUSInvestmemt', arrangeUSInvestmemt);
 			await safeRun('updateAccountList', updateAccountList);
-			await safeRun('sendBalanceUpdateNotification', sendBalanceUpdateNotification);
+			await safeRun('sendBalanceUpdateNotification', () => sendBalanceUpdateNotification('US'));
 			await safeRun('updateLifeTimePlanner', updateLifeTimePlanner);
 			await safeRun('updateNetWorth', updateNetWorth);
 			await safeRun('updateNetWorthDaily', updateNetWorthDaily);
