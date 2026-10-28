@@ -35,7 +35,9 @@ function DesignPage ({
 		outerSx.height = { md: '100vh' };
 		outerSx.display = { md: 'flex' };
 		outerSx.flexDirection = { md: 'column' };
-		outerSx.overflow = { md: 'hidden' };
+		// hidden 이면 자식의 최소 높이(예: 트리맵 420px)보다 창이 낮을 때 아래가 잘린다.
+		// auto 면 그때만 이 상자 안에서 스크롤된다 — 상자가 100vh 라 창 스크롤은 여전히 없다.
+		outerSx.overflow = { md: 'auto' };
 	} else {
 		outerSx.minHeight = '100vh';
 	}

@@ -176,11 +176,10 @@ const MonthlyExpense = () => {
 			spacing={2}
 			sx={{
 				flex: 1,
-				// Concrete viewport-relative height so the inner flex:1 panel actually receives
-				// remaining space. Offset accounts for sidebar header gutter + DesignPage title +
-				// section pill row + sub-tab row + page padding.
-				height: { xs: 'auto', md: 'calc(100vh - 140px)' },
-				minHeight: { xs: 720, md: 'calc(100vh - 140px)' },
+				// 데스크톱 높이는 ReportMain 이 DesignPage fillViewport 로 화면에 맞춰 준다.
+				// 여기서는 그 남은 공간을 채우기만 한다 — 예전처럼 100vh - 140px 로 따로
+				// 잡으면 실제 상단 영역과 어긋나 페이지 스크롤이 하나 더 생긴다.
+				minHeight: { xs: 720, md: 0 },
 				display: 'flex',
 				flexDirection: 'column'
 			}}

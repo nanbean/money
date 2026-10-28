@@ -143,7 +143,9 @@ function InvestmentPortfolio () {
 	};
 
 	return (
-		<Stack spacing={2}>
+		// 데스크톱 높이는 ReportMain 이 DesignPage fillViewport 로 화면에 맞춰 준다.
+		// 트리맵 패널이 그 남은 높이를 채운다.
+		<Stack spacing={2} sx={{ flex: { md: 1 }, minHeight: { md: 0 } }}>
 			{/* Header panel */}
 			<Box sx={panelSx}>
 				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
@@ -167,9 +169,12 @@ function InvestmentPortfolio () {
 			</Box>
 
 			{/* Treemap panel */}
-			<Box sx={panelSx}>
+			{/* minHeight 는 auto 로 둔다 — 0 이면 낮은 창에서 패널 테두리가 트리맵보다 먼저 줄어든다. */}
+			<Box sx={{ ...panelSx, flex: { md: 1 }, display: { md: 'flex' }, flexDirection: 'column' }}>
 				{allInvestments.length > 0 ? (
-					<Box sx={{ height: { xs: 420, md: 600 } }}>
+					// 모바일 420px 고정. 데스크톱은 남은 높이를 채우되 420px 아래로는 줄이지
+					// 않는다 (그보다 낮은 창에서는 DesignPage 상자가 스크롤된다).
+					<Box sx={{ height: { xs: 420, md: 'auto' }, flex: { md: 1 }, minHeight: { md: 420 } }}>
 						<ReactEcharts
 							option={option}
 							style={{ height: '100%', width: '100%' }}
