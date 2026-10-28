@@ -134,28 +134,31 @@ export function General () {
 			</ListItem>
 			<Divider component="li" sx={{ my: 1 }} />
 			<ListSubheader sx={{ bgcolor: 'transparent' }}>Currency</ListSubheader>
+			{/* ListItemSecondaryAction 은 오른쪽 컨트롤 자리로 48px 만 비워 두고 절대 위치로
+			    올린다. 스위치는 들어가지만 ₩/$(80px)는 넘쳐서 모바일에서 설명 글자가 버튼 밑으로
+			    들어갔다. Theme Mode 처럼 같은 줄 흐름에 두어 글자가 버튼 앞에서 줄바꿈되게 한다. */}
 			<ListItem>
 				<ListItemText
 					id="currency-label"
 					primary="Display Currency"
 					secondary="Select the currency for displaying amounts"
+					sx={{ minWidth: 0, flex: '1 1 auto', marginRight: 1.5 }}
 				/>
-				<ListItemSecondaryAction>
-					<ToggleButtonGroup
-						size="small"
-						value={currency}
-						exclusive
-						onChange={handleCurrencyChange}
-						aria-labelledby="currency-label"
-					>
-						<ToggleButton value="KRW" aria-label="Korean Won" sx={{ ...toggleSx, width: 40 }}>
-							₩
-						</ToggleButton>
-						<ToggleButton value="USD" aria-label="US Dollar" sx={{ ...toggleSx, width: 40 }}>
-							$
-						</ToggleButton>
-					</ToggleButtonGroup>
-				</ListItemSecondaryAction>
+				<ToggleButtonGroup
+					size="small"
+					value={currency}
+					exclusive
+					onChange={handleCurrencyChange}
+					aria-labelledby="currency-label"
+					sx={{ flexShrink: 0 }}
+				>
+					<ToggleButton value="KRW" aria-label="Korean Won" sx={{ ...toggleSx, width: 40 }}>
+						₩
+					</ToggleButton>
+					<ToggleButton value="USD" aria-label="US Dollar" sx={{ ...toggleSx, width: 40 }}>
+						$
+					</ToggleButton>
+				</ToggleButtonGroup>
 			</ListItem>
 			<ListItem>
 				<ListItemText
