@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 
 import DesignPage from '../../components/DesignPage';
+import FadeScroller from '../../components/FadeScroller';
 import MonthlyExpense from '../MonthlyExpense';
 import Dividend from '../Dividend';
 import FamilyGifts from '../FamilyGifts';
@@ -65,66 +66,76 @@ const SUB_TO_SECTION = {};
 SECTIONS.forEach(s => s.subs.forEach(sub => { SUB_TO_SECTION[sub.id] = s.id; }));
 
 function PillNav ({ items, activeId, onClick, T }) {
+	// 섹션 버튼도 모바일에서 화면을 넘으면 하위 탭과 같은 방식(FadeScroller)으로 스크롤한다.
+	// 알약 배경은 바깥 상자에 두고 안쪽만 페이드한다 — 상자에 걸면 배경까지 흐려진다.
+	// 활성 버튼 그림자가 overflow 에 잘리지 않게 안쪽에 2px 여유를 둔다.
 	return (
 		<Box sx={{
 			display: 'inline-flex',
 			background: T.surf2,
 			borderRadius: '12px',
-			padding: '4px',
-			gap: '2px',
-			overflowX: 'auto',
-			maxWidth: '100%'
+			padding: '2px',
+			maxWidth: '100%',
+			overflow: 'hidden'
 		}}>
-			{items.map(it => {
-				const active = it.id === activeId;
-				return (
-					<Box
-						key={it.id}
-						component="button"
-						type="button"
-						onClick={() => onClick(it.id)}
-						sx={{
-							padding: '8px 16px',
-							borderRadius: '9px',
-							border: 'none',
-							cursor: 'pointer',
-							background: active ? T.surf : 'transparent',
-							color: active ? T.ink : T.ink2,
-							boxShadow: active ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
-							fontFamily: 'inherit',
-							fontSize: 13,
-							fontWeight: 600,
-							whiteSpace: 'nowrap',
-							transition: 'all 0.15s'
-						}}
-					>
-						{it.label}
-						<Box component="span" sx={{ color: T.ink2, fontWeight: 400, marginLeft: '6px', fontSize: 11 }}>· {it.ko}</Box>
-					</Box>
-				);
-			})}
+			<FadeScroller activeKey={activeId} gap="2px" padding="2px" sx={{ minWidth: 0 }}>
+				{items.map(it => {
+					const active = it.id === activeId;
+					return (
+						<Box
+							key={it.id}
+							data-active={active ? 'true' : undefined}
+							component="button"
+							type="button"
+							onClick={() => onClick(it.id)}
+							sx={{
+								padding: { xs: '8px 12px', sm: '8px 16px' },
+								borderRadius: '9px',
+								border: 'none',
+								cursor: 'pointer',
+								background: active ? T.surf : 'transparent',
+								color: active ? T.ink : T.ink2,
+								boxShadow: active ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
+								fontFamily: 'inherit',
+								fontSize: 13,
+								fontWeight: 600,
+								whiteSpace: 'nowrap',
+								transition: 'all 0.15s'
+							}}
+						>
+							{it.label}
+							<Box component="span" sx={{ color: T.ink2, fontWeight: 400, marginLeft: '6px', fontSize: 11 }}>· {it.ko}</Box>
+						</Box>
+					);
+				})}
+			</FadeScroller>
 		</Box>
 	);
 }
 
 function SubTabs ({ items, activeId, onClick, T }) {
 	if (items.length <= 1) return null;
+	// 모바일에서 탭이 화면 폭을 넘으면 이 줄 안에서만 가로 스크롤한다 (예전에는 넘친 폭이
+	// 페이지를 밀었다). 잘린 쪽 페이드·스냅·선택 탭 가운데 정렬은 FadeScroller 가 한다.
+	// 밑줄은 음수 margin 대신 inset 그림자로 그린다 — overflow-x 가 auto 면 y 도
+	// 스크롤 영역이 되어 1px 세로 스크롤이 생긴다.
 	return (
-		<Box sx={{ display: 'flex', gap: '6px', borderBottom: `1px solid ${T.rule}` }}>
+		<FadeScroller activeKey={activeId} sx={{ boxShadow: `inset 0 -1px 0 ${T.rule}` }}>
 			{items.map(it => {
 				const active = it.id === activeId;
 				return (
 					<Box
 						key={it.id}
+						data-active={active ? 'true' : undefined}
 						component="button"
 						type="button"
 						onClick={() => onClick(it.id)}
 						sx={{
-							padding: '10px 16px 12px',
+							whiteSpace: 'nowrap',
+							padding: { xs: '10px 12px 12px', sm: '10px 16px 12px' },
 							background: 'transparent',
 							border: 'none',
 							borderBottom: `2px solid ${active ? T.acc.bright : 'transparent'}`,
-							marginBottom: '-1px',
 							cursor: 'pointer',
 							color: active ? T.ink : T.ink2,
 							fontFamily: 'inherit',
@@ -138,7 +149,7 @@ function SubTabs ({ items, activeId, onClick, T }) {
 					</Box>
 				);
 			})}
-		</Box>
+		</FadeScroller>
 	);
 }
 

@@ -13,6 +13,7 @@ import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 import DesignPage from '../../components/DesignPage';
+import FadeScroller from '../../components/FadeScroller';
 
 import General from '../General';
 import NotificationLog from '../NotificationLog';
@@ -117,16 +118,25 @@ export function SettingMain () {
 					color: T.ink,
 					position: { md: 'sticky' },
 					top: { md: '20px' },
-					...(isMobile ? {
-						display: 'flex',
-						flexDirection: 'row',
-						overflowX: 'auto',
-						gap: 1,
-						padding: '8px'
-					} : {})
+					// 모바일: 상자(테두리·배경)는 그대로 두고 안쪽 FadeScroller 가 가로로
+					// 스크롤한다. 페이드를 상자에 걸면 테두리까지 흐려진다.
+					...(isMobile ? { padding: 0, overflow: 'hidden' } : {})
 				}}>
-					{TABS.map(row => (
-						<Box key={row.id} sx={isMobile ? { flexShrink: 0, minWidth: 140 } : {}}>
+					{isMobile ? (
+						<FadeScroller activeKey={active} gap="8px" padding="8px">
+							{TABS.map(row => (
+								<Box key={row.id} data-active={row.id === active ? 'true' : undefined} sx={{ minWidth: 140 }}>
+									<NavItem
+										row={row}
+										active={row.id === active}
+										onClick={() => onSelect(row.id)}
+										T={T}
+									/>
+								</Box>
+							))}
+						</FadeScroller>
+					) : TABS.map(row => (
+						<Box key={row.id}>
 							<NavItem
 								row={row}
 								active={row.id === active}
