@@ -1,11 +1,13 @@
 // 기간별 수익률: 1·3·5·10년 / 전체 연환산 + 올해 YTD.
 //
-// 세 가지를 나란히 본다.
-//   twr  — 시간가중 수익률. 연도별 Modified Dietz(useReturnReport) 를 이어 붙여 연환산한다.
-//          입출금 시점의 영향을 뺀 '운용 실력'.
-//   spx  — 같은 구간의 S&P 500(SPY 종가) 연환산. 가격 기준이라 배당은 빠져 있다.
-//   xirr — 금액가중 수익률. 같은 입출금을 날짜 그대로 넣어 푼다. 언제 얼마를 넣고
-//          뺐는지까지 반영한 '체감 수익률'.
+// 시간가중끼리, 금액가중끼리 비교하도록 넷을 나란히 본다.
+//   twr     — 시간가중 수익률. 연도별 Modified Dietz(useReturnReport) 를 이어 붙여 연환산한다.
+//             입출금 시점의 영향을 뺀 '운용 실력'.
+//   spx     — 같은 구간의 S&P 500(SPY 종가) 연환산 (twr 과 비교). 가격 기준이라 배당은 빠져 있다.
+//   xirr    — 금액가중 수익률. 같은 입출금을 날짜 그대로 넣어 푼다. 언제 얼마를 넣고
+//             뺐는지까지 반영한 '체감 수익률'.
+//   spxXirr — 같은 입출금을 SPY 에 했다면의 XIRR (PME, xirr 과 비교). xirr 을 spx 와 바로
+//             비교하면 큰돈이 들어간 시기의 성과가 실력처럼 보인다.
 //
 // 연환산 구간은 완결된 연도만 쓴다. 진행 중인 올해를 한 해로 세면 연환산이 왜곡되므로
 // 올해는 YTD(연환산하지 않은 누적) 로 따로 낸다.
@@ -108,6 +110,27 @@ const xirrFor = (cashFlows, startDate, startValue, endDate, endValue) => {
 	return xirr(flows.filter(f => f.amount !== 0));
 };
 
+// S&P 500 XIRR (PME, 공개시장 등가): 같은 날 같은 금액을 SPY 에 넣고 뺐다면.
+// 시작 평가액으로 SPY 를 사고, 입금일엔 그 금액만큼 더 사고 출금일엔 판다. 끝에 남은
+// SPY 평가액을 받는 것으로 보고 푼다. 현금흐름이 내 XIRR 과 같으므로 두 값의 차이는
+// '무엇에 투자했나'만 남는다. SPY 시계열이 구간을 덮지 못하면 null.
+const spxXirrFor = (cashFlows, series, startDate, startValue, endDate) => {
+	const startClose = closeAt(series, startDate);
+	const endClose = closeAt(series, endDate);
+	if (!startClose || !endClose) return null;
+	let units = (startValue || 0) / startClose;
+	const flows = [{ date: startDate, amount: -(startValue || 0) }];
+	for (const f of cashFlows) {
+		if (f.date <= startDate || f.date > endDate) continue;
+		const close = closeAt(series, f.date);
+		if (!close) return null;
+		units += f.amount / close;
+		flows.push({ date: f.date, amount: -f.amount });
+	}
+	flows.push({ date: endDate, amount: units * endClose });
+	return xirr(flows.filter(f => f.amount !== 0));
+};
+
 /**
  * @param {object} p
  * @param {Array<{date, netWorth, returnRate}>} p.chartData  useReturnReport 의 연말 행 (오름차순)
@@ -134,7 +157,8 @@ export const computePeriodReturns = ({ chartData = [], cashFlows = [], sp500 = [
 				...p,
 				twr,
 				spx: spxReturn(sp500, startDate, today, null),
-				xirr: null // 1년 미만은 연환산 금액가중 수익률이 과장되므로 내지 않는다
+				xirr: null, // 1년 미만은 연환산 금액가중 수익률이 과장되므로 내지 않는다
+				spxXirr: null
 			};
 		}
 
@@ -143,7 +167,7 @@ export const computePeriodReturns = ({ chartData = [], cashFlows = [], sp500 = [
 			: p.years;
 		const years = span > 0 ? Array.from({ length: span }, (_, i) => lastCompleted - span + 1 + i) : [];
 		const complete = years.length > 0 && years.every(y => rates.has(y));
-		if (!complete) return { ...p, span, twr: null, spx: null, xirr: null };
+		if (!complete) return { ...p, span, twr: null, spx: null, xirr: null, spxXirr: null };
 
 		const startYear = years[0] - 1;
 		const startDate = yearEnd(startYear);
@@ -153,7 +177,8 @@ export const computePeriodReturns = ({ chartData = [], cashFlows = [], sp500 = [
 			span,
 			twr: annualize(years.map(y => rates.get(y))),
 			spx: spxReturn(sp500, startDate, endDate, span),
-			xirr: xirrFor(flows, startDate, valueAt(startYear), endDate, valueAt(lastCompleted))
+			xirr: xirrFor(flows, startDate, valueAt(startYear), endDate, valueAt(lastCompleted)),
+			spxXirr: spxXirrFor(flows, sp500, startDate, valueAt(startYear), endDate)
 		};
 	});
 };

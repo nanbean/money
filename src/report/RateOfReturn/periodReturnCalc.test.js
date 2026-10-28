@@ -80,4 +80,28 @@ describe('computePeriodReturns', () => {
 		expect(res.ytd.spx).toBeCloseTo(0.1, 6);
 		expect(res['10y'].spx).toBeNull(); // 데이터 자체가 10년이 안 됨
 	});
+
+	test('S&P 500 XIRR: 같은 입출금을 SPY 에 했다면 — SPY 가 연 10% 면 10%', () => {
+		// SPY 가 매일 연 10% 로 오른다고 보고 일별 종가를 만든다.
+		const day = 24 * 60 * 60 * 1000;
+		const t0 = Date.UTC(2020, 11, 31);
+		const sp500 = [];
+		for (let t = t0; t <= Date.UTC(2026, 9, 27); t += day) {
+			sp500.push({ date: new Date(t).toISOString().slice(0, 10), close: 100 * Math.pow(1.1, (t - t0) / day / 365) });
+		}
+		const chart = makeChart(2020, 1000, [0.1, 0.1, 0.1, 0.1, 0.1, 0.03]);
+		// 중간 입금·출금이 있어도 SPY 수익률이 일정하면 PME XIRR 은 그 수익률이다.
+		const cashFlows = [{ date: '2022-06-30', amount: 500 }, { date: '2024-03-15', amount: -200 }];
+		const res = byKey(computePeriodReturns({ chartData: chart, cashFlows, sp500, today }));
+		expect(res['5y'].spxXirr).toBeCloseTo(0.1, 3);
+		expect(res.ytd.spxXirr).toBeNull();
+	});
+
+	test('S&P 500 XIRR: SPY 시계열이 구간을 덮지 못하면 null', () => {
+		const chart = makeChart(2015, 1000, Array(11).fill(0.1));
+		const sp500 = [{ date: '2020-12-31', close: 100 }, { date: '2025-12-31', close: 160 }];
+		const res = byKey(computePeriodReturns({ chartData: chart, sp500, today }));
+		expect(res['10y'].spxXirr).toBeNull();
+		expect(res['5y'].spxXirr).toBeCloseTo(Math.pow(1.6, 1 / 5) - 1, 3);
+	});
 });
