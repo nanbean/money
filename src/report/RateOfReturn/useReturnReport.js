@@ -93,8 +93,23 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 	const finalCash = data[data.length - 1]?.cashBalance || 0;
 	const capitalGains = finalValue - initialValue - totalCashFlow;
 
+	// XIRR 용 날짜별 입출금. 위 depositWithdrawalSum 과 같은 거래·같은 환산을 쓴다 —
+	// 그래야 시간가중(연도별 Modified Dietz)과 금액가중(XIRR)이 같은 정의로 비교된다.
+	const usdCashAccounts = new Set(allCashAccounts.filter(j => {
+		const account = accountList.find(acc => acc.name === j.split('_')[0]);
+		return account && account.currency === 'USD';
+	}));
+	const cashAccountIds = new Map(allCashAccounts.map(j => [`account:Bank:${j}`, j]));
+	const cashFlows = cashTransactions
+		.filter(t => cashAccountIds.has(t.accountId) && t.amount)
+		.map(t => ({
+			date: t.date,
+			amount: usdCashAccounts.has(cashAccountIds.get(t.accountId)) ? t.amount * exchangeRate : t.amount
+		}));
+
 	return {
 		chartData: data,
+		cashFlows,
 		geometricMean,
 		overallSummary: {
 			finalValue,

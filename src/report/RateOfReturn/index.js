@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 
 import ReturnYearlyTable from './YearlyTable';
+import PeriodReturns from './PeriodReturns';
 import AccountFilter from '../../components/AccountFilter';
 
 import { formatPercentTick } from '../../utils/axisFormat';
@@ -20,8 +21,10 @@ import { sDisplay, sMono, fmtCurrency } from '../../utils/designTokens';
 import {
 	getHistoryListAction
 } from '../../actions/couchdbActions';
+import { getSp500BenchmarkAction } from '../../actions/benchmarkActions';
 
 import useReturnReport from './useReturnReport';
+import { computePeriodReturns } from './periodReturnCalc';
 import { isInvestmentCashAccountId } from '../../utils/investmentCash';
 
 const ChartTooltip = ({ active, payload, label, T }) => {
@@ -75,6 +78,12 @@ export function RateOfReturn () {
 		dispatch(getHistoryListAction());
 	}, [dispatch]);
 
+	// 기간별 수익률의 S&P 500 비교용. Investments 화면과 같은 서버 캐시(SPY 종가)를 쓴다.
+	const sp500Benchmark = useSelector((state) => state.sp500Benchmark || []);
+	useEffect(() => {
+		if (sp500Benchmark.length === 0) dispatch(getSp500BenchmarkAction());
+	}, [sp500Benchmark.length, dispatch]);
+
 	// useState's initial value is captured on first render, but Redux data may
 	// load afterwards or new investment accounts may appear over time. Sync
 	// filteredAccounts with allInvestmentAccounts until the user touches it.
@@ -90,10 +99,16 @@ export function RateOfReturn () {
 		setFilteredAccounts(e);
 	};
 
-	const { chartData, geometricMean, overallSummary } = useReturnReport(
+	const { chartData, cashFlows, geometricMean, overallSummary } = useReturnReport(
 		allInvestments, allAccountsTransactions, investementTransactions, cashTransactions,
 		historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate
 	);
+
+	const periodReturns = useMemo(() => {
+		const now = new Date();
+		const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+		return computePeriodReturns({ chartData, cashFlows, sp500: sp500Benchmark, today });
+	}, [chartData, cashFlows, sp500Benchmark]);
 
 	const panelSx = {
 		background: T.surf,
@@ -119,8 +134,10 @@ export function RateOfReturn () {
 			spacing={2}
 			sx={{
 				flex: 1,
-				height: { xs: 'auto', md: 'calc(100vh - 140px)' },
-				minHeight: { xs: 720, md: 'calc(100vh - 140px)' },
+				// 데스크톱도 높이를 화면에 맞추지 않는다. Yearly breakdown 은 연도 수만큼의
+				// 짧은 표라 전부 펼치고 페이지 스크롤 하나로 본다 (화면에 맞추면 남는 공간만
+				// 표가 받아 낮은 화면에서 두 줄만 보이거나 표·페이지 스크롤이 겹쳤다).
+				minHeight: { xs: 720, md: 0 },
 				display: 'flex',
 				flexDirection: 'column'
 			}}
@@ -226,6 +243,9 @@ export function RateOfReturn () {
 				)}
 			</Box>
 
+			{/* 기간별 연환산 — 1·3·5·10년 / 전체, S&P 500 비교, XIRR */}
+			{periodReturns.length > 0 && <PeriodReturns periods={periodReturns} />}
+
 			{/* Chart panel */}
 			<Box sx={panelSx}>
 				<Typography sx={{ ...sDisplay, fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 1 }}>
@@ -264,15 +284,13 @@ export function RateOfReturn () {
 				</Box>
 			</Box>
 
-			{/* Yearly table panel — fills remaining vertical space (desktop) or
-			    takes natural height (mobile) so the inner 600px table wrapper
-			    isn't clipped by an outer flex:1 panel. */}
+			{/* Yearly table panel — 모든 화면에서 내용 높이 그대로. 데스크톱은 표를 전부
+			    펼치고, 모바일은 안쪽 600px 래퍼가 스크롤을 가둔다. */}
 			<Box sx={{
 				...panelSx,
-				flex: { xs: '0 0 auto', md: 1 },
+				flex: '0 0 auto',
 				display: 'flex',
 				flexDirection: 'column',
-				minHeight: { xs: 'auto', md: 0 },
 				padding: 0,
 				overflow: { xs: 'visible', md: 'hidden' }
 			}}>
@@ -289,8 +307,8 @@ export function RateOfReturn () {
 					// Mobile: drop flex (its `1 1 0%` resets flex-basis and lets the
 					// native table grow to its full content height). Pin a fixed pixel
 					// height so the table's maxHeight:100% can confine the scroll.
-					flex: { md: 1 },
-					minHeight: { md: 0 },
+					// Desktop: height auto 라 표의 maxHeight:100% 가 적용되지 않아 모든
+					// 행이 펼쳐진다. 좁은 창의 가로 스크롤만 표 안에 남는다.
 					position: 'relative',
 					height: { xs: 600, md: 'auto' }
 				}}>
