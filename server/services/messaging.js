@@ -52,6 +52,9 @@ exports.removeToken = async (removeToken) => {
 	return true;
 };
 
+// 휴대폰이 잠시 오프라인일 때 FCM·APNs 가 보관하는 시간.
+const PUSH_TTL_SECONDS = 24 * 60 * 60;
+
 exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 	const { tokens } = await readMessagingFile();
 
@@ -66,6 +69,17 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 			title: title,
 			body: body,
 			click_action: `./${target}`
+		},
+		// 우선순위를 지정하지 않은 데이터 메시지는 APNs 에서 '보통' 우선순위가 되어,
+		// 휴대폰이 저전력·집중 모드이거나 네트워크가 바뀌는 중이면 늦거나 버려진다
+		// (2026-10-28 15:30 국장 마감 알림이 서버·FCM 은 정상인데 도착하지 않았다).
+		// 하루 몇 건뿐인 알림이라 높음으로 보내고, 잠시 오프라인이어도 하루 동안은
+		// 다시 연결되면 받도록 TTL 을 준다.
+		webpush: {
+			headers: {
+				Urgency: 'high',
+				TTL: String(PUSH_TTL_SECONDS)
+			}
 		}
 	};
 
@@ -87,6 +101,18 @@ exports.sendNotification = async (title, body, type = 'icon', target = '') => {
 				}
 				return Promise.reject(error);
 			});
+	}));
+
+	// 알림마다 FCM 응답을 남긴다. 도착하지 않았을 때 '서버가 안 보냈다 / FCM 이 거부했다 /
+	// 보냈는데 휴대폰에서 사라졌다'를 가르려면 메시지 ID 가 필요하다. 토큰은 끝 6자리만.
+	console.log('[push] sent', JSON.stringify({
+		title,
+		results: settledPromises.map((r, i) => ({
+			token: `…${String(tokens[i]).slice(-6)}`,
+			status: r.status,
+			id: r.status === 'fulfilled' ? String(r.value).split('/').pop() : undefined,
+			error: r.status === 'rejected' ? (r.reason && (r.reason.code || r.reason.message)) : undefined
+		}))
 	}));
 
 	if (invalidTokens.length > 0) {
