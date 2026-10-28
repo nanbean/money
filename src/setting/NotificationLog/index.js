@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
@@ -16,6 +17,19 @@ import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 
 import { getNotificationsAction } from '../../actions/notificationActions';
+import { summarizeReceipts, WINDOW_DAYS } from './receiptSummary';
+
+const PAGE_FIRST = 20;
+const PAGE_MORE = 50;
+const PAGE_MAX = 500;
+
+const fmtAgo = (ms) => {
+	const min = Math.max(0, Math.round(ms / 60000));
+	if (min < 60) return `${min}분 전`;
+	const hours = Math.round(min / 60);
+	if (hours < 48) return `${hours}시간 전`;
+	return `${Math.round(hours / 24)}일 전`;
+};
 
 const parseDateFromId = (id) => {
 	if (!id || typeof id !== 'string') return null;
@@ -33,10 +47,24 @@ export function NotificationLog () {
 	const T = useT();
 	const dispatch = useDispatch();
 	const notifications = useSelector((state) => state.notifications);
+	// 처음엔 20건(약 일주일치). '더 보기'로 50건씩 늘린다 — 카드 명세서와 한 달치를
+	// 대조하려면 60~100건이 필요하다. 서버가 500건에서 자른다.
+	const [size, setSize] = useState(PAGE_FIRST);
+	const [loadingMore, setLoadingMore] = useState(false);
 
 	useEffect(() => {
-		dispatch(getNotificationsAction());
+		dispatch(getNotificationsAction(PAGE_FIRST));
 	}, [dispatch]);
+
+	const loadMore = () => {
+		const next = Math.min(size + PAGE_MORE, PAGE_MAX);
+		setLoadingMore(true);
+		Promise.resolve(dispatch(getNotificationsAction(next)))
+			.finally(() => {
+				setSize(next);
+				setLoadingMore(false);
+			});
+	};
 
 	const enriched = useMemo(() => {
 		const list = Array.isArray(notifications) ? notifications : [];
@@ -47,12 +75,12 @@ export function NotificationLog () {
 		}));
 	}, [notifications]);
 
-	const counts = useMemo(() => ({
-		total: enriched.length,
-		withTx: enriched.filter(n => n.transaction).length
-	}), [enriched]);
-
-	const recent = useMemo(() => enriched.slice(0, 3), [enriched]);
+	// 상단은 '알림이 제대로 들어오고 있나'를 본다 — 마지막 수신, 최근 7일 건수, 앱별 건수.
+	// (예전의 최근 3건 카드는 바로 아래 목록 맨 위와 같았고, 건수는 불러온 개수일 뿐이었다.)
+	const receipt = useMemo(
+		() => summarizeReceipts(enriched, size, Date.now()),
+		[enriched, size]
+	);
 
 	const grouped = useMemo(() => {
 		const map = new Map();
@@ -218,67 +246,34 @@ export function NotificationLog () {
 						}}>
 							Notification log · 알림 기록
 						</Typography>
-						<Typography sx={{ ...sDisplay, fontSize: { xs: 28, md: 36 }, fontWeight: 700, marginTop: '8px', lineHeight: 1.05 }}>
-							{counts.total}
-							<Box component="span" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 400, fontSize: 14, marginLeft: '8px' }}>
-								notifications
-							</Box>
-						</Typography>
-						<Stack direction="row" spacing={1.5} sx={{ marginTop: '10px', fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap' }}>
-							<span>{counts.withTx} parsed transactions</span>
-							<span>·</span>
-							<span>{counts.total - counts.withTx} system</span>
+						<Stack direction="row" alignItems="center" spacing={1} sx={{ marginTop: '10px' }}>
+							<Box sx={{
+								width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+								background: receipt.stale ? '#fbbf24' : '#34d399',
+								boxShadow: `0 0 0 4px ${receipt.stale ? 'rgba(251,191,36,0.25)' : 'rgba(52,211,153,0.25)'}`
+							}} />
+							<Typography sx={{ ...sDisplay, fontSize: { xs: 24, md: 30 }, fontWeight: 700, lineHeight: 1.1 }}>
+								{receipt.lastReceivedAt ? `마지막 수신 ${fmtAgo(receipt.sinceLastMs)}` : '수신 기록 없음'}
+							</Typography>
 						</Stack>
+						{receipt.lastReceivedAt && (
+							<Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: '6px' }}>
+								{moment(receipt.lastReceivedAt).format('YYYY-MM-DD HH:mm')}
+							</Typography>
+						)}
+						<Stack direction="row" spacing={1.5} sx={{ marginTop: '12px', fontSize: 12, color: 'rgba(255,255,255,0.85)', flexWrap: 'wrap', rowGap: 0.5 }}>
+							<span>최근 {WINDOW_DAYS}일 {receipt.recentCount}{receipt.recentPartial ? '+' : ''}건</span>
+							{receipt.sources.map(([name, count]) => (
+								<span key={name}>· {name} {count}</span>
+							))}
+						</Stack>
+						{receipt.stale && (
+							<Typography sx={{ fontSize: 12, color: '#fde68a', marginTop: '10px' }}>
+								이틀 넘게 새 알림이 없습니다. 휴대폰 단축어 자동화와 카드 앱 알림을 확인해 보세요.
+							</Typography>
+						)}
 					</Box>
 				</Stack>
-
-				{recent.length > 0 && (
-					<Box sx={{
-						marginTop: '22px',
-						display: 'grid',
-						gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-						gap: '10px',
-						position: 'relative'
-					}}>
-						{recent.map(n => {
-							const tx = n.transaction;
-							const Icon = tx ? resolveCategoryIcon(tx.category) : NotificationsNoneOutlinedIcon;
-							return (
-								<Box key={n.key} sx={{
-									background: 'rgba(255,255,255,0.08)',
-									border: '1px solid rgba(255,255,255,0.12)',
-									borderRadius: '12px',
-									padding: '12px',
-									display: 'flex',
-									alignItems: 'center',
-									gap: '10px'
-								}}>
-									<Box sx={{
-										width: 32,
-										height: 32,
-										borderRadius: '8px',
-										background: tx ? resolveCategoryColor(tx.category) : 'rgba(255,255,255,0.18)',
-										color: '#fff',
-										display: 'inline-flex',
-										alignItems: 'center',
-										justifyContent: 'center',
-										flexShrink: 0
-									}}>
-										<Icon sx={{ fontSize: 14 }} />
-									</Box>
-									<Box sx={{ flex: 1, minWidth: 0 }}>
-										<Typography sx={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-											{n.title || '(no title)'}
-										</Typography>
-										<Typography sx={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-											{tx ? `${tx.payee || ''} · ${fmtCurrencyFull(tx.amount, tx.currency)}` : (n.date || shortPackage(n.packageName))}
-										</Typography>
-									</Box>
-								</Box>
-							);
-						})}
-					</Box>
-				)}
 			</Box>
 
 			{/* List */}
@@ -326,6 +321,15 @@ export function NotificationLog () {
 						</Box>
 					);
 				})}
+
+				{/* 요청한 만큼 다 왔으면 더 있을 수 있다. 덜 왔으면 전부 받은 것이다. */}
+				{enriched.length >= size && size < PAGE_MAX && (
+					<Box sx={{ textAlign: 'center', marginTop: 1 }}>
+						<Button variant="outlined" size="small" onClick={loadMore} disabled={loadingMore} sx={{ textTransform: 'none' }}>
+							{loadingMore ? '불러오는 중…' : `더 보기 · ${PAGE_MORE}건`}
+						</Button>
+					</Box>
+				)}
 			</Box>
 		</Stack>
 	);

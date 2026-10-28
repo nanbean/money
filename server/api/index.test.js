@@ -187,12 +187,25 @@ describe('api 라우터', () => {
 			expect(notification.getHistory).toHaveBeenCalledWith(20);
 		});
 
-		test('GET /notifications 는 size 쿼리를 전달한다', async () => {
+		test('GET /notifications 는 size 쿼리를 정수로 바꿔 전달한다', async () => {
 			notification.getHistory.mockResolvedValue([]);
 
-			await runRoute('GET', '/notifications', makeCtx({ query: { size: '5' } }));
+			await runRoute('GET', '/notifications', makeCtx({ query: { size: '70' } }));
 
-			expect(notification.getHistory).toHaveBeenCalledWith('5');
+			expect(notification.getHistory).toHaveBeenCalledWith(70);
+		});
+
+		test.each([
+			['9999', 500],
+			['0', 1],
+			['-5', 1],
+			['abc', 20]
+		])('GET /notifications size=%s 는 %d 로 자른다', async (size, expected) => {
+			notification.getHistory.mockResolvedValue([]);
+
+			await runRoute('GET', '/notifications', makeCtx({ query: { size } }));
+
+			expect(notification.getHistory).toHaveBeenCalledWith(expected);
 		});
 
 		test('POST /addTransactionWithNotification 은 body 를 그대로 넘긴다', async () => {

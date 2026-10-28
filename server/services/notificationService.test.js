@@ -51,47 +51,24 @@ describe('notificationService', () => {
 	});
 
 	describe('listNotifications', () => {
-		test('should return the last `size` notifications correctly', async () => {
-			// Arrange: Mock the DB to return notifications with and without titles.
+		test('최신순 그대로, 화면이 쓰는 필드를 모두 돌려준다', async () => {
+			// Arrange: DB 는 최신순(descending)으로 준다.
+			const tx = { date: '2026-10-22', amount: -8910, payee: '삼천리(주)' };
 			notificationsDB.list.mockResolvedValue({
 				rows: [
-					{ doc: { title: 'T5', text: 'Notification 5' } },
-					{ doc: { text: 'Notification 4' } },
-					{ doc: { title: 'T3', text: 'Notification 3' } }
+					{ doc: { _id: '2026-10-22:b', _rev: '1-x', packageName: 'ios.KBPay', title: 'KBPay', text: '승인', transaction: tx } },
+					{ doc: { _id: '2026-10-21:a', _rev: '1-y', text: 'Notification 4' } }
 				]
 			});
 
-			// Act: Request the last 3 notifications.
+			// Act
 			const result = await listNotifications(3);
 
-			// Assert: Verify that the list method was called with limit and descending,
-			// and the result is correctly reversed to be in chronological order.
+			// Assert: 순서를 뒤집지 않고, _id·packageName·transaction 을 남긴다(_rev 는 뺀다).
 			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true, descending: true, limit: 3 });
 			expect(result).toEqual([
-				{ title: 'T3', text: 'Notification 3' },
-				{ title: '', text: 'Notification 4' },
-				{ title: 'T5', text: 'Notification 5' }
-			]);
-		});
-
-		test('should return all notifications if `size` is larger than the total number', async () => {
-			// Arrange: Mock a response with fewer notifications than the requested size, in descending order.
-			const mockDbResponse = {
-				rows: [
-					{ doc: { text: 'Notification 2' } },
-					{ doc: { text: 'Notification 1' } }
-				]
-			};
-			notificationsDB.list.mockResolvedValue(mockDbResponse);
-
-			// Act: Request 5 notifications.
-			const result = await listNotifications(5);
-
-			// Assert: The result should contain all available notifications, in the correct order.
-			expect(notificationsDB.list).toHaveBeenCalledWith({ include_docs: true, descending: true, limit: 5 });
-			expect(result).toEqual([
-				{ title: '', text: 'Notification 1' },
-				{ title: '', text: 'Notification 2' }
+				{ _id: '2026-10-22:b', packageName: 'ios.KBPay', title: 'KBPay', text: '승인', transaction: tx },
+				{ _id: '2026-10-21:a', packageName: '', title: '', text: 'Notification 4', transaction: null }
 			]);
 		});
 

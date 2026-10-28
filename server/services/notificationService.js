@@ -20,13 +20,20 @@ const addNotification = async (notification) => {
 	await notificationDB.addNotification(notification);
 };
 
+// Settings > Notification 화면용. 최신순 그대로 돌려준다.
+//
+// 예전에는 title·text 만 남기고 순서를 뒤집었다. 그래서 화면이 쓰는 _id(날짜 묶음)·
+// packageName·transaction(기록된 거래)이 빠져 모든 알림이 '날짜 미상'으로 묶이고
+// 상단 '최근 3건'이 가장 오래된 3건을 보여 줬다.
 const listNotifications = async (size) => {
 	const notifications = await notificationDB.listNotifications(size);
-	// The result is in descending order (newest first), so we reverse it to get chronological order.
 	return notifications.map(i => ({
+		_id: i._id,
+		packageName: i.packageName || '',
 		title: i.title || '',
-		text: i.text || ''
-	})).reverse();
+		text: i.text || '',
+		transaction: i.transaction || null
+	}));
 };
 
 // 그 시장 보유 종목을 평가금액(종가 × 수량) 순으로 줄 세워 위에서 자른다.

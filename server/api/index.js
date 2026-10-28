@@ -94,8 +94,12 @@ api.post('/testNotification', async (ctx) => {
 	ctx.body = { return: true };
 });
 
+// 화면의 '더 보기'가 개수를 늘려 다시 부른다. 쿼리 문자열이 그대로 CouchDB limit 로
+// 가지 않게 정수로 바꾸고 1~500 으로 자른다.
+const MAX_NOTIFICATIONS = 500;
 api.get('/notifications', async (ctx) => {
-	const size = ctx.request.query.size || 20;
+	const requested = parseInt(ctx.request.query.size, 10);
+	const size = Math.min(Math.max(Number.isFinite(requested) ? requested : 20, 1), MAX_NOTIFICATIONS);
 	const history = await notification.getHistory(size);
 
 	ctx.body = history;
