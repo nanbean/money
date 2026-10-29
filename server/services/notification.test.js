@@ -1292,6 +1292,26 @@ describe('notification service', () => {
 					});
 				});
 
+				// iOS 가 한글을 자모로 분해해(NFD) 보내는 경우가 있다. 2026-10-28 17:14 실제 수신분은
+				// '원'·'승인'이 분해돼 있어 실제 결제가 no-amount 로 버려졌다.
+				it('자모로 분해된(NFD) 한글도 기록하고, 상호는 완성형으로 남긴다', async () => {
+					// Arrange
+					const nfd = '\n도미노피자남동탄점\n22,500원 승인\nLOCA LIKIT 2.0(7*2*)\n일시불, 10/28 17:14\n누적금액 179,945원'.normalize('NFD');
+					expect(nfd).not.toBe(nfd.normalize('NFC'));
+
+					// Act
+					await addTransaction({ packageName: 'ios.lottecard', title: 'LotteCard'.normalize('NFD'), text: nfd });
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						date: moment('10/28', 'MM/DD').format('YYYY-MM-DD'),
+						amount: -22500,
+						payee: '도미노피자남동탄점',
+						accountId: 'account:CCard:생활비카드'
+					});
+					expect(transactionService.addTransaction.mock.calls[0][0].payee).toBe('도미노피자남동탄점'.normalize('NFC'));
+				});
+
 				// 상호에 공백이 들어간다 — 첫 줄을 통째로 쓴다.
 				it('상호의 공백을 유지한다', async () => {
 					// Act

@@ -1151,11 +1151,25 @@ const hasMonetaryAmount = (text) =>
 // 보내는 쪽을 고치는 게 맞지만 폰 설정은 서버 배포와 따로 움직인다. 오타 하나
 // 때문에 거래를 잃는 것보다는 받아 주는 편이 낫다. 제대로 온 packageName 이
 // 있으면 그쪽이 이긴다.
+//
+// 한글은 완성형(NFC)으로 맞춘다. iOS 가 가끔 자모로 분해된 형태(NFD)로 보낸다 —
+// 2026-10-28 17:14 롯데카드 '22,500원 승인' 의 '원'이 U+C6D0 이 아니라
+// U+110B U+116F U+11AB 로 와서, 화면에는 같아 보이는데 파서의 '원'·'승인' 과
+// 금액 판정이 모두 빗나가 실제 결제가 no-amount 로 조용히 버려졌다. 받는 즉시
+// 정규화하면 모든 파서에 한 번에 적용된다.
+const toNFC = (value) => (typeof value === 'string' ? value.normalize('NFC') : value);
+
 const normalizeBody = (body) => {
-	if (!body || body.packageName || !body.packagaName) {
+	if (!body) {
 		return body;
 	}
-	return { ...body, packageName: body.packagaName };
+	const packageName = body.packageName || body.packagaName;
+	return {
+		...body,
+		...(packageName ? { packageName } : {}),
+		title: toNFC(body.title),
+		text: toNFC(body.text)
+	};
 };
 
 exports.addTransaction = async function (rawBody) {
