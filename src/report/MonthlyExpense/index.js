@@ -261,13 +261,18 @@ const MonthlyExpense = () => {
 					)}
 				</Stack>
 				<Box sx={{
-					// Mobile: drop flex so the explicit pixel height wins. With flex:1, the
-					// "1 1 0%" shorthand resets flex-basis to 0 and overrides height:600,
-					// collapsing the inner area to 0 and hiding the grid.
+					// Mobile: drop flex so the explicit height wins. With flex:1, the
+					// "1 1 0%" shorthand resets flex-basis to 0 and overrides the height,
+					// collapsing the inner area to 0.
+					//
+					// 모바일 표는 높이를 고정하지 않는다 — 600px 로 가두면 표 안 스크롤과
+					// 페이지 스크롤이 겹쳤다. auto 면 표의 maxHeight:100% 가 적용되지 않아
+					// 모든 행이 펼쳐지고 페이지 스크롤 하나로 본다 (가로 스크롤·첫 열 고정은
+					// 그대로). Sankey 는 높이가 있어야 그려지므로 600px 를 유지한다.
 					flex: { md: 1 },
 					minHeight: { md: 0 },
 					position: 'relative',
-					height: { xs: 600, md: 'auto' }
+					height: { xs: view === 'sankey' ? 600 : 'auto', md: 'auto' }
 				}}>
 					{view === 'grid' && reportData.length > 1 && (
 						<MonthlyExpenseGrid reportData={reportData} onCellClick={setDrill} />
