@@ -6,7 +6,7 @@ import { styled } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import SidebarMenu from './components/SidebarMenu';
-import BottomNav from './components/BottomNav';
+import BottomNav, { BOTTOM_NAV_SPACE } from './components/BottomNav';
 import ScrollToTop from './components/ScrollToTop';
 import GlobalToast from './components/GlobalToast';
 
@@ -44,9 +44,9 @@ const Content = styled('main')(({ theme }) => ({
 	// minWidth to 0 confines overflow to the descendant container.
 	minWidth: 0,
 	backgroundColor: theme.palette.background.default,
-	// Mobile: leave room for the fixed bottom navigation (56px + safe area).
+	// Mobile: leave room for the floating bottom navigation (capsule + gap + safe area).
 	[theme.breakpoints.down('md')]: {
-		paddingBottom: 'calc(56px + env(safe-area-inset-bottom))'
+		paddingBottom: BOTTOM_NAV_SPACE
 	}
 }));
 

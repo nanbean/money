@@ -10,6 +10,7 @@ import Snackbar from '@mui/material/Snackbar';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 
 import { hideToast } from '../../actions/toastActions';
+import { BOTTOM_NAV_SPACE } from '../BottomNav';
 
 // 앱 전역 알림. 액션 thunk에서 showToast()를 dispatch하면 여기서 노출된다.
 function GlobalToast () {
@@ -38,7 +39,8 @@ function GlobalToast () {
 			anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
 			sx={{
 				// 모바일 하단 네비게이션 위로 띄운다.
-				bottom: { xs: 'calc(72px + env(safe-area-inset-bottom))', md: 24 }
+				// 모바일: 떠 있는 하단 캡슐 내비게이션 위에
+				bottom: { xs: BOTTOM_NAV_SPACE, md: 24 }
 			}}
 		>
 			<Alert
