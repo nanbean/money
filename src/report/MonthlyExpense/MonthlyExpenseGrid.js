@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
 
@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 
 import Amount from '../../components/Amount';
 import useT from '../../hooks/useT';
+import useMobile from '../../hooks/useMobile';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 
 // 왼쪽 정렬 + 들여쓰기 + '└ ' 마커가 붙어도 가장 긴 하위 라벨('도로비&주차비')이
@@ -60,6 +61,31 @@ const renderCellContent = (item) => {
 export function MonthlyExpenseGrid ({ reportData, onCellClick }) {
 	const T = useT();
 	const { categoryColors = {} } = useSelector((state) => state.settings || {});
+	const isMobile = useMobile();
+
+	// 모바일은 표를 펼쳐 페이지로 스크롤한다. 표가 가로 스크롤 상자 안에 있어
+	// 머리글의 sticky 는 그 상자를 기준으로만 동작하고, 페이지를 내리면 월 이름이
+	// 화면 밖으로 사라진다. 그래서 같은 머리글을 표 바깥에 화면 상단 고정으로 하나 더
+	// 두고, 원래 머리글이 화면 위로 나갔을 때만 보이게 한다. 가로 위치는 표를 따라간다.
+	const scrollerRef = useRef(null);
+	const headRowRef = useRef(null);
+	const floatRef = useRef(null);
+	const [floatHead, setFloatHead] = useState(false);
+
+	useEffect(() => {
+		const row = headRowRef.current;
+		if (!isMobile || !row || typeof IntersectionObserver === 'undefined') return undefined;
+		const io = new IntersectionObserver(([entry]) => {
+			setFloatHead(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+		});
+		io.observe(row);
+		return () => io.disconnect();
+	}, [isMobile, reportData]);
+
+	const syncFloatScroll = () => {
+		if (floatRef.current && scrollerRef.current) floatRef.current.scrollLeft = scrollerRef.current.scrollLeft;
+	};
+	useEffect(syncFloatScroll, [floatHead]);
 
 	if (!reportData || reportData.length === 0) return null;
 
@@ -144,8 +170,39 @@ export function MonthlyExpenseGrid ({ reportData, onCellClick }) {
 		return sx;
 	};
 
-	return (
-		<Box sx={{
+	const tableSx = {
+		borderCollapse: 'separate',
+		borderSpacing: 0,
+		width: '100%',
+		// fixed 로 두면 첫 열만 고정 폭을 쓰고 나머지 12개월+Total 이 남은 폭을
+		// 균등 분할한다 — 화면 크기에 상관없이 한 화면에 들어간다. 모바일 떠 있는
+		// 머리글도 같은 값을 써서 열 폭이 표와 똑같이 맞는다.
+		tableLayout: 'fixed',
+		minWidth: { xs: FIRST_COL_WIDTH + (columnCount - 1) * OTHER_COL_MIN_WIDTH, md: 0 }
+	};
+
+	const renderHeadRow = (rowRef) => (
+		<tr ref={rowRef}>
+			{headerRow.map((item, colIdx) => {
+				const isFirstCol = colIdx === 0;
+				const drillable = isDrillable(item);
+				const handleClick = drillable ? () => onCellClick(item) : undefined;
+				return (
+					<Box
+						component="th"
+						key={colIdx}
+						onClick={handleClick}
+						sx={cellSx({ item, isHeader: true, isFirstCol, clickable: drillable })}
+					>
+						{renderCellContent(item)}
+					</Box>
+				);
+			})}
+		</tr>
+	);
+
+	const table = (
+		<Box ref={scrollerRef} onScroll={isMobile ? syncFloatScroll : undefined} sx={{
 			width: '100%',
 			minWidth: 0,
 			maxHeight: '100%',
@@ -168,34 +225,8 @@ export function MonthlyExpenseGrid ({ reportData, onCellClick }) {
 			},
 			'&::-webkit-scrollbar-corner': { background: 'transparent' }
 		}}>
-			<Box component="table" sx={{
-				borderCollapse: 'separate',
-				borderSpacing: 0,
-				width: '100%',
-				// fixed 로 두면 첫 열만 고정 폭을 쓰고 나머지 12개월+Total 이 남은 폭을
-				// 균등 분할한다 — 화면 크기에 상관없이 한 화면에 들어간다.
-				tableLayout: 'fixed',
-				minWidth: { xs: FIRST_COL_WIDTH + (columnCount - 1) * OTHER_COL_MIN_WIDTH, md: 0 }
-			}}>
-				<thead>
-					<tr>
-						{headerRow.map((item, colIdx) => {
-							const isFirstCol = colIdx === 0;
-							const drillable = isDrillable(item);
-							const handleClick = drillable ? () => onCellClick(item) : undefined;
-							return (
-								<Box
-									component="th"
-									key={colIdx}
-									onClick={handleClick}
-									sx={cellSx({ item, isHeader: true, isFirstCol, clickable: drillable })}
-								>
-									{renderCellContent(item)}
-								</Box>
-							);
-						})}
-					</tr>
-				</thead>
+			<Box component="table" sx={tableSx}>
+				<thead>{renderHeadRow(headRowRef)}</thead>
 				<tbody>
 					{bodyRows.map((row, rowIdx) => (
 						<tr key={rowIdx}>
@@ -221,6 +252,31 @@ export function MonthlyExpenseGrid ({ reportData, onCellClick }) {
 					))}
 				</tbody>
 			</Box>
+		</Box>
+	);
+
+	if (!isMobile) return table;
+
+	return (
+		<Box sx={{ position: 'relative' }}>
+			{/* 높이 0 인 sticky 상자 — 레이아웃을 밀지 않고 표 위에 겹쳐 뜬다. 표 끝을
+			    지나면 부모(이 Box) 경계에 막혀 표와 함께 올라간다. */}
+			<Box sx={{ position: 'sticky', top: 'env(safe-area-inset-top, 0px)', height: 0, zIndex: 5 }}>
+				<Box
+					ref={floatRef}
+					aria-hidden={!floatHead}
+					sx={{
+						overflow: 'hidden',
+						visibility: floatHead ? 'visible' : 'hidden',
+						boxShadow: T.dark ? '0 4px 10px rgba(0,0,0,0.45)' : '0 4px 10px rgba(15,23,42,0.12)'
+					}}
+				>
+					<Box component="table" sx={tableSx}>
+						<thead>{renderHeadRow(null)}</thead>
+					</Box>
+				</Box>
+			</Box>
+			{table}
 		</Box>
 	);
 }
