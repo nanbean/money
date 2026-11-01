@@ -10,10 +10,10 @@ import useT from '../../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
 import { NON_EXPENSE_CATEGORY } from '../../constants';
 import { flattenExpenseRows, isInternalTransfer, isLivingExpenseExempt } from '../../utils/expense';
+import { projectMonthEnd } from '../../utils/monthProjection';
 
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 // Match Spending page's monthly projection blend (src/views/Spending.js).
-const INFLATION_RATE = 1.025;
 
 export default function HomeCashFlow () {
 	const T = useT();
@@ -60,7 +60,6 @@ export default function HomeCashFlow () {
 		// adjusted by inflation).
 		const todayM = moment();
 		const days = todayM.date();
-		const daysInCurrentMonth = todayM.daysInMonth();
 		const lastYearMonthStart = todayM.clone().subtract(1, 'year').startOf('month').format('YYYY-MM-DD');
 		const lastYearMonthEnd = todayM.clone().subtract(1, 'year').endOf('month').format('YYYY-MM-DD');
 		const lastYearMonthTxns = (allAccountsTransactions || []).filter(t =>
@@ -69,10 +68,9 @@ export default function HomeCashFlow () {
 		);
 		const lastYearLivingExp = flattenExpenseRows(lastYearMonthTxns).filter(isLivingExpense)
 			.reduce((s, t) => s + conv(t), 0);
-		const weight = days / daysInCurrentMonth;
-		const currentPace = days > 0 ? (livingExp / days) * daysInCurrentMonth : 0;
-		const historical = lastYearLivingExp * INFLATION_RATE;
-		const projectedLivingExp = Math.max(livingExp, Math.round(weight * currentPace + (1 - weight) * historical));
+		// Spending 과 같은 식(monthProjection). 실제 시각 기준이라 마지막 날에도 남은
+		// 시간만큼 작년 지출을 더한다.
+		const projectedLivingExp = Math.max(livingExp, projectMonthEnd(livingExp, lastYearLivingExp));
 
 		const monthName = todayM.format('MMMM');
 		return {

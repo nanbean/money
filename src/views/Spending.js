@@ -34,11 +34,11 @@ import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../utils/designTo
 import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
 import { EXPENSE_ACCOUNT_TYPES, flattenExpenseRows, isLivingExpenseExempt } from '../utils/expense';
 import { monthsAgoStr, thisMonthStr, isMonthInRange } from '../utils/spendingRange';
+import { INFLATION_RATE, projectMonthEnd } from '../utils/monthProjection';
 
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
 const EXPENSE_TYPES = EXPENSE_ACCOUNT_TYPES;
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const INFLATION_RATE = 1.025;
 
 const makeFormatYAxis = (currency) => (value) => {
 	if (currency === 'USD') {
@@ -300,8 +300,6 @@ function Spending () {
 	const annualMonthlyData = useMemo(() => {
 		const today = new Date();
 		const month = today.getMonth();
-		const dayOfMonth = today.getDate();
-		const daysInCurrentMonth = new Date(currentYear, month + 1, 0).getDate();
 
 		const thisYearMonthly = {};
 		const lastYearMonthly = {};
@@ -322,17 +320,15 @@ function Spending () {
 			const lastYear = Math.round(lastYearMonthly[m] || 0);
 			const actual = Math.round(thisYearMonthly[m] || 0);
 			let projected = 0;
-			if (m === month && dayOfMonth > 0) {
-				const weight = dayOfMonth / daysInCurrentMonth;
-				const currentPace = (actual / dayOfMonth) * daysInCurrentMonth;
-				const historical = (lastYearMonthly[m] || 0) * INFLATION_RATE;
-				projected = Math.max(0, Math.round(weight * currentPace + (1 - weight) * historical) - actual);
+			if (m === month) {
+				// 실제 시각 기준이라 마지막 날에도 남은 시간만큼 남는다 (monthProjection 참고).
+				projected = Math.max(0, projectMonthEnd(actual, lastYearMonthly[m], today) - actual);
 			} else if (m > month) {
 				projected = Math.round((lastYearMonthly[m] || 0) * INFLATION_RATE);
 			}
 			return { month: label, lastYear, actual, projected };
 		});
-	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix, lastYearPrefix, currentYear]);
+	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix, lastYearPrefix]);
 
 	const projectedAnnual = useMemo(() => {
 		return Math.round(annualMonthlyData.reduce((sum, d) => sum + d.actual + d.projected, 0));
@@ -363,8 +359,6 @@ function Spending () {
 	const monthlyData = useMemo(() => {
 		const today = new Date();
 		const currentMonthStr = `${currentYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-		const dayOfMonth = today.getDate();
-		const daysInCurrentMonth = new Date(currentYear, today.getMonth() + 1, 0).getDate();
 
 		const map = {};
 		spendingTransactions.forEach(tx => {
@@ -375,11 +369,11 @@ function Spending () {
 			.sort(([a], [b]) => a.localeCompare(b))
 			.map(([month, total]) => {
 				const actual = Math.round(total);
-				if (month === currentMonthStr && dayOfMonth < daysInCurrentMonth) {
-					const weight = dayOfMonth / daysInCurrentMonth;
-					const currentPace = total / dayOfMonth * daysInCurrentMonth;
-					const historical = (annualMonthlyData[today.getMonth()]?.lastYear || 0) * INFLATION_RATE;
-					const projected = Math.max(0, Math.round(weight * currentPace + (1 - weight) * historical) - actual);
+				if (month === currentMonthStr) {
+					// 예전에는 마지막 날이면 예상을 0 으로 두어 실적과 같게 보였다.
+					// 실제 시각 기준으로 자정까지 남은 만큼 더한다 (monthProjection 참고).
+					const lastYearSameMonth = annualMonthlyData[today.getMonth()]?.lastYear || 0;
+					const projected = Math.max(0, projectMonthEnd(actual, lastYearSameMonth, today) - actual);
 					return { month, actual, projected };
 				}
 				return { month, actual, projected: 0 };
