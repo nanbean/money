@@ -153,7 +153,7 @@ describe('notification service', () => {
 					packageName: 'com.americanexpress.android.acctsvcs.us',
 					text: 'American Express: A charge of $25.50 was just approved on your Card ending in 12345 at STARBUCKS.'
 				};
-				const expectedDate = moment().tz('America/Los_Angeles').format('YYYY-MM-DD');
+				const expectedDate = moment().tz('Asia/Seoul').format('YYYY-MM-DD');
 
 				// Act
 				await addTransaction(body);
@@ -168,6 +168,26 @@ describe('notification service', () => {
 				});
 			});
 
+			// 한국 오전 결제는 미국 서부 날짜로 아직 전날이다. 서울 날짜로 기록해야 한다.
+			it('Amex 는 서울 날짜로 기록한다 (한국 11/01 오전 = 미국 서부 10/31 오후)', async () => {
+				// Arrange
+				jest.setSystemTime(new Date('2026-11-01T09:30:00+09:00'));
+
+				// Act
+				await addTransaction({
+					packageName: 'ios.Amex',
+					title: 'Amex',
+					text: 'You have a $12.34 charge on your American Express Card ending in 91000 at CU DONGTAN.'
+				});
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					date: '2026-11-01',
+					amount: -12.34,
+					payee: 'CU DONGTAN'
+				});
+			});
+
 			// iOS 알림은 packageName 이 'ios.Amex' 로 온다. 안드로이드 패키지명만
 			// 보던 시절에는 no-parser 로 떨어져 거래를 잃었다. 실측 본문이다.
 			it('should correctly parse an iOS Amex (ios.Amex) notification', async () => {
@@ -177,7 +197,7 @@ describe('notification service', () => {
 					title: 'Amex',
 					text: '\nYou have a $209.64 charge on your American Express Card ending in 91000 at HILTON GYEONGJU.'
 				};
-				const expectedDate = moment().tz('America/Los_Angeles').format('YYYY-MM-DD');
+				const expectedDate = moment().tz('Asia/Seoul').format('YYYY-MM-DD');
 
 				// Act
 				await addTransaction(body);

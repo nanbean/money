@@ -791,6 +791,10 @@ const parsers = [
 		//    91000 at HILTON GYEONGJU.'
 		// iOS 쪽은 packageName 이 'ios.Amex' 로 와서 안드로이드 패키지명만 보던
 		// 매처에 걸리지 않았고, 그대로 no-parser 로 떨어지고 있었다.
+		//
+		// 본문에 날짜가 없어 받은 시각으로 날짜를 정한다. 2026 하반기 한국 복귀 후로는
+		// 한국에서 결제하므로 서울 날짜를 쓴다 — 미국 서부 시각으로 두면 한국 오전
+		// 결제가 하루 전 날짜로 기록됐다(11/01 오전 결제가 10/31 로).
 		matcher: (body) => body.packageName.match(/com\.americanexpress\.android\.acctsvcs\.us|^ios\.Amex$/i),
 		parser: (body) => {
 			const amountMatch = body.text.replace(/,/g, '').match(/-?\$[0-9]+[.]*[0-9]*/);
@@ -803,7 +807,7 @@ const parsers = [
 			return {
 				account: 'BoA',
 				transaction: {
-					date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+					date: moment().tz('Asia/Seoul').format('YYYY-MM-DD'),
 					amount: parseFloat(amountMatch[0].replace('$', '')) * -1,
 					payee: payeeMatch[1].replace(/.$/, ''),
 					category: '분류없음'
