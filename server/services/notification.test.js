@@ -8,7 +8,8 @@ const notificationService = require('./notificationService');
 
 // Mock dependencies
 jest.mock('./settingService', () => ({
-	getCategoryList: jest.fn()
+	getCategoryList: jest.fn(),
+	getExchangeRate: jest.fn()
 }));
 jest.mock('./transactionService', () => ({
 	getAllTransactions: jest.fn(),
@@ -1212,6 +1213,49 @@ describe('notification service', () => {
 					});
 				});
 
+				// 2026-11-01 실측. 외화 결제는 금액이 'USD 132.00' 으로 와서 no-transaction 으로 빠졌다.
+				// 설정 환율로 원화 환산하고, 원래 금액과 환율을 메모에 남긴다.
+				it('해외승인(USD)을 설정 환율로 환산해 기록한다', async () => {
+					// Arrange
+					settingService.getExchangeRate.mockResolvedValue(1345.05);
+
+					// Act
+					const result = await addTransaction(nh('NH농협카드\nNH카드6*4*해외승인\r\n김*심\r\nUSD 132.00 일시불\r\n11/01 15:20\r\naliexpress\r\n총누적290,906원'));
+
+					// Assert
+					expect(result).toBe(true);
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						date: moment('11/01', 'MM/DD').format('YYYY-MM-DD'),
+						amount: -Math.round(132 * 1345.05),
+						payee: 'aliexpress',
+						memo: 'USD 132.00 @1,345.05',
+						accountId: 'account:Bank:급여계좌'
+					});
+				});
+
+				it('해외승인인데 환율이 없으면 거래를 만들지 않는다', async () => {
+					// Arrange
+					settingService.getExchangeRate.mockResolvedValue(undefined);
+
+					// Act
+					await addTransaction(nh('NH카드6*4*해외승인\n김*심\nUSD 132.00 일시불\n11/01 15:20\naliexpress'));
+
+					// Assert
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+
+				// 2026-10-27 실측. 개별 승인은 이미 기록돼 있어 대금 출금은 적지 않는다.
+				// 파서가 몰라 ⚠️ 푸시가 갔다.
+				it('카드대금 납부 안내는 거래도 ⚠️ 도 만들지 않는다', async () => {
+					// Act
+					const result = await addTransaction(nh('NH농협카드\n[농협카드] 김*심님 10/26 2,962,936원 카드대금 정상 납부(결제) 되었습니다.'));
+
+					// Assert
+					expect(result).toBe(false);
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(messaging.sendNotification).not.toHaveBeenCalled();
+				});
+
 				// 실측 원문. '총누적' 을 못 떼서 payee 가
 				// '11번가 총누적135,486원' 으로 기록된 적이 있다.
 				it('실측 원문의 총누적 필드를 떼어낸다', async () => {
@@ -2042,6 +2086,146 @@ describe('notification service', () => {
 				});
 				// Gemini API는 호출되지 않아야 함
 				expect(mockGetGenerativeModel).not.toHaveBeenCalled();
+			});
+
+			// NH 는 'aliexpress', Amex 는 'ALIEXPRESS' 로 와서 같은 가맹점이 따로 쌓였다.
+			it('대소문자·공백만 다른 기존 가맹점에 맞추고, 사용자가 고친 표기를 쓴다', async () => {
+				// Arrange: 'ALIEXPRESS' 가 더 많지만, 사용자가 'aliexpress' 를 'Aliexpress' 로 고친 이력이 있다.
+				transactionService.getAllTransactions.mockResolvedValue([
+					{ payee: 'ALIEXPRESS', category: '생활용품비', subcategory: '기타생활비' },
+					{ payee: 'ALIEXPRESS', category: '생활용품비', subcategory: '기타생활비' },
+					{ payee: 'ALIEXPRESS', category: '분류없음' },
+					{ payee: 'Aliexpress', originalPayee: 'aliexpress', category: '생활용품비', subcategory: '기타생활비' }
+				]);
+
+				// Act
+				await addTransaction({
+					packageName: 'ios.Amex',
+					title: 'Amex',
+					text: 'You have a $12.00 charge on your American Express Card ending in 91000 at  ALIEXPRESS .'
+				});
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					payee: 'Aliexpress',
+					category: '생활용품비',
+					subcategory: '기타생활비'
+				});
+				expect(mockGetGenerativeModel).not.toHaveBeenCalled();
+			});
+
+			it('고친 이력이 없으면 가장 많이 쓰인 표기를 쓴다', async () => {
+				// Arrange
+				transactionService.getAllTransactions.mockResolvedValue([
+					{ payee: 'Traders Dongtan Br', category: '식비' },
+					{ payee: 'Traders Dongtan Br', category: '식비' },
+					{ payee: 'TRADERS DONGTAN BR', category: '식비' }
+				]);
+
+				// Act
+				await addTransaction({
+					packageName: 'ios.Amex',
+					title: 'Amex',
+					text: 'You have a $5.00 charge on your American Express Card ending in 91000 at traders dongtan br.'
+				});
+
+				// Assert
+				expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+					payee: 'Traders Dongtan Br',
+					originalPayee: 'traders dongtan br',
+					category: '식비'
+				});
+			});
+
+			// Amex 는 한국 가맹점을 로마자 음차로 보낸다. 처음 보는 로마자 상호면 한글로 바꾼다.
+			describe('로마자 한국 상호', () => {
+				const amex = (merchant) => ({
+					packageName: 'ios.Amex',
+					title: 'Amex',
+					text: `You have a $18.19 charge on your American Express Card ending in 91000 at ${merchant}.`
+				});
+
+				it('한글로 바꾸고 원래 표기를 남긴 뒤 분류를 묻는다', async () => {
+					// Arrange: 첫 호출은 한글 이름, 둘째 호출은 분류
+					transactionService.getAllTransactions.mockResolvedValue([]);
+					mockSendMessage
+						.mockResolvedValueOnce({ response: { text: () => '{"korean": "더제이메이크스 주식회사"}' } })
+						.mockResolvedValueOnce({ response: { text: () => '식비:외식' } });
+
+					// Act
+					await addTransaction(amex('DEOJEIMAKES JUSIKHOESA'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						payee: '더제이메이크스 주식회사',
+						originalPayee: 'DEOJEIMAKES JUSIKHOESA',
+						category: '식비',
+						subcategory: '외식'
+					});
+				});
+
+				it('바꾼 한글 이름의 이력이 있으면 그 이름·분류를 쓰고 원래 표기는 지킨다', async () => {
+					// Arrange: 국내 카드로 같은 가게에서 결제한 이력
+					transactionService.getAllTransactions.mockResolvedValue([
+						{ payee: '정육점', category: '식비', subcategory: '식료품' }
+					]);
+					mockSendMessage.mockResolvedValueOnce({ response: { text: () => '{"korean": "정육점"}' } });
+
+					// Act
+					await addTransaction(amex('JEONGYUKJEOM'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+						payee: '정육점',
+						originalPayee: 'JEONGYUKJEOM',
+						category: '식비',
+						subcategory: '식료품'
+					});
+					expect(mockSendMessage).toHaveBeenCalledTimes(1); // 분류는 이력에서 — Gemini 에 묻지 않는다
+				});
+
+				it('원래 영어인 상호(null)는 그대로 둔다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([]);
+					mockSendMessage
+						.mockResolvedValueOnce({ response: { text: () => '{"korean": null}' } })
+						.mockResolvedValueOnce({ response: { text: () => '생활용품비' } });
+
+					// Act
+					await addTransaction(amex('WAL-MART.COM'));
+
+					// Assert
+					const tx = transactionService.addTransaction.mock.calls[0][0];
+					expect(tx.payee).toBe('WAL-MART.COM');
+					expect(tx.originalPayee).toBeUndefined();
+				});
+
+				it('JSON 이 아니거나 한글이 없는 답이면 바꾸지 않는다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([]);
+					mockSendMessage
+						.mockResolvedValueOnce({ response: { text: () => 'Sure! The name is Deojeimakes' } })
+						.mockResolvedValueOnce({ response: { text: () => '식비' } });
+
+					// Act
+					await addTransaction(amex('DEOJEIMAKES'));
+
+					// Assert
+					expect(transactionService.addTransaction.mock.calls[0][0].payee).toBe('DEOJEIMAKES');
+				});
+
+				it('한글 상호는 묻지 않는다', async () => {
+					// Arrange
+					transactionService.getAllTransactions.mockResolvedValue([]);
+					mockSendMessage.mockResolvedValueOnce({ response: { text: () => '식비' } });
+
+					// Act
+					await addTransaction({ packageName: 'ios.NHPay', text: 'NH카드6*4*승인\n김*심\n12,000원 일시불\n11/02 12:00\n새로운식당' });
+
+					// Assert
+					expect(mockSendMessage).toHaveBeenCalledTimes(1); // 분류만
+					expect(transactionService.addTransaction.mock.calls[0][0].payee).toBe('새로운식당');
+				});
 			});
 
 			it('should call Gemini to find category if no existing transaction is found', async () => {

@@ -56,6 +56,45 @@ const setLastTransaction = (body) => {
 	_lastTransaction.date = new Date();
 };
 
+// 로마자로 적힌 한국 상호를 한글로 바꾼다. Amex 같은 해외 카드는 한국 가맹점을
+// 결제망 등록 이름(로마자 음차)으로 보낸다 — 'DEOJEIMAKES JUSIKHOESA'(더제이메이크스
+// 주식회사), 'JEONGYUKJEOM'(정육점). 원래 영어인 상호('WAL-MART.COM')는 그대로 둔다.
+//
+// 분류용 모델과 지시문이 달라 따로 둔다. 답은 JSON 으로만 받고, 형식이 다르거나 한글이
+// 아니면 바꾸지 않는다 — 엉뚱한 답이 와도 이름이 이상하게 바뀌지 않게.
+let koreanNameModel;
+const KOREAN_NAME_INSTRUCTION = [
+	'You read merchant names from card transaction notifications.',
+	'If the name is a Korean business name written in Latin letters (romanized Korean, e.g. Revised Romanization),',
+	'reply with the business name in Hangul. Keep branch or location words in Hangul too.',
+	'If it is an English or other foreign-language name, a global brand, a website, or you are not confident, reply null.',
+	'Reply only with JSON: {"korean": "<Hangul name>"} or {"korean": null}.'
+].join(' ');
+
+const looksRomanized = (payee) => /[A-Za-z]/.test(payee || '') && /^[A-Za-z0-9 .,&'()*/-]+$/.test(String(payee).trim());
+
+const findKoreanNameFromGemini = async (payee) => {
+	if (!looksRomanized(payee)) return null;
+	try {
+		if (!koreanNameModel) {
+			koreanNameModel = genAI.getGenerativeModel({ model: config.geminiModel, systemInstruction: KOREAN_NAME_INSTRUCTION });
+		}
+		const chat = koreanNameModel.startChat({
+			generationConfig: { maxOutputTokens: 256, responseMimeType: 'application/json' },
+			history: []
+		});
+		const result = await retryWithBackoff(() => chat.sendMessage(String(payee).trim()), { label: 'findKoreanNameFromGemini' });
+		const korean = JSON.parse(result.response.text()).korean;
+		if (typeof korean !== 'string') return null;
+		const name = korean.normalize('NFC').trim();
+		// 한글이 들어 있고 한 줄 길이일 때만 쓴다.
+		return /[가-힣]/.test(name) && !/[\r\n]/.test(name) && name.length <= 40 ? name : null;
+	} catch (error) {
+		console.error('Error finding Korean name from Gemini:', error?.message || error);
+		return null;
+	}
+};
+
 const findCategoryFromGemini = async (transaction) => {
 	if (!model) {
 		await initGeminiModel();
@@ -77,40 +116,84 @@ const findCategoryFromGemini = async (transaction) => {
 	}
 };
 
+// 가맹점 이름 비교용 키. 대소문자·공백·한글 정규화 차이는 같은 가맹점으로 본다 —
+// NH 는 'aliexpress', Amex 는 'ALIEXPRESS' 로 와서 같은 곳이 따로 쌓였다.
+// 화면(src/utils/payee.js)도 같은 규칙으로 묶는다.
+const payeeKey = (payee) => String(payee || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
+
+// 매칭된 과거 거래들에서 기준 표기를 고른다. 사용자가 이름을 고쳐 둔 거래(원래
+// 이름이 originalPayee 에 남아 있다)의 표기를 먼저, 없으면 가장 많이 쓰인 표기.
+const canonicalPayee = (matches) => {
+	const score = new Map();
+	for (const m of matches) {
+		if (!m.payee) continue;
+		score.set(m.payee, (score.get(m.payee) || 0) + 1 + (m.originalPayee ? 1000 : 0));
+	}
+	return [...score.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+};
+
+const matchHistory = (transactions, payee) => {
+	const key = payeeKey(payee);
+	return key
+		? transactions.filter((i) => payeeKey(i.payee) === key || payeeKey(i.originalPayee) === key)
+		: [];
+};
+
+// 과거 거래에서 이름과 분류를 가져온다. 원래 표기(originalPayee)는 이미 있으면
+// 덮지 않는다 — 한글로 바꾼 뒤 이력을 다시 찾을 때 로마자 원문을 잃지 않게.
+const applyHistory = (matches, transaction) => {
+	// Pick the most frequent (category, subcategory) pair across all past
+	// transactions with this payee. A one-off manual override is outvoted by
+	// the historical norm and won't pollute future auto-categorization.
+	const tally = new Map();
+	for (const m of matches) {
+		const key = JSON.stringify([m.category || '', m.subcategory || '']);
+		tally.set(key, (tally.get(key) || 0) + 1);
+	}
+	const [bestKey] = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
+	const [bestCategory, bestSubcategory] = JSON.parse(bestKey);
+
+	const canonical = canonicalPayee(matches);
+	if (canonical && canonical !== transaction.payee) {
+		if (!transaction.originalPayee) transaction.originalPayee = transaction.payee;
+		transaction.payee = canonical;
+	}
+	if (bestCategory) {
+		transaction.category = bestCategory;
+	}
+	if (bestSubcategory) {
+		transaction.subcategory = bestSubcategory;
+	}
+};
+
 const findCategoryByPayee = async (transactions, transaction) => {
-	const matches = transactions.filter((i) => i.payee === transaction.payee || i.originalPayee === transaction.payee);
+	const matches = matchHistory(transactions, transaction.payee);
 	if (matches.length > 0) {
-		// Pick the most frequent (category, subcategory) pair across all past
-		// transactions with this payee. A one-off manual override is outvoted by
-		// the historical norm and won't pollute future auto-categorization.
-		const tally = new Map();
-		for (const m of matches) {
-			const key = JSON.stringify([m.category || '', m.subcategory || '']);
-			tally.set(key, (tally.get(key) || 0) + 1);
-		}
-		const [bestKey] = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
-		const [bestCategory, bestSubcategory] = JSON.parse(bestKey);
+		applyHistory(matches, transaction);
+		return transaction;
+	}
 
-		const sample = matches[0];
-		if (sample.payee !== transaction.payee) {
-			transaction.originalPayee = transaction.payee;
-			transaction.payee = sample.payee;
+	// 처음 보는 로마자 상호면 한글로 바꿔 본다. 바꾼 이름으로 이력이 있으면(국내
+	// 카드로 같은 가게에서 결제한 적이 있으면) 그 이름·분류를 쓴다.
+	const korean = await findKoreanNameFromGemini(transaction.payee);
+	if (korean) {
+		console.log('korean name from Gemini: ', transaction.payee, '->', korean);
+		transaction.originalPayee = transaction.payee;
+		transaction.payee = korean;
+		const koreanMatches = matchHistory(transactions, korean);
+		if (koreanMatches.length > 0) {
+			applyHistory(koreanMatches, transaction);
+			return transaction;
 		}
-		if (bestCategory) {
-			transaction.category = bestCategory;
-		}
-		if (bestSubcategory) {
-			transaction.subcategory = bestSubcategory;
-		}
-	} else {
-		const category = await findCategoryFromGemini(transaction);
-		console.log('category from Gemini: ', category);
-		const splitCategory = category.split(':');
+	}
 
-		transaction.category = splitCategory[0];
-		if (splitCategory.length > 1) {
-			transaction.subcategory = splitCategory[1];
-		}
+	const category = await findCategoryFromGemini(transaction);
+	console.log('category from Gemini: ', category);
+	const splitCategory = category.split(':');
+
+	transaction.category = splitCategory[0];
+	if (splitCategory.length > 1) {
+		transaction.subcategory = splitCategory[1];
 	}
 
 	return transaction;
@@ -710,6 +793,37 @@ const parsers = [
 		parser: (body) => {
 			const line = body.text.replace(/\r?\n/g, ' ').trim();
 
+			// 카드대금 납부 안내. 개별 승인은 이미 급여계좌에 기록돼 있어 대금 출금을
+			// 또 적으면 두 번 센다. 파서가 몰라 ⚠️ 가 떴다 (2026-10-27 실측).
+			//   '[농협카드] 김*심님 10/26 2,962,936원 카드대금 정상 납부(결제) 되었습니다.'
+			if (/카드대금/.test(line) && /납부|결제/.test(line)) {
+				return { options: { ignored: 'card-bill-paid' } };
+			}
+
+			// 해외 결제는 금액이 외화로 온다. 통화·금액만 읽어 넘기고, 저장 직전에 설정
+			// 환율로 원화 환산한다 (addTransaction 의 foreignAmount). 원화만 읽던 동안
+			// 실제 결제가 no-transaction 으로 빠졌다 (2026-11-01 실측).
+			//   'NH카드6*4*해외승인\n김*심\nUSD 132.00 일시불\n11/01 15:20\naliexpress\n총누적290,906원'
+			const overseas = line.match(
+				/NH카드[0-9*]+해외(승인|취소)\s+\S+\s+([A-Z]{3})\s*([\d,]+(?:\.\d+)?)(?:\s+(?!\d{2}\/\d{2})\S+)*\s+(\d{2}\/\d{2})\s+\d{1,2}:\d{2}\s+(.+?)(?:\s+\S*누적[\d,]+원?)?\s*$/
+			);
+			if (overseas) {
+				const [, kind, currency, foreignText, dateText, payee] = overseas;
+				// 취소는 국내와 같이 거래를 만들지 않는다.
+				if (kind !== '승인') return {};
+				return {
+					account: '급여계좌',
+					transaction: {
+						date: moment(dateText, 'MM/DD').format('YYYY-MM-DD'),
+						payee,
+						category: '분류없음'
+					},
+					options: {
+						foreignAmount: { currency, amount: parseFloat(foreignText.replace(/,/g, '')) }
+					}
+				};
+			}
+
 			// 'NH카드<번호>승인|취소 <이름> <금액>원 [일시불] <MM/DD> <HH:mm> <상호> [총누적...]'
 			//
 			// 앞에 앱 이름 줄('NH농협카드')이 붙어 오므로 앞을 고정하지 않는다.
@@ -1286,6 +1400,18 @@ exports.addTransaction = async function (rawBody) {
 			parserIndex
 		});
 		return false;
+	}
+
+	// 원화 계좌에 외화 결제가 온 경우(해외승인). 설정 환율로 환산하고 원래 금액과
+	// 환율을 메모에 남긴다 — 실제 청구 원화는 결제일 환율·해외 수수료로 조금 다르다.
+	// 지금은 USD 만 환율이 있다. 그 밖의 통화는 금액 없이 두어 no-transaction(⚠️)으로 알린다.
+	if (options.foreignAmount && transaction) {
+		const { currency, amount } = options.foreignAmount;
+		const rate = currency === 'USD' ? Number(await settingService.getExchangeRate()) : NaN;
+		if (Number.isFinite(rate) && rate > 0 && Number.isFinite(amount)) {
+			transaction.amount = -Math.round(amount * rate);
+			transaction.memo = `${currency} ${amount.toFixed(2)} @${rate.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+		}
 	}
 
 	// 결제대금 인출 안내. 예고된 청구액이 실제로 빠져나간 통지다. 지출은 개별
