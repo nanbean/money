@@ -28,6 +28,7 @@ import { COUCHDB_URL } from '../constants';
 import { applyMemoTags } from '../utils/memoTags';
 import { isInvestmentCashName, invstAccountNameFor } from '../utils/investmentCash';
 import { renameInTransaction } from '../utils/categoryRename';
+import { renamePayeeDocs } from '../utils/payee';
 import { isInternalTransferCategory } from '../utils/expense';
 
 import {
@@ -909,6 +910,28 @@ export const renameCategoryInTransactionsAction = (oldName, newName) => {
 		const failed = results.filter(r => r && r.error);
 		if (failed.length > 0) {
 			console.log(`renameCategoryInTransactions: ${failed.length} failed`, failed[0]); // eslint-disable-line no-console
+		}
+
+		dispatch(getAllAccountsTransactionsAction());
+		return changed.length - failed.length;
+	};
+};
+
+// 가맹점 이름 일괄 변경. 거래 하나의 이름을 고칠 때 같은 가맹점(대소문자·공백 무시)의
+// 다른 거래도 함께 바꾼다 — Amex 가 로마자로 보낸 한국 상호('DEOJEIMAKES JUSIKHOESA')를
+// 한 번에 '더제이메이크스' 로 정리하려는 것. 원래 표기는 originalPayee 에 남아 서버가 다음
+// 알림부터 이 이름을 쓴다. 이름만 바꾸므로 editTransactionAction(이체 짝 처리 등)을
+// 거치지 않고 bulkDocs 로 한 번에 쓴다. excludeId 는 따로 저장되는 편집 중인 거래.
+export const renamePayeeInTransactionsAction = (oldPayee, newPayee, excludeId) => {
+	return async dispatch => {
+		const allTransactions = await getAllTransactions();
+		const changed = renamePayeeDocs(allTransactions, oldPayee, newPayee, excludeId);
+		if (changed.length === 0) return 0;
+
+		const results = await transactionsDB.bulkDocs(changed);
+		const failed = results.filter(r => r && r.error);
+		if (failed.length > 0) {
+			console.log(`renamePayeeInTransactions: ${failed.length} failed`, failed[0]); // eslint-disable-line no-console
 		}
 
 		dispatch(getAllAccountsTransactionsAction());

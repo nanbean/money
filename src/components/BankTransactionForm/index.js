@@ -8,6 +8,8 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -29,8 +31,10 @@ import { buildCategoryMenu } from '../../utils/categoryOrder';
 import {
 	addTransactionAction,
 	deleteTransactionAction,
-	editTransactionAction
+	editTransactionAction,
+	renamePayeeInTransactionsAction
 } from '../../actions/couchdbActions';
+import { renamePayeeDocs } from '../../utils/payee';
 
 import {
 	fillTransactionForm,
@@ -127,6 +131,18 @@ export function BankTransactionForm ({
 
 	const [isSplit, setIsSplit] = useState(false);
 	const [divisions, setDivisions] = useState([]);
+
+	// 편집 중 가맹점 이름을 바꾸면 같은 가맹점의 다른 거래도 함께 바꿀 수 있게 한다
+	// (Amex 로마자 상호를 한글로 정리하는 용도). 기본은 끔 — 체크해야 바뀐다.
+	const [renameAll, setRenameAll] = useState(false);
+	const editingTx = form.isEdit ? transactions[form.index] : null;
+	const renameCandidates = useMemo(() => {
+		if (!editingTx || !form.payee || form.payee === editingTx.payee) return 0;
+		return renamePayeeDocs(allAccountsTransactions, editingTx.payee, form.payee, editingTx._id).length;
+	}, [editingTx, form.payee, allAccountsTransactions]);
+	useEffect(() => {
+		if (renameCandidates === 0) setRenameAll(false);
+	}, [renameCandidates]);
 
 	useEffect(() => {
 		if (form.isEdit && transactions[form.index]) {
@@ -336,6 +352,7 @@ export function BankTransactionForm ({
 
 	const onEditButton = () => {
 		const transaction = transactions[form.index];
+		const previousPayee = transaction.payee;
 		transaction.account = form.account || account;
 		transaction.changed = {};
 
@@ -381,6 +398,10 @@ export function BankTransactionForm ({
 		}
 
 		dispatch(editTransactionAction(transaction));
+		if (renameAll && renameCandidates > 0) {
+			dispatch(renamePayeeInTransactionsAction(previousPayee, form.payee, transaction._id));
+		}
+		setRenameAll(false);
 		dispatch(resetTransactionForm());
 	};
 
@@ -443,6 +464,13 @@ export function BankTransactionForm ({
 						onEnter={onPayeeEnter}
 						onBlur={onPayeeBlur}
 					/>
+					{renameCandidates > 0 && (
+						<FormControlLabel
+							sx={{ marginTop: 0.5, marginLeft: 0, '& .MuiFormControlLabel-label': { fontSize: 12, color: T.ink2 } }}
+							control={<Checkbox size="small" checked={renameAll} onChange={(e) => setRenameAll(e.target.checked)} sx={{ padding: '4px' }} />}
+							label={`'${editingTx.payee}' 거래 ${renameCandidates}건도 함께 바꾸기`}
+						/>
+					)}
 				</Box>
 			</Box>
 

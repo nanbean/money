@@ -35,6 +35,7 @@ import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
 import { EXPENSE_ACCOUNT_TYPES, flattenExpenseRows, isLivingExpenseExempt } from '../utils/expense';
 import { monthsAgoStr, thisMonthStr, isMonthInRange } from '../utils/spendingRange';
 import { INFLATION_RATE, projectMonthEnd } from '../utils/monthProjection';
+import { payeeKey, pickPayeeLabel } from '../utils/payee';
 
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
 const EXPENSE_TYPES = EXPENSE_ACCOUNT_TYPES;
@@ -205,7 +206,7 @@ function Spending () {
 			setProjectionExpanded(true);
 		}
 	}, [range]);
-	const [txDialog, setTxDialog] = useState(null); // { mode: 'category'|'payee', key: string }
+	const [txDialog, setTxDialog] = useState(null); // { mode: 'category'|'payee', key: string, label?: string } — payee 의 key 는 payeeKey
 
 	const uncategorizedTxs = useMemo(() => {
 		return allAccountsTransactions
@@ -400,8 +401,9 @@ function Spending () {
 				.sort((a, b) => b.date.localeCompare(a.date));
 		}
 		if (txDialog.mode === 'payee') {
+			// Top payees 와 같은 기준으로 묶는다 — 대소문자·공백만 다른 표기도 함께.
 			return spendingTransactions
-				.filter(tx => (tx.payee || '(none)') === txDialog.key)
+				.filter(tx => payeeKey(tx.payee) === txDialog.key)
 				.sort((a, b) => b.date.localeCompare(a.date));
 		}
 		return [];
@@ -413,17 +415,20 @@ function Spending () {
 	}, [txDialog, dialogTxns]);
 
 	const topPayees = useMemo(() => {
+		// 대소문자·공백만 다른 표기는 한 가맹점으로 묶는다 (utils/payee). 'Aliexpress'(NH)와
+		// 'ALIEXPRESS'(Amex)가 따로 나왔다. 통화가 섞이면 아래에서 표시 통화로 합친다.
 		const map = {};
 		spendingTransactions.forEach(tx => {
-			const payee = tx.payee || '(none)';
+			const key = payeeKey(tx.payee);
 			const cat = (tx.category || '기타 지출').split(':')[0];
 			const txCurrency = accountCurrencyMap[tx.accountId] || 'KRW';
 			const abs = Math.abs(tx.amount);
-			if (!map[payee]) map[payee] = { payee, total: 0, count: 0, categories: {}, native: {} };
-			map[payee].total += toDisplayAmount(tx);
-			map[payee].count += 1;
-			map[payee].categories[cat] = (map[payee].categories[cat] || 0) + toDisplayAmount(tx);
-			map[payee].native[txCurrency] = (map[payee].native[txCurrency] || 0) + abs;
+			if (!map[key]) map[key] = { key, txns: [], total: 0, count: 0, categories: {}, native: {} };
+			map[key].txns.push(tx);
+			map[key].total += toDisplayAmount(tx);
+			map[key].count += 1;
+			map[key].categories[cat] = (map[key].categories[cat] || 0) + toDisplayAmount(tx);
+			map[key].native[txCurrency] = (map[key].native[txCurrency] || 0) + abs;
 		});
 		return Object.values(map)
 			.map(p => {
@@ -435,7 +440,8 @@ function Spending () {
 					: Math.round(p.total);
 				const displayCurrency = singleCurrency || currency;
 				return {
-					payee: p.payee,
+					key: p.key,
+					payee: pickPayeeLabel(p.txns),
 					total: Math.round(p.total),
 					displayTotal,
 					displayCurrency,
@@ -909,14 +915,14 @@ function Spending () {
 										Total
 									</Typography>
 								</Stack>
-								{topPayees.map(({ payee, count, displayTotal, displayCurrency, category }) => {
+								{topPayees.map(({ key, payee, count, displayTotal, displayCurrency, category }) => {
 									const catColor = getCategoryColor(category) || T.acc.hero;
 									return (
 										<Stack
-											key={payee}
+											key={key}
 											direction="row"
 											alignItems="center"
-											onClick={() => setTxDialog({ mode: 'payee', key: payee })}
+											onClick={() => setTxDialog({ mode: 'payee', key, label: payee })}
 											sx={{
 												paddingY: 1,
 												paddingX: 0.5,
@@ -977,7 +983,7 @@ function Spending () {
 			<TransactionListDialog
 				open={!!txDialog}
 				onClose={() => setTxDialog(null)}
-				title={txDialog?.mode === 'payee' ? (dialogTopCat || txDialog?.key) : txDialog?.key}
+				title={txDialog?.mode === 'payee' ? (dialogTopCat || txDialog?.label) : txDialog?.key}
 				iconCategory={txDialog?.mode === 'payee' ? dialogTopCat : txDialog?.key}
 				transactions={dialogTxns}
 				accountCurrencyMap={accountCurrencyMap}
