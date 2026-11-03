@@ -80,7 +80,9 @@ const findKoreanNameFromGemini = async (payee) => {
 			koreanNameModel = genAI.getGenerativeModel({ model: config.geminiModel, systemInstruction: KOREAN_NAME_INSTRUCTION });
 		}
 		const chat = koreanNameModel.startChat({
-			generationConfig: { maxOutputTokens: 256, responseMimeType: 'application/json' },
+			// 256 이면 thinking 토큰까지 한도에 들어가 JSON 이 중간에 잘렸다
+			// (2026-11-02 'SSIYU(CU)DONGTANJIOJEOM' → Unterminated string).
+			generationConfig: { maxOutputTokens: 2048, responseMimeType: 'application/json' },
 			history: []
 		});
 		const result = await retryWithBackoff(() => chat.sendMessage(String(payee).trim()), { label: 'findKoreanNameFromGemini' });
@@ -291,6 +293,41 @@ const formatWithdrawalNotice = (withdrawal) => {
 	return parts.length > 0 ? `${head}\n${parts.join(' · ')}` : head;
 };
 
+// 하이패스 청구 합계가 아직 정산되지 않은 도로비 건별 기록과 맞는지 본다.
+// 하이패스 알림을 놓친 통행이 있으면 합계가 모자란다.
+//
+// 정산 여부는 도로비 거래의 tollBilled 필드에 남긴다 (값은 결제예정일, 하이패스를
+// 건별로 적기 전의 옛 도로비는 'legacy'). 미청구 = tollBilled 가 없는 도로비 중
+// 결제예정일 전월 말까지의 것. 일치할 때만 표시하므로 늦게 청구된 통행
+// (09-23 통행이 11/16 청구에 들어갔다)은 다음 청구에서 함께 맞춰진다.
+// 같은 청구가 다시 와도 결과가 같도록 그 청구로 표시된 건도 센다.
+const checkTollBill = (transactions, tollCheck) => {
+	const through = moment(tollCheck.dueDate, 'YYYY-MM-DD').subtract(1, 'month').endOf('month').format('YYYY-MM-DD');
+	const accountId = `account:CCard:${tollCheck.account}`;
+	const tolls = (transactions || []).filter((t) => t.accountId === accountId
+		&& t.payee === '도로비'
+		&& typeof t.date === 'string' && t.date <= through
+		&& (!t.tollBilled || t.tollBilled === tollCheck.dueDate));
+	const unbilled = tolls.reduce((sum, t) => sum - (Number(t.amount) || 0), 0);
+
+	return {
+		through,
+		tolls,
+		unbilledAmount: unbilled,
+		matched: unbilled === tollCheck.amount
+	};
+};
+
+const formatTollCheckNotice = (tollCheck, result) => {
+	const won = (n) => `${n.toLocaleString('en-US')}원`;
+	const billed = `청구 ${won(tollCheck.amount)}(${tollCheck.count}건)`;
+	const through = moment(result.through, 'YYYY-MM-DD').format('M/D');
+	const recorded = `${through}까지 미청구 도로비 ${won(result.unbilledAmount)}`;
+	if (result.matched) return `${tollCheck.account} 하이패스 ${billed} = ${recorded}`;
+	const diff = tollCheck.amount - result.unbilledAmount;
+	return `${tollCheck.account} 하이패스 ${billed} ≠ ${recorded}\n차이 ${diff > 0 ? '+' : ''}${won(diff)}`;
+};
+
 const formatNotification = (transaction) => {
 	if (!transaction) {
 		return '';
@@ -473,13 +510,19 @@ const parsers = [
 			}
 
 			// 'KB국민카드 후불교통(신용) <건수>건 <금액>원 <MM/DD> 결제예정'
+			// 'KB국민카드 교통(신용) <건수>건 <금액>원 하이패스 <건수>건 <금액>원 <MM/DD> 결제예정'
+			//   (2026-11 부터 온 형식. 기존 정규식에 안 맞아 no-transaction 이 됐다.)
+			//
+			// 하이패스 줄은 기록하지 않는다. 통행마다 오는 하이패스 알림이 이미
+			// KB카드 '도로비'로 건별 기록하고 있어 여기서 또 적으면 두 번 잡힌다.
+			// 대신 정산 안 된 도로비 합계와 맞는지 확인해 알린다 (options.tollCheck).
 			//
 			// 후불교통은 탈 때마다 알림이 오지 않고 청구 예정액으로 한 번에 온다.
 			// 카드번호가 본문에 없어 계좌를 가릴 수 없으므로 KB카드로 둔다.
 			//
 			// 날짜는 결제예정일이다. 카드 명세서에 그 날짜로 찍히고, 같은 청구건이
 			// 건수를 늘려 다시 와도 같은 날짜로 모인다 (dedupeKey 참고).
-			const transit = line.match(/후불교통\S*\s+(\d+)건\s+([\d,]+)원\s+(\d{2}\/\d{2})\s*결제예정/);
+			const transit = line.match(/(?:후불교통|교통\(신용\))\S*\s+(\d+)건\s+([\d,]+)원[\s\S]*?(\d{2}\/\d{2})\s*결제예정/);
 			if (transit) {
 				const [, count, amountText, dateText] = transit;
 
@@ -490,6 +533,8 @@ const parsers = [
 					due.add(1, 'year');
 				}
 
+				const toll = line.match(/하이패스\s+(\d+)건\s+([\d,]+)원/);
+
 				return {
 					account: 'KB카드',
 					transaction: {
@@ -499,14 +544,21 @@ const parsers = [
 						// 기존 교통비 거래가 모두 '교통비:대중교통' 이라 맞춰 둔다.
 						category: '교통비',
 						subcategory: '대중교통',
-						// 금액이 왜 바뀌었는지 알 수 있게 건수를 남긴다.
-						memo: `${count}건`
+						// 금액이 왜 바뀌었는지 알 수 있게 건수를 남긴다. 하이패스 청구액은
+						// 보기 위한 것이다 (정산 상태는 도로비의 tollBilled 에 있다).
+						memo: toll ? `${count}건 · 하이패스 ${toll[1]}건 ${toll[2]}원` : `${count}건`
 					},
 					options: {
 						// 같은 청구건은 쌓지 않고 갱신한다.
 						dedupeKey: '후불교통',
 						// 분류가 확정적이라 Gemini 에 묻지 않는다.
-						fixedCategory: true
+						fixedCategory: true,
+						tollCheck: toll ? {
+							account: 'KB카드',
+							dueDate: due.format('YYYY-MM-DD'),
+							count: parseInt(toll[1], 10),
+							amount: parseInt(toll[2].replace(/[^0-9]/g, ''), 10)
+						} : undefined
 					}
 				};
 			}
@@ -1491,6 +1543,38 @@ exports.addTransaction = async function (rawBody) {
 		});
 
 		await messaging.sendNotification('👍 Transaction', formatNotification(categorizedTransaction), 'receipt', 'transactions');
+
+		// 하이패스 청구 합계 확인. 원장은 건드리지 않고 맞는지만 알린다.
+		if (options.tollCheck) {
+			const tollCheck = options.tollCheck;
+			const result = checkTollBill(couchTransactions, tollCheck);
+
+			logNotification('toll-check', {
+				packageName: body.packageName,
+				parserIndex,
+				account: tollCheck.account,
+				dueDate: tollCheck.dueDate,
+				billedAmount: tollCheck.amount,
+				billedCount: tollCheck.count,
+				through: result.through,
+				unbilledAmount: result.unbilledAmount,
+				unbilledCount: result.tolls.length,
+				matched: result.matched
+			});
+
+			if (result.matched) {
+				await transactionService.updateTransactions(result.tolls
+					.filter((t) => t.tollBilled !== tollCheck.dueDate)
+					.map((t) => ({ ...t, tollBilled: tollCheck.dueDate })));
+			}
+
+			await messaging.sendNotification(
+				result.matched ? '✅ 하이패스 청구 일치' : '⚠️ 하이패스 청구 불일치',
+				formatTollCheckNotice(tollCheck, result),
+				'receipt',
+				'transactions'
+			);
+		}
 		return true;
 	}
 

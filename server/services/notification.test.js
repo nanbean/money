@@ -13,7 +13,8 @@ jest.mock('./settingService', () => ({
 }));
 jest.mock('./transactionService', () => ({
 	getAllTransactions: jest.fn(),
-	addTransaction: jest.fn()
+	addTransaction: jest.fn(),
+	updateTransactions: jest.fn()
 }));
 jest.mock('./notificationService', () => ({
 	addNotification: jest.fn(),
@@ -1171,6 +1172,153 @@ describe('notification service', () => {
 
 					// Assert
 					expect(transactionService.addTransaction.mock.calls[0][0].date).toBe('2027-01-15');
+				});
+
+				// 2026-11-03 실측. '후불교통(신용)' 이 '교통(신용)' 으로 바뀌고 하이패스
+				// 합계가 같은 알림에 붙어 왔다.
+				describe('교통(신용) + 하이패스 형식', () => {
+					const NEW = '\nKB국민카드\n교통(신용) 6건 10,900원\n하이패스 14건 28,840원\n11/16 결제예정 ';
+
+					beforeEach(() => {
+						jest.setSystemTime(new Date('2026-11-03T10:22:00+09:00'));
+					});
+
+					it('교통(신용)만 후불교통으로 기록한다', async () => {
+						// Act
+						const result = await addTransaction(transit(NEW));
+
+						// Assert
+						expect(result).toBe(true);
+						expect(transactionService.addTransaction).toHaveBeenCalledTimes(1);
+						expect(transactionService.addTransaction.mock.calls[0][0]).toMatchObject({
+							_id: '2026-11-16:KB카드:후불교통',
+							date: '2026-11-16',
+							amount: -10900,
+							payee: '후불교통',
+							category: '교통비',
+							subcategory: '대중교통'
+						});
+					});
+
+					// 하이패스는 통행마다 '도로비'로 이미 기록된다. 합계를 또 적으면 두 번 잡힌다.
+					it('하이패스 합계는 기록하지 않는다', async () => {
+						// Act
+						await addTransaction(transit(NEW));
+
+						// Assert
+						const amounts = transactionService.addTransaction.mock.calls.map((c) => c[0].amount);
+						expect(amounts).not.toContain(-28840);
+					});
+
+					const toll = (date, amount, extra = {}) =>
+						({ _id: `${date}:x:${amount}`, _rev: '1-a', date, amount, payee: '도로비', accountId: 'account:CCard:KB카드', ...extra });
+					const marked = () => (transactionService.updateTransactions.mock.calls[0] || [[]])[0];
+
+					it('하이패스 청구액을 메모에 남긴다', async () => {
+						// Act
+						await addTransaction(transit(NEW));
+
+						// Assert
+						expect(transactionService.addTransaction.mock.calls[0][0].memo).toBe('6건 · 하이패스 14건 28,840원');
+					});
+
+					// 전월보다 앞선 통행(09-23)도 늦게 청구될 수 있어 정산 안 된 건은 모두 센다.
+					it('정산 안 된 도로비 합계와 같으면 일치로 알린다', async () => {
+						// Arrange
+						transactionService.getAllTransactions.mockResolvedValue([
+							toll('2025-07-20', -1640000, { tollBilled: 'legacy' }), // 건별 기록 전의 도로비
+							toll('2026-08-20', -5000, { tollBilled: '2026-09-15' }), // 이전 청구에 정산됨
+							toll('2026-09-23', -2800),
+							toll('2026-10-02', -20000),
+							toll('2026-10-31', -6040),
+							toll('2026-11-01', -5000), // 다음 청구
+							toll('2026-10-11', -5000, { accountId: 'account:CCard:생활비카드' }) // 다른 카드
+						]);
+
+						// Act
+						await addTransaction(transit(NEW));
+
+						// Assert
+						expect(messaging.sendNotification).toHaveBeenCalledWith(
+							'✅ 하이패스 청구 일치',
+							'KB카드 하이패스 청구 28,840원(14건) = 10/31까지 미청구 도로비 28,840원',
+							'receipt',
+							'transactions'
+						);
+					});
+
+					it('일치하면 대조한 도로비에 정산 표시를 남긴다', async () => {
+						// Arrange
+						transactionService.getAllTransactions.mockResolvedValue([
+							toll('2026-09-23', -2800),
+							toll('2026-10-02', -26040),
+							toll('2026-11-01', -5000)
+						]);
+
+						// Act
+						await addTransaction(transit(NEW));
+
+						// Assert
+						expect(marked().map((t) => [t.date, t.tollBilled, t._rev])).toEqual([
+							['2026-09-23', '2026-11-16', '1-a'],
+							['2026-10-02', '2026-11-16', '1-a']
+						]);
+					});
+
+					// 같은 청구가 다시 와도 이미 표시한 건을 미청구로 다시 센다.
+					it('같은 청구를 다시 받아도 일치하고 다시 표시하지 않는다', async () => {
+						// Arrange
+						transactionService.getAllTransactions.mockResolvedValue([
+							toll('2026-09-23', -2800, { tollBilled: '2026-11-16' }),
+							toll('2026-10-02', -26040, { tollBilled: '2026-11-16' })
+						]);
+
+						// Act
+						await addTransaction(transit(NEW));
+
+						// Assert
+						expect(messaging.sendNotification.mock.calls.map((c) => c[0])).toContain('✅ 하이패스 청구 일치');
+						expect(marked()).toEqual([]);
+					});
+
+					// 불일치면 표시하지 않는다 — 늦게 청구된 통행은 다음 청구에서 함께 맞춰진다.
+					it('다르면 차이와 함께 불일치로 알리고 표시하지 않는다', async () => {
+						// Arrange
+						transactionService.getAllTransactions.mockResolvedValue([
+							toll('2026-10-02', -20000),
+							toll('2026-10-11', -6040)
+						]);
+
+						// Act
+						await addTransaction(transit(NEW));
+
+						// Assert
+						expect(messaging.sendNotification).toHaveBeenCalledWith(
+							'⚠️ 하이패스 청구 불일치',
+							'KB카드 하이패스 청구 28,840원(14건) ≠ 10/31까지 미청구 도로비 26,040원\n차이 +2,800원',
+							'receipt',
+							'transactions'
+						);
+						expect(transactionService.updateTransactions).not.toHaveBeenCalled();
+					});
+
+					// 하이패스 줄이 없는 예전 형식에는 확인 알림을 보내지 않는다.
+					it('하이패스 줄이 없으면 확인하지 않는다', async () => {
+						// Act
+						await addTransaction(transit(REAL));
+
+						// Assert
+						const titles = messaging.sendNotification.mock.calls.map((c) => c[0]);
+						expect(titles.some((t) => t.includes('하이패스'))).toBe(false);
+					});
+
+					it('확인 값을 문서에 넣지 않는다', async () => {
+						// Act
+						await addTransaction(transit(NEW));
+
+						// Assert
+						expect(transactionService.addTransaction.mock.calls[0][0]).not.toHaveProperty('tollCheck');
+					});
 				});
 
 				// 기존 두 형식이 이 분기에 걸려서는 안 된다.

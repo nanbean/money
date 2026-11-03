@@ -1,11 +1,12 @@
-const { getAllTransactions, addTransaction } = require('./transactionService');
+const { getAllTransactions, addTransaction, updateTransactions } = require('./transactionService');
 const transactionDB = require('../db/transactionDB');
 const { updateAccount, updateAccountList } = require('./accountService');
 
 // Mock dependencies
 jest.mock('../db/transactionDB', () => ({
 	getAllTransactions: jest.fn(),
-	insertTransaction: jest.fn()
+	insertTransaction: jest.fn(),
+	bulkTransactions: jest.fn()
 }));
 
 jest.mock('./accountService', () => ({
@@ -95,6 +96,29 @@ describe('transactionService', () => {
 			await expect(addTransaction(newTransaction)).rejects.toThrow('Insert failed');
 			expect(updateAccount).not.toHaveBeenCalled();
 			expect(updateAccountList).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('updateTransactions', () => {
+		test('should bulk-save the documents without recalculating balances', async () => {
+			// Arrange
+			const docs = [{ _id: 'tx1', _rev: '1-a', tollBilled: '2026-11-16' }];
+
+			// Act
+			await updateTransactions(docs);
+
+			// Assert
+			expect(transactionDB.bulkTransactions).toHaveBeenCalledWith(docs);
+			expect(updateAccount).not.toHaveBeenCalled();
+			expect(updateAccountList).not.toHaveBeenCalled();
+		});
+
+		test('should do nothing for an empty list', async () => {
+			// Act
+			await updateTransactions([]);
+
+			// Assert
+			expect(transactionDB.bulkTransactions).not.toHaveBeenCalled();
 		});
 	});
 });

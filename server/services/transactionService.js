@@ -21,7 +21,14 @@ const addTransaction = async (transaction) => {
 	}
 };
 
+// 금액이 바뀌지 않는 표시용 필드만 고칠 때 쓴다. 잔액을 다시 계산하지 않는다.
+const updateTransactions = async (transactions) => {
+	if (!transactions || transactions.length === 0) return;
+	await transactionDB.bulkTransactions(transactions);
+};
+
 module.exports = {
 	getAllTransactions,
-	addTransaction
+	addTransaction,
+	updateTransactions
 };
