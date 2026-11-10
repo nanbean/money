@@ -1,18 +1,5 @@
 import { getBalance, getDepositWithdrawalSum, getInvestmentList, getInvestmentBalance } from '../../utils/netWorth';
 
-const findGeometricMean = (returns) => {
-	// Include 0% years — multiplying by 1 doesn't change the product, but
-	// dropping them shrinks n and inflates the mean. Return 1 for empty input
-	// so callers (which display geometricMean - 1) render 0%.
-	if (returns.length === 0) return 1;
-	const factors = returns.map(i => i + 1);
-	let result = 1;
-	for (let i = 0; i < factors.length; i++) {
-		result *= factors[i];
-	}
-	return Math.pow(result, 1 / factors.length);
-};
-
 const useReturnReport = (allInvestments, allAccountsTransactions, investementTransactions, cashTransactions, historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate) => {
 	let dates = [];
 	const date = new Date();
@@ -62,8 +49,6 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 		}, 0);
 	}
 
-	const returns = [];
-
 	data[0].cumulativeReturn = 0;
 	data[0].returnRate = null;
 
@@ -78,10 +63,7 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 		const prevCumulativeReturn = data[i - 1].cumulativeReturn || 0;
 		data[i].cumulativeReturn = (1 + prevCumulativeReturn) * (1 + currentReturn) - 1;
 		data[i].returnRate = Number.isNaN(returnRate) ? null : returnRate;
-		returns.push(Number.isNaN(returnRate) ? 0 : returnRate);
 	}
-
-	const geometricMean = findGeometricMean(returns);
 
 	const initialValue = data[0]?.netWorth || 0;
 	const finalValue = data[data.length - 1]?.netWorth || 0;
@@ -110,7 +92,6 @@ const useReturnReport = (allInvestments, allAccountsTransactions, investementTra
 	return {
 		chartData: data,
 		cashFlows,
-		geometricMean,
 		overallSummary: {
 			finalValue,
 			totalCashFlow,

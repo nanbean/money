@@ -99,7 +99,7 @@ export function RateOfReturn () {
 		setFilteredAccounts(e);
 	};
 
-	const { chartData, cashFlows, geometricMean, overallSummary } = useReturnReport(
+	const { chartData, cashFlows, overallSummary } = useReturnReport(
 		allInvestments, allAccountsTransactions, investementTransactions, cashTransactions,
 		historyList, filteredAccounts, allCashAccounts, accountList, exchangeRate
 	);
@@ -126,7 +126,12 @@ export function RateOfReturn () {
 	const heroDivider = T.dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)';
 	const heroPos = '#34d399';
 	const heroNeg = '#fb7185';
-	const meanPct = geometricMean ? (geometricMean - 1) * 100 : 0;
+	// Hero 는 아래 표의 '전체' 행과 같은 값이다. 예전에는 2005년부터 21년을 모두
+	// 기하평균해서, 계좌가 없던 해는 0% 로, 개설 첫해는 분모가 작아 부풀려진 값으로,
+	// 올해는 YTD 로 섞였다 (오은미연금저축: 표 +13.94%, Hero +2.276%).
+	const overall = periodReturns.find(p => p.key === 'all');
+	const meanPct = overall && overall.twr !== null ? overall.twr * 100 : null;
+	const meanYears = overall ? overall.span || 0 : 0;
 	const meanColor = meanPct > 0 ? heroPos : meanPct < 0 ? heroNeg : heroInk;
 
 	return (
@@ -179,10 +184,12 @@ export function RateOfReturn () {
 									marginTop: '12px',
 									color: meanColor
 								}}>
-									{meanPct >= 0 ? '+' : ''}{meanPct.toFixed(3)}%
+									{meanPct === null ? '—' : `${meanPct >= 0 ? '+' : ''}${meanPct.toFixed(2)}%`}
 								</Typography>
 								<Typography sx={{ fontSize: 12, color: heroDim, marginTop: '6px' }}>
-									Geometric mean across {chartData.length - 1 || 0} years
+									{meanPct === null
+										? 'No completed year yet · 완결 연도 없음'
+										: `Annualized over ${meanYears} completed year${meanYears === 1 ? '' : 's'} · 완결 ${meanYears}년 연환산`}
 								</Typography>
 							</>
 						)}
