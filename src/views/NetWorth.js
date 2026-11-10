@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
-import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Bar, Line, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -34,6 +34,7 @@ import {
 import moment from 'moment';
 import { makeIsInvestmentCash } from '../utils/investmentCash';
 import { isInternalTransfer } from '../utils/expense';
+import { projectNetWorth, normalizeRates } from '../utils/netWorthProjection';
 
 
 // Color palette (dedicated semantics — distinct from accent)
@@ -53,15 +54,20 @@ const ChartTooltip = ({ active, payload, label, T, currency }) => {
 			}}>
 				<Typography sx={{ fontSize: 12, fontWeight: 600, color: T.ink, marginBottom: 0.5 }}>{label}</Typography>
 				{payload
-					.filter(entry => Number.isFinite(entry.value))
-					.sort((a, b) => b.value - a.value)
+					// 예측 범위(projBand)는 [비관, 낙관] 배열로 온다.
+					.filter(entry => Number.isFinite(entry.value) || (Array.isArray(entry.value) && entry.value.every(Number.isFinite)))
+					.sort((a, b) => [].concat(b.value)[0] - [].concat(a.value)[0])
 					.map(entry => (
 						<Stack key={entry.dataKey} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
 							<Stack direction="row" spacing={0.5} alignItems="center">
 								<Box sx={{ width: 8, height: 8, background: entry.color || entry.fill, borderRadius: '2px' }} />
 								<Typography sx={{ fontSize: 11, color: T.ink2 }}>{entry.name}</Typography>
 							</Stack>
-							<Typography sx={{ fontSize: 11, color: T.ink }}>{fmtCurrency(entry.value, currency)}</Typography>
+							<Typography sx={{ fontSize: 11, color: T.ink }}>
+								{Array.isArray(entry.value)
+									? `${fmtCurrency(entry.value[0], currency)} – ${fmtCurrency(entry.value[1], currency)}`
+									: fmtCurrency(entry.value, currency)}
+							</Typography>
 						</Stack>
 					))}
 			</Box>
@@ -118,7 +124,8 @@ function NetWorth () {
 		currency: displayCurrency = 'KRW',
 		exchangeRate,
 		netWorthChartRange = 'monthly',
-		livingExpenseExempt = []
+		livingExpenseExempt = [],
+		netWorthProjectionRates
 	} = useSelector((state) => state.settings);
 
 	useEffect(() => {
@@ -149,6 +156,30 @@ function NetWorth () {
 		cashNetWorth: displayCurrency === 'USD' ? item.cashNetWorth / exchangeRate : item.cashNetWorth,
 		netWorth: displayCurrency === 'USD' ? item.netWorth / exchangeRate : item.netWorth
 	})), [netWorthFlow, netWorthChartRange, displayCurrency, exchangeRate]);
+
+	// 미래 순자산 예측 (Yearly 보기에서만). 다음 해 = 올해 × (1 + 수익률) + 연 저축액.
+	// 연 저축액은 최근 12개월 수입 − 지출. 점수와 달리 living expense 예외 항목도
+	// 지출로 센다 — 생활비가 아닐 뿐 실제로 나간 돈이라, 빼면 저축이 부풀려진다.
+	const projection = useMemo(() => {
+		if (netWorthChartRange !== 'yearly' || rangedNetWorthFlow.length === 0 || !accountList || accountList.length === 0) return null;
+		const { income, expense } = calcSavingsBreakdown(allAccountsTransactions || [], accountList, [], exchangeRate, displayCurrency, 12);
+		const annualSaving = income - expense;
+		const rates = normalizeRates(netWorthProjectionRates);
+		const start = rangedNetWorthFlow[rangedNetWorthFlow.length - 1].netWorth;
+		const rows = projectNetWorth({ start, annualSaving, rates, now: new Date() });
+		return rows.length ? { annualSaving, rates, rows } : null;
+	}, [netWorthChartRange, rangedNetWorthFlow, accountList, allAccountsTransactions, exchangeRate, displayCurrency, netWorthProjectionRates]);
+
+	// 실제 마지막 해(올해, 지금 값)에서 예측선이 이어지도록 그 행에도 같은 값을 둔다.
+	const chartRows = useMemo(() => {
+		if (!projection) return rangedNetWorthFlow;
+		const last = rangedNetWorthFlow[rangedNetWorthFlow.length - 1];
+		return [
+			...rangedNetWorthFlow.slice(0, -1),
+			{ ...last, projBase: last.netWorth, projBand: [last.netWorth, last.netWorth] },
+			...projection.rows.map(r => ({ date: String(r.year), projBase: r.base, projBand: [r.low, r.high] }))
+		];
+	}, [projection, rangedNetWorthFlow]);
 
 	// Current breakdown from accountList for the right-now snapshot
 	const breakdown = useMemo(() => {
@@ -403,7 +434,7 @@ function NetWorth () {
 								<Box component="span" sx={{ color: T.ink2, fontWeight: 400, fontSize: 12 }}> · 추이</Box>
 							</Typography>
 							<Typography sx={{ fontSize: 11, color: T.ink3 }}>
-								{netWorthChartRange === 'yearly' ? 'Year-end snapshots' : 'Monthly progression'}
+								{netWorthChartRange === 'yearly' ? 'Year-end snapshots + 10-year projection' : 'Monthly progression'}
 							</Typography>
 						</Stack>
 						<SortMenuButton
@@ -419,7 +450,7 @@ function NetWorth () {
 						<Box sx={{ width: '100%', height: 360 }}>
 							<ResponsiveContainer>
 								<ComposedChart
-									data={rangedNetWorthFlow}
+									data={chartRows}
 									margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
 								>
 									<XAxis
@@ -437,6 +468,12 @@ function NetWorth () {
 									<Bar dataKey="investmentsNetWorth" name="Investments" stackId="a" fill={ASSET_TONES[1]} radius={[3, 3, 3, 3]} />
 									<Bar dataKey="cashNetWorth" name="Cash" stackId="a" fill={ASSET_TONES[0]} radius={[3, 3, 3, 3]} />
 									<Line dataKey="netWorth" name="Net worth" stroke={T.ink} strokeDasharray="4 4" strokeWidth={2} dot={false} />
+									{projection && (
+										<Area dataKey="projBand" name={`Projection range · ${projection.rates[0]}–${projection.rates[2]}%`} stroke="none" fill={T.acc.hero} fillOpacity={0.15} isAnimationActive={false} />
+									)}
+									{projection && (
+										<Line dataKey="projBase" name={`Projection · ${projection.rates[1]}%`} stroke={T.acc.hero} strokeDasharray="6 4" strokeWidth={2} dot={false} isAnimationActive={false} />
+									)}
 								</ComposedChart>
 							</ResponsiveContainer>
 						</Box>
@@ -444,6 +481,13 @@ function NetWorth () {
 						<Box sx={{ padding: 4, textAlign: 'center' }}>
 							<Typography sx={{ fontSize: 13, color: T.ink2 }}>Not enough data points yet</Typography>
 						</Box>
+					)}
+					{projection && (
+						<Typography sx={{ fontSize: 11, color: T.ink3, marginTop: 1 }}>
+							Projection · 예측: 연 저축 {fmtCurrency(projection.annualSaving, displayCurrency)} (최근 12개월 수입 − 지출)
+							{' · '}수익률 {projection.rates[0]} / {projection.rates[1]} / {projection.rates[2]}% (비관 / 기본 / 낙관, Settings에서 변경)
+							{' · '}10년 후 기본 {fmtCurrency(projection.rows[projection.rows.length - 1].base, displayCurrency)}
+						</Typography>
 					)}
 				</Box>
 

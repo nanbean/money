@@ -9,6 +9,7 @@ import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
 import ListSubheader from '@mui/material/ListSubheader';
 import Divider from '@mui/material/Divider';
 import Switch from '@mui/material/Switch';
+import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -18,6 +19,7 @@ import CheckIcon from '@mui/icons-material/Check';
 
 import useT from '../../hooks/useT';
 import { ACCENTS, ACCENT_LABELS } from '../../utils/designTokens';
+import { normalizeRates } from '../../utils/netWorthProjection';
 
 import {
 	requestPermissionAction,
@@ -36,9 +38,11 @@ export function General () {
 		enableExchangeRateUpdate,
 		exchangeRate,
 		themeMode = 'auto',
-		accent = 'indigo'
+		accent = 'indigo',
+		netWorthProjectionRates
 	} = useSelector((state) => state.settings);
 	const [exchangeRateValue, setExchangeRateValue] = useState(exchangeRate);
+	const [projectionRates, setProjectionRates] = useState(() => normalizeRates(netWorthProjectionRates).map(String));
 	const dispatch = useDispatch();
 
 	const onExchangeRateValueChange = (ev) => {
@@ -58,6 +62,27 @@ export function General () {
 		if (event.key === 'Enter') {
 			// Save when Enter key is pressed
 			event.target.blur();
+		}
+	};
+
+	// 순자산 예측 수익률(비관·기본·낙관, 연 %). 셋 다 숫자일 때만 저장하고 아니면 되돌린다.
+	const handleProjectionRateChange = (index) => (ev) => {
+		const next = [...projectionRates];
+		next[index] = ev.target.value;
+		setProjectionRates(next);
+	};
+
+	const handleProjectionRatesSend = () => {
+		const nums = projectionRates.map(v => parseFloat(v));
+		const current = normalizeRates(netWorthProjectionRates);
+		if (nums.every(Number.isFinite)) {
+			const sorted = normalizeRates(nums);
+			setProjectionRates(sorted.map(String));
+			if (sorted.some((v, i) => v !== current[i])) {
+				dispatch(updateGeneralAction('netWorthProjectionRates', sorted));
+			}
+		} else {
+			setProjectionRates(current.map(String));
 		}
 	};
 
@@ -196,6 +221,31 @@ export function General () {
 					variant="outlined"
 					inputProps={{ 'aria-labelledby': 'exchange-rate-label' }}
 				/>
+			</ListItem>
+			<ListItem sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' }, rowGap: 1.25 }}>
+				<ListItemText
+					id="projection-rates-label"
+					primary="Net Worth Projection · 순자산 예측"
+					secondary="Annual return % · 연 수익률 (비관 / 기본 / 낙관)"
+					sx={{ minWidth: 0, flex: '1 1 auto' }}
+				/>
+				<Stack direction="row" spacing={1}>
+					{['Low', 'Base', 'High'].map((label, i) => (
+						<TextField
+							key={label}
+							label={label}
+							value={projectionRates[i]}
+							size="small"
+							type="number"
+							onChange={handleProjectionRateChange(i)}
+							onBlur={handleProjectionRatesSend}
+							onKeyDown={handleExchangeRateKeyDown}
+							sx={{ width: '72px' }}
+							variant="outlined"
+							inputProps={{ 'aria-labelledby': 'projection-rates-label', step: 0.5 }}
+						/>
+					))}
+				</Stack>
 			</ListItem>
 			<Divider component="li" sx={{ my: 1 }} />
 			<ListSubheader sx={{ bgcolor: 'transparent' }}>Theme</ListSubheader>

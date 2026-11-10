@@ -33,7 +33,9 @@ export const toDisplay = (acc, exchangeRate, currency) => {
 //
 // income 은 NON_INCOME_CATEGORY(차량 매각 등 자산→현금 유입)도 제외한다 —
 // 일회성 자산 매각이 수입으로 잡혀 저축률이 왜곡되는 문제 방지.
-export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExempt, exchangeRate, currency) => {
+// months: 최근 몇 개월(지난달까지 꽉 찬 달)로 볼지. 점수는 3개월, 순자산 예측의
+// 연 저축액은 계절성을 지우려고 12개월을 쓴다.
+export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExempt, exchangeRate, currency, months = 3) => {
 	const accountMap = new Map((accountList || []).map(a => [a._id, a]));
 	const toAmount = (row) => {
 		const acc = accountMap.get(row.accountId);
@@ -42,12 +44,12 @@ export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExe
 		return currency === 'KRW' ? row.amount * exchangeRate : row.amount / exchangeRate;
 	};
 
-	const threeMonthsStart = moment().subtract(3, 'months').startOf('month').format('YYYY-MM-DD');
+	const windowStart = moment().subtract(months, 'months').startOf('month').format('YYYY-MM-DD');
 	const lastMonthEnd = moment().subtract(1, 'months').endOf('month').format('YYYY-MM-DD');
 
 	// 분할 항목은 부모의 date 를 물려받으므로 펼치기 전에 창을 잘라도 결과가 같다.
 	const inWindow = (transactions || [])
-		.filter(t => t && t.date >= threeMonthsStart && t.date <= lastMonthEnd);
+		.filter(t => t && t.date >= windowStart && t.date <= lastMonthEnd);
 	const rows = flattenTransactionRows(inWindow)
 		.filter(row => fullCategoryOf(row) !== NON_EXPENSE_CATEGORY);
 
