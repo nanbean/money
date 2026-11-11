@@ -509,6 +509,38 @@ const parsers = [
 				};
 			}
 
+			// '[KB국민카드]<이름>님 <MM/DD> 결제금액 <금액>원. 감사합니다. (<MM/DD>기준)'
+			// '[KB국민카드]<이름>님 <MM/DD> 결제금액 <금액>원. 포인트리잔액1,738(<MM/DD>기준)'
+			//
+			// 결제금액 안내. 개별 승인은 이미 원장에 있으므로 거래로 만들지 않고
+			// '💳 결제 예정' 으로 알린다 (2026-11-05 두 건이 no-transaction ⚠️ 로 떴다).
+			// 카드번호가 없어 이름으로 계좌를 가른다. 모르는 이름이어도 안내라서
+			// 버리지 않고 이름을 붙여 알린다.
+			const bill = line.match(/\[KB국민카드\]\s*(\S+?)님\s+(\d{2}\/\d{2})\s*결제금액\s*([\d,]+)원/);
+			if (bill) {
+				const [, name, dueText, amountText] = bill;
+				const ACCOUNT_BY_NAME = { 오은미: 'KB카드오은미', 김정심: 'KB카드' };
+
+				// 결제예정일은 앞을 보는 날짜다 (후불교통과 같은 연말 보정).
+				const dueDate = moment(dueText, 'MM/DD');
+				if (dueDate.diff(moment(), 'days') < -180) {
+					dueDate.add(1, 'year');
+				}
+				const base = line.match(/\(\s*(\d{1,2}\/\d{1,2})\s*기준\s*\)/);
+
+				return {
+					options: {
+						statement: {
+							account: ACCOUNT_BY_NAME[name] || `KB국민카드 ${name}`,
+							dueDate: dueDate.format('YYYY-MM-DD'),
+							amount: parseInt(amountText.replace(/[^0-9]/g, ''), 10),
+							bank: null,
+							baseDate: base ? base[1] : null
+						}
+					}
+				};
+			}
+
 			// 'KB국민카드 후불교통(신용) <건수>건 <금액>원 <MM/DD> 결제예정'
 			// 'KB국민카드 교통(신용) <건수>건 <금액>원 하이패스 <건수>건 <금액>원 <MM/DD> 결제예정'
 			//   (2026-11 부터 온 형식. 기존 정규식에 안 맞아 no-transaction 이 됐다.)
@@ -1299,7 +1331,12 @@ const logNotification = (stage, detail) => {
 // 맨 앞만 본다. 어디에 있든 걸러 버리면 거래 알림 뒤에 광고 문구가 붙어 오는
 // 경우에 거래를 조용히 잃는다 — 가계부에서는 그게 더 나쁘다. 그런 형식을 실제로
 // 본 적은 없고, 온다면 상호에 광고 문구가 붙어 기록되므로 파서에서 떼야 한다.
-const isAdvertisement = (text) => /^\s*(?:\[Web발신\]\s*)?\(광고\)/.test(text);
+//
+// 단, 첫 줄이 앱·카드사 이름뿐인 경우는 그 다음 줄을 맨 앞으로 본다. 카카오톡으로
+// 오는 삼성카드는 '삼성카드\n(광고)[삼성카드] …' 형태라 걸러지지 않고 ⚠️ 가 떴다
+// (2026-11-06). 이름 줄은 공백·숫자·기호 없는 짧은 한 단어로만 인정한다.
+const isAdvertisement = (text) =>
+	/^\s*(?:[가-힣A-Za-z]{2,10}[ \t]*\r?\n\s*)?(?:\[Web발신\]\s*)?\(광고\)/.test(text || '');
 
 // 금액이 아예 없으면 거래일 수 없다.
 //

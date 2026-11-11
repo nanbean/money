@@ -465,8 +465,25 @@ describe('notification service', () => {
 					// 본문에 '65,365원' 이 들어 있다. 금액처럼 보이는 광고도 버려야 한다.
 					['특가 광고', 'ios.lottecard', '(광고)[~15%쿠폰]단 하루 하기스 띵샵 특가\n[29%]보송보송 팬티형 2팩*2박스 65,365원\r\n\r\n※ 수신거부: 전체메뉴-내 카드 정보-알림 설정'],
 					['SMS 광고', 'com.google.android.apps.messaging', '[Web발신](광고)NH카드 이벤트 안내'],
-					['앞에 개행', 'ios.KBPay', '\n(광고)KB Pay 첫 결제 이벤트']
+					['앞에 개행', 'ios.KBPay', '\n(광고)KB Pay 첫 결제 이벤트'],
+					// 2026-11-06 실측. 첫 줄이 카드사 이름이고 파서도 없어 no-parser ⚠️ 가 떴다.
+					['이름 줄 뒤 광고', 'ios.KakaoTalk.SamsungCard', '삼성카드\n(광고)[삼성카드] 삼성전자 최대 10만원 할인 LINK 혜택\n\n최대 10만원 결제일할인에 무이자할부까지 이용할 수 있어요.']
 				];
+
+				// 첫 줄이 이름 한 단어가 아니면 광고로 보지 않는다 — 거래 줄 뒤의 광고 문구로
+				// 거래를 잃으면 안 된다.
+				it('거래 줄 다음의 (광고) 는 광고로 거르지 않는다', async () => {
+					// Arrange
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					await addTransaction({ packageName: 'ios.KBPay', text: '\n[KB Pay 사용 알림] 신용 6036 09/02 16:13 14,160원 11번가 승인\n(광고)이벤트' });
+					const lines = log.mock.calls.map((c) => c.map(String).join(' '));
+					log.mockRestore();
+
+					// Assert
+					expect(lines.some((l) => l.includes('advertisement'))).toBe(false);
+				});
 
 				test.each(ADS)('%s 를 거래 없이 버린다', async (_label, packageName, text) => {
 					// Act
@@ -1048,6 +1065,53 @@ describe('notification service', () => {
 
 					// Assert
 					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+				});
+			});
+
+			// 결제금액 안내. 거래가 아니라 '💳 결제 예정' 으로 알린다.
+			describe('iOS KB Pay 결제금액 안내', () => {
+				// 2026-11-05 실측 원문 두 건.
+				const OH = '\n[KB국민카드]오은미님 11/16 결제금액 598,258원. 감사합니다. (11/03기준) ';
+				const KIM = '\n[KB국민카드]김정심님 11/16 결제금액 58,440원. 포인트리잔액1,738(11/03기준) ';
+				const kb = (text) => ({ packageName: 'ios.KBPay', text });
+
+				beforeEach(() => {
+					jest.setSystemTime(new Date('2026-11-05T10:19:00+09:00'));
+				});
+
+				test.each([
+					['오은미', OH, 'KB카드오은미 11/16 598,258원 결제 예정\n11/03 기준'],
+					['김정심', KIM, 'KB카드 11/16 58,440원 결제 예정\n11/03 기준']
+				])('%s 안내를 결제 예정으로 알린다', async (_label, text, body) => {
+					// Act
+					const result = await addTransaction(kb(text));
+
+					// Assert
+					expect(result).toBe(false);
+					expect(transactionService.addTransaction).not.toHaveBeenCalled();
+					expect(messaging.sendNotification).toHaveBeenCalledWith('💳 결제 예정', body, 'receipt');
+				});
+
+				it('모르는 이름도 버리지 않고 이름을 붙여 알린다', async () => {
+					// Act
+					await addTransaction(kb('\n[KB국민카드]홍길동님 11/16 결제금액 1,000원. 감사합니다. (11/03기준) '));
+
+					// Assert
+					expect(messaging.sendNotification).toHaveBeenCalledWith('💳 결제 예정', 'KB국민카드 홍길동 11/16 1,000원 결제 예정\n11/03 기준', 'receipt');
+				});
+
+				it('연말에 오는 다음 해 결제일을 넘긴다', async () => {
+					// Arrange
+					jest.setSystemTime(new Date('2026-12-28T10:00:00+09:00'));
+					const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+					// Act
+					await addTransaction(kb('\n[KB국민카드]김정심님 01/16 결제금액 58,440원. 감사합니다. (12/26기준) '));
+					const lines = log.mock.calls.map((c) => c.map(String).join(' '));
+					log.mockRestore();
+
+					// Assert
+					expect(lines.some((l) => l.includes('"reason":"statement"') && l.includes('"dueDate":"2027-01-16"'))).toBe(true);
 				});
 			});
 
