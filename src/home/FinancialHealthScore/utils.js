@@ -1,7 +1,7 @@
 import moment from 'moment';
 import { NON_EXPENSE_CATEGORY, NON_INCOME_CATEGORY } from '../../constants';
 import { makeIsInvestmentCash } from '../../utils/investmentCash';
-import { flattenTransactionRows, fullCategoryOf, isInternalTransfer, isLivingExpenseExempt } from '../../utils/expense';
+import { flattenTransactionRows, fullCategoryOf, isInternalTransfer } from '../../utils/expense';
 
 // 통화 변환 헬퍼 — calcInvestmentScore, calcEmergencyScore, calcDebtScore 공통 사용
 export const toDisplay = (acc, exchangeRate, currency) => {
@@ -22,10 +22,8 @@ export const toDisplay = (acc, exchangeRate, currency) => {
 // 예전에는 이 함수가 거래를 직접 훑었고 — 거래를 훑는 네 번째 사본이었다 —
 // 그 사본에 결함이 둘 있었다. 실측 기준(2026-06~08)으로:
 //
-//   * livingExpenseExempt 를 t.category 접두어로만 비교했다. 거래는 category 와
-//     subcategory 를 나눠 갖는데 면제 목록에는 '세금:소득세' 처럼 서브카테고리
-//     까지 지정된 항목이 많아서, 그런 항목이 하나도 걸러지지 않았다 —
-//     8건 ₩29,364,318 이 생활비로 잡혔다.
+//   * livingExpenseExempt 를 t.category 접두어로만 비교했다 (지금은 저축률에
+//     면제를 쓰지 않는다 — 아래 '실수령 기준' 참고).
 //   * 분할(division)을 펼치지 않고 부모 금액만 봤다 — 창 안에 분할 거래 6건
 //     (항목 43개)이 있었다.
 //
@@ -33,9 +31,18 @@ export const toDisplay = (acc, exchangeRate, currency) => {
 //
 // income 은 NON_INCOME_CATEGORY(차량 매각 등 자산→현금 유입)도 제외한다 —
 // 일회성 자산 매각이 수입으로 잡혀 저축률이 왜곡되는 문제 방지.
+//
+// 실수령 기준이다 (2026-11-11 변경). 수입은 급여에서 뗀 세금·4대보험을 뺀 실수령,
+// 지출은 면제 없이 나간 돈 전부다. 예전에는 수입을 세전으로 세면서 같은 급여의
+// 세금·4대보험은 생활비 면제(livingExpenseExempt)로 지출에서 빼서, 받지도 않은 돈이
+// 저축으로 잡혔다 — 2026-08~10 에 공제 ₩15.4M 이 빠져 71.7% 가 나왔다(실수령 기준 29%).
+// 생활비 면제는 '생활비가 얼마인가' 를 볼 때의 기준이지 저축률의 기준이 아니다.
+//
+// 급여 공제 = 부모 금액이 양수(실수령)인 분할 거래 안의 '세금' 항목.
+//
 // months: 최근 몇 개월(지난달까지 꽉 찬 달)로 볼지. 점수는 3개월, 순자산 예측의
 // 연 저축액은 계절성을 지우려고 12개월을 쓴다.
-export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExempt, exchangeRate, currency, months = 3) => {
+export const calcSavingsBreakdown = (transactions, accountList, exchangeRate, currency, months = 3) => {
 	const accountMap = new Map((accountList || []).map(a => [a._id, a]));
 	const toAmount = (row) => {
 		const acc = accountMap.get(row.accountId);
@@ -53,19 +60,28 @@ export const calcSavingsBreakdown = (transactions, accountList, livingExpenseExe
 	const rows = flattenTransactionRows(inWindow)
 		.filter(row => fullCategoryOf(row) !== NON_EXPENSE_CATEGORY);
 
-	const income = rows
+	const payrollIds = new Set(inWindow
+		.filter(t => t.division && t.division.length > 0 && t.amount > 0)
+		.map(t => t._id));
+	const isPayrollDeduction = (row) => row.fromDivision && payrollIds.has(row._id) && row.category === '세금';
+
+	const gross = rows
 		.filter(row => row.amount > 0 && fullCategoryOf(row) !== NON_INCOME_CATEGORY)
 		.reduce((sum, row) => sum + toAmount(row), 0);
+	const deductions = rows
+		.filter(row => row.amount < 0 && isPayrollDeduction(row))
+		.reduce((sum, row) => sum + Math.abs(toAmount(row)), 0);
 	const expense = rows
-		.filter(row => row.amount < 0 && !isLivingExpenseExempt(row, livingExpenseExempt))
+		.filter(row => row.amount < 0 && !isPayrollDeduction(row))
 		.reduce((sum, row) => sum + Math.abs(toAmount(row)), 0);
 
+	const income = gross - deductions;
 	const savingsRate = income > 0 ? (income - expense) / income : 0;
 	return { income, expense, savingsRate };
 };
 
-export const calcSavingsScore = (transactions, accountList, livingExpenseExempt, exchangeRate, currency) => {
-	const { income, savingsRate } = calcSavingsBreakdown(transactions, accountList, livingExpenseExempt, exchangeRate, currency);
+export const calcSavingsScore = (transactions, accountList, exchangeRate, currency) => {
+	const { income, savingsRate } = calcSavingsBreakdown(transactions, accountList, exchangeRate, currency);
 	if (income <= 0) return 0;
 	if (savingsRate >= 0.2) return 25;
 	if (savingsRate >= 0.1) return 15;
@@ -151,8 +167,8 @@ export const calcDebtScore = (accountList, exchangeRate, currency) => {
 	return 0;
 };
 
-export const calcHealthScore = ({ transactions, accountList, livingExpenseExempt, exchangeRate, currency }) =>
-	calcSavingsScore(transactions, accountList, livingExpenseExempt, exchangeRate, currency) +
+export const calcHealthScore = ({ transactions, accountList, exchangeRate, currency }) =>
+	calcSavingsScore(transactions, accountList, exchangeRate, currency) +
 	calcInvestmentScore(accountList, exchangeRate, currency) +
 	calcEmergencyScore(accountList, transactions, exchangeRate, currency) +
 	calcDebtScore(accountList, exchangeRate, currency);

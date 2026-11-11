@@ -83,7 +83,7 @@ export default function HomeHero () {
 	const allAccountsTransactions = useSelector((state) => state.allAccountsTransactions);
 	const netWorthFlow = useSelector((state) => state.netWorthFlow);
 	const username = useSelector((state) => state.username);
-	const { exchangeRate, currency = 'KRW', livingExpenseExempt = [] } = useSelector((state) => state.settings || {});
+	const { exchangeRate, currency = 'KRW' } = useSelector((state) => state.settings || {});
 
 	useEffect(() => {
 		if (!netWorthFlow || netWorthFlow.length === 0) {
@@ -122,12 +122,12 @@ export default function HomeHero () {
 	const score = useMemo(() => {
 		if (!accountList || accountList.length === 0) return 0;
 		return (
-			calcSavingsScore(allAccountsTransactions || [], accountList, livingExpenseExempt, exchangeRate, currency) +
+			calcSavingsScore(allAccountsTransactions || [], accountList, exchangeRate, currency) +
 			calcInvestmentScore(accountList, exchangeRate, currency) +
 			calcEmergencyScore(accountList, allAccountsTransactions || [], exchangeRate, currency) +
 			calcDebtScore(accountList, exchangeRate, currency)
 		);
-	}, [accountList, allAccountsTransactions, livingExpenseExempt, exchangeRate, currency]);
+	}, [accountList, allAccountsTransactions, exchangeRate, currency]);
 
 	const onRefresh = () => username && dispatch(updateInvestmentPriceAction());
 

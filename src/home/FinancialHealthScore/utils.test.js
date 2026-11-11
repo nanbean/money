@@ -19,8 +19,8 @@ const tx = (over) => ({
 	...over
 });
 
-const run = (transactions, exempt = []) =>
-	calcSavingsBreakdown(transactions, ACCOUNTS, exempt, 1378.85, 'KRW');
+const run = (transactions) =>
+	calcSavingsBreakdown(transactions, ACCOUNTS, 1378.85, 'KRW');
 
 describe('calcSavingsBreakdown', () => {
 	test('수입과 지출을 나눠 저축률을 낸다', () => {
@@ -41,37 +41,15 @@ describe('calcSavingsBreakdown', () => {
 		expect(result).toEqual({ income: 0, expense: 0, savingsRate: 0 });
 	});
 
-	// 실측 결함 1 — 면제 목록에는 '세금:소득세' 처럼 서브카테고리까지 지정된
-	// 항목이 많은데 t.category 접두어로만 비교해서 하나도 걸러지지 않았다.
-	// 2026-06~08 창에서 8건 ₩29,364,318 이 생활비로 잡혔다.
-	test('서브카테고리까지 지정된 면제 항목이 걸러진다', () => {
-		const transactions = [
-			tx({ category: '월급&보너스', subcategory: '월급', amount: 1000000 }),
-			tx({ category: '세금', subcategory: '소득세', amount: -400000 })
-		];
-
-		expect(run(transactions, ['세금:소득세']).expense).toBe(0);
-		// 면제가 없으면 지출로 센다
-		expect(run(transactions, []).expense).toBe(400000);
-	});
-
-	test('부모 이름 면제는 자식까지 덮는다', () => {
+	// 생활비 면제(세금·대출이자 등)도 저축률에서는 지출이다 — 실제로 나간 돈이다.
+	test('급여 밖의 세금·대출이자도 지출로 센다', () => {
 		const result = run([
 			tx({ category: '기타 수입', amount: 1000000 }),
-			tx({ category: '세금', subcategory: '소득세', amount: -400000 })
-		], ['세금']);
+			tx({ category: '세금', subcategory: '재산세', amount: -100000 }),
+			tx({ category: '대출이자', amount: -200000 })
+		]);
 
-		expect(result.expense).toBe(0);
-	});
-
-	// 경로 단위 비교라 접두어만 겹치는 이름은 덮지 않는다.
-	test('접두어만 겹치는 카테고리는 면제되지 않는다', () => {
-		const result = run([
-			tx({ category: '기타 수입', amount: 1000000 }),
-			tx({ category: '보험료', amount: -50000 })
-		], ['보험']);
-
-		expect(result.expense).toBe(50000);
+		expect(result).toMatchObject({ income: 1000000, expense: 300000 });
 	});
 
 	// 실측 결함 2 — 분할을 펼치지 않고 부모 금액만 봤다. 급여는 부모가 양수인데
@@ -88,11 +66,14 @@ describe('calcSavingsBreakdown', () => {
 			]
 		});
 
-		test('분할 항목을 펼쳐서 센다', () => {
+		// 실수령 기준: 급여에서 뗀 세금은 수입에서 빼고 지출로는 세지 않는다.
+		// 세전 수입에 공제를 지출에서 빼면 받지도 않은 돈이 저축이 된다(71.7% → 29%).
+		test('급여 공제(세금)는 수입에서 빼고, 나머지 분할 지출은 지출로 센다', () => {
 			const result = run([payroll]);
 
-			expect(result.income).toBe(1000000);
-			expect(result.expense).toBe(300000);
+			expect(result.income).toBe(800000);
+			expect(result.expense).toBe(100000);
+			expect(result.savingsRate).toBeCloseTo(0.875);
 		});
 
 		test('부모 금액은 계산에 넣지 않는다', () => {
@@ -100,8 +81,21 @@ describe('calcSavingsBreakdown', () => {
 			expect(run([payroll]).income).not.toBe(700000);
 		});
 
-		test('분할 안의 면제 항목도 걸러진다', () => {
-			expect(run([payroll], ['세금:소득세']).expense).toBe(100000);
+		// 부모가 음수인 분할(대출 상환 등)의 세금은 급여 공제가 아니다.
+		test('급여가 아닌 분할의 세금은 지출이다', () => {
+			const result = run([
+				tx({ category: '기타 수입', amount: 1000000 }),
+				tx({
+					category: '세금',
+					amount: -150000,
+					division: [
+						{ category: '세금', subcategory: '재산세', amount: -100000, description: '재산세' },
+						{ category: '세금', subcategory: '지방교육세', amount: -50000, description: '교육세' }
+					]
+				})
+			]);
+
+			expect(result).toMatchObject({ income: 1000000, expense: 150000 });
 		});
 	});
 
@@ -192,7 +186,7 @@ describe('calcSavingsScore', () => {
 			tx({ category: '기타 수입', amount: income }),
 			tx({ category: '기타 지출', amount: -expense })
 		];
-		return calcSavingsScore(transactions, ACCOUNTS, [], 1378.85, 'KRW');
+		return calcSavingsScore(transactions, ACCOUNTS, 1378.85, 'KRW');
 	};
 
 	// 경계는 모두 포함이다 (>= 0.2 / >= 0.1 / >= 0).
@@ -210,6 +204,6 @@ describe('calcSavingsScore', () => {
 
 	// 실측: 두 결함 탓에 -33.7% 가 나와 점수가 0이었다. 바로잡으면 +42.1% → 25점.
 	test('수입이 없으면 0점', () => {
-		expect(calcSavingsScore([], ACCOUNTS, [], 1378.85, 'KRW')).toBe(0);
+		expect(calcSavingsScore([], ACCOUNTS, 1378.85, 'KRW')).toBe(0);
 	});
 });

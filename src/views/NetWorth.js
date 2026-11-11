@@ -124,7 +124,6 @@ function NetWorth () {
 		currency: displayCurrency = 'KRW',
 		exchangeRate,
 		netWorthChartRange = 'monthly',
-		livingExpenseExempt = [],
 		netWorthProjectionRates
 	} = useSelector((state) => state.settings);
 
@@ -158,11 +157,10 @@ function NetWorth () {
 	})), [netWorthFlow, netWorthChartRange, displayCurrency, exchangeRate]);
 
 	// 미래 순자산 예측 (Yearly 보기에서만). 다음 해 = 올해 × (1 + 수익률) + 연 저축액.
-	// 연 저축액은 최근 12개월 수입 − 지출. 점수와 달리 living expense 예외 항목도
-	// 지출로 센다 — 생활비가 아닐 뿐 실제로 나간 돈이라, 빼면 저축이 부풀려진다.
+	// 연 저축액은 최근 12개월 실수령 − 지출 (저축률과 같은 정의, calcSavingsBreakdown).
 	const projection = useMemo(() => {
 		if (netWorthChartRange !== 'yearly' || rangedNetWorthFlow.length === 0 || !accountList || accountList.length === 0) return null;
-		const { income, expense } = calcSavingsBreakdown(allAccountsTransactions || [], accountList, [], exchangeRate, displayCurrency, 12);
+		const { income, expense } = calcSavingsBreakdown(allAccountsTransactions || [], accountList, exchangeRate, displayCurrency, 12);
 		const annualSaving = income - expense;
 		const rates = normalizeRates(netWorthProjectionRates);
 		const start = rangedNetWorthFlow[rangedNetWorthFlow.length - 1].netWorth;
@@ -217,12 +215,12 @@ function NetWorth () {
 	// Financial health (ported from home/FinancialHealthScore)
 	const fhScore = useMemo(() => {
 		if (!accountList || accountList.length === 0) return null;
-		const savings = calcSavingsScore(allAccountsTransactions || [], accountList, livingExpenseExempt, exchangeRate, displayCurrency);
+		const savings = calcSavingsScore(allAccountsTransactions || [], accountList, exchangeRate, displayCurrency);
 		const investing = calcInvestmentScore(accountList, exchangeRate, displayCurrency);
 		const emergency = calcEmergencyScore(accountList, allAccountsTransactions || [], exchangeRate, displayCurrency);
 		const debt = calcDebtScore(accountList, exchangeRate, displayCurrency);
 		return { savings, investing, emergency, debt, total: savings + investing + emergency + debt };
-	}, [accountList, allAccountsTransactions, exchangeRate, displayCurrency, livingExpenseExempt]);
+	}, [accountList, allAccountsTransactions, exchangeRate, displayCurrency]);
 
 	// Detailed metrics (income/expense/ratio numbers for the bar tooltips).
 	// Reuse calcSavingsBreakdown so the displayed numbers match what the score is computed from.
@@ -234,7 +232,7 @@ function NetWorth () {
 		const isInvCash = makeIsInvestmentCash(accountList);
 
 		const { income, expense, savingsRate: savingsRateFrac } =
-			calcSavingsBreakdown(allAccountsTransactions || [], accountList, livingExpenseExempt, exchangeRate, displayCurrency);
+			calcSavingsBreakdown(allAccountsTransactions || [], accountList, exchangeRate, displayCurrency);
 		const savingsRate = savingsRateFrac * 100;
 
 		const totalNet = accountList
@@ -276,7 +274,7 @@ function NetWorth () {
 
 		return {
 			savings: income > 0
-				? `최근 3개월 수입 ${sym}${fmt(income)} · 지출 ${sym}${fmt(expense)} → 저축률 ${savingsRate.toFixed(1)}%`
+				? `최근 3개월 실수령 ${sym}${fmt(income)} · 지출 ${sym}${fmt(expense)} → 저축률 ${savingsRate.toFixed(1)}%`
 				: '수입 데이터 없음',
 			investing: `투자 ${sym}${fmt(invTotal)} / 순자산 ${sym}${fmt(totalNet)} = ${invRatio.toFixed(1)}%`,
 			emergency: monthlyAvg > 0
@@ -284,7 +282,7 @@ function NetWorth () {
 				: '지출 데이터 없음',
 			debt: `부채 ${sym}${fmt(debtTotal)} / 자산 ${sym}${fmt(assetTotal)} = ${debtRatio.toFixed(1)}%`
 		};
-	}, [accountList, allAccountsTransactions, exchangeRate, displayCurrency, livingExpenseExempt]);
+	}, [accountList, allAccountsTransactions, exchangeRate, displayCurrency]);
 
 	// Composition donut data (current snapshot)
 	const compositionData = useMemo(() => {
