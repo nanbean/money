@@ -15,6 +15,7 @@ import { resolveCategoryIcon } from '../../utils/categoryIcon';
 import { resolveCategoryColor } from '../../utils/categoryColor';
 
 import { toDateFormat } from '../../utils/formatting';
+import { buildDateGroups, formatDayHeader } from '../../utils/dateGroups';
 
 import {
 	openTransactionInModal
@@ -26,11 +27,13 @@ const tint = (hex, alphaHex = '22') => `${hex}${alphaHex}`;
 
 const ROW_HEIGHT_DESKTOP = 64;
 const ROW_HEIGHT_MOBILE = 72;
+const HEADER_HEIGHT = 36;
 const OVERSCAN = 6;
 
 export function BankTransactions ({
 	account,
 	currency,
+	groupByDate,
 	showAccount,
 	transactions
 }) {
@@ -53,14 +56,37 @@ export function BankTransactions ({
 	const scrollRef = useRef(null);
 	const count = transactions ? transactions.length : 0;
 
+	const currencyOf = (t) => {
+		if (currency) return currency;
+		const acc = t && t.accountId ? accountById.get(t.accountId) : null;
+		return (acc && acc.currency) || 'KRW';
+	};
+
+	// 날짜 머리줄과 거래 줄을 한 목록으로 편다. 거래 줄은 원래 index 를 들고 있다.
+	const items = useMemo(() => (groupByDate
+		? buildDateGroups(transactions, currencyOf)
+		: (transactions || []).map((_, index) => ({ type: 'row', index }))
+	// currencyOf 는 currency·accountById 로만 정해진다.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	), [groupByDate, transactions, currency, accountById]);
+
 	const rowVirtualizer = useVirtualizer({
-		count,
+		count: items.length,
 		getScrollElement: () => scrollRef.current,
-		estimateSize: () => rowHeight,
+		estimateSize: (i) => (items[i]?.type === 'header' ? HEADER_HEIGHT : rowHeight),
 		overscan: OVERSCAN,
 		// stable key so React doesn't reuse rows across re-orders
-		getItemKey: (index) => transactions[index]?._id || index
+		getItemKey: (i) => {
+			const item = items[i];
+			if (!item) return i;
+			return item.type === 'header' ? `day-${item.date}-${i}` : (transactions[item.index]?._id || `row-${item.index}`);
+		}
 	});
+
+	// 줄 높이가 섞여 있어 목록이 바뀌면 크기를 다시 잰다.
+	useEffect(() => {
+		rowVirtualizer.measure();
+	}, [items, rowHeight, rowVirtualizer]);
 
 	// Desc-sorted: newest sits at index 0. Snap to top on mount / list growth.
 	useEffect(() => {
@@ -123,7 +149,41 @@ export function BankTransactions ({
 		>
 			<Box sx={{ height: totalSize, position: 'relative', width: '100%' }}>
 				{virtualItems.map(vRow => {
-					const index = vRow.index;
+					const item = items[vRow.index];
+					if (!item) return null;
+
+					if (item.type === 'header') {
+						const total = item.total;
+						return (
+							<Stack
+								key={vRow.key}
+								direction="row"
+								alignItems="flex-end"
+								justifyContent="space-between"
+								sx={{
+									position: 'absolute',
+									top: 0,
+									left: 0,
+									right: 0,
+									transform: `translateY(${vRow.start}px)`,
+									height: HEADER_HEIGHT,
+									padding: '0 4px 6px',
+									boxSizing: 'border-box'
+								}}
+							>
+								<Typography sx={{ fontSize: 12, fontWeight: 700, color: T.ink2 }}>
+									{formatDayHeader(item.date)}
+								</Typography>
+								{total !== null && total !== 0 && (
+									<Typography sx={{ ...sMono, fontSize: 11, color: total > 0 ? T.pos : T.ink3 }}>
+										{total > 0 ? '+' : '−'}{fmtCurrencyFull(Math.abs(total), item.currency)}
+									</Typography>
+								)}
+							</Stack>
+						);
+					}
+
+					const index = item.index;
 					const t = transactions[index];
 					if (!t) return null;
 
@@ -135,12 +195,7 @@ export function BankTransactions ({
 					const amount = Number(t.amount) || 0;
 					const amountColor = amount > 0 ? T.pos : T.ink;
 
-					let rowCurrency = currency;
-					if (!rowCurrency && t.accountId) {
-						const acc = accountById.get(t.accountId);
-						if (acc?.currency) rowCurrency = acc.currency;
-					}
-					rowCurrency = rowCurrency || 'KRW';
+					const rowCurrency = currencyOf(t);
 
 					const AccountIcon = TYPE_ICON_MAP[t.type];
 
@@ -195,12 +250,15 @@ export function BankTransactions ({
 									{t.payee || baseCat || '—'}
 								</Typography>
 								<Stack direction="row" alignItems="center" spacing={0.75} sx={{ marginTop: '2px', minWidth: 0 }}>
-									<Typography sx={{ fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
-										{toDateFormat(t.date)}
-									</Typography>
+									{/* 날짜로 묶을 때는 머리줄에 날짜가 있어 줄에서는 뺀다. */}
+									{!groupByDate && (
+										<Typography sx={{ fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
+											{toDateFormat(t.date)}
+										</Typography>
+									)}
 									{baseCat && (
 										<>
-											<Box sx={{ width: 3, height: 3, borderRadius: '2px', background: T.ink3, flexShrink: 0 }} />
+											{!groupByDate && <Box sx={{ width: 3, height: 3, borderRadius: '2px', background: T.ink3, flexShrink: 0 }} />}
 											<Box sx={{
 												display: 'inline-flex',
 												alignItems: 'center',
@@ -224,7 +282,7 @@ export function BankTransactions ({
 									)}
 									{showAccount && t.account && (
 										<>
-											<Box sx={{ width: 3, height: 3, borderRadius: '2px', background: T.ink3, flexShrink: 0 }} />
+											{(!groupByDate || baseCat) && <Box sx={{ width: 3, height: 3, borderRadius: '2px', background: T.ink3, flexShrink: 0 }} />}
 											<Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
 												{AccountIcon && <AccountIcon sx={{ fontSize: 11, color: T.ink2 }} />}
 												<Typography sx={{ fontSize: 11, color: T.ink2, whiteSpace: 'nowrap' }}>
@@ -259,6 +317,7 @@ export function BankTransactions ({
 BankTransactions.propTypes = {
 	account: PropTypes.string,
 	currency: PropTypes.string,
+	groupByDate: PropTypes.bool,
 	showAccount: PropTypes.bool,
 	transactions: PropTypes.array
 };

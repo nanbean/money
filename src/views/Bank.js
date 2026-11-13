@@ -71,7 +71,9 @@ export function Bank () {
 			);
 		}
 		// Newest first. Source array is shared with Redux, so clone before reversing.
-		return [...tx].reverse();
+		// 새로 넣은 거래는 날짜와 상관없이 배열 끝에 붙으므로 날짜로 다시 정렬한다
+		// (날짜 머리줄이 둘로 갈라지지 않게). 같은 날은 reverse 순서가 유지된다.
+		return [...tx].reverse().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
 	}, [allAccountsTransactions, accountId, endDate, query]);
 
 	const balance = useMemo(() => {
@@ -166,32 +168,64 @@ export function Bank () {
 			spacing={1.5}
 			sx={{ marginBottom: 1.5 }}
 		>
-			<Stack direction="row" alignItems="center" spacing={1.5} sx={{ flexShrink: 0 }}>
-				<Typography sx={{ fontSize: 12, color: T.ink2 }}>Show on or before</Typography>
-				<Box
-					component="input"
-					type="date"
-					value={endDate}
-					onChange={e => setEndDate(e.target.value)}
-					sx={{
-						background: T.surf,
-						color: T.ink,
-						border: `1px solid ${T.rule}`,
-						borderRadius: '8px',
-						padding: '6px 10px',
-						fontSize: { xs: 16, sm: 13 },
-						fontFamily: 'inherit',
-						colorScheme: T.dark ? 'dark' : 'light',
-						outline: 'none',
-						// iOS Safari sizes input[type=date] natively and lets its internal date
-						// fields spill past the border box, clipping the right edge on mobile.
-						// No minWidth:0 here — this input is sized by its content, so letting it
-						// shrink below min-content would reintroduce the clipping.
-						WebkitAppearance: 'none',
-						appearance: 'none',
-						'&:focus': { borderColor: T.acc.hero }
-					}}
-				/>
+			{/* 좁은 화면에서 날짜와 Clear 가 넘치면 다음 줄로 내린다. */}
+			<Stack direction="row" alignItems="center" spacing={1.5} useFlexGap flexWrap="wrap" sx={{ flexShrink: 0, rowGap: 1 }}>
+				<Typography sx={{ fontSize: 12, color: T.ink2, whiteSpace: 'nowrap' }}>Show on or before</Typography>
+				{/* iOS Safari 는 비어 있는 date 입력칸을 글자 없는 작은 상자로 그리고, 값이 들어오면
+				    가운데 정렬·내용 너비로 바뀌어 모바일에서 들쭉날쭉했다. 크기를 고정하고 왼쪽
+				    정렬하며, 비었을 때는 안내 문구를 덧씌운다 (포커스 중에는 숨긴다). */}
+				<Box sx={{ position: 'relative', flexShrink: 0 }}>
+					<Box
+						component="input"
+						type="date"
+						value={endDate}
+						onChange={e => setEndDate(e.target.value)}
+						aria-label="Show on or before"
+						sx={{
+							display: 'block',
+							boxSizing: 'border-box',
+							width: 150,
+							height: 36,
+							background: T.surf,
+							// 비었을 때는 브라우저의 'yyyy-mm-dd' 자리표시를 감추고 안내 문구를 보인다.
+							color: endDate ? T.ink : 'transparent',
+							border: `1px solid ${T.rule}`,
+							borderRadius: '8px',
+							padding: '0 10px',
+							margin: 0,
+							fontSize: { xs: 16, sm: 13 },
+							lineHeight: '34px',
+							textAlign: 'left',
+							fontFamily: 'inherit',
+							colorScheme: T.dark ? 'dark' : 'light',
+							outline: 'none',
+							WebkitAppearance: 'none',
+							appearance: 'none',
+							'&::-webkit-date-and-time-value': { textAlign: 'left', margin: 0 },
+							'&:focus': { borderColor: T.acc.hero, color: T.ink },
+							'&:focus + .date-placeholder': { display: 'none' }
+						}}
+					/>
+					{!endDate && (
+						<Box
+							className="date-placeholder"
+							sx={{
+								position: 'absolute',
+								left: 11,
+								top: 0,
+								height: 36,
+								display: 'flex',
+								alignItems: 'center',
+								fontSize: { xs: 14, sm: 13 },
+								color: T.ink3,
+								pointerEvents: 'none',
+								whiteSpace: 'nowrap'
+							}}
+						>
+							Any date · 전체
+						</Box>
+					)}
+				</Box>
 				{endDate && (
 					<Box
 						component="button"
@@ -201,7 +235,8 @@ export function Bank () {
 							color: T.ink2,
 							border: `1px solid ${T.rule}`,
 							borderRadius: '8px',
-							padding: '6px 10px',
+							height: 36,
+							padding: '0 10px',
 							fontSize: 12,
 							cursor: 'pointer',
 							fontFamily: 'inherit',
@@ -219,7 +254,9 @@ export function Bank () {
 				background: T.bg,
 				border: `1px solid ${T.rule}`,
 				borderRadius: '8px',
-				padding: '4px 10px',
+				padding: '0 10px',
+				boxSizing: 'border-box',
+				height: 36,
 				flex: 1,
 				minWidth: 0,
 				transition: 'border-color 0.12s',
@@ -286,6 +323,7 @@ export function Bank () {
 						<BankTransactions
 							account={account}
 							currency={currency}
+							groupByDate
 							transactions={accountTransactions}
 						/>
 					</Box>

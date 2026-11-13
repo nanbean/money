@@ -100,7 +100,9 @@ const Transactions = () => {
 
 			const date = moment(t.date);
 			return date.isSameOrAfter(dateRange.start, 'day') && date.isSameOrBefore(dateRange.end, 'day');
-		}).reverse();
+		}).reverse()
+			// 새로 넣은 거래는 날짜와 상관없이 배열 끝에 붙는다. 날짜 머리줄이 갈라지지 않게 다시 정렬한다.
+			.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
 	}, [allAccountsTransactions, dateRange, filteredAccounts]);
 
 	const stats = useMemo(() => {
@@ -370,7 +372,7 @@ const Transactions = () => {
 						</Box>
 					) : (
 						<Box sx={{ height: { xs: 600, md: 720 } }}>
-							<BankTransactions showAccount transactions={filteredTransactions} />
+							<BankTransactions groupByDate showAccount transactions={filteredTransactions} />
 						</Box>
 					)}
 				</Box>
