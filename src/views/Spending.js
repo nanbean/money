@@ -34,7 +34,7 @@ import { sDisplay, sMono, fmtCurrency, fmtCurrencyFull } from '../utils/designTo
 import { NON_EXPENSE_CATEGORY, TYPE_ICON_MAP } from '../constants';
 import { EXPENSE_ACCOUNT_TYPES, flattenExpenseRows, isLivingExpenseExempt } from '../utils/expense';
 import { monthsAgoStr, thisMonthStr, isMonthInRange } from '../utils/spendingRange';
-import { INFLATION_RATE, projectMonthEnd } from '../utils/monthProjection';
+import { INFLATION_RATE, projectMonthEnd, buildSpendProfile } from '../utils/monthProjection';
 import { payeeKey, pickPayeeLabel } from '../utils/payee';
 
 const RANGES = ['1M', '3M', '6M', 'YTD', '1Y'];
@@ -298,6 +298,12 @@ function Spending () {
 			.reduce((sum, tx) => sum + toDisplayAmount(tx), 0);
 	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix]);
 
+	// 이번 달 남은 몫을 잡을 지출 패턴 (최근 12개월, monthProjection 참고).
+	const spendProfile = useMemo(
+		() => buildSpendProfile(expenseRows.filter(isExpenseTx), toDisplayAmount, new Date()),
+		[expenseRows, isExpenseTx, toDisplayAmount]
+	);
+
 	const annualMonthlyData = useMemo(() => {
 		const today = new Date();
 		const month = today.getMonth();
@@ -323,13 +329,13 @@ function Spending () {
 			let projected = 0;
 			if (m === month) {
 				// 실제 시각 기준이라 마지막 날에도 남은 시간만큼 남는다 (monthProjection 참고).
-				projected = Math.max(0, projectMonthEnd(actual, lastYearMonthly[m], today) - actual);
+				projected = Math.max(0, projectMonthEnd(actual, lastYearMonthly[m], today, spendProfile) - actual);
 			} else if (m > month) {
 				projected = Math.round((lastYearMonthly[m] || 0) * INFLATION_RATE);
 			}
 			return { month: label, lastYear, actual, projected };
 		});
-	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix, lastYearPrefix]);
+	}, [expenseRows, isExpenseTx, toDisplayAmount, thisYearPrefix, lastYearPrefix, spendProfile]);
 
 	const projectedAnnual = useMemo(() => {
 		return Math.round(annualMonthlyData.reduce((sum, d) => sum + d.actual + d.projected, 0));
@@ -374,12 +380,12 @@ function Spending () {
 					// 예전에는 마지막 날이면 예상을 0 으로 두어 실적과 같게 보였다.
 					// 실제 시각 기준으로 자정까지 남은 만큼 더한다 (monthProjection 참고).
 					const lastYearSameMonth = annualMonthlyData[today.getMonth()]?.lastYear || 0;
-					const projected = Math.max(0, projectMonthEnd(actual, lastYearSameMonth, today) - actual);
+					const projected = Math.max(0, projectMonthEnd(actual, lastYearSameMonth, today, spendProfile) - actual);
 					return { month, actual, projected };
 				}
 				return { month, actual, projected: 0 };
 			});
-	}, [spendingTransactions, toDisplayAmount, currentYear, annualMonthlyData]);
+	}, [spendingTransactions, toDisplayAmount, currentYear, annualMonthlyData, spendProfile]);
 
 	const categoryData = useMemo(() => {
 		const map = {};

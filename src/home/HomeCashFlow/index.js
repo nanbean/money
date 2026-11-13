@@ -10,7 +10,7 @@ import useT from '../../hooks/useT';
 import { sDisplay, sMono, labelStyle, fmtCurrency } from '../../utils/designTokens';
 import { NON_EXPENSE_CATEGORY } from '../../constants';
 import { flattenExpenseRows, isInternalTransfer, isLivingExpenseExempt } from '../../utils/expense';
-import { projectMonthEnd } from '../../utils/monthProjection';
+import { projectMonthEnd, buildSpendProfile } from '../../utils/monthProjection';
 
 const isInvestmentTxn = (t) => !!(t.accountId && t.accountId.startsWith('account:Invst'));
 // Match Spending page's monthly projection blend (src/views/Spending.js).
@@ -68,9 +68,14 @@ export default function HomeCashFlow () {
 		);
 		const lastYearLivingExp = flattenExpenseRows(lastYearMonthTxns).filter(isLivingExpense)
 			.reduce((s, t) => s + conv(t), 0);
-		// Spending 과 같은 식(monthProjection). 실제 시각 기준이라 마지막 날에도 남은
-		// 시간만큼 작년 지출을 더한다.
-		const projectedLivingExp = Math.max(livingExp, projectMonthEnd(livingExp, lastYearLivingExp));
+		// Spending 과 같은 식(monthProjection). 남은 몫은 최근 12개월 지출 패턴으로 잡는다
+		// (월초 고정 지출을 두 번 세지 않게).
+		const profileStart = todayM.clone().subtract(12, 'months').startOf('month').format('YYYY-MM-DD');
+		const profileRows = flattenExpenseRows((allAccountsTransactions || []).filter(t =>
+			t.date >= profileStart && t.date < monthStart && !isInternalTransfer(t) && !isInvestmentTxn(t)
+		)).filter(isLivingExpense);
+		const profile = buildSpendProfile(profileRows, conv, todayM.toDate());
+		const projectedLivingExp = Math.max(livingExp, projectMonthEnd(livingExp, lastYearLivingExp, todayM.toDate(), profile));
 
 		const monthName = todayM.format('MMMM');
 		return {
